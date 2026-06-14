@@ -2657,7 +2657,7 @@ async function handleAddItem(parentItem: any) {
   // 在固定指标分区Tab下新增：若分区尚未创建，先懒创建并切到真实分区
   if (!parentItem && isIndicatorTabActive.value) {
     const secId = await ensureIndicatorSection()
-    if (!secId) { message.error('指标分区创建失败'); return }
+    if (!secId) return // ensureIndicatorSection 失败时已给提示
     activeTabId.value = secId
   }
   const defaultParentId = parentItem?.id || activeTabId.value || 0
@@ -2681,20 +2681,26 @@ async function handleAddItem(parentItem: any) {
 }
 
 // 懒创建全局唯一指标分区（根级 group + isIndicatorSection），返回其 id；已存在则直接返回。
+// 创建失败（如名称重复/网络错误）时与本文件其他处理一致：给出错误提示并返回 null。
 async function ensureIndicatorSection(): Promise<number | null> {
   if (indicatorSectionItem.value) return indicatorSectionItem.value.id
   if (!selectedTemplateId.value) return null
-  const created: any = await addAmoebaPLItem(selectedTemplateId.value, {
-    itemName: '运营指标',
-    nodeRole: 'group',
-    parentId: 0,
-    sort: computeNextSortOrder(0),
-    itemCategory: 'section',
-    isIndicatorSection: true,
-  })
-  const newId = created?.id ?? created?.data?.id ?? null
-  await loadTemplateItems()
-  return newId
+  try {
+    const created: any = await addAmoebaPLItem(selectedTemplateId.value, {
+      itemName: '运营指标',
+      nodeRole: 'group',
+      parentId: 0,
+      sort: computeNextSortOrder(0),
+      itemCategory: 'section',
+      isIndicatorSection: true,
+    })
+    const newId = created?.id ?? null
+    await loadTemplateItems()
+    return newId
+  } catch (e: any) {
+    message.error(e?.message || '指标分区创建失败')
+    return null
+  }
 }
 
 // 当用户切换所属位置时，自动重算 sort 为该父节点末尾
