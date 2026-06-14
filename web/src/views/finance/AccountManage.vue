@@ -711,10 +711,16 @@ async function handleSaveAndAdd() {
     const savedParentId = formData.parentId
     const savedCategory = formData.category
     const savedBalanceDirection = formData.balanceDirection
+    const savedCode = formData.code
     resetForm()
     formData.parentId = savedParentId
     formData.category = savedCategory
     formData.balanceDirection = savedBalanceDirection
+    // 续填下一条默认编码 = 刚保存编码顺序号 + 1（基于已存编码递增，不等异步刷新的树）
+    // 仅子科目续填；顶级新增（无上级）保持留空，与既有行为一致
+    if (savedParentId && savedCode.length >= 2) {
+      formData.code = buildChildCode(savedCode.slice(0, -2), parseInt(savedCode.slice(-2), 10) + 1)
+    }
   } catch (error) {
     console.error('创建失败:', error)
   }
