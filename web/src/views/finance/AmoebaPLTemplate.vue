@@ -74,6 +74,16 @@
               </a-button>
             </a-tooltip>
           </template>
+          <!-- 固定"指标分区"特别 Tab：始终最左，无改名/删除入口 -->
+          <a-tab-pane :key="indicatorTabNode.id">
+            <template #tab>
+              <span class="dir-tab-label indicator-tab">
+                <BarChartOutlined />
+                <span>{{ indicatorTabNode.name }}</span>
+                <span class="dir-tab-count">({{ indicatorTabNode.childCount }})</span>
+              </span>
+            </template>
+          </a-tab-pane>
           <a-tab-pane
             v-for="tab in tabNodes"
             :key="tab.id"
@@ -137,15 +147,6 @@
           <a-button size="small" @click="handleAddItem(null)">
             <template #icon><PlusOutlined /></template>
             新增项目
-          </a-button>
-          <a-button
-            v-if="!hasIndicatorSection"
-            size="small"
-            type="dashed"
-            @click="handleAddIndicatorSection"
-          >
-            <template #icon><PlusOutlined /></template>
-            指标分区
           </a-button>
         </div>
         <a-spin :spinning="itemsLoading">
@@ -860,6 +861,7 @@ import {
   CopyOutlined,
   DownOutlined,
   RightOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import AccountSetSelector from '@/components/AccountSetSelector.vue'
@@ -1291,6 +1293,26 @@ const tabNodes = computed(() => {
     }))
 })
 
+// ==================== 固定"指标分区"特别 Tab ====================
+// 指标分区按设计为全局唯一、根级；编辑器把它固定成标签栏最左的特别 Tab，
+// 不再钉在每个普通 Tab 顶部。分区尚未创建时用哨兵 id，首次在该 Tab 新增指标项时懒创建。
+const INDICATOR_TAB_ID = -1
+
+const indicatorSectionItem = computed(() =>
+  flatItems.value.find(i => i.isIndicatorSection && (!i.parentId || i.parentId === 0)) || null
+)
+
+const indicatorTabNode = computed(() => {
+  const sec = indicatorSectionItem.value
+  return {
+    id: sec ? sec.id : INDICATOR_TAB_ID,
+    name: sec ? getItemName(sec) : '运营指标',
+    childCount: sec ? flatItems.value.filter(c => c.parentId === sec.id).length : 0,
+  }
+})
+
+const isIndicatorTabActive = computed(() => activeTabId.value === indicatorTabNode.value.id)
+
 // 全局formula节点 = depth=0 formula节点
 const globalFormulaNodes = computed(() => {
   return flatItems.value
@@ -1307,6 +1329,8 @@ const globalFormulaNodes = computed(() => {
 
 // Tab列表变更后，如果当前activeTab不在列表中，自动选中第一个
 watch(tabNodes, (tabs) => {
+  // 指标分区固定Tab始终合法，不参与回退（其 id 不在 tabNodes 中）
+  if (isIndicatorTabActive.value) return
   if (tabs.length === 0) {
     activeTabId.value = null
     return
@@ -1355,14 +1379,7 @@ function filterTreeNode(node: any, keyword: string): any | null {
 const treeData = computed(() => {
   const nodes: any[] = []
 
-  // 1. 指标分区始终放在树最顶部（全局，不依赖Tab）。
-  // 仅认根级标记：历史脏数据中 Tab 内分组可能被误标（FinanceSeeder.MigrateV4 前），按普通分组留在 Tab 树中
-  const indicatorSection = flatItems.value.find(i => i.isIndicatorSection && (!i.parentId || i.parentId === 0))
-  if (indicatorSection) {
-    nodes.push(buildItemNode(indicatorSection))
-  }
-
-  // 2. 当前Tab下的项目
+  // 当前Tab（含固定指标分区Tab）下的项目；指标分区不再全局置顶到每个 Tab
   if (activeTabId.value) {
     const roots = flatItems.value
       .filter(i => i.parentId === activeTabId.value)
@@ -1923,9 +1940,7 @@ const isFormDirty = computed(() => {
 // ==================== 二维正交选择器联动逻辑 ====================
 
 /** 是否已有指标分区（仅认根级标记，与报表服务和树渲染同口径） */
-const hasIndicatorSection = computed(() => {
-  return flatItems.value.some(item => item.isIndicatorSection && (!item.parentId || item.parentId === 0))
-})
+const hasIndicatorSection = computed(() => !!indicatorSectionItem.value)
 
 /**
  * 是否为有效的指标分区节点：仅认根级标记。
@@ -3177,6 +3192,14 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.indicator-tab {
+  font-weight: 600;
+  color: #d46b08; // 琥珀色，与报表"运营指标"呼应
+  .anticon {
+    margin-right: 2px;
+  }
 }
 
 .dir-tab-count {
