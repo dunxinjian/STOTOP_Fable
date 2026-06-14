@@ -511,6 +511,26 @@ function findAccountById(tree: any[], id: number): any | null {
   return null
 }
 
+// 把 2 位顺序号拼成完整子科目编码；非法或超 99（同级上限）返回空串
+function buildChildCode(parentCode: string, suffix: number): string {
+  if (!Number.isInteger(suffix) || suffix < 1 || suffix > 99) return ''
+  return parentCode + String(suffix).padStart(2, '0')
+}
+
+// 计算"上级科目下最大子编码 + 1"；无有效子科目时返回首个子编码（…01）
+function computeNextChildCode(parentCode: string, children: any[]): string {
+  let maxSuffix = 0
+  for (const child of children || []) {
+    const childCode = String(child?.code ?? '')
+    if (!childCode.startsWith(parentCode)) continue
+    const tail = childCode.slice(parentCode.length)
+    if (!/^\d{2}$/.test(tail)) continue
+    const n = parseInt(tail, 10)
+    if (n > maxSuffix) maxSuffix = n
+  }
+  return buildChildCode(parentCode, maxSuffix + 1)
+}
+
 const formRules: Record<string, any[]> = {
   code: [
     { required: true, message: '请输入编码', trigger: 'blur' },
@@ -603,6 +623,9 @@ function handleAddChild(parent: any) {
   formData.parentId = parent.id
   formData.category = parent.category
   formData.balanceDirection = parent.balanceDirection
+  // 默认编码 = 上级下最大子编码 + 1（扁平行已剥离 children，需回树取真实节点）
+  const parentNode = findAccountById(accountTree.value, parent.id)
+  formData.code = computeNextChildCode(parent.code, parentNode?.children ?? [])
   dialogVisible.value = true
 }
 
