@@ -1,0 +1,153 @@
+<template>
+  <div class="comment-section">
+    <div class="comment-title">
+      批次评论{{ comments.length ? ` (${comments.length})` : '' }}
+    </div>
+
+    <!-- 评论列表 -->
+    <div v-if="comments.length > 0" class="comment-list">
+      <div v-for="(c, ci) in comments" :key="ci" class="comment-item">
+        <span class="comment-avatar" :style="{ background: getAvatarColor(c.author) }">
+          {{ c.author?.[0] || '?' }}
+        </span>
+        <div class="comment-body">
+          <div class="comment-header">
+            <span class="comment-author">{{ c.author }}</span>
+            <span class="comment-time">{{ c.time }}</span>
+          </div>
+          <div class="comment-text">{{ c.text }}</div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="comment-empty">暂无评论</div>
+
+    <!-- 发布评论 -->
+    <div class="comment-input-area">
+      <a-input
+        v-model:value="newComment"
+        :placeholder="`以${currentUserName}身份评论...`"
+        size="small"
+        @pressEnter="handleSend"
+      />
+      <a-button type="primary" size="small" @click="handleSend" :disabled="!newComment.trim()">
+        发送
+      </a-button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import type { CommentItem } from '../composables/useUploadCenter'
+
+const props = defineProps<{
+  comments: CommentItem[]
+  currentUserName: string
+}>()
+
+const emit = defineEmits<{
+  addComment: [text: string]
+}>()
+
+const newComment = ref('')
+
+function handleSend() {
+  const text = newComment.value.trim()
+  if (!text) return
+  emit('addComment', text)
+  newComment.value = ''
+}
+
+function getAvatarColor(name: string): string {
+  if (!name) return '#8c8c8c'
+  const colors = ['#1677ff', '#52c41a', '#fa8c16', '#722ed1', '#eb2f96', '#13c2c2']
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
+</script>
+
+<style scoped lang="scss">
+.comment-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.comment-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 8px;
+}
+
+.comment-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-author {
+  font-size: 12px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.comment-text {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.comment-empty {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.35);
+  padding: 8px 0;
+}
+
+.comment-input-area {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+</style>

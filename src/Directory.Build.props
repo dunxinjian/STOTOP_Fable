@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <!-- Static graph restore and parallel project builds can hang/fail on local macOS .NET 10. -->
+    <RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
+    <BuildInParallel>false</BuildInParallel>
+    <NuGetAudit Condition="'$(ContinuousIntegrationBuild)' != 'true'">false</NuGetAudit>
+    <EnablePlaywrightBuildAssets Condition="'$(MSBuildProjectName)' == 'STOTOP.WebAPI'">true</EnablePlaywrightBuildAssets>
+    <PlaywrightPlatform Condition="'$(EnablePlaywrightBuildAssets)' != 'true'">none</PlaywrightPlatform>
+  </PropertyGroup>
+</Project>

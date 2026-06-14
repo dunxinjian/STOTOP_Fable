@@ -1,0 +1,60 @@
+// 操作按钮语义颜色规范
+// 通过语义类名统一全系统按钮颜色
+@use 'sass:color';
+@use './variables.scss' as *;
+
+// 成功/同意/启用 - 绿色
+.btn-approve,
+.btn-success,
+.btn-enable {
+  color: $color-success !important;
+  border-color: $color-success !important;
+  &:hover {
+    color: color.adjust($color-success, $lightness: 8%) !important;
+    border-color: color.adjust($color-success, $lightness: 8%) !important;
+    background: rgba(82, 196, 26, 0.06);
+  }
+}
+.btn-approve-filled {
+  background: $color-success !important;
+  border-color: $color-success !important;
+  color: #fff !important;
+  &:hover {
+    background: color.adjust($color-success, $lightness: 8%) !important;
+    border-color: color.adjust($color-success, $lightness: 8%) !important;
+  }
+}
+
+// 警告/返回/撤回/停用 - 橙色
+.btn-warning,
+.btn-return,
+.btn-disable {
+  color: $color-warning !important;
+  border-color: $color-warning !important;
+  &:hover {
+    color: color.adjust($color-warning, $lightness: 8%) !important;
+    border-color: color.adjust($color-warning, $lightness: 8%) !important;
+    background: rgba(250, 173, 20, 0.06);
+  }
+}
+
+// 危险/删除/拒绝 — 使用 Ant Design 原生 danger 属性即可，无需自定义
+
+// 金额格式统一
+.amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.amount-positive {
+  color: $color-success;
+}
+.amount-negative {
+  color: $color-danger;
+}
+
+// 操作列统一宽度
+.table-action-col-sm { width: 80px; }
+.table-action-col-md { width: 120px; }
+.table-action-col-lg { width: 160px; }
+.table-action-col-xl { width: 200px; }
