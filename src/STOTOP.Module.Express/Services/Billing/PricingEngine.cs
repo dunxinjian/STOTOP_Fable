@@ -226,7 +226,7 @@ public class PricingEngine
                 // 重跑去重：先删除这批运单的旧计费结果，再插入新结果
                 var successWaybillNos = successResults.Select(r => r.FWaybillNo!).Distinct().ToList();
                 await _bulkWriter.DeleteExistingResults(
-                    successWaybillNos, resultTable, connection, dbTransaction);
+                    successWaybillNos, resultTable, batchId, connection, dbTransaction);
 
                 await _bulkWriter.BulkInsertBillingResults(
                     successResults, resultTable, connection, dbTransaction);
@@ -262,10 +262,10 @@ public class PricingEngine
                     using var errTransaction = (SqlTransaction)await errConnection.BeginTransactionAsync();
                     try
                     {
-                        // 重跑去重：先删除这批运单的旧失败记录
+                        // 重跑去重：先删除这批运单的旧失败记录（仅删 calcStatus=2，不碰 Phase A 写入的成功行）
                         var failureWaybillNos = failureResults.Select(r => r.FWaybillNo!).Distinct().ToList();
                         await _bulkWriter.DeleteExistingResults(
-                            failureWaybillNos, resultTable, errConnection, errTransaction);
+                            failureWaybillNos, resultTable, batchId, errConnection, errTransaction, calcStatus: 2);
 
                         await _bulkWriter.BulkInsertBillingResults(
                             failureResults, resultTable, errConnection, errTransaction);

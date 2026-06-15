@@ -46,6 +46,24 @@ assert.ok(
   deleteExistingResults.includes('#TmpDeleteWaybillNos'),
   'DeleteExistingResults should limit both deletes to the retried waybill numbers'
 )
+assert.ok(
+  deleteExistingResults.includes('[F批次ID] = @batchId'),
+  'DeleteExistingResults must scope deletes to the current batch'
+)
+assert.ok(
+  deleteExistingResults.includes('AND r.[F计算状态] = @calcStatus'),
+  'DeleteExistingResults must support restricting deletes to a calc status (Phase B failure rows)'
+)
+
+const pricingEngine = read('src/STOTOP.Module.Express/Services/Billing/PricingEngine.cs')
+assert.ok(
+  /DeleteExistingResults\(\s*\r?\n?\s*successWaybillNos[\s\S]*?batchId/.test(pricingEngine),
+  'PricingEngine Phase A must pass the batch id to scope deletion'
+)
+assert.ok(
+  /DeleteExistingResults\(\s*\r?\n?\s*failureWaybillNos[\s\S]*?calcStatus:\s*2/.test(pricingEngine),
+  'PricingEngine Phase B must restrict deletion to failure rows (calcStatus: 2) so it cannot remove Phase A success rows'
+)
 
 const retrySelection = pricingPlugin.slice(
   pricingPlugin.indexOf('// 6.5 重试时清除旧计费失败记录'),

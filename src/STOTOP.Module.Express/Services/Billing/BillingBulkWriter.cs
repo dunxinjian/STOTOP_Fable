@@ -292,12 +292,17 @@ public class BillingBulkWriter
     /// <summary>
     /// 删除指定运单编号的已有计费结果（用于重跑前清理，防止重复累积）
     /// 采用临时表+JOIN高性能模式。
+    /// WHERE 限定 [F批次ID]=@batchId 防止跨批次误删（运单号跨批次可重复）；
+    /// calcStatus 非空时再限定 [F计算状态]，供 Phase B 只删失败行、
+    /// 不误删 Phase A 刚写入的同批次成功行。
     /// </summary>
     public async Task DeleteExistingResults(
         IReadOnlyList<string> waybillNos,
         string resultTable,
+        long batchId,
         SqlConnection connection,
-        SqlTransaction transaction)
+        SqlTransaction transaction,
+        int? calcStatus = null)
     {
         if (waybillNos.Count == 0) return;
         ValidateTableName(resultTable);
@@ -322,22 +327,29 @@ public class BillingBulkWriter
             await bulkCopy.WriteToServerAsync(dt);
         }
 
-        // 3. 先删除成本明细，再删除旧结果，避免留下孤儿成本明细
+        // 3. 先删除成本明细，再删除旧结果，避免留下孤儿成本明细。
+        //    WHERE 限定本批次（@batchId）；calcStatus 非空时追加状态限定。
+        var statusClause = calcStatus.HasValue ? " AND r.[F计算状态] = @calcStatus" : "";
         var deleteSql = $@"
             IF OBJECT_ID(N'{costTable}', N'U') IS NOT NULL
             BEGIN
                 DELETE c FROM [{costTable}] c
                 INNER JOIN [{resultTable}] r ON c.[F计费结果ID] = r.[FID]
-                INNER JOIN #TmpDeleteWaybillNos t ON r.[F运单编号] = t.[FWaybillNo];
+                INNER JOIN #TmpDeleteWaybillNos t ON r.[F运单编号] = t.[FWaybillNo]
+                WHERE r.[F批次ID] = @batchId{statusClause};
             END;
 
             DELETE r FROM [{resultTable}] r
-            INNER JOIN #TmpDeleteWaybillNos t ON r.[F运单编号] = t.[FWaybillNo];
+            INNER JOIN #TmpDeleteWaybillNos t ON r.[F运单编号] = t.[FWaybillNo]
+            WHERE r.[F批次ID] = @batchId{statusClause};
 
             DROP TABLE #TmpDeleteWaybillNos;";
         using (var cmd = new SqlCommand(deleteSql, connection, transaction))
         {
             cmd.CommandTimeout = 120;
+            cmd.Parameters.AddWithValue("@batchId", batchId);
+            if (calcStatus.HasValue)
+                cmd.Parameters.AddWithValue("@calcStatus", calcStatus.Value);
             await cmd.ExecuteNonQueryAsync();
         }
     }
