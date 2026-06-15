@@ -1276,7 +1276,17 @@ const tabSaveLoading = ref(false)
 
 const activeTabKey = computed<any>({
   get: () => activeTabId.value ?? undefined,
-  set: value => { activeTabId.value = toNumberOrNull(value) },
+  set: value => {
+    const next = toNumberOrNull(value)
+    if (next === activeTabId.value) return
+    // 用户切换 Tab：关闭右栏编辑面板并清空选中，避免残留上一个 Tab 的选中项。
+    // 脏数据按账套切换的既有口径——提示已丢弃（不阻断切换）。
+    if (isFormDirty.value) message.warning('已切换Tab，未保存的修改已丢弃')
+    activeTabId.value = next
+    selectedKeys.value = []
+    selectedItem.value = null
+    editMode.value = null
+  },
 })
 
 // Tab节点 = depth=0 group节点
