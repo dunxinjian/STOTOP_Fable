@@ -295,6 +295,7 @@ public class BillingBulkWriter
     /// WHERE 限定 [F批次ID]=@batchId 防止跨批次误删（运单号跨批次可重复）；
     /// calcStatus 非空时再限定 [F计算状态]，供 Phase B 只删失败行、
     /// 不误删 Phase A 刚写入的同批次成功行。
+    /// 删除范围的 C# 等价判定见 <see cref="BillingDeleteScope.WouldDeleteRow"/>。
     /// </summary>
     public async Task DeleteExistingResults(
         IReadOnlyList<string> waybillNos,

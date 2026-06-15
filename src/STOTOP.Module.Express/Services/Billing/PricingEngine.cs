@@ -262,7 +262,10 @@ public class PricingEngine
                     using var errTransaction = (SqlTransaction)await errConnection.BeginTransactionAsync();
                     try
                     {
-                        // 重跑去重：先删除这批运单的旧失败记录（仅删 calcStatus=2，不碰 Phase A 写入的成功行）
+                        // 重跑去重：先删除这批运单的旧失败记录（仅限本批次失败状态行）。
+                        // 已知边角：某运单上一轮全部成功、本轮全部失败时，Phase A 不处理它、
+                        // Phase B 只删状态=2，旧成功行会残留。极少见，详见
+                        // docs/superpowers/specs/2026-06-14-express-billing-delete-batch-scope-design.md。
                         var failureWaybillNos = failureResults.Select(r => r.FWaybillNo!).Distinct().ToList();
                         await _bulkWriter.DeleteExistingResults(
                             failureWaybillNos, resultTable, batchId, errConnection, errTransaction, calcStatus: 2);

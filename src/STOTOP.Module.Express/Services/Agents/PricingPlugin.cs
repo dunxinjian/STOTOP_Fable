@@ -1060,7 +1060,14 @@ WHERE [F批次ID] = @batchId
         }
     }
 
-    /// <summary>删除旧计费结果（重试场景）</summary>
+    /// <summary>
+    /// 删除旧计费结果（重试场景）。
+    /// WHERE 限定 [F批次ID]=@batchId 防止跨批次误删（运单号跨批次可重复）；
+    /// 不限状态，因为是引擎前预清、无两阶段互删问题。
+    /// </summary>
+    /// <param name="resultTable">计费结果表名</param>
+    /// <param name="batchId">当前批次 ID，DELETE 限定在本批次内</param>
+    /// <param name="waybillNos">需要重试的运单编号列表</param>
     private async Task DeleteOldBillingResultsAsync(string resultTable, long batchId, IReadOnlyList<string> waybillNos)
     {
         var normalizedWaybillNos = waybillNos
