@@ -72,8 +72,9 @@ DeleteExistingResults(IReadOnlyList<string> waybillNos, string resultTable,
 
 ### 抽取
 
-- `BillingDeleteSqlBuilder.Build(resultTable, costTable, tempTable, bool filterByStatus)`：构造 DELETE SQL，`filterByStatus=true` 时在 WHERE 注入 `AND r.[F计算状态] = @calcStatus`。供两处真实方法复用，避免 SQL 重复。
-- 纯判定函数 `WouldDeleteRow(rowBatchId, rowWaybillNo, rowCalcStatus, deleteBatchId, deleteWaybillNos, deleteCalcStatus)`：把 SQL 的 WHERE 语义在 C# 里等价表达（`rowBatchId == deleteBatchId && deleteWaybillNos.Contains(rowWaybillNo) && (deleteCalcStatus == null || rowCalcStatus == deleteCalcStatus)`）。
+> 实现修正：原设想抽 `BillingDeleteSqlBuilder.Build(...)` 统一构造 DELETE SQL，但现有 `.mjs` 契约测试切取的是两方法体内联 SQL 文本来断言，抽离会使既有断言失配、需大改契约测试。故**保持 SQL 内联**（只在两处 WHERE 各加谓词），**只抽纯判定函数 `BillingDeleteScope.WouldDeleteRow`**。SQL 形状由 `.mjs` 源级断言守护，删除语义由纯函数守护。
+
+- 纯判定函数 `BillingDeleteScope.WouldDeleteRow(rowBatchId, rowWaybillNo, rowCalcStatus, deleteBatchId, deleteWaybillNos, deleteCalcStatus)`：把 SQL 的 WHERE 语义在 C# 里等价表达（`rowBatchId == deleteBatchId && deleteWaybillNos.Contains(rowWaybillNo) && (deleteCalcStatus == null || rowCalcStatus == deleteCalcStatus)`）。改动任一侧 SQL 谓词时须同步本函数。
 
 ### C# 测试 `tests/STOTOP.Module.Express.Tests/Billing/BillingDeleteScopeTests.cs`
 
@@ -81,7 +82,7 @@ DeleteExistingResults(IReadOnlyList<string> waybillNos, string resultTable,
   - 旧语义（无批次/状态）：`WouldDeleteRow` 返回 `true` —— 成功行被删 = 丢数据。
   - 修复语义（`deleteBatchId=82, deleteCalcStatus=2`）：返回 `false` —— 成功行存活。
 - **跨批次**：成功行属批次 81，Phase B 在批次 82 删 → 修复后 `false`（不波及历史批次）。
-- **SQL 形状**：断言 `Build(...)` 产出 SQL 含 `[F批次ID] = @batchId`；`filterByStatus=true` 变体含 `[F计算状态] = @calcStatus`。
+- 共 5 个 `[Fact]`（正路径命中、Phase B 放过成功行、跨批不命中、Phase B 删失败行、不在名单不命中）。SQL 形状不在 C# 测试断言，改由下方 `.mjs` 契约测试守护。
 - 注意 xUnit 下 `async Task` 命名空间被遮蔽时用 `global::System.Threading.Tasks.Task`（项目既有坑）。本批测试为纯同步断言，预计不涉及，但保留此约定。
 
 ### 扩展 `scripts/tests/express-billing-delete-cascade-contract.test.mjs`
@@ -93,14 +94,16 @@ DeleteExistingResults(IReadOnlyList<string> waybillNos, string resultTable,
 
 | 文件 | 改动 |
 |------|------|
-| `BillingBulkWriter.cs` | `DeleteExistingResults` 加 `batchId`/`calcStatus` 参数与 WHERE 谓词；抽 `BillingDeleteSqlBuilder` |
+| `BillingDeleteScope.cs`（新增） | 纯判定函数 `WouldDeleteRow`（删除语义可执行规格） |
+| `BillingBulkWriter.cs` | `DeleteExistingResults` 加 `batchId`/`calcStatus` 参数与内联 WHERE 谓词 |
 | `PricingEngine.cs` | Phase A 传 `batchId`；Phase B 传 `batchId` + `calcStatus:2` |
 | `PricingPlugin.cs` | `DeleteOldBillingResultsAsync` 加 `batchId` 参数与 WHERE；调用方传 `batchId` |
-| `BillingDeleteScopeTests.cs`（新增） | 行为复现 + SQL 形状测试 |
-| `express-billing-delete-cascade-contract.test.mjs` | 加批次限定正向断言 |
+| `BillingDeleteScopeTests.cs`（新增） | 行为复现（5 用例） |
+| `express-billing-delete-cascade-contract.test.mjs` | 加批次/状态限定正向断言 |
 
 ## 非目标（YAGNI）
 
 - 单次预删除重构（封堵成功→失败翻转的孤儿边角）。
 - `F参与方角色` 限定。
+- 抽 `BillingDeleteSqlBuilder.Build` 统一 SQL（保留内联以护住既有契约测试；两处 DELETE 模板的轻度重复由纯函数 + 契约断言防漂移）。
 - 针对真实 SQL Server 的集成测试（无 CI 数据库，超出本次范围）。
