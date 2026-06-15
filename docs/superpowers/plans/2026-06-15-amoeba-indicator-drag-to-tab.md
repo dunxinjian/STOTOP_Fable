@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 允许用户把任意 Tab 树里的「指标」类型叶子项拖到标签栏的"运营指标"指标 Tab 上，从而把它移成全局指标分区的直接子项（无分区则懒创建）。
+**Goal:** 允许用户把当前 Tab 树里可见的「指标」类型叶子项拖到标签栏的"运营指标"指标 Tab 上，从而把它移成全局指标分区的直接子项（无分区则懒创建）。要拖其它 Tab 的指标项需先切到该 Tab（树一次只渲染当前 Tab）。
 
 **Architecture:** 纯前端 + 复用现有更新接口。a-tree 的 `@dragstart` 记下被拖项 id；指标 Tab 标签加原生 `@dragover/@dragleave/@drop`；落下时校验是指标项、`ensureIndicatorSection()`（懒创建）、`updateAmoebaPLItem` 改 `parentId`、重载。后端不动。
 
