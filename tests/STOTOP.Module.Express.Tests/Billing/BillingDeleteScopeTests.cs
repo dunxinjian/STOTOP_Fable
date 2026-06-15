@@ -14,16 +14,21 @@ public class BillingDeleteScopeTests
     private static readonly IReadOnlySet<string> WaybillSto123 =
         new HashSet<string> { "STO123" };
 
-    // 同批互删：Phase A 写入的成功行(批次82, 状态1)，在 Phase B 删失败行时必须存活。
+    // 正路径 & 风险根因：不限状态(null)删除会命中本批次本运单的成功行。
+    // 对 Phase A 而言这是预期（重跑时替换自己的旧成功行）；
+    // 但若 Phase B 也不限状态，就会误删 Phase A 刚写入的成功行（数据丢失）。
     [Fact]
-    public void PhaseB_delete_must_not_remove_phaseA_success_row()
+    public void Unscoped_delete_hits_same_batch_success_row()
     {
-        // 旧语义：Phase B 不限定状态 → 成功行被命中删除（数据丢失）
         Assert.True(BillingDeleteScope.WouldDeleteRow(
             rowBatchId: 82, rowWaybillNo: "STO123", rowCalcStatus: 1,
             deleteBatchId: 82, deleteWaybillNos: WaybillSto123, deleteCalcStatus: null));
+    }
 
-        // 新语义：Phase B 限定状态=2 → 成功行(状态1)不被命中，存活
+    // 修复：Phase B 限定状态=2 → 成功行(状态1)不被命中，存活。
+    [Fact]
+    public void PhaseB_status_scoped_delete_spares_success_row()
+    {
         Assert.False(BillingDeleteScope.WouldDeleteRow(
             rowBatchId: 82, rowWaybillNo: "STO123", rowCalcStatus: 1,
             deleteBatchId: 82, deleteWaybillNos: WaybillSto123, deleteCalcStatus: 2));

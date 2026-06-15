@@ -3,8 +3,9 @@ namespace STOTOP.Module.Express.Services.Billing;
 /// <summary>
 /// 计费结果删除范围的纯判定函数——把删除 SQL 的 WHERE 语义在 C# 里等价表达，
 /// 作为删除范围的可执行规格供单测使用（DELETE 依赖临时表，无法脱离真实库直测）。
-/// 与 BillingBulkWriter.DeleteExistingResults / PricingPlugin.DeleteOldBillingResultsAsync
-/// 的 DELETE r 谓词保持一致；改动 SQL 谓词时须同步本函数。
+/// 它描述删除范围的目标语义（按 批次 + 运单号集合 + 可选计算状态 限定），
+/// BillingBulkWriter.DeleteExistingResults 与 PricingPlugin.DeleteOldBillingResultsAsync
+/// 的 DELETE 谓词应与之保持一致；改动任一侧时须同步另一侧。
 /// </summary>
 public static class BillingDeleteScope
 {
