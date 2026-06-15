@@ -233,7 +233,7 @@ public class PricingPlugin : BatchPluginBase, IQualityIssueTypeProvider
                 .ToList();
             if (retryWaybillNos.Any())
             {
-                await DeleteOldBillingResultsAsync(resultTable!, retryWaybillNos);
+                await DeleteOldBillingResultsAsync(resultTable!, batchId, retryWaybillNos);
                 _logger.LogInformation("PricingPlugin: 批次 {BatchId} 清除 {Count} 条旧计费失败记录", batchId, retryWaybillNos.Count);
             }
 
@@ -1061,7 +1061,7 @@ WHERE [F批次ID] = @batchId
     }
 
     /// <summary>删除旧计费结果（重试场景）</summary>
-    private async Task DeleteOldBillingResultsAsync(string resultTable, IReadOnlyList<string> waybillNos)
+    private async Task DeleteOldBillingResultsAsync(string resultTable, long batchId, IReadOnlyList<string> waybillNos)
     {
         var normalizedWaybillNos = waybillNos
             .Where(no => !string.IsNullOrWhiteSpace(no))
@@ -1098,21 +1098,25 @@ WHERE [F批次ID] = @batchId
                 await bulkCopy.WriteToServerAsync(table);
             }
 
+            // 限定本批次：避免删掉其它批次同运单号的历史计费结果（运单号跨批次可重复）。
             var deleteSql = $@"
                 IF OBJECT_ID(N'{costTable}', N'U') IS NOT NULL
                 BEGIN
                     DELETE c FROM [{costTable}] c
                     INNER JOIN [{resultTable}] r ON c.[F计费结果ID] = r.[FID]
-                    INNER JOIN #TmpRetryWaybillNos t ON r.[F运单编号] = t.[FWaybillNo];
+                    INNER JOIN #TmpRetryWaybillNos t ON r.[F运单编号] = t.[FWaybillNo]
+                    WHERE r.[F批次ID] = @batchId;
                 END;
 
                 DELETE r FROM [{resultTable}] r
-                INNER JOIN #TmpRetryWaybillNos t ON r.[F运单编号] = t.[FWaybillNo];
+                INNER JOIN #TmpRetryWaybillNos t ON r.[F运单编号] = t.[FWaybillNo]
+                WHERE r.[F批次ID] = @batchId;
 
                 DROP TABLE #TmpRetryWaybillNos;";
             using (var deleteCmd = new SqlCommand(deleteSql, connection, transaction))
             {
                 deleteCmd.CommandTimeout = 120;
+                deleteCmd.Parameters.AddWithValue("@batchId", batchId);
                 await deleteCmd.ExecuteNonQueryAsync();
             }
 

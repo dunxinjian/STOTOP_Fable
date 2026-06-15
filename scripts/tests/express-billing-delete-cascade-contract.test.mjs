@@ -109,4 +109,17 @@ assert.ok(
   'PricingPlugin retry cleanup must not treat row IDs as batch IDs'
 )
 
+assert.ok(
+  deleteOldBillingResults.includes('long batchId'),
+  'PricingPlugin.DeleteOldBillingResultsAsync must accept the batch id'
+)
+assert.ok(
+  deleteOldBillingResults.includes('[F批次ID] = @batchId'),
+  'PricingPlugin retry cleanup must scope deletes to the current batch'
+)
+assert.ok(
+  /DeleteOldBillingResultsAsync\([^)]*batchId/.test(retrySelection),
+  'PricingPlugin retry cleanup must pass batchId to DeleteOldBillingResultsAsync'
+)
+
 console.log('express billing delete cascade contract passed')
