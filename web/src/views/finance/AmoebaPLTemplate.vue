@@ -1603,6 +1603,12 @@ async function onIndicatorTabDrop() {
     const savedKeys = [...expandedKeys.value]
     await loadTemplateItems()
     expandedKeys.value = [...new Set([...savedKeys, `item-${secId}`])]
+    // 被移走的若正是当前选中项，移入指标分区后它已不在当前 Tab，清空右栏编辑面板
+    if (selectedItem.value?.id === itemId) {
+      selectedItem.value = null
+      selectedKeys.value = []
+      editMode.value = null
+    }
     message.success('已移入指标分区')
   } catch (e: any) {
     message.error(e?.message || '移入指标分区失败')
