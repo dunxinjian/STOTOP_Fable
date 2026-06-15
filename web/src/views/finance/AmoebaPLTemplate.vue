@@ -1242,10 +1242,11 @@ async function loadTemplateItems() {
         expandedKeys.value = groupKeys
       }
     })
-    // 自动选中第一个Tab
+    // 自动选中第一个Tab；无普通Tab时默认激活固定指标Tab——否则其哨兵态下 activeTabId 恒为 null，
+    // 在该Tab点「新增项目」时 isIndicatorTabActive 为假、无法触发懒创建
     if (!activeTabId.value) {
       const firstTab = tabNodes.value[0]
-      if (firstTab) activeTabId.value = firstTab.id
+      activeTabId.value = firstTab ? firstTab.id : indicatorTabNode.value.id
     }
   } catch {
     if (gen !== loadItemsGeneration) return
