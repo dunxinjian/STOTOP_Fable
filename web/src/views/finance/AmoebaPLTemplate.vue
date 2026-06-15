@@ -77,7 +77,13 @@
           <!-- 固定"指标分区"特别 Tab：始终最左，无改名/删除入口 -->
           <a-tab-pane :key="indicatorTabNode.id">
             <template #tab>
-              <span class="dir-tab-label indicator-tab">
+              <span
+                class="dir-tab-label indicator-tab"
+                :class="{ 'indicator-tab--drop-active': indicatorTabDropActive }"
+                @dragover="onIndicatorTabDragOver"
+                @dragleave="onIndicatorTabDragLeave"
+                @drop.prevent="onIndicatorTabDrop"
+              >
                 <BarChartOutlined />
                 <span>{{ indicatorTabNode.name }}</span>
                 <span class="dir-tab-count">({{ indicatorTabNode.childCount }})</span>
@@ -164,6 +170,8 @@
               :allow-drop="handleAllowDrop"
               @select="handleTreeSelect"
               @drop="handleTreeDrop"
+              @dragstart="onTreeDragStart"
+              @dragend="onTreeDragEnd"
               @expand="handleTreeExpand"
             >
               <template #title="nodeData">
@@ -1543,6 +1551,59 @@ function parseItemKey(key: any): number {
   const k = String(key ?? '')
   const id = parseInt(k.replace('item-', ''))
   return Number.isNaN(id) ? 0 : id
+}
+
+// ==================== 拖指标项到「指标Tab」改归属（单向） ====================
+const draggingItemId = ref<number | null>(null)
+const indicatorTabDropActive = ref(false)
+
+function isIndicatorLeaf(item: any): boolean {
+  return !!item && ((item.itemCategory || '') === 'indicator' || getNodeRole(item) === 'indicator')
+}
+
+function onTreeDragStart(info: any) {
+  draggingItemId.value = parseItemKey(info?.node?.key)
+}
+function onTreeDragEnd() {
+  draggingItemId.value = null
+  indicatorTabDropActive.value = false
+}
+
+function onIndicatorTabDragOver(e: DragEvent) {
+  const item = flatItems.value.find(i => i.id === draggingItemId.value)
+  if (item && isIndicatorLeaf(item)) {
+    e.preventDefault() // 允许放置（仅指标项）
+    indicatorTabDropActive.value = true
+  }
+}
+function onIndicatorTabDragLeave() {
+  indicatorTabDropActive.value = false
+}
+
+async function onIndicatorTabDrop() {
+  indicatorTabDropActive.value = false
+  const itemId = draggingItemId.value
+  draggingItemId.value = null
+  if (!itemId || !selectedTemplateId.value) return
+  let item = flatItems.value.find(i => i.id === itemId)
+  if (!item) return
+  if (!isIndicatorLeaf(item)) { message.warning('只有指标项可移入指标分区'); return }
+  try {
+    const secId = await ensureIndicatorSection()
+    if (!secId) return // ensureIndicatorSection 失败时已给提示
+    item = flatItems.value.find(i => i.id === itemId) || item // ensure 可能已重载
+    if ((item.parentId ?? 0) === secId) { message.info('该指标已在指标分区中'); return }
+    await updateAmoebaPLItem(selectedTemplateId.value, itemId, buildItemUpdatePayload(item, {
+      parentId: secId,
+      sort: computeNextSortOrder(secId),
+    }))
+    const savedKeys = [...expandedKeys.value]
+    await loadTemplateItems()
+    expandedKeys.value = [...new Set([...savedKeys, `item-${secId}`])]
+    message.success('已移入指标分区')
+  } catch (e: any) {
+    message.error(e?.message || '移入指标分区失败')
+  }
 }
 
 async function handleTreeDrop(info: any) {
@@ -3225,6 +3286,13 @@ onMounted(() => {
   .anticon {
     margin-right: 2px;
   }
+}
+
+.indicator-tab--drop-active {
+  outline: 2px dashed #52c41a;
+  outline-offset: 2px;
+  border-radius: 4px;
+  background: rgba(82, 196, 26, 0.08);
 }
 
 .dir-tab-count {
