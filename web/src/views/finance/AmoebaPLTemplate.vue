@@ -1576,7 +1576,10 @@ function onIndicatorTabDragOver(e: DragEvent) {
     indicatorTabDropActive.value = true
   }
 }
-function onIndicatorTabDragLeave() {
+function onIndicatorTabDragLeave(e: DragEvent) {
+  // 子元素穿越时浏览器会先触发外层 dragleave，再触发子元素 dragenter；
+  // 仅在光标真正离开整个 span（含子元素）时才清除高亮，避免闪烁
+  if (e.currentTarget && (e.currentTarget as Element).contains(e.relatedTarget as Node)) return
   indicatorTabDropActive.value = false
 }
 
