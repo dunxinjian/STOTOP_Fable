@@ -360,7 +360,6 @@ public class AmoebaPLServiceTests
             FName = name,
             FBalanceDirection = balanceDirection,
             FAccountSetId = 1,
-            FOrgId = 192,
             FCreatedTime = DateTime.UtcNow,
             FUpdatedTime = DateTime.UtcNow,
         };

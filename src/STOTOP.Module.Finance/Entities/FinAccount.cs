@@ -2,7 +2,7 @@ using STOTOP.Core.Models;
 
 namespace STOTOP.Module.Finance.Entities;
 
-public class FinAccount : BaseEntity, IOrgScoped
+public class FinAccount : BaseEntity, IAccountSetScoped
 {
     public string FCode { get; set; } = string.Empty;
     public string FName { get; set; } = string.Empty;
@@ -16,7 +16,6 @@ public class FinAccount : BaseEntity, IOrgScoped
     public string? FUnit { get; set; }
     public int FEnableStatus { get; set; }
     public long FAccountSetId { get; set; }
-    public long FOrgId { get; set; }  // 组织ID
     /// <summary>启用年度</summary>
     public int F启用年度 { get; set; }
     /// <summary>启用期间</summary>

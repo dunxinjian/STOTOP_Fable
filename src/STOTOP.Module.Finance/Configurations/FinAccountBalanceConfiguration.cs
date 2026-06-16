@@ -20,7 +20,6 @@ public class FinAccountBalanceConfiguration : IEntityTypeConfiguration<FinAccoun
         builder.Property(e => e.FEndDebit).HasColumnName("F期末借方").HasColumnType("DECIMAL(18,2)");
         builder.Property(e => e.FEndCredit).HasColumnName("F期末贷方").HasColumnType("DECIMAL(18,2)");
         builder.Property(e => e.FAccountSetId).HasColumnName("F账套ID").HasDefaultValue(0L);
-        builder.Property(e => e.FOrgId).HasColumnName("F组织ID").HasDefaultValue(0L);
         builder.Property(e => e.FCreatedTime).HasColumnName("F创建时间");
         builder.Property(e => e.FUpdatedTime).HasColumnName("F更新时间");
         

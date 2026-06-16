@@ -23,7 +23,6 @@ public class FinAccountConfiguration : IEntityTypeConfiguration<FinAccount>
         builder.Property(e => e.FUnit).HasColumnName("F计算单位").HasMaxLength(20);
         builder.Property(e => e.FEnableStatus).HasColumnName("F启用状态");
         builder.Property(e => e.FAccountSetId).HasColumnName("F账套ID").HasDefaultValue(0L);
-        builder.Property(e => e.FOrgId).HasColumnName("F组织ID").HasDefaultValue(0L);
         builder.Property(e => e.F启用年度).HasColumnName("F启用年度").HasDefaultValue(0);
         builder.Property(e => e.F启用期间).HasColumnName("F启用期间").HasDefaultValue(0);
         builder.Property(e => e.FCreatedTime).HasColumnName("F创建时间");

@@ -215,8 +215,8 @@ public class VoucherExplainServiceTests
     {
         await using var db = TestDbContextFactory.Create(nameof(Explain_matched_row_builds_draft_with_rule_lines_and_match_reason));
         await SeedFlowWithConfigAsync(db, CreateConfig());
-        db.Add(new FinAccount { FID = 1001, FCode = "6601", FName = "销售费用", FOrgId = OrgId });
-        db.Add(new FinAccount { FID = 2001, FCode = "1001", FName = "库存现金", FOrgId = OrgId });
+        db.Add(new FinAccount { FID = 1001, FCode = "6601", FName = "销售费用" });
+        db.Add(new FinAccount { FID = 2001, FCode = "1001", FName = "库存现金" });
         await db.SaveChangesAsync();
 
         var service = new VoucherExplainService(db, NullLogger<VoucherExplainService>.Instance);

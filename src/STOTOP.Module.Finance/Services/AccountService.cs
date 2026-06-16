@@ -185,7 +185,6 @@ public class AccountService : IAccountService
             FUnit = request.Unit,
             FEnableStatus = 1,
             FAccountSetId = accountSetId,
-            FOrgId = GetCurrentOrgId(),
             FCreatedTime = DateTime.Now,
             FUpdatedTime = DateTime.Now
         };
@@ -426,7 +425,6 @@ public class AccountService : IAccountService
                     FPeriodId = 0,
                     FAccountId = item.AccountId,
                     FAccountSetId = request.AccountSetId,
-                    FOrgId = GetCurrentOrgId(),
                     FBeginDebit = item.DebitBalance,
                     FBeginCredit = item.CreditBalance,
                     FCurrentDebit = 0,

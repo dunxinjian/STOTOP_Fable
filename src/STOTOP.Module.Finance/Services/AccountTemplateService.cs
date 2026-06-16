@@ -323,7 +323,6 @@ public class AccountTemplateService : IAccountTemplateService
                     FUnit = item.FUnit,
                     FEnableStatus = 1,
                     FAccountSetId = accountSetId,
-                    FOrgId = currentOrgId,
                     FCreatedTime = DateTime.Now,
                     FUpdatedTime = DateTime.Now
                 };

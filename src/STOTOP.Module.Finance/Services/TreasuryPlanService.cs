@@ -232,10 +232,6 @@ public class TreasuryPlanService : ITreasuryPlanService
             var balanceQuery = _accountBalanceRepository.Query()
                 .Where(b => b.FAccountSetId == accountSetId && b.FAccountId == binding.FCashAccountId!.Value);
 
-            if (binding.FOrgId.HasValue)
-            {
-                balanceQuery = balanceQuery.Where(b => b.FOrgId == binding.FOrgId.Value);
-            }
 
             var latestBalance = await balanceQuery
                 .OrderByDescending(b => b.FPeriodId)

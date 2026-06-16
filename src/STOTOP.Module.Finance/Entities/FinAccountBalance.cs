@@ -2,7 +2,7 @@ using STOTOP.Core.Models;
 
 namespace STOTOP.Module.Finance.Entities;
 
-public class FinAccountBalance : BaseEntity, IOrgScoped
+public class FinAccountBalance : BaseEntity, IAccountSetScoped
 {
     public long FPeriodId { get; set; }
     public long FAccountId { get; set; }
@@ -13,7 +13,6 @@ public class FinAccountBalance : BaseEntity, IOrgScoped
     public decimal FEndDebit { get; set; }
     public decimal FEndCredit { get; set; }
     public long FAccountSetId { get; set; }
-    public long FOrgId { get; set; }  // 组织ID
     public DateTime FCreatedTime { get; set; }
     public DateTime FUpdatedTime { get; set; }
 }
