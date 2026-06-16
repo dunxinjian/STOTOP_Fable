@@ -41,6 +41,7 @@ public static class CardFlowSeeder
             new(19, "补齐历史流程节点稳定键 (2026-06-12)", MigrateV19),
             new(20, "流程节点重复键兜底清理（循环收敛） (2026-06-12)", MigrateV20),
             new(21, "CF卡片流程新增 F是否模板 列 (2026-06-16)", MigrateV21),
+            new(22, "费用报销 FOrgId=0 全局模板种子 (2026-06-16)", MigrateV22),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1417,6 +1418,46 @@ END
         IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = N'CF卡片流程' AND COLUMN_NAME = N'F是否模板')
         ALTER TABLE [CF卡片流程] ADD [F是否模板] bit NOT NULL CONSTRAINT [DF_CF卡片流程_F是否模板] DEFAULT 0;
+        ");
+    }
+
+    private static void MigrateV22(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // 1) 流程定义（FOrgId=0，F是否模板=1，published）
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2262)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID],[F乐观锁],[F创建人ID],[F创建时间],[F可发起角色JSON],[F描述],[F更新时间],[F标题模板],[F流程名称],[F流程组ID],[F流程编码],[F状态],[F组织ID],[F编号模板],[F触发配置JSON],[F账套ID],[F匹配规则],[F是否模板])
+            VALUES (2262, NULL, 0, GETDATE(), NULL, N'费用报销审批模板（部门负责人→财务）', GETDATE(), N'{发起人}-费用报销-{金额}元', N'费用报销（模板）', NULL, N'FYBS_TEMPLATE', N'published', 0, N'FYBSTPL-{yyyy}{MM}{dd}-{seq}', NULL, NULL, NULL, 1);
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // 2) 流程版本（current、published，复用 FYBS 扁平 schema）
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2263)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID],[F创建人ID],[F创建时间],[F卡片SchemaJSON],[F发布时间],[F明细SchemaJSON],[F是否当前版本],[F流程定义ID],[F流程设置JSON],[F版本号],[F状态])
+            VALUES (2263, 0, GETDATE(), N'[{""key"":""applicant"",""label"":""申请人"",""type"":""user"",""required"":true},{""key"":""department"",""label"":""部门"",""type"":""department"",""required"":true},{""key"":""amount"",""label"":""报销金额"",""type"":""amount"",""required"":true,""source"":""detailSum""},{""key"":""category"",""label"":""费用类别"",""type"":""select"",""required"":true,""options"":[""差旅费"",""办公费"",""招待费"",""交通费"",""通讯费"",""其他""]},{""key"":""description"",""label"":""报销说明"",""type"":""textarea"",""required"":true},{""key"":""attachments"",""label"":""附件"",""type"":""attachment"",""required"":false}]', GETDATE(), N'[{""key"":""expenseDate"",""label"":""费用日期"",""type"":""date"",""required"":true},{""key"":""expenseType"",""label"":""费用类型"",""type"":""select"",""required"":true,""options"":[""差旅费"",""办公费"",""招待费"",""交通费"",""通讯费"",""住宿费"",""餐费"",""其他""]},{""key"":""description"",""label"":""费用说明"",""type"":""text"",""required"":true},{""key"":""amount"",""label"":""金额"",""type"":""amount"",""required"":true},{""key"":""invoiceNo"",""label"":""发票号"",""type"":""text"",""required"":false}]', 1, 2262, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // 3) 两个人工节点（线性，靠排序号推进；fixedUsers→管理员占位）
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5031)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID],[F流程版本ID],[F节点键],[F排序号],[F节点名称],[F类型],[F处理粒度],[F审批模式],[F插件注册ID],[F插件规则ID],[F处理人策略],[F处理人配置JSON])
+            VALUES (5031, 2263, N'tpl_expense_dept', 1, N'部门负责人审批', N'human', N'card', N'single', NULL, NULL, N'fixedUsers', N'{""users"":[{""userId"":1,""userName"":""管理员""}],""fallback"":{""mode"":""fixedUsers"",""users"":[{""userId"":1,""userName"":""管理员""}]}}');
+            INSERT INTO [CF流程节点] ([FID],[F流程版本ID],[F节点键],[F排序号],[F节点名称],[F类型],[F处理粒度],[F审批模式],[F插件注册ID],[F插件规则ID],[F处理人策略],[F处理人配置JSON])
+            VALUES (5032, 2263, N'tpl_expense_finance', 2, N'财务审批', N'human', N'card', N'single', NULL, NULL, N'fixedUsers', N'{""users"":[{""userId"":1,""userName"":""管理员""}],""fallback"":{""mode"":""fixedUsers"",""users"":[{""userId"":1,""userName"":""管理员""}]}}');
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
         ");
     }
 }
