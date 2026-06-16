@@ -119,6 +119,9 @@ public class EntryLineV2
     // 辅助核算
     /// <summary>辅助核算配置列表（支持多类型）</summary>
     public List<AuxiliaryConfigV2>? AuxiliaryConfigs { get; set; }
+    /// <summary>[方案B 源打标] 科目契约(FinAccount.FAuxiliary)声明、但 AuxiliaryConfigs 未覆盖的维度按此补齐
+    /// （business_direction 走 fixed=OUT/IN/CMB；project/department 等按需）。为空则不补齐、不改现有行为。</summary>
+    public List<AuxiliaryConfigV2>? DefaultAuxiliaryConfigs { get; set; }
     /// <summary>[E7] 分录行在凭证中的显示顺序（借方在前贷方在后的原则下，同方向按此排序）</summary>
     public int DisplayOrder { get; set; }
     /// <summary>[E7] 启用状态：1=启用, 0=禁用（禁用后不参与凭证生成，但保留配置供后续恢复）</summary>

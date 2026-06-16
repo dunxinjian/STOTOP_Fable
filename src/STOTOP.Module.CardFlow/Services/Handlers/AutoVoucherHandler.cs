@@ -9,6 +9,7 @@ using STOTOP.Infrastructure.Data;
 using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
+using STOTOP.Module.Finance.Services.Auxiliary;
 using STOTOP.Module.CardFlow.Models;
 using STOTOP.Module.Finance.Services.Interfaces;
 using STOTOP.Module.CardFlow.AutoPlugin;
@@ -154,6 +155,13 @@ public partial class AutoVoucherHandler : IClassificationHandler
             .ToListAsync();
         auxResolver.Initialize(auxItems);
 
+        // 6b. 预加载本账套科目契约(FID→F辅助核算)，供分录按科目声明维度补齐辅助核算(方案B 源打标 C)
+        var accountAuxMap = await _dbContext.Set<FinAccount>()
+            .IgnoreQueryFilters() // 科目为账套级共享，绕过 IOrgScoped 历史过滤(若存在)，按账套取
+            .Where(a => a.FAccountSetId == accountSetId)
+            .Select(a => new { a.FID, a.FAuxiliary })
+            .ToDictionaryAsync(a => a.FID, a => a.FAuxiliary);
+
         // 7. 对每个 GroupBy 组处理
         int successGroups = 0, failedGroups = 0, skippedRows = 0;
         int totalUnmatched = 0;
@@ -247,7 +255,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
                                 {
                                     var singleRowList = new List<IDictionary<string, object>> { row };
                                     var assigned = engine.AssignRowsToEntryLines(singleRowList, ruleGroup);
-                                    BuildEntryLinesV2(assigned, ruleGroup, row, auxResolver, voucherEntries, warnings);
+                                    BuildEntryLinesV2(assigned, ruleGroup, row, auxResolver, voucherEntries, warnings, accountAuxMap);
                                 }
                             }
                             else // SUM
@@ -256,7 +264,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
                                 var firstRow = !string.IsNullOrEmpty(ruleGroup.SumFirstRowOrderBy)
                                     ? dateRows.OrderBy(r => r.TryGetValue(ruleGroup.SumFirstRowOrderBy, out var v) ? v?.ToString() ?? "" : "").First()
                                     : dateRows.First();
-                                BuildEntryLinesV2(assigned, ruleGroup, firstRow, auxResolver, voucherEntries, warnings);
+                                BuildEntryLinesV2(assigned, ruleGroup, firstRow, auxResolver, voucherEntries, warnings, accountAuxMap);
                             }
 
                             // [H3] 借贷平衡校验
@@ -350,7 +358,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
                             {
                                 var singleRowList = new List<IDictionary<string, object>> { row };
                                 var assigned = engine.AssignRowsToEntryLines(singleRowList, ruleGroup);
-                                BuildEntryLinesV2(assigned, ruleGroup, row, auxResolver, voucherEntries, warnings);
+                                BuildEntryLinesV2(assigned, ruleGroup, row, auxResolver, voucherEntries, warnings, accountAuxMap);
                             }
                         }
                         else // SUM
@@ -359,7 +367,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
                             var firstRow = !string.IsNullOrEmpty(ruleGroup.SumFirstRowOrderBy)
                                 ? matchedRows.OrderBy(r => r.TryGetValue(ruleGroup.SumFirstRowOrderBy, out var v) ? v?.ToString() ?? "" : "").First()
                                 : matchedRows.First();
-                            BuildEntryLinesV2(assigned, ruleGroup, firstRow, auxResolver, voucherEntries, warnings);
+                            BuildEntryLinesV2(assigned, ruleGroup, firstRow, auxResolver, voucherEntries, warnings, accountAuxMap);
                         }
                     }
 
@@ -521,7 +529,8 @@ public partial class AutoVoucherHandler : IClassificationHandler
         IDictionary<string, object> firstRow,
         AutoVoucherAuxiliaryResolver auxResolver,
         List<V2VoucherEntryDto> entries,
-        List<string> warnings)
+        List<string> warnings,
+        Dictionary<long, string?> accountAuxMap)
     {
         foreach (var line in ruleGroup.Lines.Where(l => l.Status == 1).OrderBy(l => l.DisplayOrder))
         {
@@ -555,6 +564,21 @@ public partial class AutoVoucherHandler : IClassificationHandler
 
             // 辅助核算
             var auxResults = auxResolver.ResolveAuxiliary(firstRow, line.AuxiliaryConfigs);
+            // 方案B 源打标(C)：按科目契约补齐缺失维度——科目声明了辅助核算维度但本行未覆盖的,
+            // 用 line.DefaultAuxiliaryConfigs 再解析一轮补上(business_direction=OUT/IN/CMB、project、department 等)。
+            // 无 DefaultAuxiliaryConfigs 配置时整段不生效，不改变现有自动凭证行为(additive)。
+            if (accountId.HasValue && line.DefaultAuxiliaryConfigs is { Count: > 0 }
+                && accountAuxMap.TryGetValue(accountId.Value, out var fAux))
+            {
+                var present = auxResults.Select(a => a.Type).ToHashSet();
+                var missing = AccountAuxContract.GetMissingAuxTypes(fAux, present);
+                if (missing.Count > 0)
+                {
+                    var fillConfigs = line.DefaultAuxiliaryConfigs.Where(c => missing.Contains(c.AuxType)).ToList();
+                    if (fillConfigs.Count > 0)
+                        auxResults.AddRange(auxResolver.ResolveAuxiliary(firstRow, fillConfigs));
+                }
+            }
             string? auxiliaryJson = auxResults.Count > 0 ? JsonSerializer.Serialize(auxResults) : null;
 
             entries.Add(new V2VoucherEntryDto
