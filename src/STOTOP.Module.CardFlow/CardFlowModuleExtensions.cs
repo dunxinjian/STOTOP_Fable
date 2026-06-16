@@ -85,7 +85,6 @@ public static class CardFlowModuleExtensions
         services.AddScoped<IBatchTriggerService, BatchTriggerService>();
         services.AddScoped<IBatchLifecycleService, BatchLifecycleService>();
         services.AddHostedService<BatchJobProcessorService>();
-        services.AddHostedService<BatchRecoveryHostedService>();
 
         // 推送基础设施（Task #10）
         services.AddScoped<IBatchNotifier, BatchNotifier>();
