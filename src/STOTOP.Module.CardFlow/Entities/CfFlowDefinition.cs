@@ -22,6 +22,8 @@ public class CfFlowDefinition : BaseEntity, IOrgScoped
     /// 格式: { "fullColumnIdentifier": "col1,col2,...", "columnIdentifier": "col1,col2", "fileNamePattern": "*交易明细*" }
     /// </summary>
     public string? FMatchPattern { get; set; }
+    /// <summary>是否为可克隆的流程模板（"从模板创建"列表来源）</summary>
+    public bool FIsTemplate { get; set; } = false;
     public long FCreatorId { get; set; }
     public DateTime FCreatedTime { get; set; }
     public DateTime? FUpdatedTime { get; set; }

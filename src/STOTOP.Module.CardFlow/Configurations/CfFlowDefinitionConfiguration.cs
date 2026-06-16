@@ -23,6 +23,7 @@ public class CfFlowDefinitionConfiguration : IEntityTypeConfiguration<CfFlowDefi
         builder.Property(e => e.FAccountSetId).HasColumnName("F账套ID");
         builder.Property(e => e.FTriggerConfigJson).HasColumnName("F触发配置JSON");
         builder.Property(e => e.FMatchPattern).HasColumnName("F匹配规则").HasColumnType("nvarchar(max)");
+        builder.Property(e => e.FIsTemplate).HasColumnName("F是否模板").HasDefaultValue(false);
         builder.Property(e => e.FCreatorId).HasColumnName("F创建人ID");
         builder.Property(e => e.FCreatedTime).HasColumnName("F创建时间");
         builder.Property(e => e.FUpdatedTime).HasColumnName("F更新时间");

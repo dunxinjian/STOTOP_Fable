@@ -40,6 +40,7 @@ public static class CardFlowSeeder
             new(18, "新增导入计算验证工作台权限 (2026-06-10)", MigrateV18),
             new(19, "补齐历史流程节点稳定键 (2026-06-12)", MigrateV19),
             new(20, "流程节点重复键兜底清理（循环收敛） (2026-06-12)", MigrateV20),
+            new(21, "CF卡片流程新增 F是否模板 列 (2026-06-16)", MigrateV21),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1406,5 +1407,16 @@ BEGIN
      WHERE policy.[F触发节点键] = fix.OldStageKey;
 END
 ");
+    }
+
+    private static void MigrateV21(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = N'CF卡片流程' AND COLUMN_NAME = N'F是否模板')
+        ALTER TABLE [CF卡片流程] ADD [F是否模板] bit NOT NULL CONSTRAINT [DF_CF卡片流程_F是否模板] DEFAULT 0;
+        ");
     }
 }
