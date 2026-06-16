@@ -116,13 +116,8 @@ public static class CardFlowModuleExtensions
         services.AddMemoryCache();
         services.AddScoped<SecureFileUploadValidator>();
 
-        // 导入管线服务与阶段注册
+        // 导入服务（仅保留 RetryBatchAsync）
         services.AddScoped<IImportService, ImportService>();
-        services.AddScoped<SecurityCheckStage>();
-        services.AddScoped<StagingTableCheckStage>();
-        services.AddScoped<DuplicateDetectionStage>();
-        services.AddScoped<StagingImportStage>();
-        services.AddScoped<QualityAnalysisStage>();
 
 
         // Parser 工厂和实现
