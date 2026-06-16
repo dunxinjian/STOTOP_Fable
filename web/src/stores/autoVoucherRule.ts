@@ -53,6 +53,7 @@ export interface EntryLine {
   conditionField?: string | null
   conditionValues: string[]
   auxiliaryConfigs: AuxiliaryConfig[]
+  defaultAuxiliaryConfigs?: AuxiliaryConfig[] // [方案B] 科目契约声明、行内未覆盖的维度的补齐配置(透传后端 EntryLineV2.DefaultAuxiliaryConfigs)
   status: number // 1=启用 0=禁用
   remark?: string
 }
@@ -319,6 +320,13 @@ export const useAutoVoucherRuleStore = defineStore('autoVoucherRule', () => {
                 field: a.sourceField || a.field || '',
                 matchMode: a.matchBy || a.matchMode || undefined,
               })),
+              defaultAuxiliaryConfigs: (l.defaultAuxiliaryConfigs || []).map((a: any) => ({
+                name: auxCodeToName(a.auxType || a.name || ''),
+                type: a.sourceType === 'dynamic' ? 'field' : (a.sourceType === 'fixed' ? 'fixed' : (a.type || 'fixed')),
+                value: a.fixedValue || a.value || '',
+                field: a.sourceField || a.field || '',
+                matchMode: a.matchBy || a.matchMode || undefined,
+              })),
               status: l.status ?? 1,
               remark: l.remark ?? '',
             })),
@@ -399,6 +407,15 @@ export const useAutoVoucherRuleStore = defineStore('autoVoucherRule', () => {
           conditionValues: l.conditionValues?.length ? l.conditionValues : [],
           auxiliaryConfigs: l.auxiliaryConfigs?.length
             ? l.auxiliaryConfigs.map(a => ({
+                auxType: auxTypeToCode(a.name),
+                sourceType: a.type === 'field' ? 'dynamic' : 'fixed',
+                fixedValue: a.type === 'fixed' ? a.value : undefined,
+                sourceField: a.type === 'field' ? a.field : undefined,
+                matchBy: a.matchMode || undefined,
+              }))
+            : [],
+          defaultAuxiliaryConfigs: l.defaultAuxiliaryConfigs?.length
+            ? l.defaultAuxiliaryConfigs.map(a => ({
                 auxType: auxTypeToCode(a.name),
                 sourceType: a.type === 'field' ? 'dynamic' : 'fixed',
                 fixedValue: a.type === 'fixed' ? a.value : undefined,
@@ -553,6 +570,7 @@ export const useAutoVoucherRuleStore = defineStore('autoVoucherRule', () => {
             conditionField: l.conditionField,
             conditionValues: l.conditionValues || [],
             auxiliaryConfigs: l.auxiliaryConfigs || [],
+            defaultAuxiliaryConfigs: l.defaultAuxiliaryConfigs || [],
             status: l.status ?? 1,
           })),
         }
