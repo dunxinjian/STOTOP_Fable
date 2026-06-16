@@ -71,7 +71,9 @@ public class ReportService : IReportService
         }
 
         var balances = await query.ToListAsync();
-        var accounts = await _accountRepository.Query().ToListAsync();
+        var accounts = await _accountRepository.Query()
+            .Where(a => a.FAccountSetId == accountSetId)
+            .ToListAsync();
 
         return balances.Select(b =>
         {
