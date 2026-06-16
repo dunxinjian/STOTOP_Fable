@@ -6,6 +6,7 @@ using NPOI.XSSF.UserModel;
 using NPOI.XSSF.UserModel.Extensions;
 using STOTOP.Core.Interfaces;
 using STOTOP.Infrastructure.Data;
+using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.System.Entities;
@@ -1173,6 +1174,11 @@ public class AmoebaPLService
                 "express_brand" => dp.BrandCode ?? dp.AuxValues?.GetValueOrDefault("express_brand"),
                 "business_unit" => dp.BusinessUnitId?.ToString() ?? dp.AuxValues?.GetValueOrDefault("business_unit"),
                 "business_object" => dp.AuxValues?.GetValueOrDefault("business_object"),
+                // 方案B 源打标(B1)：方向/项目/部门显式化。business_direction 优先读 AuxValues(OUT/IN/CMB)，
+                // 回落 dp.Direction(批次3 后 Direction 统一为 OUT/IN/CMB，此 fallback 退役)。
+                "business_direction" => dp.AuxValues?.GetValueOrDefault("business_direction") ?? dp.Direction,
+                "project" => dp.AuxValues?.GetValueOrDefault("project"),
+                "department" => dp.AuxValues?.GetValueOrDefault("department"),
                 _ => dp.AuxValues?.GetValueOrDefault(f.AuxType)
             };
 
@@ -1830,6 +1836,9 @@ public class AmoebaPLService
             var siteCode = r.SiteCode?.Trim();
             var businessObjectCode = r.BusinessObjectCode?.Trim();
             var auxValues = new Dictionary<string, string>();
+            // 方案B 源打标(A1)：出港运单计费结果天然出港，无条件写 business_direction=OUT，
+            // 供损益项 business_direction filter 命中；DataPoint.Direction 维持中文不动(批次3 再统一为 OUT/IN/CMB)。
+            auxValues[AuxTypes.BusinessDirection] = BusinessDirection.Outbound;
             if (!string.IsNullOrEmpty(siteCode))
                 auxValues["outlet"] = siteCode;
             if (!string.IsNullOrEmpty(businessObjectCode))
@@ -2069,7 +2078,9 @@ public class AmoebaPLService
                 AccountCode = e.FAccountCode,
                 Amount = e.FAmount,
                 Category = "",
-                Direction = null,
+                // 方案B 源打标(F1)：估值带的 business_direction(OUT/IN/CMB)回填 Direction，与 voucher 同口径，
+                // 使 business_direction filter 经 AuxiliaryMatches 命中；无则 null。
+                Direction = auxValues.GetValueOrDefault("business_direction"),
                 AuxValues = auxValues.Count > 0 ? auxValues : null,
                 SiteCode = ExtractAuxCode(auxValues, "outlet"),
                 BrandCode = ExtractAuxCode(auxValues, "express_brand"),
