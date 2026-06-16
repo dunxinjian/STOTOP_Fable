@@ -34,7 +34,10 @@ public class FinAmoebaPLItemConfiguration : IEntityTypeConfiguration<FinAmoebaPL
         builder.Property(e => e.F值来源).HasColumnName("F值来源").HasMaxLength(20);
         builder.Property(e => e.F系统数据源).HasColumnName("F系统数据源").HasMaxLength(20);
         builder.Property(e => e.F指标方向范围).HasColumnName("F指标方向范围").HasMaxLength(200);
-        
+        builder.Property(e => e.F小数位数).HasColumnName("F小数位数");
+        builder.Property(e => e.F分摊方式).HasColumnName("F分摊方式").HasMaxLength(20);
+        builder.Property(e => e.F分摊基数).HasColumnName("F分摊基数").HasMaxLength(20);
+
         builder.HasIndex(e => e.FTemplateId).HasDatabaseName("IX_FIN阿米巴损益项_模板ID");
         builder.HasIndex(e => e.FParentId).HasDatabaseName("IX_FIN阿米巴损益项_父级ID");
         
