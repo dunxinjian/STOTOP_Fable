@@ -43,7 +43,6 @@ public class AccountService : IAccountService
             return new List<AccountTreeDto>();
 
         var query = _accountRepository.Query()
-            .IgnoreQueryFilters() // FIN科目 FOrgId=0（账套级共享），绕过 IOrgScoped 全局过滤；账套已通过用户授权
             .Where(a => a.FAccountSetId == accountSetId);
         
         if (!string.IsNullOrEmpty(category))
@@ -97,12 +96,10 @@ public class AccountService : IAccountService
     }
 
     /// <summary>
-    /// 按主键加载科目。科目 FOrgId=0（账套级共享），需绕过 IOrgScoped 组织过滤，
-    /// 否则带组织上下文时 FindAsync 会因 FOrgId 不匹配而查不到，误报"科目不存在"。
+    /// 按主键加载科目（账套级共享，不受组织过滤）。
     /// </summary>
     private Task<FinAccount?> LoadAccountAsync(long id)
         => _accountRepository.Query()
-            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(a => a.FID == id);
 
     public async Task<AccountDto> CreateAsync(CreateAccountRequest request, long accountSetId = 0)
@@ -124,7 +121,6 @@ public class AccountService : IAccountService
         }
 
         var existing = await _accountRepository.Query()
-            .IgnoreQueryFilters() // 科目账套级共享，查重需跨组织绕过过滤，避免重复编码
             .FirstOrDefaultAsync(a => a.FCode == code && a.FAccountSetId == accountSetId);
 
         if (existing != null)
@@ -255,7 +251,6 @@ public class AccountService : IAccountService
 
         // 检查是否有子科目
         var hasChildren = await _accountRepository.Query()
-            .IgnoreQueryFilters() // 科目账套级共享，绕过组织过滤，避免漏检子科目误删父级
             .AnyAsync(a => a.FParentId == id);
         
         if (hasChildren)
@@ -265,7 +260,6 @@ public class AccountService : IAccountService
 
         // 清理该科目的余额记录（期初余额等），避免留下孤儿行
         var balanceRows = await _balanceRepository.Query()
-            .IgnoreQueryFilters()
             .Where(b => b.FAccountId == id)
             .ToListAsync();
         foreach (var row in balanceRows)
@@ -279,7 +273,6 @@ public class AccountService : IAccountService
         if (account.FParentId > 0)
         {
             var siblings = await _accountRepository.Query()
-                .IgnoreQueryFilters() // 科目账套级共享，绕过组织过滤
                 .Where(a => a.FParentId == account.FParentId)
                 .ToListAsync();
             
@@ -316,15 +309,12 @@ public class AccountService : IAccountService
 
         // 查询该账套所有科目（含非末级，用于显示层级结构）
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // 科目账套级共享，绕过组织过滤
             .Where(a => a.FAccountSetId == accountSetId && a.FEnableStatus == 1)
             .OrderBy(a => a.FCode)
             .ToListAsync();
 
-        // 查询期间0（期初余额专用期间）的余额记录。
-        // 余额行的 FOrgId 是录入者组织，账套可能跨组织使用，需绕过组织过滤
+        // 查询期间0（期初余额专用期间）的余额记录
         var balances = await _balanceRepository.Query()
-            .IgnoreQueryFilters()
             .Where(b => b.FAccountSetId == accountSetId && b.FPeriodId == 0)
             .ToListAsync();
 
@@ -382,7 +372,6 @@ public class AccountService : IAccountService
 
         // 校验科目归属与末级状态，不信任客户端提交的数据
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters()
             .Where(a => a.FAccountSetId == request.AccountSetId)
             .Select(a => new { a.FID, a.FParentId })
             .ToListAsync();
@@ -403,9 +392,8 @@ public class AccountService : IAccountService
 
         foreach (var item in request.Items)
         {
-            // 期初余额使用 PeriodId=0 存储；余额行 FOrgId 是录入者组织，需绕过组织过滤
+            // 期初余额使用 PeriodId=0 存储
             var existing = await _balanceRepository.Query()
-                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(b => b.FPeriodId == 0 && b.FAccountId == item.AccountId && b.FAccountSetId == request.AccountSetId);
 
             if (existing != null)
@@ -443,7 +431,6 @@ public class AccountService : IAccountService
     public async Task<List<AccountDto>> GetByAuxTypeAsync(string auxType, long accountSetId)
     {
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // 科目账套级共享，绕过组织过滤
             .Where(a => a.FAccountSetId == accountSetId
                 && a.FAuxiliary != null
                 && a.FAuxiliary.Contains(auxType)
@@ -455,9 +442,8 @@ public class AccountService : IAccountService
 
     public async Task<bool> UpdateAccountAuxiliaryAsync(UpdateAccountAuxiliaryRequest request)
     {
-        // 获取该账套下所有启用科目（账套级共享，绕过组织过滤，否则跨组织时漏改）
+        // 获取该账套下所有启用科目
         var allAccounts = await _accountRepository.Query()
-            .IgnoreQueryFilters()
             .Where(a => a.FAccountSetId == request.AccountSetId && a.FEnableStatus == 1)
             .ToListAsync();
 

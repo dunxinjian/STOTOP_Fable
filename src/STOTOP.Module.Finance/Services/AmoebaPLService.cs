@@ -1873,7 +1873,6 @@ public class AmoebaPLService
 
         // 获取所有科目
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // FIN科目 F组织ID=0（账套级共享），绕过 IOrgScoped 全局过滤；账套已通过用户授权
             .Where(a => a.FAccountSetId == accountSetId)
             .ToListAsync();
         var accountDict = accounts.ToDictionary(a => a.FID, a => a);
@@ -2700,7 +2699,6 @@ public class AmoebaPLService
                             }).ToListAsync();
 
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // FIN科目 F组织ID=0（账套级共享），绕过 IOrgScoped 全局过滤；账套已通过用户授权
             .Where(a => a.FAccountSetId == accountSetId)
             .ToListAsync();
         var accountDict = accounts.ToDictionary(a => a.FID, a => a);
@@ -2839,7 +2837,6 @@ public class AmoebaPLService
 
         // 5. 加载科目
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // FIN科目 F组织ID=0（账套级共享），绕过 IOrgScoped 全局过滤；账套已通过用户授权
             .Where(a => a.FAccountSetId == accountSetId)
             .ToListAsync();
         var accountDict = accounts.ToDictionary(a => a.FID, a => a);
@@ -3213,7 +3210,6 @@ public class AmoebaPLService
                             }).ToListAsync();
 
         var accounts = await _accountRepository.Query()
-            .IgnoreQueryFilters() // FIN科目 F组织ID=0（账套级共享），绕过 IOrgScoped 全局过滤；账套已通过用户授权
             .Where(a => a.FAccountSetId == accountSetId)
             .ToListAsync();
         var accountDict = accounts.ToDictionary(a => a.FID, a => a);
@@ -3699,7 +3695,6 @@ public class AmoebaPLService
         if (uncoveredCodes.Count > 0)
         {
             var accounts = await _accountRepository.Query()
-                .IgnoreQueryFilters() // FIN科目 F组织ID=0（账套级共享），绕过 IOrgScoped 全局过滤
                 .Where(a => a.FAccountSetId == accountSetId)
                 .ToListAsync();
             var accountByCode = accounts.ToDictionary(a => a.FCode, a => a);
