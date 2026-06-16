@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using STOTOP.Infrastructure.Data;
 using STOTOP.Module.CardFlow.Entities;
+using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.Finance.Services;
 
@@ -437,7 +438,10 @@ public partial class VoucherMigrationPlugin : BatchPluginBase
 
                 try
                 {
-                    var targetCode = _mappingService.ResolveAuxiliary(colDef.Type, sourceValue, auxMappings, defaultStrategy);
+                    // 方案B 源打标(D)：业务方向直接归一为 OUT/IN/CMB，不走映射表
+                    var targetCode = colDef.Type == AuxTypes.BusinessDirection
+                        ? BusinessDirection.Normalize(sourceValue)
+                        : _mappingService.ResolveAuxiliary(colDef.Type, sourceValue, auxMappings, defaultStrategy);
                     if (targetCode != null)
                     {
                         auxList.Add(new { type = colDef.Type, code = targetCode, name = sourceValue });
@@ -471,7 +475,10 @@ public partial class VoucherMigrationPlugin : BatchPluginBase
 
                 try
                 {
-                    var targetCode = _mappingService.ResolveAuxiliary(auxType, sourceCode, auxMappings, defaultStrategy);
+                    // 方案B 源打标(D)：业务方向直接归一为 OUT/IN/CMB，不走映射表
+                    var targetCode = auxType == AuxTypes.BusinessDirection
+                        ? BusinessDirection.Normalize(sourceCode)
+                        : _mappingService.ResolveAuxiliary(auxType, sourceCode, auxMappings, defaultStrategy);
                     if (targetCode != null)
                     {
                         auxList.Add(new { type = auxType, code = targetCode, name = sourceCode });
