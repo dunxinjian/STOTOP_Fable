@@ -14,7 +14,6 @@ using STOTOP.Module.CardFlow.Services.Download;
 using STOTOP.Module.CardFlow.Services.FileManager;
 using STOTOP.Module.CardFlow.Services.Handlers;
 using STOTOP.Module.CardFlow.Services.Import;
-using STOTOP.Module.CardFlow.Services.Import.Parsers;
 using STOTOP.Module.CardFlow.Services.Import.TransformEngine;
 using STOTOP.Module.CardFlow.Services.Interfaces;
 using STOTOP.Module.CardFlow.Services.Quality;
@@ -119,10 +118,6 @@ public static class CardFlowModuleExtensions
         // 导入服务（仅保留 RetryBatchAsync）
         services.AddScoped<IImportService, ImportService>();
 
-
-        // Parser 工厂和实现
-        services.AddScoped<SourceParserFactory>();
-        services.AddScoped<DynamicSourceParser>();
 
         // 文件管理服务
         services.AddScoped<FileManagerService>();
