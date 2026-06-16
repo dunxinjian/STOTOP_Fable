@@ -781,32 +781,13 @@ export const layoutRoute: RouteRecordRaw = {
       component: () => import('@/views/cardflow/file-manager/FileManager.vue'),
       meta: { title: '文件管理', menuCode: 'cardflow:file-manager', module: 'cardflow' },
     },
-    // ===== CardFlow 自动化下载 =====
-    {
-      path: 'cardflow/automation',
-      name: 'CardFlowAutomation',
-      component: () => import('@/views/cardflow/automation/AutomationList.vue'),
-      meta: { title: '自动化下载', menuCode: 'cardflow:automation', module: 'cardflow' },
-    },
-    {
-      path: 'cardflow/automation/designer/:id?',
-      name: 'CardFlowFlowDesigner',
-      component: () => import('@/views/cardflow/automation/FlowDesigner.vue'),
-      meta: { title: '流程设计', hidden: true, module: 'cardflow' },
-    },
+    // V2 冻结（2026-06 简化）：编排中心 / 下载自动化 / 质量规则 路由暂下线，组件保留于磁盘，详见 docs/superpowers/specs/2026-06-16-cardflow-简化瘦身-design.md
     // ===== CardFlow 暂存数据 =====
     {
       path: 'cardflow/staging',
       name: 'CardFlowStaging',
       component: () => import('@/views/cardflow/staging/StagingBrowser.vue'),
       meta: { title: '暂存数据', menuCode: 'cardflow:staging', module: 'cardflow' },
-    },
-    // ===== CardFlow 质量规则 =====
-    {
-      path: 'cardflow/quality-rules',
-      name: 'CardFlowQualityRules',
-      component: () => import('@/views/cardflow/quality/QualityRuleEditor.vue'),
-      meta: { title: '质量规则', menuCode: 'cardflow:quality', module: 'cardflow' },
     },
     // ===== 卡片流转编辑页 =====
     {
@@ -869,31 +850,6 @@ export const layoutRoute: RouteRecordRaw = {
       name: 'CardFlowLogs',
       component: () => import('@/views/cardflow/AuditLogPage.vue'),
       meta: { title: '操作日志', permission: 'cardflow:admin', module: 'cardflow' },
-    },
-    // ===== 卡片流程编排中心 =====
-    {
-      path: 'cardflow/orchestrations',
-      name: 'OrchestrationList',
-      component: () => import('@/views/cardflow/OrchestrationListPage.vue'),
-      meta: { title: '卡片流程编排管理', module: 'cardflow' },
-    },
-    {
-      path: 'cardflow/orchestrations/:id',
-      name: 'OrchestrationDetail',
-      component: () => import('@/views/cardflow/OrchestrationDetailPage.vue'),
-      meta: { title: '编排模板详情', hidden: true, module: 'cardflow' },
-    },
-    {
-      path: 'cardflow/orchestration-instances',
-      name: 'OrchestrationInstanceList',
-      component: () => import('@/views/cardflow/OrchestrationInstanceListPage.vue'),
-      meta: { title: '编排实例监控', module: 'cardflow' },
-    },
-    {
-      path: 'cardflow/orchestration-instances/:id',
-      name: 'OrchestrationInstanceDetail',
-      component: () => import('@/views/cardflow/OrchestrationInstanceDetailPage.vue'),
-      meta: { title: '编排实例详情', hidden: true, module: 'cardflow' },
     },
     // ===== 数据导入 =====
     {
