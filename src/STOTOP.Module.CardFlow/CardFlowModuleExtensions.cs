@@ -183,9 +183,6 @@ public static class CardFlowModuleExtensions
         services.AddScoped<ValidationAttributionClassifier>();
         services.AddScoped<VoucherExplainService>();
 
-        // 调度路由
-        services.AddScoped<DispatchRouter>();
-
         // 异常派发服务
         services.AddScoped<IDispatchService, DispatchService>();
 
