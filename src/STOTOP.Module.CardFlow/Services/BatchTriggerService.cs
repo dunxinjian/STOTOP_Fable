@@ -55,16 +55,6 @@ public interface IBatchTriggerService
     Task<List<MatchResult>> MatchFlowDefinitionsAsync(IReadOnlyList<string> fileColumns, string? fileName, long orgId);
 
     /// <summary>
-    /// 根据文件列头匹配流程定义（两轮策略：精确匹配 → 包含匹配）
-    /// </summary>
-    /// <param name="fileColumns">文件列头名称集合</param>
-    /// <param name="fileName">文件名（可选，用于文件名模式匹配）</param>
-    /// <param name="orgId">组织ID</param>
-    /// <returns>匹配到的 FlowDefinitionId，null 表示未匹配</returns>
-    [Obsolete("请使用 MatchFlowDefinitionsAsync（支持多流程匹配）")]
-    Task<long?> MatchFlowDefinitionAsync(IReadOnlyList<string> fileColumns, string? fileName, long orgId);
-
-    /// <summary>
     /// 获取可选流程定义列表（匹配失败时供前端选择）
     /// </summary>
     Task<List<FlowDefinitionCandidateDto>> GetFlowDefinitionCandidatesAsync(long orgId);
@@ -603,20 +593,6 @@ public class BatchTriggerService : IBatchTriggerService
 
         _logger.LogDebug("未找到匹配的流程定义，组织={OrgId}", orgId);
         return [];
-    }
-
-    /// <summary>
-    /// 根据文件列头匹配流程定义（两轮策略：精确匹配 → 包含匹配）
-    /// </summary>
-    /// <param name="fileColumns">文件列头名称集合</param>
-    /// <param name="fileName">文件名（可选，用于文件名模式匹配）</param>
-    /// <param name="orgId">组织ID</param>
-    /// <returns>匹配到的 FlowDefinitionId，null 表示未匹配</returns>
-    [Obsolete("请使用 MatchFlowDefinitionsAsync（支持多流程匹配）")]
-    public async Task<long?> MatchFlowDefinitionAsync(IReadOnlyList<string> fileColumns, string? fileName, long orgId)
-    {
-        var results = await MatchFlowDefinitionsAsync(fileColumns, fileName, orgId);
-        return results.FirstOrDefault()?.FlowDefinitionId;
     }
 
     /// <summary>
