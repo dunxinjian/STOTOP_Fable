@@ -1447,13 +1447,22 @@ END
         END
         ");
 
-        // 3) 两个人工节点（线性，靠排序号推进；fixedUsers→管理员占位）
+        // 3) 部门负责人审批节点（fixedUsers→管理员占位）
         ExecSql(ctx, @"
         IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5031)
         BEGIN
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID],[F流程版本ID],[F节点键],[F排序号],[F节点名称],[F类型],[F处理粒度],[F审批模式],[F插件注册ID],[F插件规则ID],[F处理人策略],[F处理人配置JSON])
             VALUES (5031, 2263, N'tpl_expense_dept', 1, N'部门负责人审批', N'human', N'card', N'single', NULL, NULL, N'fixedUsers', N'{""users"":[{""userId"":1,""userName"":""管理员""}],""fallback"":{""mode"":""fixedUsers"",""users"":[{""userId"":1,""userName"":""管理员""}]}}');
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+
+        // 4) 财务审批节点（fixedUsers→管理员占位）
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5032)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID],[F流程版本ID],[F节点键],[F排序号],[F节点名称],[F类型],[F处理粒度],[F审批模式],[F插件注册ID],[F插件规则ID],[F处理人策略],[F处理人配置JSON])
             VALUES (5032, 2263, N'tpl_expense_finance', 2, N'财务审批', N'human', N'card', N'single', NULL, NULL, N'fixedUsers', N'{""users"":[{""userId"":1,""userName"":""管理员""}],""fallback"":{""mode"":""fixedUsers"",""users"":[{""userId"":1,""userName"":""管理员""}]}}');
             SET IDENTITY_INSERT [CF流程节点] OFF;
