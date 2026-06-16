@@ -8,5 +8,4 @@ public interface IDelegationService
     Task<DelegationDto> CreateAsync(CreateDelegationRequest request, long userId);
     Task<DelegationDto> UpdateAsync(long id, UpdateDelegationRequest request, long userId);
     Task CancelAsync(long id, long userId);
-    Task CheckAndCreateDelegateTodoAsync(long todoItemId);
 }

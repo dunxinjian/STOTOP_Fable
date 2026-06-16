@@ -112,41 +112,4 @@ public class DelegationService : IDelegationService
         await _dbContext.SaveChangesAsync();
         _logger.LogInformation("Cancelled delegation {Id} by user {UserId}", id, userId);
     }
-
-    public async Task CheckAndCreateDelegateTodoAsync(long todoItemId)
-    {
-        var todoItem = await _dbContext.Set<CfTodoItem>().FirstOrDefaultAsync(t => t.FID == todoItemId);
-        if (todoItem == null) return;
-
-        var now = DateTime.Now;
-        var activeDelegation = await _dbContext.Set<CfDelegation>()
-            .FirstOrDefaultAsync(d =>
-                d.FDelegatorId == todoItem.FHandlerId &&
-                d.FStatus == "active" &&
-                d.FStartTime <= now &&
-                d.FEndTime >= now);
-
-        if (activeDelegation == null) return;
-
-        // 创建镜像待办
-        var delegateTodo = new CfTodoItem
-        {
-            FCardId = todoItem.FCardId,
-            FStageInstanceId = todoItem.FStageInstanceId,
-            FHandlerId = activeDelegation.FTrusteeId,
-            FHandlerName = activeDelegation.FTrusteeName,
-            FTitle = todoItem.FTitle,
-            FType = todoItem.FType,
-            FStatus = "pending",
-            FPriority = todoItem.FPriority,
-            FDelegateSourceId = todoItem.FID,
-            FPushStatus = "pending",
-            FCreatedTime = DateTime.Now,
-            FOrgId = todoItem.FOrgId
-        };
-
-        _dbContext.Set<CfTodoItem>().Add(delegateTodo);
-        await _dbContext.SaveChangesAsync();
-        _logger.LogInformation("Created delegate todo {NewId} from {SourceId} to trustee {TrusteeId}", delegateTodo.FID, todoItemId, activeDelegation.FTrusteeId);
-    }
 }
