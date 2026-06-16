@@ -1,57 +1,55 @@
-# FIN科目去组织作用域重构 — 设计文档
+# FIN科目去组织作用域重构 — 设计文档（v2：物理删列）
 
 - 日期：2026-06-16
-- 范围：`STOTOP.Module.Finance`（连带 `STOTOP.Core`、`AmoebaPLService`）
-- 类型：纯重构（修正实体作用域语义，不改业务语义）
+- 范围：`STOTOP.Core`、`STOTOP.Module.Finance`、`STOTOP.WebAPI`（种子/迁移）
+- 类型：重构 + 表结构变更（删列）
+
+> v2 变更：用户决定**物理删除** `F组织ID` 列（方案 B），不再保留为审计字段。
+> 这覆盖了原任务"FOrgId 字段保留、不要直接删"的约束——用户明确确认承担其代价。
 
 ## 1. 背景与问题
 
-`FinAccount`（FIN科目）实现了 `IOrgScoped`。`STOTOPDbContext` 给所有 `IOrgScoped`
-实体注册了"按 `FOrgId` 的全局组织查询过滤器"（[STOTOPDbContext.cs:115-146](../../../src/STOTOP.Infrastructure/Data/STOTOPDbContext.cs)）。
+`FinAccount`（FIN科目）实现 `IOrgScoped`，被 `STOTOPDbContext` 的"组织全局查询过滤器
+（按 `FOrgId`）"约束（[STOTOPDbContext.cs:115-146](../../../src/STOTOP.Infrastructure/Data/STOTOPDbContext.cs)）。
+但科目本质是**账套级共享**：账套已按组织授权，科目只按 `FAccountSetId` 限定，且账套可跨组织共享。
 
-但科目本质是**账套级共享**：账套（`FinAccountSet`）本身已按组织授权，科目只按
-`FAccountSetId` 限定，且同一账套可跨组织共享。把科目纳入组织过滤器是错误的作用域，
-导致：
+错误的作用域导致：满地 `.IgnoreQueryFilters()` 绕过（AccountService 12 + AmoebaPLService 5）；
+`FOrgId` 沦为不参与任何过滤、**全程无索引**的残留字段；未加绕过的查询点（VoucherService、
+ReportService、AccountSetService 等十余处）在跨组织共享账套下存在隐性漏查 bug。
 
-- 满地写 `.IgnoreQueryFilters()` 绕过组织过滤器（AccountService 12 处、AmoebaPLService 5 处）。
-- `FOrgId` 沦为"接口要求 + 审计字段"，不参与任何业务过滤，且**全程无索引**——
-  证明它只是过滤器的附庸，不是业务分区键。
-- 凡是**没有**加绕过的查询点（VoucherService、ReportService、AccountSetService 等
-  十余处），在带组织上下文时会因 `FOrgId` 不匹配而漏查，存在跨组织共享账套下的隐性 bug。
-
-同样问题存在于两个"兄弟实体"：`FinAccountBalance`（科目余额）、`FinAuxiliaryBalance`
-（辅助核算余额）——结构一致（`FAccountSetId` + `FOrgId`，`FOrgId` 无索引）。
+同问题存在于兄弟实体 `FinAccountBalance`、`FinAuxiliaryBalance`（结构一致、`FOrgId` 无索引）。
 
 ## 2. 目标与非目标
 
 ### 目标
-- 让 `FinAccount` / `FinAccountBalance` / `FinAuxiliaryBalance` 不再受组织全局过滤器约束。
-- 移除因此变得多余的 `.IgnoreQueryFilters()`，使代码意图清晰、不易被误解。
-- 保留 `FOrgId` 字段（审计用），不破坏建库/现有数据。
-- `dotnet build` 通过；科目/凭证/余额相关查询无回归。
+- 三实体 `FinAccount` / `FinAccountBalance` / `FinAuxiliaryBalance` 不再受组织过滤器约束
+  （改为账套作用域标记 `IAccountSetScoped`）。
+- 移除多余的 `.IgnoreQueryFilters()`（17 处），使意图清晰。
+- **物理删除三张表的 `F组织ID` 列**（含属性、配置映射、写入代码、种子列、实库列）。
+- `dotnet build` 通过；全新建库成功；科目/凭证/余额查询无回归。
 
 ### 非目标（明确排除）
-- 不改科目结构（字段、层级、编码规则）或其它业务逻辑。
-- 不动 `FinVoucher` / `FinVoucherEntry` 的组织作用域——凭证**确实**是组织级。
-- 不动 `FinAccountPeriod` 等其它 `IOrgScoped` 实体（虽可能是同类候选，但不在本次范围）。
-- 不动 `AuxiliaryService` 对 `FinAuxiliaryItem` 的绕过——那是另一回事（全局品牌
-  `FOrgId=0` 共享），与本次的 `FinAuxiliaryBalance` 是不同实体，勿混淆。
-- 不删 `FOrgId` 字段，不加 EF 迁移（移除接口不改表结构）。
+- 不改科目结构（除删 `FOrgId` 外）、不改其它业务逻辑。
+- 不动 `FinVoucher` / `FinVoucherEntry` 的组织作用域——凭证确是组织级。
+- 不动 `FinAccountPeriod`、`FinAccountSet`、`FinAccountTemplate`、`FinAuxiliaryItem` 等其它实体的
+  `FOrgId`（它们genuinely组织级或全局共享，不在范围）。**种子里 `FIN账套` / `FIN科目模板` 的
+  `F组织ID` 保持不动。**
+- 不动 `AuxiliaryService` 对 `FinAuxiliaryItem` 的绕过（另一回事：全局品牌 `FOrgId=0`）。
 
 ## 3. 已确认的决策
 
 | 决策 | 选择 |
 |---|---|
-| D1 实体范围 | **三个全改**：`FinAccount` + `FinAccountBalance` + `FinAuxiliaryBalance` |
-| D2 实现方式 | **新增 `IAccountSetScoped` 标记接口**（不挂全局过滤器）；`FOrgId` 注释为审计字段 |
-| D3 AmoebaPL | **一并清理** AmoebaPLService 的 5 处冗余绕过 |
-| D4 FOrgId 写入 | 原依赖自动填充的写入点**接受 `FOrgId=0`**；不新增组织上下文管线；AccountService 现有两处显式赋值保留 |
+| D1 实体范围 | 三个全改：`FinAccount` + `FinAccountBalance` + `FinAuxiliaryBalance` |
+| D2 实现方式 | 新增 `IAccountSetScoped` 标记接口（不挂全局过滤器） |
+| D3 AmoebaPL | 一并清理 AmoebaPLService 的 5 处冗余绕过 |
+| **D4 F组织ID** | **方案 B：物理删列**（删属性/映射/909 条种子列/写入 + V5 迁移 DropColumnSafe；连带余额表） |
 
 ## 4. 设计
 
 ### 4.1 新增标记接口 `IAccountSetScoped`
 
-文件：`src/STOTOP.Core/Models/IAccountSetScoped.cs`（与 `IOrgScoped` 同目录）
+文件：`src/STOTOP.Core/Models/IAccountSetScoped.cs`
 
 ```csharp
 namespace STOTOP.Core.Models;
@@ -60,7 +58,6 @@ namespace STOTOP.Core.Models;
 /// 标记"账套级共享"实体：按 FAccountSetId 限定，不随组织隔离。
 /// 与 IOrgScoped 互斥——实现本接口的实体【不】被组织全局查询过滤器约束。
 /// 账套本身已按组织授权（FinAccountSetAuthorization），账套即访问边界。
-/// 实体上的 FOrgId（若有）仅为"创建者组织"审计字段，不参与任何过滤，且不建索引。
 /// </summary>
 public interface IAccountSetScoped
 {
@@ -68,120 +65,130 @@ public interface IAccountSetScoped
 }
 ```
 
-- 纯标记（带 `FAccountSetId` 以文档化作用域键，三实体本就有此字段，零成本）。
-- **不在 `STOTOPDbContext` 注册任何过滤器**——这是它与 `IOrgScoped` 的本质区别。
+纯标记，不在 `STOTOPDbContext` 注册任何过滤器。
 
 ### 4.2 三个实体改造
 
 `FinAccount` / `FinAccountBalance` / `FinAuxiliaryBalance`：
-
 - `: BaseEntity, IOrgScoped` → `: BaseEntity, IAccountSetScoped`
-- `FOrgId` 注释从 `// 组织ID` 改为 `// 创建者组织（审计字段，不参与过滤）`
-- 字段、其余成员不变。
+- **删除 `public long FOrgId { get; set; }` 属性及其注释**
+- 其余成员不变（三者均已有 `FAccountSetId`，满足新接口）。
 
-### 4.3 `STOTOPDbContext` 无需改动
+### 4.3 配置类删除 FOrgId 映射
 
-- 组织过滤器循环（[:115-122](../../../src/STOTOP.Infrastructure/Data/STOTOPDbContext.cs)）按
-  `IOrgScoped` 收集实体；三实体不再实现该接口，自动不被收集——无需改循环。
-- `FillOrgIdForNewEntities`（[:171-193](../../../src/STOTOP.Infrastructure/Data/STOTOPDbContext.cs)）
-  按 `IOrgScoped` 自动填 `FOrgId`；三实体退出后不再被自动填充（见 4.5）。
-- `IAccountSetScoped` 不挂过滤器，故 DbContext **零改动**。这是低风险点。
+删除以下行：
+- [FinAccountConfiguration.cs:26](../../../src/STOTOP.Module.Finance/Configurations/FinAccountConfiguration.cs)
+- [FinAccountBalanceConfiguration.cs:23](../../../src/STOTOP.Module.Finance/Configurations/FinAccountBalanceConfiguration.cs)
+- [FinAuxiliaryBalanceConfiguration.cs:24](../../../src/STOTOP.Module.Finance/Configurations/FinAuxiliaryBalanceConfiguration.cs)
 
-### 4.4 清理 `IgnoreQueryFilters`（精确清单）
+（均为 `builder.Property(e => e.FOrgId).HasColumnName("F组织ID").HasDefaultValue(0L);`）
 
-> 以下为 HEAD 行号，编辑后会位移；实施时按"方法名 + 实体"定位。
+删除后 EF 模型不再含该列，全新建库（`CreateTablesAsync` 按模型建表）不会创建 `F组织ID`。
 
-**`AccountService.cs` — 删 12 处，保留 1 处：**
+### 4.4 `STOTOPDbContext` 无需改动
 
-| 行 | 方法 | 实体 | 处理 |
-|---|---|---|---|
-| 46 | GetTreeAsync | FinAccount | 删 |
-| 105 | LoadAccountAsync | FinAccount | 删 |
-| 127 | CreateAsync（查重） | FinAccount | 删 |
-| 249 | DeleteAsync（凭证引用检查） | **FinVoucherEntry** | **保留**（凭证是组织级，跨组织查引用合理） |
-| 259 | DeleteAsync（子科目检查） | FinAccount | 删 |
-| 269 | DeleteAsync（清余额行） | FinAccountBalance | 删 |
-| 283 | DeleteAsync（兄弟科目） | FinAccount | 删 |
-| 320 | GetInitialBalancesAsync（科目） | FinAccount | 删 |
-| 328 | GetInitialBalancesAsync（余额） | FinAccountBalance | 删 |
-| 386 | SaveInitialBalancesAsync（科目校验） | FinAccount | 删 |
-| 409 | SaveInitialBalancesAsync（余额查） | FinAccountBalance | 删 |
-| 448 | GetByAuxTypeAsync | FinAccount | 删 |
-| 462 | UpdateAccountAuxiliaryAsync | FinAccount | 删 |
+组织过滤器循环与 `FillOrgIdForNewEntities` 都按 `IOrgScoped` 收集；三实体退出该接口后自动
+不被处理。`IAccountSetScoped` 不挂过滤器。DbContext **零改动**。
 
-删除时一并清理/修正同行的"绕过组织过滤"注释（避免遗留误导性注释）。
-保留的 249 行注释保持不变（说明为何跨组织查凭证）。
+### 4.5 清理 `IgnoreQueryFilters`（删 17 留 1）+ 删 2 处写入
 
-**`AmoebaPLService.cs` — 删 5 处（均 FinAccount）：**
-行 1870 / 2696 / 2835 / 3208 / 3694，注释同款"FIN科目…绕过 IOrgScoped"。
+**`AccountService.cs`**：删除以下 `IgnoreQueryFilters`（HEAD 行号，实施按方法名+实体定位）：
+46/105/127/259/283/320/386/448/462（FinAccount，9 处）、269/328/409（FinAccountBalance，3 处）。
+**保留** 249（`FinVoucherEntry`，凭证组织级，跨组织查引用合理）。
+另删除两处 `FOrgId = GetCurrentOrgId()` 写入：**188**（FinAccount）、**429**（FinAccountBalance）。
+清理同行误导性注释。
 
-**合计：删 17 处，保留 1 处。** `FinAuxiliaryBalance` 无任何 `IgnoreQueryFilters`（仅在
-ReportService 注入），改造后其读取从"被组织过滤"变为"不过滤"，属隐性跨组织 bug 的修复。
+**`AmoebaPLService.cs`**：删 1870/2696/2835/3208/3694（FinAccount，5 处）。
 
-### 4.5 `FOrgId` 写入点
+> `dotnet build` 会报出任何遗漏的 `.FOrgId` 读写（编译错误兜底）。已知触及三实体 FOrgId 的
+> 写入仅 AccountService:188/429；`AccountPeriodService:136` 是 `FinAccountPeriod`（范围外，不动）。
 
-移除 `IOrgScoped` 后，`FillOrgIdForNewEntities` 不再填充三实体。处理：
+### 4.6 种子数据：改 909 条 `FIN科目` INSERT
 
-- **保留**现有显式赋值：`AccountService.CreateAsync`（[:188](../../../src/STOTOP.Module.Finance/Services/AccountService.cs)）、
-  `SaveInitialBalancesAsync`（[:429](../../../src/STOTOP.Module.Finance/Services/AccountService.cs)）。
-- **接受 `FOrgId=0`** 的写入点（原靠自动填充，本次不补组织上下文管线）：
-  - `AccountSetService.InitializeAccountSetAsync`（建科目 ≈ :412）
-  - `AccountTemplateService.CopyFromTemplateAsync`（建科目 ≈ :331）
-  - `AccountSetService.InitializeAccountSetAsync`（建余额 ≈ :534）
-  - `AccountPeriodService.OpenNextPeriodAsync`（结转建余额 ≈ :389）
-  - 理由：`FOrgId` 已不参与过滤、无索引；这些是账套级/模板/结转行，本非组织私有，
-    `0`（未指定）语义上是诚实的，且避免给这些服务新增 `GetCurrentOrgId` 管线（属范围外改动）。
+[FinanceSeeder.cs](../../../src/STOTOP.WebAPI/Data/Seeders/FinanceSeeder.cs) 的 `MigrateV1` 含
+**909 条** `INSERT INTO [FIN科目] (…, [F组织ID], …)`。删列后全新建库表无此列，这些 INSERT 会失败，
+故必须同步去列：
+- 列清单：`[F账套ID], [F组织ID], [F创建时间]` → `[F账套ID], [F创建时间]`（全文件统一替换）。
+- VALUES：删除第 14 列（`F组织ID`）对应的整数值——位于"日期字面量 `N'2026…'` 前紧邻的第三个
+  连续整数"（顺序为 `…启用状态, 账套ID, 组织ID, N'创建时间'…`）。用脚本（PowerShell 正则）做
+  **按位删除**，因各账套 `F组织ID` 取值不同（0 / 192 等），不可按值匹配。
+- **不动** `FIN账套`、`FIN科目模板` 的 INSERT（范围外实体，保留其 `F组织ID`）。
+- 余额表无种子 INSERT（0 条），无需处理。
 
-### 4.6 顺手修正：`ReportService.GetAccountBalanceAsync`
+> 风险点：`dotnet build` 查不出 SQL 字符串错误。必须靠**全新建库实测**或**每行"列数=值数"校验**
+> 验证；详见 §6。
 
-[:74](../../../src/STOTOP.Module.Finance/Services/ReportService.cs) 当前 `Query().ToListAsync()`
-无 `Where`，靠组织过滤器隐式限定。改造后会加载全部账套科目（结果仍正确——余额已按账套
-限定、按主键 `FID` 匹配且 FID 全局唯一，仅多加载行）。**补 `.Where(a => a.FAccountSetId == accountSetId)`**
-保持范围与效率。这是小幅安全改进，非回归。
+### 4.7 Schema 迁移：FinanceSeeder 加 V5 步骤删实库列
+
+在 `FinanceSeeder.Migrate` 的 steps 末尾追加（当前最高 V4）：
+
+```csharp
+new(5, "删除 FIN科目/科目余额/辅助余额 的 F组织ID 列 (2026-06-16)", MigrateV5),
+```
+
+```csharp
+private static void MigrateV5(STOTOPDbContext ctx)
+{
+    if (!SeederHelper.IsSqlServer(ctx)) return;
+    SeederHelper.DropColumnSafe(ctx, "FIN科目", "F组织ID");
+    SeederHelper.DropColumnSafe(ctx, "FIN科目余额", "F组织ID");
+    SeederHelper.DropColumnSafe(ctx, "FIN辅助核算余额", "F组织ID");
+}
+```
+
+`DropColumnSafe`（[SeederHelper.cs:113](../../../src/STOTOP.WebAPI/Data/SeederHelper.cs)）会先删依赖
+索引/约束与 DEFAULT 约束再 `DROP COLUMN`，且 `IF EXISTS 列` 幂等——既存库删列、全新库（列本就
+不存在）跳过。版本号严格递增、记录于 `SYS迁移历史`。
+
+### 4.8 顺手：`ReportService.GetAccountBalanceAsync`
+
+[:74](../../../src/STOTOP.Module.Finance/Services/ReportService.cs) `Query().ToListAsync()` 无 Where，
+补 `.Where(a => a.FAccountSetId == accountSetId)` 限定范围（小幅安全/效率改进，非回归）。
 
 ## 5. 行为变化分析（为何安全）
 
-移除组织过滤器后，所有对三实体的查询从"按当前组织过滤"变为"不过滤"。逐类核实：
+移除组织过滤器后，三实体查询从"按当前组织过滤"变为"不过滤"。逐类核实：
 
-1. **已按 `FAccountSetId` 限定的读取**（绝大多数）：变为"返回该账套全部行（不分组织）"，
-   即跨组织共享账套**应有的正确行为**。账套授权是真边界。
-2. **按主键的读取**（`Repository.GetByIdAsync` → `FindAsync`，[Repository.cs:20](../../../src/STOTOP.Infrastructure/Repositories/Repository.cs)）：
-   `FindAsync` 会套用组织过滤器。VoucherService 录入凭证按 `AccountId` 取科目时，今天若科目
-   `FOrgId` 与当前组织不符就误报"科目不存在"；移除后**修复**（正是任务要解决的症状）。
-3. **`AccountSetService` 初始化**：今天"是否已初始化"计数、强制重置清理只看当前组织，
-   跨组织会漏判、漏删；移除后**修复**。
-4. **`ReportService` / `TrialBalanceService` / `JournalService`**：均按 `FAccountSetId`
-   或 `accountIds` 间接限定，行为正确，不受影响。
+1. **已按 `FAccountSetId` 限定的读取**（绝大多数）：变为"返回该账套全部行（不分组织）"，即跨组织
+   共享账套应有的正确行为。账套授权是真边界。
+2. **按主键读取**（`Repository.GetByIdAsync`→`FindAsync`，[Repository.cs:20](../../../src/STOTOP.Infrastructure/Repositories/Repository.cs)）：
+   `FindAsync` 套用过滤器。VoucherService 录入凭证按 `AccountId` 取科目时，今天若 `FOrgId` 不符即
+   误报"科目不存在"；移除后**修复**（正是任务症状）。
+3. **`AccountSetService` 初始化**：今天"是否已初始化"计数、强制清理只看当前组织，跨组织漏判漏删；
+   移除后**修复**。
+4. **Report/TrialBalance/Journal**：均按 `FAccountSetId` 或 `accountIds` 间接限定，行为正确。
 
-> 安全前提（沿用现有代码已依赖的假设）：账套访问通过 `FinAccountSetAuthorization` 授权，
-> 调用方只在已授权账套内传入 `FAccountSetId`。本次只是把现有 17 处绕过已假设的前提
-> 推广到全部查询点，不引入新假设。
+> 安全前提（沿用现有代码已依赖）：账套访问经 `FinAccountSetAuthorization` 授权，调用方只在已授权
+> 账套内传 `FAccountSetId`。本次把 17 处绕过已假设的前提推广到全部查询点，不引入新假设。
 
 ## 6. 验收与验证
 
-- [ ] `dotnet build` 通过。
-- [ ] 全仓库不再有针对三实体的 `IgnoreQueryFilters`（grep 复核）；`FinVoucherEntry`
-      那处保留。
-- [ ] 科目查询正常：建/查/树/查重/按辅助核算筛选。
-- [ ] 跨组织共用同一账套：在 A 组织建的科目，B 组织（已授权该账套）可见。
-- [ ] 按主键 `FindAsync` 取科目正常，不再误报"科目不存在"。
-- [ ] 凭证录入/更新/红冲/校验取科目正常。
-- [ ] 期初余额录入/汇总、期间结转、试算平衡、阿米巴报表无回归。
-- [ ] 账套初始化（含强制重置）正常。
+- [ ] `dotnet build` 通过（兜底报出所有遗漏的 `.FOrgId` 引用）。
+- [ ] grep 复核：三实体相关代码再无 `IgnoreQueryFilters`（`FinVoucherEntry` 那处保留）；
+      `src` 内三实体再无 `FOrgId` 引用。
+- [ ] **种子完整性**：`INSERT INTO [FIN科目]` 仍为 909 条，且每条"列数 = 值数"（脚本校验）。
+- [ ] **全新建库实测**：跑一次 full init（`DatabaseService.FullInitializeAsync` 路径），
+      `FIN科目` 909 条全部插入成功、表无 `F组织ID` 列、启动无 SchemaAutoSync"多余列"告警。
+- [ ] 既存库：启动后 V5 迁移执行成功，三表 `F组织ID` 列被删，`SYS迁移历史` 记录 Finance V5。
+- [ ] 功能回归：科目建/查/树/查重/辅助核算筛选；跨组织共用账套可见；按主键取科目不误报；
+      凭证录入/更新/红冲/校验；期初余额、期间结转、试算平衡、阿米巴报表；账套初始化（含强制重置）。
 
 ## 7. 风险与缓解
 
 | 风险 | 等级 | 缓解 |
 |---|---|---|
-| 漏改某查询点导致行为不一致 | 中 | grep 复核 + 验收逐项；DbContext 零改动收敛风险面 |
-| 误删合法的 `FinVoucherEntry` 跨组织绕过 | 中 | 清单明确标注保留；按方法名+实体定位 |
-| `FOrgId=0` 影响审计可读性 | 低 | 已在 D4 记录；非功能字段，review 可改口径 |
-| `FinAuxiliaryBalance` 读取行为变化 | 低 | 仅 ReportService 注入；属跨组织 bug 修复 |
+| 909 条种子去列出错（列/值错位），build 查不出 | **高** | 脚本按位删除 + 每行列数=值数校验 + 全新建库实测（§6） |
+| 改动已记录的基线迁移 V1（违反"只追加"惯例） | 中 | 末态收敛（新库走改后 V1，旧库走 V5 删列）；spec 记录权衡 |
+| 删列不可逆（数据丢失） | 中 | 用户已确认；`FOrgId` 已无功能、无索引；删前可由 DBA 自行备份 |
+| 漏改某 `.FOrgId` 引用 | 低 | `dotnet build` 编译错误兜底 |
+| 误删合法的 `FinVoucherEntry` 绕过 | 中 | 清单标注保留，按方法名+实体定位 |
 
 ## 8. 涉及文件清单
 
-- 新增：`src/STOTOP.Core/Models/IAccountSetScoped.cs`
-- 改实体：`FinAccount.cs`、`FinAccountBalance.cs`、`FinAuxiliaryBalance.cs`
-- 清绕过：`AccountService.cs`（12 删 1 留）、`AmoebaPLService.cs`（5 删）
-- 小修：`ReportService.cs`（补账套限定）
-- 不改：`STOTOPDbContext.cs`、`Repository.cs`、`IOrgScoped.cs`
+- **新增**：`src/STOTOP.Core/Models/IAccountSetScoped.cs`
+- **改实体**（去 IOrgScoped + 删 FOrgId 属性）：`FinAccount.cs`、`FinAccountBalance.cs`、`FinAuxiliaryBalance.cs`
+- **改配置**（删 FOrgId 映射）：`FinAccountConfiguration.cs`、`FinAccountBalanceConfiguration.cs`、`FinAuxiliaryBalanceConfiguration.cs`
+- **清绕过 + 删写入**：`AccountService.cs`（删 12 绕过 + 2 写入，留 1 绕过）、`AmoebaPLService.cs`（删 5 绕过）
+- **改种子**：`FinanceSeeder.cs`（909 条 FIN科目 INSERT 去列 + 新增 V5 步骤 MigrateV5）
+- **小修**：`ReportService.cs`（补账套限定）
+- **不改**：`STOTOPDbContext.cs`、`Repository.cs`、`IOrgScoped.cs`、`SeederHelper.cs`、`MigrationRunner.cs`
