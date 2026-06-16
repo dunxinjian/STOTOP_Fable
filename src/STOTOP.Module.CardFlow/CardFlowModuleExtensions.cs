@@ -87,9 +87,6 @@ public static class CardFlowModuleExtensions
         services.AddHostedService<BatchJobProcessorService>();
         services.AddHostedService<BatchRecoveryHostedService>();
 
-        // CFAutoPlugin 批次进度回调
-        services.AddScoped<IBatchProgressCallback, BatchProgressCallbackService>();
-
         // 推送基础设施（Task #10）
         services.AddScoped<IBatchNotifier, BatchNotifier>();
 
