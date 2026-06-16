@@ -46,18 +46,6 @@ public class JintTransformEngine : ITransformEngine
         return result;
     }
 
-    public List<Dictionary<string, object?>> Preview(
-        List<Dictionary<string, string>> sampleRows,
-        List<TransformRule> rules)
-    {
-        var results = new List<Dictionary<string, object?>>();
-        foreach (var row in sampleRows)
-        {
-            results.Add(Execute(row, rules));
-        }
-        return results;
-    }
-
     private static Engine CreateEngine()
     {
         return new Engine(options =>
