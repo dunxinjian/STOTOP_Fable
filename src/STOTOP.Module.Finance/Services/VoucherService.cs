@@ -10,6 +10,7 @@ using STOTOP.Infrastructure.Events;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.Finance.Events;
+using STOTOP.Module.Finance.Services.Auxiliary;
 using STOTOP.Module.Finance.Services.Interfaces;
 // 消歧义：本文件 IVoucherService 指 Finance 内部接口
 using IVoucherService = STOTOP.Module.Finance.Services.Interfaces.IVoucherService;
@@ -246,10 +247,10 @@ public class VoucherService : IVoucherService
         };
     }
 
-    public async Task<VoucherDto> CreateAsync(CreateVoucherRequest request, string creator, long accountSetId = 0)
+    public async Task<VoucherDto> CreateAsync(CreateVoucherRequest request, string creator, long accountSetId = 0, bool enforceAuxContract = false)
     {
         ValidateVoucher(request);
-        await ValidateEntriesAsync(request.Entries);
+        await ValidateEntriesAsync(request.Entries, enforceAuxContract);
 
         // 验证辅助核算JSON格式
         foreach (var entry in request.Entries)
@@ -338,7 +339,7 @@ public class VoucherService : IVoucherService
         return createdVoucher;
     }
 
-    public async Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier)
+    public async Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier, bool enforceAuxContract = false)
     {
         var voucher = await _voucherRepository.Query()
             .Include(v => v.Entries)
@@ -365,7 +366,7 @@ public class VoucherService : IVoucherService
         }
 
         ValidateVoucher(request);
-        await ValidateEntriesAsync(request.Entries);
+        await ValidateEntriesAsync(request.Entries, enforceAuxContract);
 
         // 验证辅助核算JSON格式
         foreach (var entry in request.Entries)
@@ -809,7 +810,7 @@ public class VoucherService : IVoucherService
             msg);
     }
 
-    private async Task ValidateEntriesAsync(List<CreateVoucherEntryRequest> entries)
+    private async Task ValidateEntriesAsync(List<CreateVoucherEntryRequest> entries, bool enforceAuxContract = false)
     {
         foreach (var entry in entries)
         {
@@ -832,6 +833,17 @@ public class VoucherService : IVoucherService
                 {
                     throw new InvalidOperationException($"分录第{entry.LineNo}行的辅助核算数据格式无效");
                 }
+            }
+
+            // 方案B 源打标(E2)：科目声明了辅助核算维度则分录必须带齐(标准"科目挂辅助核算即必填"口径)。
+            // 仅手动录入/导入入口(enforceAuxContract=true)强校验；自动凭证/迁移/草稿默认 false 不阻断,
+            // 其维度由自动凭证引擎按科目契约补齐(批次2-C)。
+            if (enforceAuxContract)
+            {
+                var missing = EntryAuxValidator.GetMissing(account.FAuxiliary, entry.AuxiliaryJson);
+                if (missing.Count > 0)
+                    throw new InvalidOperationException(
+                        $"分录第{entry.LineNo}行科目 {account.FCode} {account.FName} 缺少必填辅助核算：{string.Join("、", missing)}");
             }
         }
     }

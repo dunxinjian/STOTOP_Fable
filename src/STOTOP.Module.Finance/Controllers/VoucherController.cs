@@ -52,7 +52,8 @@ public class VoucherController : ControllerBase
         try
         {
             var creator = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
-            var result = await _voucherService.CreateAsync(request, creator, accountSetId);
+            // 手动录入凭证：强校验科目辅助核算契约(声明的维度必须带齐, E2)
+            var result = await _voucherService.CreateAsync(request, creator, accountSetId, enforceAuxContract: true);
             return ApiResult<VoucherDto>.Success(result, "创建凭证成功");
         }
         catch (InvalidOperationException ex)
@@ -68,7 +69,8 @@ public class VoucherController : ControllerBase
         try
         {
             var modifier = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
-            var result = await _voucherService.UpdateAsync(id, request, modifier);
+            // 手动编辑凭证：强校验科目辅助核算契约(E2)
+            var result = await _voucherService.UpdateAsync(id, request, modifier, enforceAuxContract: true);
             if (result == null)
             {
                 return ApiResult<VoucherDto>.Fail("凭证不存在");

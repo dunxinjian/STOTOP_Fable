@@ -7,8 +7,8 @@ public interface IVoucherService
 {
     Task<VoucherPagedResult> GetPagedListAsync(VoucherQueryRequest request, long accountSetId = 0);
     Task<VoucherDto?> GetByIdAsync(long id);
-    Task<VoucherDto> CreateAsync(CreateVoucherRequest request, string creator, long accountSetId = 0);
-    Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier);
+    Task<VoucherDto> CreateAsync(CreateVoucherRequest request, string creator, long accountSetId = 0, bool enforceAuxContract = false);
+    Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier, bool enforceAuxContract = false);
     Task<bool> DeleteAsync(long id);
     Task<bool> AuditAsync(long id, string auditor);
     Task<bool> UnAuditAsync(long id);
