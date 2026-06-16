@@ -105,6 +105,40 @@ public class AmoebaPLServiceTests
     }
 
     [Fact]
+    public void ApplyScopeFilter_filters_by_outlet_direction_project_and_cross_dimension_AND()
+    {
+        var points = new List<DataPoint>
+        {
+            new() { Source = "voucher", AccountCode = "540102", SiteCode = "OUT-A", AuxValues = new() { ["business_direction"] = "OUT" }, Amount = 10m },
+            new() { Source = "voucher", AccountCode = "540102", SiteCode = "OUT-B", AuxValues = new() { ["business_direction"] = "IN" }, Amount = 20m },
+            new() { Source = "voucher", AccountCode = "500101", SiteCode = "OUT-A", AuxValues = new() { ["business_direction"] = "OUT", ["project"] = "裹裹项目" }, Amount = 30m },
+        };
+
+        // null scope → 全口径不过滤
+        Assert.Equal(3, AmoebaPLService.ApplyScopeFilter(points, null).Count);
+
+        // 网点 OUT-A(第1、3点)
+        var byOutlet = AmoebaPLService.ApplyScopeFilter(points, new AmoebaReportScope { Outlets = new() { "OUT-A" } });
+        Assert.Equal(2, byOutlet.Count);
+        Assert.All(byOutlet, p => Assert.Equal("OUT-A", p.SiteCode));
+
+        // 方向 OUT(第1、3点)
+        Assert.Equal(2, AmoebaPLService.ApplyScopeFilter(points, new AmoebaReportScope { Directions = new() { "OUT" } }).Count);
+
+        // 项目=裹裹项目 跨网点,仅命中带 project 的点
+        var byProject = AmoebaPLService.ApplyScopeFilter(points, new AmoebaReportScope { Projects = new() { "裹裹项目" } });
+        Assert.Equal(30m, Assert.Single(byProject).Amount);
+
+        // 跨维 AND:网点OUT-A ∧ 方向OUT → 第1、3点
+        Assert.Equal(2, AmoebaPLService.ApplyScopeFilter(points,
+            new AmoebaReportScope { Outlets = new() { "OUT-A" }, Directions = new() { "OUT" } }).Count);
+
+        // 严格剔除:约束方向但点无方向辅助 → 被剔除(子报表不掺无归属点)
+        var noDir = new List<DataPoint> { new() { Source = "voucher", AccountCode = "560104", Amount = 5m } };
+        Assert.Empty(AmoebaPLService.ApplyScopeFilter(noDir, new AmoebaReportScope { Directions = new() { "OUT" } }));
+    }
+
+    [Fact]
     public async Task GetPLItemDetail_excludes_branded_import_revenue_entries()
     {
         await using var db = TestDbContextFactory.Create(nameof(GetPLItemDetail_excludes_branded_import_revenue_entries), orgId: 192);

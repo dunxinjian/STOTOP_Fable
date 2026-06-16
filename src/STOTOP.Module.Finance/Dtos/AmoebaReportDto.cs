@@ -364,6 +364,25 @@ public class AmoebaMultiPeriodRequest
     public long AccountSetId { get; set; }
     public string MainPeriod { get; set; } = "";     // "202603" — 主期间(YYYYMM)
     public bool IncludeYoy { get; set; }              // 是否包含同比
+    public AmoebaReportScope? Scope { get; set; }     // [方案B 批次4] L1 请求级作用域过滤;null=全口径。周期粒度 Granularity 待批次4c
+}
+
+/// <summary>
+/// [方案B 批次4] 报表作用域:维度内 OR、跨维度 AND;空集合=该维度不约束。
+/// 子报表(任一维度被约束)的公共费走分摊注入而非科目匹配(批次5)。
+/// </summary>
+public class AmoebaReportScope
+{
+    public List<string>? Outlets { get; set; }      // 网点编号 → dp.SiteCode
+    public List<string>? Projects { get; set; }     // 项目编码 → dp.AuxValues["project"]
+    public List<string>? Directions { get; set; }   // OUT/IN/CMB → dp.AuxValues["business_direction"]
+    public List<long>? Units { get; set; }           // 经营单元ID → dp.BusinessUnitId(可扩展)
+    public List<string>? Brands { get; set; }        // 品牌编码 → dp.BrandCode(可扩展)
+
+    /// <summary>是否子报表(任一维度被约束)。</summary>
+    public bool IsSubReport =>
+        (Outlets?.Count > 0) || (Projects?.Count > 0) || (Directions?.Count > 0)
+        || (Units?.Count > 0) || (Brands?.Count > 0);
 }
 
 public class AmoebaMultiPeriodResponse

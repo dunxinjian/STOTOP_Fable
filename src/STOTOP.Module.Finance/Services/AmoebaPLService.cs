@@ -265,6 +265,8 @@ public class AmoebaPLService
             all.AddRange(voucher);
             all.AddRange(depreciation);
             all.AddRange(estimate);
+            // [方案B 批次4] L1 请求级 scope 预过滤(独占匹配之前)：网点/项目/方向等;Scope=null 则全口径不变
+            all = ApplyScopeFilter(all, request.Scope);
             periodResults.Add(all);
         }
 
@@ -1186,6 +1188,25 @@ public class AmoebaPLService
                 return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// [方案B 批次4] L1 请求级作用域预过滤：在独占匹配(MatchDataPointsToPLItems)之前对 DataPoint 池过滤。
+    /// 维度内 OR、跨维度 AND(复用 AuxiliaryMatches);某维度被约束时该维度为空的点被剔除(严格语义,
+    /// 子报表正确性必须——否则掺入无网点归属的公共费)。scope=null 或全空 → 原样返回(全口径)。
+    /// 不 clone DataPoint(与独占匹配的 consumed 引用相等共存)。
+    /// </summary>
+    internal static List<DataPoint> ApplyScopeFilter(List<DataPoint> points, AmoebaReportScope? scope)
+    {
+        if (scope == null) return points;
+        var filters = new List<AuxFilter>();
+        if (scope.Outlets is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "outlet", Codes = scope.Outlets });
+        if (scope.Projects is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "project", Codes = scope.Projects });
+        if (scope.Directions is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "business_direction", Codes = scope.Directions });
+        if (scope.Units is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "business_unit", Codes = scope.Units.Select(x => x.ToString()).ToList() });
+        if (scope.Brands is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "express_brand", Codes = scope.Brands });
+        if (filters.Count == 0) return points;
+        return points.Where(p => AuxiliaryMatches(p, filters)).ToList();
     }
 
     /// <summary>损益项级辅助核算过滤条件</summary>
