@@ -167,7 +167,11 @@ public class AmoebaPLService
     /// </summary>
     public async Task<AmoebaMultiPeriodResponse> GetMultiPeriodReportAsync(AmoebaMultiPeriodRequest request)
     {
-        var orgId = request.OrgId > 0 ? request.OrgId : GetCurrentOrgId();
+        // 安全(P1-4)：报表组织一律取当前登录组织，忽略请求体 OrgId，避免越权读他组织数据。
+        // 凭证源已由 IOrgScoped 全局过滤按当前组织过滤，此处统一 billing/depreciation/estimate 其余三源口径，
+        // 杜绝"传 OrgId=B + AccountSetId=A 把两组织数据拼一张表"。如需授权用户跨组织出报表，
+        // 改为校验 request.OrgId ∈ 用户可访问组织集后再用 request.OrgId。
+        var orgId = GetCurrentOrgId();
         var accountSetId = request.AccountSetId;
 
         // 0. 入参校验：期间格式（畸形输入会让后续 int.Parse 直接 500）与模板存在性/账套归属
@@ -1855,9 +1859,11 @@ public class AmoebaPLService
         // 查询日期范围内已过账凭证分录
         var entries = await (from e in _voucherEntryRepository.Query()
                             join v in _voucherRepository.Query()
-                                .Where(v => v.FAccountSetId == accountSetId && v.FStatus >= 1) // 1=已审核, 2=已过账
+                                // 含已审核未过账(FStatus>=1, 用户口径)；排除红冲/作废(P1-5)
+                                .Where(v => v.FAccountSetId == accountSetId && v.FStatus >= 1 && !v.FIsRevoked)
                             on e.FVoucherId equals v.FID
-                            where v.FDate >= startDate && v.FDate <= endDate
+                            // 半开区间 [月初, 次月初)：避免月末当天带时分的凭证被 <=endDate(月末0点) 漏掉(P1-6)
+                            where v.FDate >= startDate && v.FDate < endDate.AddDays(1)
                             select new
                             {
                                 Entry = e,
@@ -2679,13 +2685,14 @@ public class AmoebaPLService
 
         // 查询该日该单元的凭证分录明细
         var startDate = date.Date;
-        var endDate = date.Date.AddDays(1).AddSeconds(-1);
+        var endDate = date.Date.AddDays(1); // 半开区间 [当日0点, 次日0点)，避免 23:59:59 边界漏单(P1-6)
 
         var entries = await (from e in _voucherEntryRepository.Query()
                             join v in _voucherRepository.Query()
-                                .Where(v => v.FAccountSetId == accountSetId && v.FStatus >= 1) // 与主报表一致：草稿凭证不入钻取
+                                // 与主报表一致：草稿凭证不入钻取；排除红冲/作废(P1-5)
+                                .Where(v => v.FAccountSetId == accountSetId && v.FStatus >= 1 && !v.FIsRevoked)
                             on e.FVoucherId equals v.FID
-                            where v.FDate >= startDate && v.FDate <= endDate
+                            where v.FDate >= startDate && v.FDate < endDate
                             select new
                             {
                                 Entry = e,
@@ -3195,7 +3202,8 @@ public class AmoebaPLService
                             join v in _voucherRepository.Query()
                                 .Where(v => v.FAccountSetId == accountSetId)
                             on e.FVoucherId equals v.FID
-                            where v.FDate >= startDate && v.FDate <= endDate
+                            // 半开区间，避免月末当天带时分的分录漏入"未分类"判断(P1-6)
+                            where v.FDate >= startDate && v.FDate < endDate.AddDays(1)
                                 && !classifiedEntryIds.Contains(e.FID)
                             select new
                             {
