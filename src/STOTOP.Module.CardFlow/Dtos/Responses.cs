@@ -21,6 +21,7 @@ public class FlowDefinitionDto
     public DateTime? LastPublishedTime { get; set; }
     public bool HasDraft { get; set; }
     public int? DraftVersion { get; set; }
+    public bool IsTemplate { get; set; }
 }
 
 public class FlowVersionDto

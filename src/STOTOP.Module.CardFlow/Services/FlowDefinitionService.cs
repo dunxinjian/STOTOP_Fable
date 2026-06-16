@@ -1018,7 +1018,7 @@ public class FlowDefinitionService : IFlowDefinitionService
     {
         var templates = await _dbContext.Set<CfFlowDefinition>()
             .IgnoreQueryFilters()
-            .Where(x => x.FOrgId == 0 && x.FStatus == "published")
+            .Where(x => x.FIsTemplate && x.FStatus == "published")
             .OrderBy(x => x.FFlowName)
             .Select(x => new FlowDefinitionDto
             {
@@ -1034,7 +1034,8 @@ public class FlowDefinitionService : IFlowDefinitionService
                 OrgId = x.FOrgId,
                 CreatedTime = x.FCreatedTime,
                 TriggerConfigJson = x.FTriggerConfigJson,
-                AccountSetId = x.FAccountSetId
+                AccountSetId = x.FAccountSetId,
+                IsTemplate = x.FIsTemplate
             })
             .ToListAsync();
         return templates;
@@ -1091,6 +1092,7 @@ public class FlowDefinitionService : IFlowDefinitionService
             existingTemplate.FTriggerConfigJson = source.FTriggerConfigJson;
             existingTemplate.FAccountSetId = source.FAccountSetId;
             existingTemplate.FStatus = "published";
+            existingTemplate.FIsTemplate = true;
             existingTemplate.FUpdatedTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
@@ -1117,6 +1119,7 @@ public class FlowDefinitionService : IFlowDefinitionService
                 .IgnoreQueryFilters()
                 .FirstAsync(x => x.FID == result.Id);
             templateDef.FStatus = "published";
+            templateDef.FIsTemplate = true;
 
             // 同时将版本设为 published + IsCurrentVersion
             var templateVersion = await _dbContext.Set<CfFlowVersion>()
@@ -1214,7 +1217,8 @@ public class FlowDefinitionService : IFlowDefinitionService
             OrgId = entity.FOrgId,
             CreatedTime = entity.FCreatedTime,
             TriggerConfigJson = entity.FTriggerConfigJson,
-            AccountSetId = entity.FAccountSetId
+            AccountSetId = entity.FAccountSetId,
+            IsTemplate = entity.FIsTemplate
         };
     }
 }
