@@ -52,6 +52,7 @@ public static class CardFlowSeeder
             new(30, "网点质控：接入 STG申通_积压明细（建表 + 规则3108 + 流程2308 + 首节点5108）(2026-06-18)", MigrateV30),
             new(31, "网点质控：接入 STG申通_疑似遗失明细（建表 + 规则3109 + 流程2309 + 首节点5109）(2026-06-18)", MigrateV31),
             new(32, "网点质控：接入 STG申通_进港投诉明细（建表 + 规则3110 + 流程2310 + 首节点5110）(2026-06-18)", MigrateV32),
+            new(33, "网点质控：接入 STG申通_投诉账单明细（双行表头 + 建表 + 规则3111 + 流程2311 + 首节点5111）(2026-06-18)", MigrateV33),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2668,6 +2669,122 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5110, 2310, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3110);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+    private static void MigrateV33(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_投诉账单明细 暂存表（系统列 + 23 业务列 + 标准字段） ═══
+        // 双行表头「坑」源：第 1 行是分类合并表头（费用明细数据/仲裁详情/申诉详情/申诉处理结果/申诉合计结果），
+        // 第 2 行才是真字段名 → 规则用 headerRow=2, dataStartRow=3。
+        // 全 137 列中字段名跨段重复，插件按列名映射会被同名列覆盖；故只映射 row2 中「名称全局唯一」的 23 列，
+        // 其余列由插件自动归集进 F其他列数据。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_投诉账单明细')
+        CREATE TABLE [STG申通_投诉账单明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3111 columnMapping，23 列，均为 row2 全局唯一列名）
+            [F运单号] NVARCHAR(200) NULL,
+            [F账单一级类型] NVARCHAR(200) NULL,
+            [F账单二级类型] NVARCHAR(200) NULL,
+            [F金额] NVARCHAR(200) NULL,
+            [F理赔来源] NVARCHAR(200) NULL,
+            [F账单生成时间] NVARCHAR(200) NULL,
+            [F申诉完结时间] NVARCHAR(200) NULL,
+            [F理赔类型] NVARCHAR(200) NULL,
+            [F处理结果] NVARCHAR(200) NULL,
+            [F投诉网点] NVARCHAR(200) NULL,
+            [F被投诉方1] NVARCHAR(200) NULL,
+            [F完结方式] NVARCHAR(200) NULL,
+            [F投诉时间] NVARCHAR(200) NULL,
+            [F补录时间] NVARCHAR(200) NULL,
+            [F内件品名] NVARCHAR(200) NULL,
+            [F内件实际价值] NVARCHAR(200) NULL,
+            [F调查经过] NVARCHAR(200) NULL,
+            [F处理人] NVARCHAR(200) NULL,
+            [F总部主管审核人姓名] NVARCHAR(200) NULL,
+            [F受款方网点编号] NVARCHAR(200) NULL,
+            [F受款方网点名称] NVARCHAR(200) NULL,
+            [F受款方应受款金额] NVARCHAR(200) NULL,
+            [F受款方协商受款金额] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_投诉账单明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_投诉账单明细'))
+        CREATE INDEX [IX_STG申通_投诉账单明细_F批次ID] ON [STG申通_投诉账单明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_投诉账单明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_投诉账单明细'))
+        CREATE INDEX [IX_STG申通_投诉账单明细_数据作用域] ON [STG申通_投诉账单明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 账单生成时间 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_投诉账单明细_运单账单时间_未撤销' AND object_id = OBJECT_ID(N'STG申通_投诉账单明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_投诉账单明细_运单账单时间_未撤销]
+            ON [STG申通_投诉账单明细]([F运单号],[F账单生成时间],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3111（投诉账单明细导入，双行表头 headerRow=2/dataStartRow=3） ═══
+        // 路由说明：upload-auto 读第 1 行做内容路由，本文件第 1 行是分类名（非字段名），columnIdentifier 内容匹配无效，
+        // 故必须靠第三轮 fileNamePattern *投诉账单* 路由；columnIdentifier 仍按映射列写（无害）。
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3111)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3111, 192, N'excelInput', N'申通投诉账单明细导入规则',
+        N'{""targetTable"":""STG申通_投诉账单明细"",""outputMode"":""stg"",""headerRow"":2,""dataStartRow"":3,""columnIdentifier"":""运单号,账单一级类型,金额,投诉网点"",""fullColumnIdentifier"":""运单号,账单一级类型,账单二级类型,金额,理赔来源,账单生成时间,申诉完结时间,理赔类型,处理结果,投诉网点,被投诉方1,完结方式,投诉时间,补录时间,内件品名,内件实际价值,调查经过,处理人,总部主管审核人姓名,受款方网点编号,受款方网点名称,受款方应受款金额,受款方协商受款金额"",""columnMapping"":[{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""账单一级类型"",""dbColumn"":""F账单一级类型""},{""excelColumn"":""账单二级类型"",""dbColumn"":""F账单二级类型""},{""excelColumn"":""金额"",""dbColumn"":""F金额""},{""excelColumn"":""理赔来源"",""dbColumn"":""F理赔来源""},{""excelColumn"":""账单生成时间"",""dbColumn"":""F账单生成时间""},{""excelColumn"":""申诉完结时间"",""dbColumn"":""F申诉完结时间""},{""excelColumn"":""理赔类型"",""dbColumn"":""F理赔类型""},{""excelColumn"":""处理结果"",""dbColumn"":""F处理结果""},{""excelColumn"":""投诉网点"",""dbColumn"":""F投诉网点""},{""excelColumn"":""被投诉方1"",""dbColumn"":""F被投诉方1""},{""excelColumn"":""完结方式"",""dbColumn"":""F完结方式""},{""excelColumn"":""投诉时间"",""dbColumn"":""F投诉时间""},{""excelColumn"":""补录时间"",""dbColumn"":""F补录时间""},{""excelColumn"":""内件品名"",""dbColumn"":""F内件品名""},{""excelColumn"":""内件实际价值"",""dbColumn"":""F内件实际价值""},{""excelColumn"":""调查经过"",""dbColumn"":""F调查经过""},{""excelColumn"":""处理人"",""dbColumn"":""F处理人""},{""excelColumn"":""总部主管审核人姓名"",""dbColumn"":""F总部主管审核人姓名""},{""excelColumn"":""受款方网点编号"",""dbColumn"":""F受款方网点编号""},{""excelColumn"":""受款方网点名称"",""dbColumn"":""F受款方网点名称""},{""excelColumn"":""受款方应受款金额"",""dbColumn"":""F受款方应受款金额""},{""excelColumn"":""受款方协商受款金额"",""dbColumn"":""F受款方协商受款金额""}],""keyFields"":[""运单号"",""账单生成时间""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F账单生成时间""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通收到的投诉账单_账单明细 Excel导入配置（双行表头，仅映射 row2 全局唯一列）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2311（QC_ST_COMPLAINT_BILL；靠 fileNamePattern 路由） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2311)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2311, NULL, 1, GETDATE(), NULL, N'网点质控：申通收到的投诉账单_账单明细 导入暂存（双行表头，靠 fileNamePattern 路由）', GETDATE(), NULL, N'申通投诉账单明细导入', NULL, N'QC_ST_COMPLAINT_BILL', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""*投诉账单*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2311（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2311)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2311, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2311, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5111（ExcelInput 批次级自动节点，插件注册=1，规则=3111） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5111)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5111, 2311, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3111);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
