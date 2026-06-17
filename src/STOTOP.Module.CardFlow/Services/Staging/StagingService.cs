@@ -24,6 +24,7 @@ public class StagingService
         ["expense"] = "STG费用支出记录",
         ["outbound"] = "STG申通出港运单数据",
         ["outbound_fee"] = "STG_出港运费",
+        ["deliver"] = "STG申通派件日明细",
     };
 
     public StagingService(STOTOPDbContext context, ILogger<StagingService> logger)
@@ -157,6 +158,10 @@ public class StagingService
                 return await _context.Set<StgShentongOutbound>()
                     .Where(e => ids.Contains(e.FID))
                     .ExecuteDeleteAsync(ct);
+            case "STG申通派件日明细":
+                return await _context.Set<StgShentongDeliveryDaily>()
+                    .Where(e => ids.Contains(e.FID))
+                    .ExecuteDeleteAsync(ct);
             default:
                 if (ValidateTableName(targetTable))
                     return await DeleteFromRawTableAsync(targetTable, ids, ct);
@@ -192,6 +197,10 @@ public class StagingService
                     .ExecuteUpdateAsync(s => s.SetProperty(e => e.F处理状态, newStatus), ct);
             case "STG申通出港运单数据":
                 return await _context.Set<StgShentongOutbound>()
+                    .Where(e => ids.Contains(e.FID))
+                    .ExecuteUpdateAsync(s => s.SetProperty(e => e.F处理状态, newStatus), ct);
+            case "STG申通派件日明细":
+                return await _context.Set<StgShentongDeliveryDaily>()
                     .Where(e => ids.Contains(e.FID))
                     .ExecuteUpdateAsync(s => s.SetProperty(e => e.F处理状态, newStatus), ct);
             default:
@@ -266,6 +275,17 @@ public class StagingService
                 stats.TotalExpense = 0;
                 break;
             }
+            case "STG申通派件日明细":
+            {
+                var set = _context.Set<StgShentongDeliveryDaily>();
+                stats.TotalCount = await set.CountAsync(ct);
+                stats.UnprocessedCount = await set.CountAsync(e => e.F处理状态 == 0, ct);
+                stats.ProcessedCount = await set.CountAsync(e => e.F处理状态 == 1, ct);
+                stats.FailedCount = await set.CountAsync(e => e.F处理状态 == 2, ct);
+                stats.TotalIncome = 0;
+                stats.TotalExpense = 0;
+                break;
+            }
             default:
                 if (ValidateTableName(targetTable))
                     await FillStatsFromRawTableAsync(stats, targetTable, ct);
@@ -326,6 +346,7 @@ public class StagingService
         "STG韵达总部交易明细" => _context.Set<StgYundaHqTx>(),
         "STG费用支出记录" => _context.Set<StgExpenseRecord>(),
         "STG申通出港运单数据" => _context.Set<StgShentongOutbound>(),
+        "STG申通派件日明细" => _context.Set<StgShentongDeliveryDaily>(),
         _ => null
     };
 
@@ -338,6 +359,7 @@ public class StagingService
             "STG韵达总部交易明细" => (object?)await _context.Set<StgYundaHqTx>().FirstOrDefaultAsync(e => e.FID == id, ct),
             "STG费用支出记录" => (object?)await _context.Set<StgExpenseRecord>().FirstOrDefaultAsync(e => e.FID == id, ct),
             "STG申通出港运单数据" => (object?)await _context.Set<StgShentongOutbound>().FirstOrDefaultAsync(e => e.FID == id, ct),
+            "STG申通派件日明细" => (object?)await _context.Set<StgShentongDeliveryDaily>().FirstOrDefaultAsync(e => e.FID == id, ct),
             _ => null
         };
     }

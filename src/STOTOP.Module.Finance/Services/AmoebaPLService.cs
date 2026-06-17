@@ -283,6 +283,9 @@ public class AmoebaPLService
         var perPeriodAmounts = new List<Dictionary<long, decimal>>();
         // [批次5-S4] 日/周公共费分摊基线缓存：所属当月数据点(实际凭证/估值，含当月例外)，同月一次请求内只聚合一次
         var monthPointsCache = new Dictionary<string, List<DataPoint>>();
+        // [派件量接入 §B2 审查 I1] 日/周分母 deliver 按月缓存：fullDeliver 是所属当月全网点件量，同月多日/多周
+        //   会发出多次完全相同的全月聚合 SQL(N+1)，按月缓存使每月只聚合一次(镜像 monthPointsCache)。
+        var fullDeliverCache = new Dictionary<string, long>();
         async Task<List<DataPoint>> GetMonthPoints(string month)
         {
             if (!monthPointsCache.TryGetValue(month, out var pts))
@@ -328,14 +331,30 @@ public class AmoebaPLService
                 if (wkStart.Month != wkEnd.Month)
                     allocWarnings.Add($"跨月期间公共费按周首月 {PeriodContainingMonth(periods[i], granularity)} 线性摊(分子含另一月天数，比例为近似)");
                 var monthPts = await GetMonthPoints(PeriodContainingMonth(periods[i], granularity));
-                ApplyCommonCostAllocation(matched, periodResults[i], monthPts, plItems, indicatorItems, allItems, allocWarnings);
+                // [派件量接入 §B2] deliver 件量从 STG申通派件日明细 取：分子=本期(scope 网点)、分母=所属当月(全网点)，
+                // 与 monthPts 月公共费全额配对成「时间+scope」一次比例（镜像 send 侧 billing 件量口径）。
+                var scopedDeliver = await AggregateDeliverVolume(wkStart, wkEnd, orgId, request.Scope);
+                // [审查 I1] fullDeliver 按月缓存：同月多日/多周只对全月聚合一次(scopedDeliver 仍每期算)
+                var monthKey = PeriodContainingMonth(periods[i], granularity);
+                if (!fullDeliverCache.TryGetValue(monthKey, out var fullDeliver))
+                {
+                    var (mStart, mEnd) = PeriodToDateRange(monthKey, "month");
+                    fullDeliver = await AggregateDeliverVolume(mStart, mEnd, orgId, null);
+                    fullDeliverCache[monthKey] = fullDeliver;
+                }
+                ApplyCommonCostAllocation(matched, periodResults[i], monthPts, plItems, indicatorItems, allItems, allocWarnings, scopedDeliver, fullDeliver);
                 // [批次5-S4 审查] 各期均收集告警(原仅 i==0)，使日/周 deliver件量=0/件量=0 在环比同比列也可见
                 unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
             }
             else if (isSubReport && periodFullScopePoints[i] is { } fullPts)
             {
                 var allocWarnings = new List<string>();
-                ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings);
+                // [派件量接入 §B2] 月/季/年子报表：deliver 件量同期取——分子=本期 scope 网点、分母=同期全网点，
+                // 与 fullPts 同期全口径全额配对成纯 scope 比例（无时间维，故 scoped/full 用同一期间范围）。
+                var (pStart, pEnd) = PeriodToDateRange(periods[i], granularity);
+                var scopedDeliver = await AggregateDeliverVolume(pStart, pEnd, orgId, request.Scope);
+                var fullDeliver = await AggregateDeliverVolume(pStart, pEnd, orgId, null);
+                ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings, scopedDeliver, fullDeliver);
                 unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
             }
         }
@@ -1415,19 +1434,19 @@ public class AmoebaPLService
     }
 
     /// <summary>
-    /// 计算件量基数（设计 spec §4.2 取值优先级）：
+    /// 计算件量基数（设计 spec §4.2 取值优先级 / 派件量接入 §B1）：
     /// send = 出港计费 SUM(WaybillCount)（billing 源天然出港）→ 回退发件票量 indicator 匹配值；
-    /// deliver = 派件票量 indicator 匹配值（进港无 billing 源，由 estimate/手工 经独占匹配落入 matched）。
+    /// deliver = 调用方传入（来自 STG申通派件日明细 SUM([F基础派费收费件量])，见 AggregateDeliverVolume）。
+    /// 旧逻辑从 matched 取派件票量 indicator 恒为 0（派件票量是手工节点不进 matched），故改为外部注入。
     /// </summary>
     internal static VolumeBasis ComputeVolumeBasis(
-        List<DataPoint> points, IReadOnlyDictionary<long, decimal> matched, long? sendId, long? deliverId)
+        List<DataPoint> points, IReadOnlyDictionary<long, decimal> matched, long? sendId, long deliverCount)
     {
         long billingSend = points.Where(p => p.Source == "billing").Sum(p => (long)p.WaybillCount);
         long send = billingSend > 0
             ? billingSend
             : (sendId is long sid && matched.TryGetValue(sid, out var sv) ? (long)sv : 0L);
-        long deliver = deliverId is long did && matched.TryGetValue(did, out var dv) ? (long)dv : 0L;
-        return new VolumeBasis { SendCount = send, DeliverCount = deliver };
+        return new VolumeBasis { SendCount = send, DeliverCount = deliverCount };
     }
 
     // ===== [批次5-S5] 单票&均方向化（设计 spec §5.4）=====
@@ -1470,7 +1489,9 @@ public class AmoebaPLService
         List<FinAmoebaPLItem> plItems,
         List<FinAmoebaPLItem> indicatorItems,
         List<FinAmoebaPLItem> allItems,
-        List<string> warnings)
+        List<string> warnings,
+        long scopedDeliver,
+        long fullDeliver)
     {
         var commonLeaves = plItems.Where(IsCommonCostLeaf).ToList();
         if (commonLeaves.Count == 0) return;
@@ -1487,9 +1508,11 @@ public class AmoebaPLService
         foreach (var leaf in commonLeaves)
             if (fullMatched.TryGetValue(leaf.FID, out var t)) fullTotals[leaf.FID] = t;
 
-        var (sendId, deliverId) = ResolveVolumeIndicatorIds(allItems);
-        var scopeVol = ComputeVolumeBasis(scopedPoints, scopedMatched, sendId, deliverId);
-        var fullVol = ComputeVolumeBasis(fullPoints, fullMatched, sendId, deliverId);
+        // deliver 件量改由调用方注入（scopedDeliver/fullDeliver 来自 AggregateDeliverVolume / STG申通派件日明细）；
+        // deliverId 不再用于取数（旧逻辑从 matched 取派件票量 indicator 恒为 0），ResolveVolumeIndicatorIds 仅取 sendId。
+        var (sendId, _) = ResolveVolumeIndicatorIds(allItems);
+        var scopeVol = ComputeVolumeBasis(scopedPoints, scopedMatched, sendId, scopedDeliver);
+        var fullVol = ComputeVolumeBasis(fullPoints, fullMatched, sendId, fullDeliver);
 
         var alloc = _allocEngine.Allocate(commonLeaves, fullTotals, scopeVol, fullVol, out var w);
         warnings.AddRange(w);
@@ -2170,6 +2193,38 @@ public class AmoebaPLService
                 AuxValues = auxValues.Count > 0 ? auxValues : null
             };
         }).ToList();
+    }
+
+    /// <summary>
+    /// 从 STG申通派件日明细 聚合 deliver（派件）件量（设计 spec 派件量接入 §B1）。平行 AggregateBillingRevenue：
+    /// 参数化 SQL、半开区间 [起, 末日+1)、按组织(不按账套，STG 按组织隔离)；
+    /// 过滤列用系统列 [F归属网点编号]（OutletResolver 规范化，与 billing dp.SiteCode / scope.Outlets 同源）。
+    /// 取数列 [F基础派费收费件量] = 派件量。原始 SQL，InMemory 不可测，靠 SQL Server 冒烟覆盖。
+    /// SUM 在无数据/全 NULL 时返回 NULL，用 ISNULL 包装为 0 避免 SqlNullValueException。
+    /// v1 仅按 scope.Outlets（网点）裁；Direction/Projects 维度不下推（见 spec 派件量接入 §风险：方向子报表 deliver 基数口径 v1 未定）。
+    /// </summary>
+    private async Task<long> AggregateDeliverVolume(
+        DateTime startDate, DateTime endDate, long orgId, AmoebaReportScope? scope)
+    {
+        var outlets = scope?.Outlets?.Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+
+        var sql = @"SELECT ISNULL(SUM([F基础派费收费件量]), 0) AS [Value]
+                    FROM [STG申通派件日明细]
+                    WHERE [F结算日期] >= {0} AND [F结算日期] < {1}
+                        AND [FOrgId] = {2} AND [FIsRevoked] = 0";
+        // 半开区间 [起, 末日+1)：与 AggregateBillingRevenue / AggregateVoucherData 口径一致
+        var parameters = new List<object> { startDate, endDate.AddDays(1), orgId };
+
+        if (outlets is { Count: > 0 })
+        {
+            var inClause = string.Join(",", outlets.Select((_, i) => $"{{{i + 3}}}"));
+            sql += $" AND [F归属网点编号] IN ({inClause})";
+            parameters.AddRange(outlets.Cast<object>());
+        }
+
+        return await _dbContext.Database
+            .SqlQueryRaw<long>(sql, parameters.ToArray())
+            .FirstAsync();
     }
 
     /// <summary>

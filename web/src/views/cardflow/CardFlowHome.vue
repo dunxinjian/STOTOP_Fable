@@ -145,6 +145,7 @@ const stagingStatsMap = ref<Record<string, StagingStat>>({
   'STG极兔总部交易明细': { targetTable: 'STG极兔总部交易明细', total: 0, pending: 0, processed: 0, failed: 0 },
   'STG申通总部交易明细': { targetTable: 'STG申通总部交易明细', total: 0, pending: 0, processed: 0, failed: 0 },
   'STG韵达总部交易明细': { targetTable: 'STG韵达总部交易明细', total: 0, pending: 0, processed: 0, failed: 0 },
+  'STG申通派件日明细': { targetTable: 'STG申通派件日明细', total: 0, pending: 0, processed: 0, failed: 0 },
 })
 
 const totalPending = computed(() =>
@@ -321,7 +322,7 @@ async function loadData() {
     }
   } catch { /* 静默 */ }
 
-  for (const targetTable of ['STG极兔总部交易明细', 'STG申通总部交易明细', 'STG韵达总部交易明细']) {
+  for (const targetTable of ['STG极兔总部交易明细', 'STG申通总部交易明细', 'STG韵达总部交易明细', 'STG申通派件日明细']) {
     try {
       const res = await getStagingStats(encodeURIComponent(targetTable))
       const d = res.data ?? res

@@ -48,9 +48,11 @@ public class StagingRevokeHandler : IDataScopeRevokeHandler
         result.ExpenseCount = await RevokeTableAsync<StgExpenseRecord>(dataScopeId, "STG费用支出记录", errors);
         result.OutboundCount = await RevokeTableAsync<StgShentongOutbound>(dataScopeId, "STG申通出港运单数据", errors);
         result.DynamicCount = await RevokeTableAsync<StgDynamicRecord>(dataScopeId, "STG通用记录", errors);
+        result.DeliveryCount = await RevokeTableAsync<StgShentongDeliveryDaily>(
+            dataScopeId, "STG申通派件日明细", errors);  // 对派件恒 0 行(FDataScopeId 恒 NULL)；真正撤销走 F批次ID 物理删除
 
         result.TotalAffected = result.JtCount + result.StCount + result.YdCount
-            + result.ExpenseCount + result.OutboundCount + result.DynamicCount;
+            + result.ExpenseCount + result.OutboundCount + result.DynamicCount + result.DeliveryCount;
         result.Errors = errors;
 
         // 记录撤销日志
@@ -75,10 +77,10 @@ public class StagingRevokeHandler : IDataScopeRevokeHandler
 
         _logger.LogInformation(
             "StagingRevokeHandler: DataScopeId={DataScopeId} 撤销完成，" +
-            "总影响{Total}行（极兔{Jt}、申通{St}、韵达{Yd}、费用{Expense}、出港{Outbound}、通用{Dynamic}），失败{Errors}项",
+            "总影响{Total}行（极兔{Jt}、申通{St}、韵达{Yd}、费用{Expense}、出港{Outbound}、通用{Dynamic}、派件{Delivery}），失败{Errors}项",
             dataScopeId, result.TotalAffected,
             result.JtCount, result.StCount, result.YdCount, result.ExpenseCount, result.OutboundCount, result.DynamicCount,
-            errors.Count);
+            result.DeliveryCount, errors.Count);
 
         return result;
     }
@@ -122,5 +124,6 @@ public class StagingRevokeResult
     public int ExpenseCount { get; set; }
     public int OutboundCount { get; set; }
     public int DynamicCount { get; set; }
+    public int DeliveryCount { get; set; }
     public List<string> Errors { get; set; } = new();
 }
