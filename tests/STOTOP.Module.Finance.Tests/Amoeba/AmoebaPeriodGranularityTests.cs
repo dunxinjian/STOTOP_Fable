@@ -119,22 +119,46 @@ public class AmoebaPeriodGranularityTests
         Assert.Equal(expected, AmoebaPLService.IsLedgerGranularity(g));
     }
 
-    // C1 互斥选源（设计 §5.1）：billing 两类粒度共享；台账粒度用 voucher+depreciation 不注入 estimate；
-    // 估算粒度用 estimate 不注入 voucher/depreciation。
+    // C1 互斥选源（设计 §5.1 + 当月例外）：billing 两类粒度共享；台账粒度(月/季/年)恒用 voucher+depreciation，
+    // 仅当期间**未结**(当月/未来)才叠加 estimate(账期未结、凭证不全的临时填充)，已结过往期间不取 estimate；
+    // 估算粒度(日/周)恒用 estimate 不取 voucher/depreciation。
     [Theory]
-    [InlineData("month", true, true, true, false)]
-    [InlineData("quarter", true, true, true, false)]
-    [InlineData("year", true, true, true, false)]
-    [InlineData("day", true, false, false, true)]
-    [InlineData("week", true, false, false, true)]
-    [InlineData(null, true, true, true, false)]   // 默认 month
-    public void SelectSources_applies_C1_mutual_exclusion(
-        string? granularity, bool billing, bool voucher, bool depreciation, bool estimate)
+    // 台账粒度：未结(periodClosed=false)→含估值；已结(true)→仅台账
+    [InlineData("month", false, true, true, true, true)]
+    [InlineData("month", true, true, true, true, false)]
+    [InlineData("quarter", false, true, true, true, true)]
+    [InlineData("quarter", true, true, true, true, false)]
+    [InlineData("year", false, true, true, true, true)]
+    [InlineData("year", true, true, true, true, false)]
+    [InlineData(null, false, true, true, true, true)]    // 默认 month，未结
+    [InlineData(null, true, true, true, true, false)]    // 默认 month，已结
+    // 估算粒度：estimate 恒取，periodClosed 不影响
+    [InlineData("day", false, true, false, false, true)]
+    [InlineData("day", true, true, false, false, true)]
+    [InlineData("week", false, true, false, false, true)]
+    [InlineData("week", true, true, false, false, true)]
+    public void SelectSources_applies_C1_with_current_period_estimate(
+        string? granularity, bool periodClosed, bool billing, bool voucher, bool depreciation, bool estimate)
     {
-        var src = AmoebaPLService.SelectSources(granularity);
+        var src = AmoebaPLService.SelectSources(granularity, periodClosed);
         Assert.Equal(billing, src.Billing);
         Assert.Equal(voucher, src.Voucher);
         Assert.Equal(depreciation, src.Depreciation);
         Assert.Equal(estimate, src.Estimate);
+    }
+
+    [Theory]
+    [InlineData("202602", "month", "2026-03-15", true)]    // 上月已结
+    [InlineData("202603", "month", "2026-03-15", false)]   // 当月未结
+    [InlineData("202604", "month", "2026-03-15", false)]   // 未来未结
+    [InlineData("202603", "month", "2026-03-31", false)]   // 当月最后一天仍未结
+    [InlineData("202603", "month", "2026-04-01", true)]    // 次月起当月已结
+    [InlineData("20260314", "day", "2026-03-15", true)]    // 昨日已结
+    [InlineData("20260315", "day", "2026-03-15", false)]   // 当日未结
+    [InlineData("2026Q1", "quarter", "2026-03-15", false)] // 当季未结
+    [InlineData("2026Q1", "quarter", "2026-04-01", true)]  // 次季起已结
+    public void IsPeriodClosed_true_when_period_fully_elapsed(string period, string granularity, string asOf, bool expected)
+    {
+        Assert.Equal(expected, AmoebaPLService.IsPeriodClosed(period, granularity, DateTime.Parse(asOf)));
     }
 }

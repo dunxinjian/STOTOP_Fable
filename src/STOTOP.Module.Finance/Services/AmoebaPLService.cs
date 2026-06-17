@@ -625,15 +625,20 @@ public class AmoebaPLService
     internal static bool IsLedgerGranularity(string? granularity) =>
         NormalizeGranularity(granularity) is "month" or "quarter" or "year";
 
+    /// <summary>期间是否已结(完全过去)：末日 &lt; asOf 当日。已结台账期用凭证、未结(当月/未来)叠加估值。</summary>
+    internal static bool IsPeriodClosed(string period, string granularity, DateTime asOf)
+        => PeriodToDateRange(period, granularity).End < asOf.Date;
+
     /// <summary>
-    /// 按粒度选数据源（设计 §5.1 裁决C1 互斥选源）：
-    /// billing 两类粒度共享(按日期可裁)；台账粒度(月/季/年)用 voucher+depreciation(本期发生额/折旧)、
-    /// 不注入 estimate；估算粒度(日/周)用 estimate(opreport)、无 voucher(按月过账)/无 depreciation(按月计提)。
+    /// 按粒度选数据源（设计 §5.1 裁决C1 + 当月例外）：
+    /// billing 两类粒度共享(按日期可裁)；台账粒度(月/季/年)恒用 voucher+depreciation(本期发生额/折旧)，
+    /// 仅当期间**未结**(periodClosed=false，当月/未来：账期未结、凭证不全)才叠加 estimate 作临时填充，
+    /// 已结过往期间不取 estimate(改用凭证实时聚合)；估算粒度(日/周)恒用 estimate、无 voucher/depreciation。
     /// </summary>
-    internal static (bool Billing, bool Voucher, bool Depreciation, bool Estimate) SelectSources(string? granularity)
+    internal static (bool Billing, bool Voucher, bool Depreciation, bool Estimate) SelectSources(string? granularity, bool periodClosed)
     {
         bool ledger = IsLedgerGranularity(granularity);
-        return (Billing: true, Voucher: ledger, Depreciation: ledger, Estimate: !ledger);
+        return (Billing: true, Voucher: ledger, Depreciation: ledger, Estimate: ledger ? !periodClosed : true);
     }
 
     /// <summary>期间键 = 粒度前缀 + 期间（设计 §5.3）：D:/W:/M:/Q:/Y:。存量(全月)迁移回填 'M:'+期间。</summary>
@@ -2318,17 +2323,18 @@ public class AmoebaPLService
     }
 
     /// <summary>
-    /// [批次5-S3] 按粒度构建一期的数据点集合（设计 §5.1 裁决C1 互斥选源）。
-    /// billing 两类粒度共享(按日期可裁)；台账(月/季/年)叠加 voucher+depreciation、不取 estimate；
-    /// 估算(日/周)叠加 estimate(opreport，按期间键取)、不取 voucher(按月过账)/depreciation(按月计提)。
-    /// 两源产出同形 DataPoint(带 outlet/business_direction/project)，下游 Match/scope/分摊完全复用。
+    /// [批次5-S3] 按粒度构建一期的数据点集合（设计 §5.1 裁决C1 + 当月例外）。
+    /// billing 两类粒度共享(按日期可裁)；台账(月/季/年)叠加 voucher+depreciation，仅当期间未结(当月/未来)
+    /// 再叠加 estimate 临时填充、已结过往期改用凭证；估算(日/周)叠加 estimate(opreport，按期间键取)、
+    /// 不取 voucher(按月过账)/depreciation(按月计提)。两源产出同形 DataPoint，下游 Match/scope/分摊复用。
     /// </summary>
     private async Task<List<DataPoint>> BuildPeriodDataPoints(
         string period, string granularity, long orgId, long accountSetId, long templateId,
         List<FinAmoebaPLItem> plItems, List<FinAmoebaMappingRule> mappingRules)
     {
         var (startDate, endDate) = PeriodToDateRange(period, granularity);
-        var src = SelectSources(granularity);
+        // 当月例外：已结台账期(末日<今天)用凭证实时聚合，未结(当月/未来)叠加估值临时填充
+        var src = SelectSources(granularity, periodClosed: endDate < DateTime.Today);
         var all = new List<DataPoint>();
         if (src.Billing)
             all.AddRange(await AggregateBillingRevenue(startDate, endDate, orgId, plItems, mappingRules, null, null));
@@ -2344,7 +2350,7 @@ public class AmoebaPLService
     /// <summary>
     /// 暂估数据聚合：将 FinAmoebaManualData 中 FDataType=estimate 的记录转为 DataPoint。
     /// 暂估数据不绑定 PLItem，通过科目编码 + 辅助核算与凭证数据共享独占匹配管道。
-    /// [批次5-S3] 按期间键(FPeriodKey)过滤——支持日/周等多粒度估值；月报已不取估值(C1 互斥)。
+    /// [批次5-S3] 按期间键(FPeriodKey)过滤——支持多粒度估值；当月月报取 'M:'+期间 的估值，已结月报不取(C1)。
     /// </summary>
     private async Task<List<DataPoint>> AggregateEstimateData(
         long templateId, long orgId, string periodKey)
