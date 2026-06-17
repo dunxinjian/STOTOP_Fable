@@ -189,14 +189,27 @@ const COLUMN_CONFIGS: Record<string, ColumnDef[]> = {
     { key: 'F处理状态', label: '状态', width: 90 },
     { key: 'F创建时间', label: '创建时间', width: 160 },
   ],
+  'STG申通派件日明细': [
+    { key: 'F结算日期', label: '结算日期', width: 110 },
+    { key: 'F网点编号', label: '网点编号', width: 100 },
+    { key: 'F网点名称', label: '网点名称', width: 130 },
+    { key: 'F承包区编号', label: '承包区编号', width: 110 },
+    { key: 'F业务员编码', label: '业务员编码', width: 110 },
+    { key: 'F业务员名称', label: '业务员名称', width: 110 },
+    { key: 'F基础派费收费件量', label: '派件量', width: 100, align: 'right' },
+    { key: 'F基础派费收费金额', label: '基础派费金额', width: 120, align: 'right' },
+    { key: 'F处理状态', label: '状态', width: 90 },
+    { key: 'F创建时间', label: '创建时间', width: 160 },
+  ],
 }
 
-const META_FIELDS = new Set(['FID', 'F创建时间', 'F更新时间', 'F处理状态', 'F批次ID', 'F关联凭证ID', 'F错误信息'])
+const META_FIELDS = new Set(['FID', 'F创建时间', 'F更新时间', 'F处理状态', 'F批次ID', 'F关联凭证ID', 'F错误信息', 'FOrgId', 'F账套ID', 'F归属网点编号', 'FDataScopeId', 'FSourceWorkItemId', 'FIsRevoked', 'F流水号', 'F原始行号', 'F其他列数据', 'F业务主键'])
 
 const tabOptions = [
   { label: '极兔', value: 'jt' },
   { label: '申通', value: 'st' },
   { label: '韵达', value: 'yd' },
+  { label: '派件', value: 'STG申通派件日明细' },
 ]
 
 // ==================== 状态 ====================

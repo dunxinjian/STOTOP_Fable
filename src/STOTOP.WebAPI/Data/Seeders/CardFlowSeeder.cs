@@ -42,6 +42,7 @@ public static class CardFlowSeeder
             new(20, "流程节点重复键兜底清理（循环收敛） (2026-06-12)", MigrateV20),
             new(21, "CF卡片流程新增 F是否模板 列 (2026-06-16)", MigrateV21),
             new(22, "费用报销 FOrgId=0 全局模板种子 (2026-06-16)", MigrateV22),
+            new(23, "创建 STG申通派件日明细 表 + 派件导入 rule/流程三件套 (2026-06-17)", MigrateV23),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1467,6 +1468,106 @@ END
             VALUES (5032, 2263, N'tpl_expense_finance', 2, N'财务审批', N'human', N'card', N'single', NULL, NULL, N'fixedUsers', N'{""users"":[{""userId"":1,""userName"":""管理员""}],""fallback"":{""mode"":""fixedUsers"",""users"":[{""userId"":1,""userName"":""管理员""}]}}');
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
+        ");
+    }
+
+    private static void MigrateV23(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // 1. 建表 STG申通派件日明细（STG 前缀表 EF 不自动建，必须显式 CREATE）
+        //    列名/类型逐字对齐 A1 实体 StgShentongDeliveryDailyConfiguration；件量 INT、金额 DECIMAL(18,4)、F结算日期 DATE
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通派件日明细')
+        CREATE TABLE [STG申通派件日明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3006 columnMapping）
+            [F结算日期] DATE NULL,
+            [F网点编号] NVARCHAR(50) NULL,
+            [F网点名称] NVARCHAR(200) NULL,
+            [F承包区编号] NVARCHAR(50) NULL,
+            [F承包区名称] NVARCHAR(200) NULL,
+            [F业务员编码] NVARCHAR(50) NULL,
+            [F业务员名称] NVARCHAR(200) NULL,
+            [F基础派费收费件量] INT NULL,
+            [F基础派费收费金额] DECIMAL(18,4) NULL,
+            [F基础派费收费调整金额] DECIMAL(18,4) NULL,
+            [F正常派件退费收金额] DECIMAL(18,4) NULL,
+            [F周期性派费收金额] DECIMAL(18,4) NULL,
+            [F大货计重收费金额] DECIMAL(18,4) NULL,
+            [F违规重量罚款收件量] INT NULL,
+            [F违规重量罚款收金额] DECIMAL(18,4) NULL,
+            [F基础派费和时效拦截弃件付费件量合计] INT NULL,
+            [F基础派费和时效拦截弃件付费金额合计] DECIMAL(18,4) NULL,
+            [F综合KPI奖励派费件量] INT NULL,
+            [F综合KPI奖励派费金额] DECIMAL(18,4) NULL,
+            [F考核奖励派费金额] DECIMAL(18,4) NULL,
+            [F补贴派费付费金额] DECIMAL(18,4) NULL,
+            [F周期性派费付费金额] DECIMAL(18,4) NULL,
+            [F大货计重付费金额] DECIMAL(18,4) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通派件日明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通派件日明细'))
+        CREATE INDEX [IX_STG申通派件日明细_F批次ID] ON [STG申通派件日明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通派件日明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通派件日明细'))
+        CREATE INDEX [IX_STG申通派件日明细_数据作用域] ON [STG申通派件日明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通派件日明细_去重' AND object_id = OBJECT_ID(N'STG申通派件日明细'))
+        CREATE UNIQUE INDEX [UX_STG申通派件日明细_去重] ON [STG申通派件日明细]([FOrgId],[F结算日期],[F网点编号],[F业务员编码]) WHERE [FIsRevoked] = 0 AND [F网点编号] IS NOT NULL AND [F业务员编码] IS NOT NULL;
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通派件日明细_取数' AND object_id = OBJECT_ID(N'STG申通派件日明细'))
+        CREATE INDEX [IX_STG申通派件日明细_取数] ON [STG申通派件日明细]([FOrgId],[F结算日期],[F归属网点编号]) INCLUDE ([F基础派费收费件量]);
+        ");
+
+        // 2. 导入规则 CF自动插件_规则（FID=3006；F组织ID 占位 192，上线前确认派件文件实际上传组织）
+        //    headerRow=1 / dataStartRow=4（前3行重复表头）；crossBatchDedupEnabled=false（去重方案B靠唯一索引）；不配 dateFields / serialNumberRule
+        //    ⚠ excelColumn 须按真实派件文件 row1 表头逐字核对（当前按 spec §A1 标准名）
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3006)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3006, 192, N'excelInput', N'申通派件日明细导入规则',
+        N'{""targetTable"":""STG申通派件日明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":4,""columnIdentifier"":""结算日期,网点编号,业务员编码,基础派费收费件量"",""fullColumnIdentifier"":""结算日期,网点编号,网点名称,承包区编号,业务员编码,业务员名称,基础派费收费件量,基础派费收费金额"",""columnMapping"":[{""excelColumn"":""结算日期"",""dbColumn"":""F结算日期""},{""excelColumn"":""网点编号"",""dbColumn"":""F网点编号""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""承包区编号"",""dbColumn"":""F承包区编号""},{""excelColumn"":""承包区名称"",""dbColumn"":""F承包区名称""},{""excelColumn"":""业务员编码"",""dbColumn"":""F业务员编码""},{""excelColumn"":""业务员名称"",""dbColumn"":""F业务员名称""},{""excelColumn"":""基础派费收费件量"",""dbColumn"":""F基础派费收费件量""},{""excelColumn"":""基础派费收费金额"",""dbColumn"":""F基础派费收费金额""},{""excelColumn"":""基础派费收费调整金额"",""dbColumn"":""F基础派费收费调整金额""},{""excelColumn"":""正常派件退费收金额"",""dbColumn"":""F正常派件退费收金额""},{""excelColumn"":""周期性派费收金额"",""dbColumn"":""F周期性派费收金额""},{""excelColumn"":""大货计重收费金额"",""dbColumn"":""F大货计重收费金额""},{""excelColumn"":""违规重量罚款收件量"",""dbColumn"":""F违规重量罚款收件量""},{""excelColumn"":""违规重量罚款收金额"",""dbColumn"":""F违规重量罚款收金额""},{""excelColumn"":""基础派费和时效拦截弃件付费件量合计"",""dbColumn"":""F基础派费和时效拦截弃件付费件量合计""},{""excelColumn"":""基础派费和时效拦截弃件付费金额合计"",""dbColumn"":""F基础派费和时效拦截弃件付费金额合计""},{""excelColumn"":""综合KPI奖励派费件量"",""dbColumn"":""F综合KPI奖励派费件量""},{""excelColumn"":""综合KPI奖励派费金额"",""dbColumn"":""F综合KPI奖励派费金额""},{""excelColumn"":""考核奖励派费金额"",""dbColumn"":""F考核奖励派费金额""},{""excelColumn"":""补贴派费付费金额"",""dbColumn"":""F补贴派费付费金额""},{""excelColumn"":""周期性派费付费金额"",""dbColumn"":""F周期性派费付费金额""},{""excelColumn"":""大货计重付费金额"",""dbColumn"":""F大货计重付费金额""}],""decimalFields"":[""基础派费收费金额"",""基础派费收费调整金额"",""正常派件退费收金额"",""周期性派费收金额"",""大货计重收费金额"",""违规重量罚款收金额"",""基础派费和时效拦截弃件付费金额合计"",""综合KPI奖励派费金额"",""考核奖励派费金额"",""补贴派费付费金额"",""周期性派费付费金额"",""大货计重付费金额""],""keyFields"":[""结算日期"",""网点编号"",""业务员编码""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""transformRules"":[],""crossBatchDedupEnabled"":false,""batchSplit"":{""enabled"":false}}',
+        1, N'申通派件日明细Excel导入配置（dataStartRow=4 前3行重复表头；去重方案B靠唯一索引，重复导入整批失败）', REPLACE(NEWID(),'-',''), GETDATE());
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // 3. 流程三件套（CF卡片流程=2264 / CF流程版本=2265 / CF流程节点=5033；F组织ID 占位 192，上线前确认派件文件实际上传组织）
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF卡片流程] ON;
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2264)
+        INSERT INTO [CF卡片流程] ([FID],[F乐观锁],[F创建人ID],[F创建时间],[F可发起角色JSON],[F描述],[F更新时间],[F标题模板],[F流程名称],[F流程组ID],[F流程编码],[F状态],[F组织ID],[F编号模板],[F触发配置JSON],[F账套ID],[F匹配规则],[F是否模板])
+        VALUES (2264, NULL, 1, GETDATE(), NULL, N'申通派件日明细导入：Excel导入 → STG申通派件日明细（按件量分摊取数 deliver）', GETDATE(), NULL, N'申通派件日明细导入', NULL, N'PL_ST_DELIVERY_DAILY', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""*派件*""}', 0);
+        SET IDENTITY_INSERT [CF卡片流程] OFF;
+
+        SET IDENTITY_INSERT [CF流程版本] ON;
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2265)
+        INSERT INTO [CF流程版本] ([FID],[F创建人ID],[F创建时间],[F卡片SchemaJSON],[F发布时间],[F明细SchemaJSON],[F是否当前版本],[F流程定义ID],[F流程设置JSON],[F版本号],[F状态])
+        VALUES (2265, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2264, NULL, 1, N'published');
+        SET IDENTITY_INSERT [CF流程版本] OFF;
+
+        SET IDENTITY_INSERT [CF流程节点] ON;
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5033)
+        INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+        VALUES (5033, 2265, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3006);
+        SET IDENTITY_INSERT [CF流程节点] OFF;
         ");
     }
 }
