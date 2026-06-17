@@ -153,7 +153,7 @@ function formatFieldValue(component: CardComponentRuntime): string {
   if (value === null || value === undefined || value === '') return emptyText
 
   if (component.masked || component.access === 'masked') {
-    return maskedValue(String(value), component.props?.maskPattern)
+    return String(value)
   }
 
   if (isAttachmentField(component)) {

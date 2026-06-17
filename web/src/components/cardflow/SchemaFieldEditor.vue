@@ -456,6 +456,20 @@ defineExpose({ fields })
           <span class="sfe-fld__label sfe-fld__label--inline">只读</span>
           <a-switch v-model:checked="draft.readonly" />
         </div>
+        <div class="sfe-fld sfe-fld--row">
+          <span class="sfe-fld__label sfe-fld__label--inline">敏感字段</span>
+          <a-switch v-model:checked="draft.sensitive" />
+        </div>
+        <div v-if="draft.sensitive" class="sfe-fld">
+          <label class="sfe-fld__label">脱敏样式</label>
+          <a-select v-model:value="draft.maskPattern" allow-clear placeholder="通用（前2后2）" style="width: 100%">
+            <a-select-option value="phone">手机号（138****8000）</a-select-option>
+            <a-select-option value="idCard">身份证（1101**********5678）</a-select-option>
+            <a-select-option value="bankCard">银行卡（**** **** **** 0123）</a-select-option>
+            <a-select-option value="email">邮箱（z***@corp.com）</a-select-option>
+            <a-select-option value="name">姓名（张**）</a-select-option>
+          </a-select>
+        </div>
 
         <div class="sfe-fld">
           <label class="sfe-fld__label">默认值</label>

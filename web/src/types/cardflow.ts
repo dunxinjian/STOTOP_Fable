@@ -891,6 +891,8 @@ export interface SchemaFieldDefinition {
   type: SchemaFieldType
   required?: boolean
   readonly?: boolean
+  sensitive?: boolean
+  maskPattern?: string | null
   defaultValue?: any
   options?: string[]            // enum 类型的选项
   placeholder?: string
