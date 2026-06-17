@@ -19,37 +19,51 @@ public static class TestSqlConnection
 
     private static string? _cached;
     private static bool _resolved;
+    private static readonly object _gate = new();
 
     /// <summary>
     /// 返回可用连接串；无法获取时返回 null（集成测试据此 Skip）。
+    /// 用锁串行化解析，并在 _cached 填好后才置 _resolved=true——否则多个集成测试类并行时，
+    /// 先进者过早置 _resolved 而后进者读到尚未填充的 null（曾致 B18 多 sheet 集成测试误 Skip）。
     /// </summary>
     public static string? GetConnectionString()
     {
         if (_resolved) return _cached;
-        _resolved = true;
 
-        // 1. 环境变量优先
-        var env = Environment.GetEnvironmentVariable("STOTOP_TEST_CONNECTION");
-        if (!string.IsNullOrWhiteSpace(env))
+        lock (_gate)
         {
-            _cached = env;
+            if (_resolved) return _cached;
+
+            string? result = null;
+
+            // 1. 环境变量优先
+            var env = Environment.GetEnvironmentVariable("STOTOP_TEST_CONNECTION");
+            if (!string.IsNullOrWhiteSpace(env))
+            {
+                result = env;
+            }
+            else
+            {
+                // 2. 从主树 db-connections.json 现场解密系统连接
+                try
+                {
+                    if (File.Exists(MainTreeConnFile))
+                    {
+                        EnsureSystemConnectionFile();
+                        // 复制到 BaseDirectory 后，DbConnectionsHelper 即可解析系统连接串
+                        result = DbConnectionsHelper.GetSystemConnectionString();
+                    }
+                }
+                catch
+                {
+                    result = null;
+                }
+            }
+
+            _cached = result;
+            _resolved = true;
             return _cached;
         }
-
-        // 2. 从主树 db-connections.json 现场解密系统连接
-        try
-        {
-            if (!File.Exists(MainTreeConnFile)) return null;
-            EnsureSystemConnectionFile();
-            // 复制到 BaseDirectory 后，DbConnectionsHelper 即可解析系统连接串
-            _cached = DbConnectionsHelper.GetSystemConnectionString();
-        }
-        catch
-        {
-            _cached = null;
-        }
-
-        return _cached;
     }
 
     /// <summary>是否具备连接能力（可达性由实际打开连接验证）。</summary>
