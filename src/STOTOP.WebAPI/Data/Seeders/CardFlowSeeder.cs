@@ -42,7 +42,7 @@ public static class CardFlowSeeder
             new(20, "流程节点重复键兜底清理（循环收敛） (2026-06-12)", MigrateV20),
             new(21, "CF卡片流程新增 F是否模板 列 (2026-06-16)", MigrateV21),
             new(22, "费用报销 FOrgId=0 全局模板种子 (2026-06-16)", MigrateV22),
-            new(23, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17)", MigrateV23),
+            new(50, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17，原 V23，因 master 的派件量 V23 占用而改 50)", MigrateV50),
             new(24, "网点质控：接入 STG申通_物流及时准确明细（建表 + 规则3102 + 流程2302 + 首节点5102）(2026-06-17)", MigrateV24),
             new(25, "网点质控：接入 STG申通_揽收分析明细（建表 + 规则3103 + 流程2303 + 首节点5103）(2026-06-17)", MigrateV25),
             new(26, "网点质控：接入 STG申通_未出仓监控明细（建表 + 规则3104 + 流程2304 + 首节点5104）(2026-06-17)", MigrateV26),
@@ -1497,7 +1497,7 @@ END
         ");
     }
 
-    private static void MigrateV23(STOTOPDbContext ctx)
+    private static void MigrateV50(STOTOPDbContext ctx)
     {
         if (!SeederHelper.IsSqlServer(ctx)) return;
 
