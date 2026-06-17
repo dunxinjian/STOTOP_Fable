@@ -82,7 +82,7 @@
             </a-card>
           </a-col>
         </a-row>
-        <a-empty v-else description="暂无目标数据" />
+        <EmptyState v-else title="暂无目标数据" />
       </template>
 
       <!-- 列表视图 -->
@@ -249,7 +249,7 @@ function levelLabel(l: string) { return levelLabels[l] ?? l }
 function levelColor(l: string) { return levelColors[l] ?? 'default' }
 function statusLabel(s: number) { return statusLabels[s] ?? `${s}` }
 function statusColor(s: number) { return statusColors[s] ?? 'default' }
-function progressColor(p: number) { return p >= 80 ? '#52c41a' : p >= 40 ? '#1890ff' : '#faad14' }
+function progressColor(p: number) { return p >= 80 ? 'var(--color-success)' : p >= 40 ? 'var(--color-info)' : 'var(--color-warning)' }
 function formatDate(d: string) { return d ? d.substring(0, 10) : '' }
 
 function flattenTree(nodes: GoalTreeDto[]): GoalTreeDto[] {

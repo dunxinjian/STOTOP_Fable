@@ -50,9 +50,9 @@ function getTimelineColor(progress: number) {
 }
 
 function getProgressColor(progress: number) {
-  if (progress >= 100) return '#52c41a'
-  if (progress >= 50) return '#1890ff'
-  return '#faad14'
+  if (progress >= 100) return 'var(--color-success)'
+  if (progress >= 50) return 'var(--color-info)'
+  return 'var(--color-warning)'
 }
 
 function formatTime(time: string) {

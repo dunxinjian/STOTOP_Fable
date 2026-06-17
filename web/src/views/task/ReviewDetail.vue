@@ -426,31 +426,31 @@ onMounted(loadDetail)
   }
 
   &--continue {
-    background: #f6ffed;
+    background: var(--color-success-light);
     border: 1px solid #b7eb8f;
 
-    .quadrant__header { color: #389e0d; }
+    .quadrant__header { color: var(--color-success-text); }
   }
 
   &--stop {
-    background: #fff2f0;
+    background: var(--color-danger-light);
     border: 1px solid #ffccc7;
 
-    .quadrant__header { color: #cf1322; }
+    .quadrant__header { color: var(--color-danger); }
   }
 
   &--start {
-    background: #e6f7ff;
-    border: 1px solid #91d5ff;
+    background: var(--color-info-light);
+    border: 1px solid var(--color-info);
 
-    .quadrant__header { color: #096dd9; }
+    .quadrant__header { color: var(--color-info); }
   }
 
   &--ask {
-    background: #fffbe6;
+    background: var(--color-warning-light);
     border: 1px solid #ffe58f;
 
-    .quadrant__header { color: #d48806; }
+    .quadrant__header { color: var(--color-warning); }
   }
 
   :deep(.ant-input) {

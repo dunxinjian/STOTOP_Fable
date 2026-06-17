@@ -58,7 +58,7 @@
     <!-- 组织预检警告提示 -->
     <div v-if="orgPreviewWarnings.length > 0" class="org-preview-bar">
       <div class="org-preview-warnings">
-        <WarningOutlined style="color: #ff4d4f; margin-right: 6px" />
+        <WarningOutlined style="color: var(--color-danger); margin-right: 6px" />
         <span v-for="(w, idx) in orgPreviewWarnings" :key="idx" class="warning-text">{{ w }}</span>
       </div>
     </div>
@@ -99,7 +99,7 @@
             :class="{ stale: (kc.waitHours ?? 0) >= 4 }"
             >
             <div class="kanban-card-name">
-              <FileExcelOutlined style="color: #52c41a; margin-right: 4px" />
+              <FileExcelOutlined style="color: var(--color-success); margin-right: 4px" />
               {{ kc.fileName }}
             </div>
             <div class="kanban-card-meta">
@@ -170,7 +170,7 @@
           >
             <div class="recycle-item-info">
               <div class="recycle-item-name">
-                <FileExcelOutlined style="color: #52c41a; margin-right: 6px" />
+                <FileExcelOutlined style="color: var(--color-success); margin-right: 6px" />
                 <span class="recycle-batch-id">#{{ item.id }}</span>
                 {{ item.fileName }}
               </div>
@@ -361,9 +361,9 @@ function formatTime(timeStr: string): string {
 const kanbanColumns = computed(() => {
   const all = filteredBatches.value
   return [
-    { title: '待分配', bg: '#fffbe6', cards: all.filter(b => !b.assigneeName || b.assigneeName === '系统自动') },
-    { title: '处理中', bg: '#e6f4ff', cards: all.filter(b => b.assigneeName && b.assigneeName !== '系统自动' && b.status !== 'success') },
-    { title: '已完成', bg: '#f6ffed', cards: all.filter(b => b.status === 'success') },
+    { title: '待分配', bg: 'var(--color-warning-light)', cards: all.filter(b => !b.assigneeName || b.assigneeName === '系统自动') },
+    { title: '处理中', bg: 'var(--color-info-light)', cards: all.filter(b => b.assigneeName && b.assigneeName !== '系统自动' && b.status !== 'success') },
+    { title: '已完成', bg: 'var(--color-success-light)', cards: all.filter(b => b.status === 'success') },
   ]
 })
 
@@ -592,7 +592,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   }
 
   &.stale {
-    border-left: 3px solid #ff4d4f;
+    border-left: 3px solid var(--color-danger);
   }
 }
 
@@ -641,17 +641,17 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   display: inline-block;
   flex-shrink: 0;
 
-  &.uploading, &.processing { background: #1677ff; animation: pulse 1.5s infinite; }
-  &.pending { background: #faad14; }
-  &.error { background: #ff4d4f; }
-  &.success { background: #52c41a; }
-  &.partial { background: #faad14; }
+  &.uploading, &.processing { background: var(--color-info); animation: pulse 1.5s infinite; }
+  &.pending { background: var(--color-warning); }
+  &.error { background: var(--color-danger); }
+  &.success { background: var(--color-success); }
+  &.partial { background: var(--color-warning); }
 }
 
 .wait-time {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.45);
-  &.warning { color: #ff4d4f; font-weight: 600; }
+  &.warning { color: var(--color-danger-text); font-weight: 600; }
 }
 
 // 分配弹窗
@@ -668,12 +668,12 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 }
 
 .toolbar-btn {
-  background: rgba(24, 144, 255, 0.08);
+  background: var(--color-primary-light);
   border: none;
-  color: #1890ff;
+  color: var(--color-primary);
   &:hover {
-    background: rgba(24, 144, 255, 0.15);
-    color: #096dd9;
+    background: var(--color-primary-border);
+    color: var(--color-primary-hover);
   }
 }
 
@@ -694,7 +694,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .org-preview-warnings {
   font-size: 13px;
-  color: #ff4d4f;
+  color: var(--color-danger-text);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -734,8 +734,8 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   &--deleting {
     opacity: 1;
     pointer-events: none;
-    background: #fff7e6;
-    border-left: 3px solid #fa8c16;
+    background: var(--color-warning-light);
+    border-left: 3px solid var(--color-warning);
   }
 }
 
@@ -763,7 +763,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 }
 
 .recycle-batch-id {
-  color: #1890ff;
+  color: var(--color-info);
   font-size: 13px;
   font-weight: 600;
   margin-right: 6px;
@@ -796,7 +796,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 }
 

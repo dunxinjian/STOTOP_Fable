@@ -207,7 +207,7 @@
           </a-col>
         </a-row>
       </template>
-      <a-empty v-else-if="!loading" description="任务不存在" />
+      <EmptyState v-else-if="!loading" title="任务不存在" />
     </a-spin>
 
     <!-- 编辑弹窗 -->
@@ -498,7 +498,7 @@ onMounted(() => {
 
   &__edit-icon {
     font-size: 14px;
-    color: #bfbfbf;
+    color: var(--text-disabled);
     opacity: 0;
     transition: opacity 0.2s;
   }
@@ -514,23 +514,23 @@ onMounted(() => {
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 12px;
-      color: #333;
+      color: var(--text-1);
     }
   }
 
   &__desc {
     font-size: 14px;
-    color: #595959;
+    color: var(--text-2);
     line-height: 1.8;
     white-space: pre-wrap;
     cursor: pointer;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     min-height: 60px;
     transition: background 0.2s;
 
     &:hover {
-      background: #fafafa;
+      background: var(--bg-muted);
     }
   }
 
@@ -552,7 +552,7 @@ onMounted(() => {
 
   &__sidebar-label {
     font-size: 13px;
-    color: #8c8c8c;
+    color: var(--text-3);
     margin-bottom: 6px;
   }
 
@@ -563,10 +563,10 @@ onMounted(() => {
 
   &__meta {
     padding: 12px;
-    background: #fafafa;
-    border-radius: 8px;
+    background: var(--bg-muted);
+    border-radius: var(--radius-lg);
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
 
     > div {
       margin-bottom: 6px;
@@ -577,7 +577,7 @@ onMounted(() => {
     }
 
     .label {
-      color: #8c8c8c;
+      color: var(--text-3);
     }
   }
 }

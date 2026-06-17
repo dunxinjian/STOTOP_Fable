@@ -97,7 +97,7 @@ const stageEntries = computed(() =>
             type="circle"
             :percent="completedRatio"
             :width="120"
-            :stroke-color="completedRatio === 100 ? '#52c41a' : '#1890ff'"
+            :stroke-color="completedRatio === 100 ? 'var(--color-success)' : 'var(--color-info)'"
           />
           <div class="cf-batch-progress__stats">
             <div class="cf-batch-progress__stat">
@@ -185,13 +185,13 @@ const stageEntries = computed(() =>
     font-weight: 600;
     color: #333;
 
-    &--ok { color: #52c41a; }
-    &--fail { color: #ff4d4f; }
+    &--ok { color: var(--color-success); }
+    &--fail { color: var(--color-danger); }
   }
 
   &__view-fail {
     margin-left: 12px;
-    color: #ff4d4f;
+    color: var(--color-danger);
     cursor: pointer;
     font-size: 13px;
   }

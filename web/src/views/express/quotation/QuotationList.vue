@@ -38,7 +38,7 @@
             </a>
           </template>
           <template v-if="column.dataIndex === 'shopCount'">
-            <span :style="{ color: record.shopCount > 0 ? '#52c41a' : '#ff4d4f', fontWeight: 600 }">
+            <span :style="{ color: record.shopCount > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }">
               {{ record.shopCount ?? 0 }}
             </span>
           </template>
@@ -208,7 +208,7 @@ onMounted(() => fetchList())
 @use '@/styles/variables.scss' as *;
 
 .plan-name-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;

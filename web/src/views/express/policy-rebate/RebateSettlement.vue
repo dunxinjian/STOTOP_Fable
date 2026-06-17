@@ -43,7 +43,7 @@
             ¥{{ (record.baseRebateAmount ?? 0).toFixed(2) }}
           </template>
           <template v-if="column.dataIndex === 'finalRebateAmount'">
-            <span style="font-weight: 600; color: #1890ff">¥{{ (record.finalRebateAmount ?? 0).toFixed(2) }}</span>
+            <span style="font-weight: 600; color: var(--color-info)">¥{{ (record.finalRebateAmount ?? 0).toFixed(2) }}</span>
           </template>
           <template v-if="column.dataIndex === 'status'">
             <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
@@ -90,16 +90,16 @@
             <a-tag :color="getStatusColor(detailData.status)">{{ getStatusText(detailData.status) }}</a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="基础返利">
-            <span style="color: #1890ff">¥{{ (detailData.baseRebateAmount ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-info)">¥{{ (detailData.baseRebateAmount ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="奖励金额">
-            <span style="color: #52c41a">+¥{{ (detailData.totalReward ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-success)">+¥{{ (detailData.totalReward ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="处罚金额">
-            <span style="color: #ff4d4f">-¥{{ (detailData.totalPenalty ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-danger)">-¥{{ (detailData.totalPenalty ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="最终返利">
-            <span style="font-weight: 600; font-size: 16px; color: #1890ff">¥{{ (detailData.finalRebateAmount ?? 0).toFixed(2) }}</span>
+            <span style="font-weight: 600; font-size: 16px; color: var(--color-info)">¥{{ (detailData.finalRebateAmount ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
         </a-descriptions>
         <h4>调整明细</h4>

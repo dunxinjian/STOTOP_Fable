@@ -221,14 +221,14 @@ watch(
 .mega-col-title {
   font-size: 13px;
   font-weight: 600;
-  color: #FF6700;
+  color: var(--color-primary);
   letter-spacing: 0.3px;
   padding: 4px 8px 10px;
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: linear-gradient(to right, rgba(255, 103, 0, 0.06), transparent);
+  background: linear-gradient(to right, var(--color-primary-light), transparent);
   border-radius: 4px;
   margin-left: -8px;
   margin-right: -8px;
@@ -259,14 +259,14 @@ watch(
   text-overflow: ellipsis;
 
   &:hover {
-    background: rgba(255, 103, 0, 0.06);
-    color: #FF6700;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
   }
 
   &.is-active {
-    color: #FF6700;
+    color: var(--color-primary);
     font-weight: 500;
-    background: rgba(255, 103, 0, 0.08);
+    background: var(--color-primary-light);
   }
 
   .mega-item-icon {

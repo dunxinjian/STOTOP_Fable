@@ -361,7 +361,7 @@ watch(() => props.modelValue, (val) => {
 
   :deep(.selected-row) {
     td {
-      background-color: #e6f4ff !important;
+      background-color: var(--color-primary-light) !important;
     }
   }
 
@@ -389,7 +389,7 @@ watch(() => props.modelValue, (val) => {
     .close-icon {
       cursor: pointer;
       color: #909399;
-      &:hover { color: #1677ff; }
+      &:hover { color: var(--color-primary); }
     }
   }
 
@@ -408,7 +408,7 @@ watch(() => props.modelValue, (val) => {
     color: #606266;
 
     strong {
-      color: #1677ff;
+      color: var(--color-info);
     }
   }
 

@@ -69,21 +69,21 @@
           <div v-else class="notification-dropdown__list">
             <div class="dropdown-item quality-alert" v-if="qualityOverdueCount > 0" @click="goToQualityExceptions">
               <div class="dropdown-item__content">
-                <div class="dropdown-item__title" style="color: #ff4d4f">
+                <div class="dropdown-item__title" style="color: var(--color-danger)">
                   <WarningOutlined style="margin-right: 6px" />已超时异常
                 </div>
                 <div class="dropdown-item__desc">{{ qualityOverdueCount }} 条异常已超时，请尽快处理</div>
               </div>
-              <a-badge :count="qualityOverdueCount" :number-style="{ backgroundColor: '#ff4d4f' }" />
+              <a-badge :count="qualityOverdueCount" :number-style="{ backgroundColor: 'var(--color-danger)' }" />
             </div>
             <div class="dropdown-item quality-alert" v-if="qualityRawPendingCount > 0" @click="goToQualityExceptions">
               <div class="dropdown-item__content">
-                <div class="dropdown-item__title" style="color: #faad14">
+                <div class="dropdown-item__title" style="color: var(--color-warning)">
                   <ClockCircleOutlined style="margin-right: 6px" />待处理异常
                 </div>
                 <div class="dropdown-item__desc">{{ qualityRawPendingCount }} 条异常等待处理</div>
               </div>
-              <a-badge :count="qualityRawPendingCount" :number-style="{ backgroundColor: '#faad14' }" />
+              <a-badge :count="qualityRawPendingCount" :number-style="{ backgroundColor: 'var(--color-warning)' }" />
             </div>
           </div>
           <div class="notification-dropdown__footer" @click="goToQualityExceptions">
@@ -309,7 +309,7 @@ onUnmounted(() => {
   }
 
   &:hover .bell-icon {
-    color: #1677FF;
+    color: var(--color-primary);
   }
 }
 
@@ -355,17 +355,17 @@ onUnmounted(() => {
     &.active {
       color: #303133;
       font-weight: 600;
-      border-bottom-color: #1890ff;
+      border-bottom-color: var(--color-primary);
     }
   }
 
   &__action {
     font-size: 13px;
-    color: #1890ff;
+    color: var(--color-primary);
     cursor: pointer;
 
     &:hover {
-      color: #40a9ff;
+      color: var(--color-primary-hover);
     }
   }
 
@@ -395,12 +395,12 @@ onUnmounted(() => {
     padding: 10px 0;
     border-top: 1px solid #f0f0f0;
     font-size: 13px;
-    color: #1890ff;
+    color: var(--color-primary);
     cursor: pointer;
 
     &:hover {
       background: #fafafa;
-      color: #40a9ff;
+      color: var(--color-primary-hover);
     }
   }
 }
@@ -439,7 +439,7 @@ onUnmounted(() => {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #1890ff;
+    background: var(--color-info);
   }
 
   &__content {

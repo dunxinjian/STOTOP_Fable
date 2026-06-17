@@ -17,12 +17,12 @@
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false">
-          <a-statistic title="本月新增" :value="stats.monthNewCount" :value-style="{ color: '#1890ff' }" />
+          <a-statistic title="本月新增" :value="stats.monthNewCount" :value-style="{ color: 'var(--color-info)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false">
-          <a-statistic title="待跟进改进" :value="stats.pendingImprovements" :value-style="{ color: '#fa8c16' }" />
+          <a-statistic title="待跟进改进" :value="stats.pendingImprovements" :value-style="{ color: 'var(--color-warning)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
@@ -182,7 +182,7 @@
             </template>
           </template>
         </a-table>
-        <a-empty v-else description="暂无改进措施" />
+        <EmptyState v-else size="small" title="暂无改进措施" />
       </template>
     </a-drawer>
   </div>

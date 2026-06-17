@@ -120,7 +120,7 @@ onMounted(() => loadData())
       <a-row :gutter="16" class="kpi-row">
         <a-col :span="6">
           <div class="kpi-card kpi-pending">
-            <a-statistic title="待审批总数" :value="stats.pendingCount" :value-style="{ color: '#d48806', fontWeight: 700, fontSize: '28px' }">
+            <a-statistic title="待审批总数" :value="stats.pendingCount" :value-style="{ color: 'var(--color-warning)', fontWeight: 700, fontSize: '28px' }">
               <template #prefix><ClockCircleOutlined /></template>
             </a-statistic>
             <div class="kpi-decoration">
@@ -130,7 +130,7 @@ onMounted(() => loadData())
         </a-col>
         <a-col :span="6">
           <div class="kpi-card kpi-processed">
-            <a-statistic title="本月已处理" :value="stats.monthlyProcessed" :value-style="{ color: '#389e0d', fontWeight: 700, fontSize: '28px' }">
+            <a-statistic title="本月已处理" :value="stats.monthlyProcessed" :value-style="{ color: 'var(--color-success-text)', fontWeight: 700, fontSize: '28px' }">
               <template #prefix><CheckCircleOutlined /></template>
             </a-statistic>
             <div class="kpi-decoration">
@@ -154,7 +154,7 @@ onMounted(() => loadData())
               title="本月驳回率"
               :value="stats.rejectRate"
               suffix="%"
-              :value-style="{ color: stats.rejectRate > 20 ? '#cf1322' : '#389e0d', fontWeight: 700, fontSize: '28px' }"
+              :value-style="{ color: stats.rejectRate > 20 ? 'var(--color-danger)' : 'var(--color-success-text)', fontWeight: 700, fontSize: '28px' }"
             >
               <template #prefix><ExclamationCircleOutlined /></template>
             </a-statistic>
@@ -192,7 +192,7 @@ onMounted(() => loadData())
                   </a-tag>
                 </template>
                 <template v-else-if="column.key === 'avgHours'">
-                  <span :style="{ color: record.avgHours > 5 ? '#cf1322' : '#333' }">{{ record.avgHours }}h</span>
+                  <span :style="{ color: record.avgHours > 5 ? 'var(--color-danger)' : '#333' }">{{ record.avgHours }}h</span>
                 </template>
               </template>
             </a-table>
@@ -249,12 +249,12 @@ onMounted(() => loadData())
               <span class="count-value">{{ record.count }}</span>
             </template>
             <template v-else-if="column.key === 'avgHours'">
-              <span :style="{ color: record.avgHours > 5 ? '#cf1322' : '#333' }">{{ record.avgHours }}h</span>
+              <span :style="{ color: record.avgHours > 5 ? 'var(--color-danger)' : '#333' }">{{ record.avgHours }}h</span>
             </template>
             <template v-else-if="column.key === 'passRate'">
               <a-progress
                 :percent="record.passRate"
-                :stroke-color="record.passRate >= 90 ? '#52c41a' : record.passRate >= 80 ? '#faad14' : '#ff4d4f'"
+                :stroke-color="record.passRate >= 90 ? 'var(--color-success)' : record.passRate >= 80 ? 'var(--color-warning)' : 'var(--color-danger)'"
                 size="small"
                 :stroke-width="8"
                 style="width: 120px;"
@@ -300,11 +300,11 @@ onMounted(() => loadData())
   }
 }
 .kpi-pending {
-  background: linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%);
+  background: linear-gradient(135deg, var(--color-warning-light) 0%, #fff1b8 100%);
   border: 1px solid #ffe58f;
 }
 .kpi-processed {
-  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  background: linear-gradient(135deg, var(--color-success-light) 0%, #d9f7be 100%);
   border: 1px solid #b7eb8f;
 }
 .kpi-duration {
@@ -312,7 +312,7 @@ onMounted(() => loadData())
   border: 1px solid #adc6ff;
 }
 .kpi-reject {
-  background: linear-gradient(135deg, #fff2f0 0%, #ffccc7 100%);
+  background: linear-gradient(135deg, var(--color-danger-light) 0%, #ffccc7 100%);
   border: 1px solid #ffa39e;
 }
 

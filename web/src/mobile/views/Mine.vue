@@ -90,7 +90,7 @@ const orgActions = computed(() =>
   authStore.organizations.map(org => ({
     name: org.name,
     value: org.id,
-    color: org.id === authStore.currentOrgId ? '#1989fa' : undefined,
+    color: org.id === authStore.currentOrgId ? 'var(--color-primary)' : undefined,
   }))
 )
 
@@ -227,7 +227,7 @@ onMounted(() => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #1989fa;
+  background: var(--color-primary);
   color: #fff;
   font-size: 22px;
   font-weight: 600;

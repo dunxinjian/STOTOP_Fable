@@ -848,7 +848,7 @@ function getSummaryText(fieldKey: string): string {
   transition: background 0.2s;
 
   &:hover {
-    background: #f0f5ff;
+    background: var(--color-primary-light);
   }
 
   .summary-text {
@@ -862,12 +862,12 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .summary-amount {
-    color: #1890ff;
+    color: var(--color-info);
     font-weight: 500;
   }
 
   .expand-btn {
-    color: #1890ff;
+    color: var(--color-primary);
     font-size: 13px;
     cursor: pointer;
     user-select: none;
@@ -904,7 +904,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .collapse-btn {
-    color: #1890ff;
+    color: var(--color-primary);
     font-size: 13px;
     cursor: pointer;
     user-select: none;
@@ -939,7 +939,7 @@ function getSummaryText(fieldKey: string): string {
 
   .summary-value {
     font-weight: 500;
-    color: #1890ff;
+    color: var(--color-info);
   }
 }
 
@@ -950,8 +950,8 @@ function getSummaryText(fieldKey: string): string {
   color: #666;
 
   &:hover {
-    color: #1890ff;
-    border-color: #1890ff;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
   }
 }
 
@@ -967,7 +967,7 @@ function getSummaryText(fieldKey: string): string {
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 
   .empty-text {
@@ -1081,7 +1081,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   &__required {
-    color: #ff4d4f;
+    color: var(--color-danger);
     margin-right: 2px;
   }
 
@@ -1123,7 +1123,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   &__value {
-    color: #1890ff;
+    color: var(--color-info);
     font-weight: 500;
   }
 }

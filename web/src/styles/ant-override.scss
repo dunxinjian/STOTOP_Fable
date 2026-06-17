@@ -5,7 +5,7 @@
 // 全局表格行高标准化 - 紧凑风格，标题行与数据行高度一致
 .ant-table {
   .ant-table-thead > tr > th {
-    background: #FAFAFA;
+    background: var(--bg-muted); // 表头底（对齐 ConfigProvider Table.headerBg）
     font-weight: 600;
     color: $text-primary;
     padding: 6px 8px !important;
@@ -16,6 +16,17 @@
   .ant-table-tbody > tr > td {
     padding: 6px 8px !important;
     border-bottom: 1px solid $border-color-lighter;
+  }
+
+  // 斑马纹：偶数行浅底，提升大表格行扫读
+  .ant-table-tbody > tr:nth-child(even) > td {
+    background: var(--bg-page);
+  }
+
+  // 行 hover 统一浅橙（与 ConfigProvider rowHoverBg 同口径）
+  .ant-table-tbody > tr:hover > td,
+  .ant-table-tbody > tr.ant-table-row-hover > td {
+    background: var(--color-primary-light) !important;
   }
 
   // small 尺寸
@@ -38,12 +49,12 @@
 // 卡片样式
 .ant-card {
   border-radius: 0;
-  border: 1px solid $border-color-lighter !important;
-  box-shadow: $shadow-card !important;
+  border: 1px solid $border-color !important;
+  box-shadow: $shadow-sm !important;
   transition: $transition-smooth;
 
   &:hover {
-    box-shadow: $shadow-card-hover !important;
+    box-shadow: $shadow-md !important;
   }
 
   .ant-card-head {
@@ -158,7 +169,7 @@
   transition: $transition-fast;
 
   &:hover {
-    box-shadow: $shadow-card-hover;
+    box-shadow: $shadow-md;
   }
 }
 
@@ -172,20 +183,31 @@
   &:focus,
   &-focused {
     border-color: $color-primary !important;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-border) !important;
   }
 }
 
 .ant-select-selector {
   .ant-select-focused & {
     border-color: $color-primary !important;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-border) !important;
   }
 }
 
-// 表单样式
+// 表单样式范式（label 字号/必填星/校验态统一令牌化；列宽建议页面用 :label-col 约定，冒号由 ConfigProvider 接管）
 .ant-form-item-label > label {
   font-weight: 500;
+  font-size: var(--font-sm2); // 13 紧凑表单标签
+}
+
+// 必填星统一危险色
+.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
+  color: var(--color-danger);
+}
+
+// 校验错误文案
+.ant-form-item-explain-error {
+  color: var(--color-danger-text);
 }
 
 // 内容区域卡片和表格容器统一直角
@@ -279,21 +301,21 @@
 }
 
 // ========== 工具栏按钮分级风格 ==========
-// 次操作按钮 — 淡蓝填充风格（导出、刷新、批量等非核心操作）
+// 次操作按钮 — 淡橙填充风格（导出、刷新、批量等非核心操作）
 .toolbar-btn {
-  background: rgba(24, 144, 255, 0.08) !important;
+  background: var(--color-primary-light) !important;
   border: none !important;
-  color: #1890ff !important;
+  color: var(--color-primary) !important;
   box-shadow: none !important;
 
   &:hover, &:focus {
-    background: rgba(24, 144, 255, 0.15) !important;
-    color: #096dd9 !important;
+    background: var(--color-primary-border) !important;
+    color: var(--color-primary-hover) !important;
   }
 
   &:active {
-    background: rgba(24, 144, 255, 0.25) !important;
-    color: #0050b3 !important;
+    background: var(--color-primary-border) !important;
+    color: var(--color-primary-hover) !important;
   }
 
   .anticon {
@@ -305,5 +327,5 @@
 .toolbar-divider {
   height: 24px;
   margin: 0 8px;
-  border-left: 1px solid #e8e8e8;
+  border-left: 1px solid var(--border);
 }

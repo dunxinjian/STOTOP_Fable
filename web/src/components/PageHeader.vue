@@ -124,15 +124,15 @@ onUnmounted(() => {
 .toolbar-back-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  color: #1677ff;
+  gap: var(--space-xs4);
+  font-size: var(--font-base);
+  color: var(--color-primary);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: var(--space-xs4) var(--space-sm8);
+  border-radius: var(--radius-sm);
   transition: background 0.2s;
   &:hover {
-    background: rgba(22, 119, 255, 0.06);
+    background: var(--color-primary-light);
   }
 }
 
@@ -145,10 +145,10 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 16px;
+  font-size: var(--font-lg);
   line-height: 24px;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--text-1);
 }
 
 .page-toolbar-center-content:empty {

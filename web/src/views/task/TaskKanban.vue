@@ -7,7 +7,7 @@
           <AppstoreOutlined />
           任务看板
         </h2>
-        <a-badge :count="totalCount" :overflow-count="999" :number-style="{ backgroundColor: '#1677ff' }">
+        <a-badge :count="totalCount" :overflow-count="999" :number-style="{ backgroundColor: 'var(--color-info)' }">
           <span class="kanban-header__total">全部任务</span>
         </a-badge>
       </div>
@@ -239,10 +239,10 @@ const filters = reactive({
 })
 
 const statusColors: Record<number, string> = {
-  0: '#1677ff',
-  1: '#faad14',
-  2: '#52c41a',
-  3: '#ff4d4f',
+  0: '#3A6FB0',
+  1: '#E6A700',
+  2: '#2BA471',
+  3: '#E5484D',
 }
 
 const defaultColumns: { status: number; statusName: string }[] = [
@@ -540,8 +540,8 @@ onMounted(() => {
   overflow: hidden;
 
   &.drag-over {
-    border-color: #1677ff;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-border);
   }
 
   &__header {
@@ -614,9 +614,9 @@ onMounted(() => {
     height: 36px;
 
     &:hover {
-      color: #1677ff;
-      border-color: #1677ff;
-      background: #f0f5ff;
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
     }
   }
 }
@@ -735,7 +735,7 @@ onMounted(() => {
     color: #86909c;
 
     &.overdue {
-      color: #ff4d4f;
+      color: var(--color-danger);
       font-weight: 500;
     }
   }

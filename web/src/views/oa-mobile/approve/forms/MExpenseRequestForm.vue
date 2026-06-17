@@ -413,7 +413,7 @@ defineExpose({
 /* 通用卡片区块 */
 .section-card {
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   margin: 8px 12px;
   padding: 16px;
   overflow: hidden;
@@ -433,8 +433,8 @@ defineExpose({
 
 /* 付款总额卡片 */
 .total-amount-card {
-  background: linear-gradient(135deg, #4d8cf7 0%, #6fa3fb 100%);
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
 }
 .total-label {
@@ -458,7 +458,7 @@ defineExpose({
   font-size: 13px;
   color: #999;
   padding: 4px 0;
-  border-bottom: 2px solid #4d8cf7;
+  border-bottom: 2px solid var(--color-primary);
 }
 
 /* 字段区块 */
@@ -481,7 +481,7 @@ defineExpose({
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f56c6c;
+  background: var(--color-danger);
   display: inline-block;
   flex-shrink: 0;
 }
@@ -608,7 +608,7 @@ defineExpose({
 }
 .process-link {
   font-size: 13px;
-  color: #4d8cf7;
+  color: var(--color-primary);
 }
 .process-node {
   position: relative;
@@ -622,7 +622,7 @@ defineExpose({
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #4d8cf7;
+  background: var(--color-primary);
 }
 .node-line {
   position: absolute;
@@ -668,7 +668,7 @@ defineExpose({
   justify-content: center;
 }
 .required-star {
-  color: #f56c6c;
+  color: var(--color-danger);
   margin-left: 2px;
   font-weight: 600;
 }

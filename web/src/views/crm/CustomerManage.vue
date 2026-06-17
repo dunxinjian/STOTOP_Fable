@@ -358,9 +358,9 @@ const stats = reactive({ total: 0, potential: 0, active: 0, lost: 0 })
 
 const statusTabs = computed(() => [
   { key: '' as const, label: '全部', color: 'rgba(0,0,0,0.25)', count: stats.total },
-  { key: 0 as const, label: '潜在', color: '#1890ff', count: stats.potential },
-  { key: 1 as const, label: '活跃', color: '#52c41a', count: stats.active },
-  { key: 2 as const, label: '流失', color: '#ff4d4f', count: stats.lost },
+  { key: 0 as const, label: '潜在', color: 'var(--color-info)', count: stats.potential },
+  { key: 1 as const, label: '活跃', color: 'var(--color-success)', count: stats.active },
+  { key: 2 as const, label: '流失', color: 'var(--color-danger)', count: stats.lost },
 ])
 
 function handleTabChange(key: number | '') {
@@ -753,7 +753,7 @@ onMounted(() => {
     font-weight: 500;
 
     &::after {
-      background: #1890ff;
+      background: var(--color-primary);
     }
   }
 
@@ -794,7 +794,7 @@ onMounted(() => {
   :deep(.clickable-row) {
     cursor: pointer;
     &:hover td {
-      background: #e6f4ff !important;
+      background: var(--color-primary-light) !important;
     }
   }
 }
@@ -829,11 +829,11 @@ onMounted(() => {
   font-size: 15px;
 
   &.count-positive {
-    color: #52c41a;
+    color: var(--color-success-text);
   }
 
   &.count-zero {
-    color: #ff4d4f;
+    color: var(--color-danger-text);
   }
 }
 
@@ -872,21 +872,21 @@ onMounted(() => {
   }
 
   &.status-0 {
-    background: #e6f4ff;
-    color: #1890ff;
-    .status-dot { background: #1890ff; }
+    background: var(--color-info-light);
+    color: var(--color-info);
+    .status-dot { background: var(--color-info); }
   }
 
   &.status-1 {
-    background: #f6ffed;
-    color: #52c41a;
-    .status-dot { background: #52c41a; }
+    background: var(--color-success-light);
+    color: var(--color-success);
+    .status-dot { background: var(--color-success); }
   }
 
   &.status-2 {
-    background: #fff2f0;
-    color: #ff4d4f;
-    .status-dot { background: #ff4d4f; }
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+    .status-dot { background: var(--color-danger); }
   }
 }
 
@@ -934,7 +934,7 @@ onMounted(() => {
   font-weight: 600;
   color: rgba(0, 0, 0, 0.65);
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
   margin: 20px 0 14px;
 
   &:first-child {

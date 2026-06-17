@@ -53,7 +53,7 @@
           </div>
         </div>
       </div>
-      <a-empty v-else description="暂无仪式环节" />
+      <EmptyState v-else size="small" title="暂无仪式环节" />
     </a-spin>
 
     <!-- 新增/编辑 Drawer -->
@@ -440,7 +440,7 @@ async function handleApplyTemplate({ key }: { key: string }) {
   flex-shrink: 0;
   min-width: 56px;
   padding: 4px 10px;
-  background: #1677ff;
+  background: var(--color-info);
   color: #fff;
   border-radius: 6px;
   font-size: 14px;

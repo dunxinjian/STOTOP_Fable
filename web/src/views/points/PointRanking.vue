@@ -15,7 +15,7 @@
         <span>我的当前排名：</span>
         <span class="my-rank-bar__rank">第 {{ myRanking.rank }} 名</span>
         <a-divider type="vertical" />
-        <span>总积分：<b style="color: #1890ff">{{ myRanking.totalPoints }}</b></span>
+        <span>总积分：<b style="color: var(--color-info)">{{ myRanking.totalPoints }}</b></span>
         <a-divider type="vertical" />
         <span>共 {{ myRanking.totalUsers }} 人参与排名</span>
       </div>
@@ -164,8 +164,8 @@ onMounted(() => {
 
 .my-rank-bar {
   padding: 12px 16px;
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
+  background: var(--color-info-light);
+  border: 1px solid var(--color-info);
   border-radius: 6px;
   margin-bottom: 16px;
   font-size: 14px;
@@ -173,7 +173,7 @@ onMounted(() => {
   &__rank {
     font-size: 18px;
     font-weight: 700;
-    color: #1890ff;
+    color: var(--color-info);
   }
 }
 

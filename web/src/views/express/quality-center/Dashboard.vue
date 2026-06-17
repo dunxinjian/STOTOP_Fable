@@ -30,7 +30,7 @@
           <a-statistic
             title="待处理"
             :value="summary.pending"
-            :value-style="{ color: '#faad14' }"
+            :value-style="{ color: 'var(--color-warning)' }"
           >
             <template #prefix><ClockCircleOutlined /></template>
           </a-statistic>
@@ -41,7 +41,7 @@
           <a-statistic
             title="处理中"
             :value="summary.processing"
-            :value-style="{ color: '#1890ff' }"
+            :value-style="{ color: 'var(--color-info)' }"
           >
             <template #prefix><SyncOutlined /></template>
           </a-statistic>
@@ -52,7 +52,7 @@
           <a-statistic
             title="已解决"
             :value="summary.resolved"
-            :value-style="{ color: '#52c41a' }"
+            :value-style="{ color: 'var(--color-success)' }"
           >
             <template #prefix><CheckCircleOutlined /></template>
           </a-statistic>
@@ -63,7 +63,7 @@
           <a-statistic
             title="超时预警"
             :value="summary.overdueWarning"
-            :value-style="{ color: '#ff4d4f' }"
+            :value-style="{ color: 'var(--color-danger)' }"
           >
             <template #prefix><WarningOutlined /></template>
           </a-statistic>
@@ -128,7 +128,7 @@
             {{ record.avgHours.toFixed(1) }}h
           </template>
           <template v-if="column.dataIndex === 'overdueCount'">
-            <span :style="{ color: record.overdueCount > 0 ? '#ff4d4f' : '#52c41a', fontWeight: 500 }">
+            <span :style="{ color: record.overdueCount > 0 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 500 }">
               {{ record.overdueCount }}
             </span>
           </template>
@@ -154,7 +154,7 @@
             {{ formatDate(record.createTime) }}
           </template>
           <template v-if="column.dataIndex === 'overdueHours'">
-            <span style="color: #ff4d4f; font-weight: 500">{{ record.overdueHours.toFixed(1) }}h</span>
+            <span style="color: var(--color-danger); font-weight: 500">{{ record.overdueHours.toFixed(1) }}h</span>
           </template>
           <template v-if="column.dataIndex === 'action'">
             <a @click="goToDetail(record)">查看</a>
@@ -273,15 +273,15 @@ const trendChartOption = computed(() => {
         type: 'line',
         data: created,
         smooth: true,
-        itemStyle: { color: '#1890ff' },
-        areaStyle: { color: 'rgba(24,144,255,0.1)' },
+        itemStyle: { color: '#3A6FB0' },
+        areaStyle: { color: 'rgba(58,111,176,0.1)' },
       },
       {
         name: '已解决',
         type: 'line',
         data: resolved,
         smooth: true,
-        itemStyle: { color: '#52c41a' },
+        itemStyle: { color: '#2BA471' },
         areaStyle: { color: 'rgba(82,196,26,0.1)' },
       },
     ],

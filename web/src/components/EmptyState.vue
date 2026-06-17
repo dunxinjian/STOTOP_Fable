@@ -1,11 +1,11 @@
 <template>
-  <div class="empty-state">
+  <div class="empty-state" :class="`empty-state--${size}`">
     <!-- 自定义图标 -->
-    <div v-if="icon" class="empty-icon" :style="{ fontSize: iconSize + 'px', color: iconColor }">
+    <div v-if="icon" class="empty-icon" :style="{ fontSize: resolvedIconSize + 'px', color: iconColor }">
       <component :is="icon" />
     </div>
     <!-- 默认 a-empty 图片 -->
-    <a-empty v-else :description="false" :image-style="{ height: imageSize + 'px' }" />
+    <a-empty v-else :description="false" :image-style="{ height: resolvedImageSize + 'px' }" />
 
     <!-- 主标题 -->
     <div class="empty-title">{{ title }}</div>
@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import type { Component } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RouteLocationRaw } from 'vue-router'
 
@@ -35,11 +36,11 @@ const props = withDefaults(defineProps<{
   description?: string
   /** 自定义图标组件 */
   icon?: Component
-  /** 图标大小（px） */
+  /** 图标大小（px），未传时按 size 推导 */
   iconSize?: number
   /** 图标颜色 */
   iconColor?: string
-  /** 默认图片大小（px） */
+  /** 默认图片大小（px），未传时按 size 推导 */
   imageSize?: number
   /** 操作按钮文字 */
   actionText?: string
@@ -47,17 +48,23 @@ const props = withDefaults(defineProps<{
   actionRoute?: string | RouteLocationRaw
   /** 是否显示操作区 */
   showAction?: boolean
+  /** 尺寸：default=整页空态；small=表格 #emptyText 内嵌 */
+  size?: 'default' | 'small'
 }>(), {
   title: '暂无数据',
   description: undefined,
   icon: undefined,
-  iconSize: 48,
-  iconColor: '#d9d9d9',
-  imageSize: 120,
+  iconSize: undefined,
+  iconColor: 'var(--text-disabled)',
+  imageSize: undefined,
   actionText: undefined,
   actionRoute: undefined,
   showAction: false,
+  size: 'default',
 })
+
+const resolvedIconSize = computed(() => props.iconSize ?? (props.size === 'small' ? 32 : 48))
+const resolvedImageSize = computed(() => props.imageSize ?? (props.size === 'small' ? 60 : 120))
 
 const router = useRouter()
 
@@ -77,6 +84,12 @@ function handleAction() {
   padding: 60px 24px;
   min-height: 300px;
   background: transparent;
+
+  // 表格 #emptyText 内嵌：更紧凑
+  &--small {
+    padding: var(--space-xl24);
+    min-height: 160px;
+  }
 }
 
 .empty-icon {
@@ -88,15 +101,19 @@ function handleAction() {
 
 .empty-title {
   margin-top: 12px;
-  font-size: 16px;
+  font-size: var(--font-lg);
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
+}
+
+.empty-state--small .empty-title {
+  font-size: var(--font-base);
 }
 
 .empty-description {
   margin-top: 8px;
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-base);
+  color: var(--text-3);
 }
 
 .empty-action {

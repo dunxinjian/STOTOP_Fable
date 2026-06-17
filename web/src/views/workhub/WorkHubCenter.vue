@@ -53,12 +53,12 @@ const dateRangeValue = ref<[Dayjs, Dayjs] | undefined>(undefined)
 
 // ===== 来源配置 =====
 const statsItems = computed(() => [
-  { key: 'oa', label: '审批', count: hub.stats.value.approval, color: '#1677ff', icon: AuditOutlined },
-  { key: 'quality', label: '异常', count: hub.stats.value.alert, color: '#fa541c', icon: WarningOutlined },
-  { key: 'task', label: '任务', count: hub.stats.value.task, color: '#52c41a', icon: CheckSquareOutlined },
-  { key: 'datacenter', label: '运单', count: hub.stats.value.reminder, color: '#722ed1', icon: ImportOutlined },
-  { key: 'contract', label: '合同', count: hub.stats.value.notification, color: '#7B5B3A', icon: FileTextOutlined },
-  { key: 'points', label: '积分', count: 0, color: '#d4b106', icon: TrophyOutlined },
+  { key: 'oa', label: '审批', count: hub.stats.value.approval, color: 'var(--biz-approval)', icon: AuditOutlined },
+  { key: 'quality', label: '异常', count: hub.stats.value.alert, color: 'var(--biz-quality)', icon: WarningOutlined },
+  { key: 'task', label: '任务', count: hub.stats.value.task, color: 'var(--color-success)', icon: CheckSquareOutlined },
+  { key: 'datacenter', label: '运单', count: hub.stats.value.reminder, color: 'var(--biz-waybill)', icon: ImportOutlined },
+  { key: 'contract', label: '合同', count: hub.stats.value.notification, color: 'var(--biz-contract)', icon: FileTextOutlined },
+  { key: 'points', label: '积分', count: 0, color: 'var(--biz-points)', icon: TrophyOutlined },
 ])
 
 const sourceOptions = [
@@ -179,14 +179,14 @@ function getNotificationIcon(type: number) {
 
 // 工作项来源颜色映射（用于混合列表）
 const sourceColorMap: Record<string, string> = {
-  oa: '#1677ff',
-  quality: '#fa541c',
-  task: '#52c41a',
-  datacenter: '#722ed1',
-  contract: '#7B5B3A',
-  points: '#d4b106',
-  finance: '#faad14',
-  system: '#595959',
+  oa: 'var(--biz-approval)',
+  quality: 'var(--biz-quality)',
+  task: 'var(--color-success)',
+  datacenter: 'var(--biz-waybill)',
+  contract: 'var(--biz-contract)',
+  points: 'var(--biz-points)',
+  finance: 'var(--biz-finance)',
+  system: 'var(--text-3)',
 }
 const sourceLabelMap: Record<string, string> = {
   oa: 'OA',
@@ -420,7 +420,7 @@ onUnmounted(() => {
           <a-badge
             v-if="allBadge > 0"
             :count="allBadge"
-            :number-style="{ backgroundColor: '#52c41a', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
+            :number-style="{ backgroundColor: 'var(--color-info)', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
             class="tab-badge"
           />
         </template>
@@ -434,11 +434,7 @@ onUnmounted(() => {
 
           <!-- 空状态 -->
           <div v-else-if="mixedList.length === 0" class="empty-state">
-            <a-empty :image="null" description="暂无消息">
-              <template #image>
-                <BellOutlined style="font-size: 40px; color: #d9d9d9;" />
-              </template>
-            </a-empty>
+            <EmptyState :icon="BellOutlined" title="暂无消息" size="small" />
           </div>
 
           <!-- 混合列表 -->
@@ -457,7 +453,7 @@ onUnmounted(() => {
               <template v-if="item.type === 'workitem'">
                 <div
                   class="mixed-avatar workitem-avatar"
-                  :style="{ backgroundColor: (sourceColorMap[item.data.source] || '#595959') + '18', color: sourceColorMap[item.data.source] || '#595959' }"
+                  :style="{ backgroundColor: `color-mix(in srgb, ${sourceColorMap[item.data.source] || 'var(--text-3)'} 12%, transparent)`, color: sourceColorMap[item.data.source] || 'var(--text-3)' }"
                 >
                   {{ sourceLabelMap[item.data.source] ?? item.data.source }}
                 </div>
@@ -503,7 +499,7 @@ onUnmounted(() => {
           <a-badge
             v-if="todoBadge > 0"
             :count="todoBadge"
-            :number-style="{ backgroundColor: '#1677ff', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
+            :number-style="{ backgroundColor: 'var(--color-primary)', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
             class="tab-badge"
           />
         </template>
@@ -728,7 +724,7 @@ onUnmounted(() => {
           <a-badge
             v-if="notificationBadge > 0"
             :count="notificationBadge"
-            :number-style="{ backgroundColor: '#ff4d4f', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
+            :number-style="{ backgroundColor: 'var(--color-info)', fontSize: '10px', minWidth: '16px', height: '16px', lineHeight: '16px' }"
             class="tab-badge"
           />
         </template>
@@ -745,11 +741,7 @@ onUnmounted(() => {
           <!-- 通知列表 -->
           <div v-if="!notificationsLoading">
             <div v-if="notifications.length === 0" class="empty-state">
-              <a-empty :image="null" description="暂无通知">
-                <template #image>
-                  <BellOutlined style="font-size: 40px; color: #d9d9d9;" />
-                </template>
-              </a-empty>
+              <EmptyState :icon="BellOutlined" title="暂无通知" size="small" />
             </div>
 
             <div
@@ -824,7 +816,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #f4f6f8;
+  background: var(--bg-page);
 }
 
 // ===== Tab 整体 =====
@@ -836,7 +828,7 @@ onUnmounted(() => {
 
   :deep(.ant-tabs-nav) {
     background: rgba(255, 255, 255, 0.92);
-    border-bottom: 1px solid #e8edf3;
+    border-bottom: 1px solid var(--border);
     margin-bottom: 0;
     flex-shrink: 0;
     backdrop-filter: blur(10px);
@@ -850,7 +842,7 @@ onUnmounted(() => {
   :deep(.ant-tabs-ink-bar) {
     height: 3px;
     border-radius: 999px 999px 0 0;
-    background: #ff6700;
+    background: var(--color-primary);
   }
 
   :deep(.ant-tabs-content-holder) {
@@ -900,8 +892,8 @@ onUnmounted(() => {
 // ===== 统计栏 =====
 .stats-bar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: var(--space-sm8);
+  margin-bottom: var(--space-md12);
   flex-wrap: wrap;
 }
 
@@ -913,16 +905,16 @@ onUnmounted(() => {
   gap: 8px;
   min-height: 48px;
   padding: 9px 12px;
-  border-radius: 8px;
-  background: $bg-card;
-  box-shadow: 0 1px 2px rgba(18, 31, 53, 0.04);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all 0.18s ease;
-  border: 1px solid rgba(18, 31, 53, 0.06);
+  border: 1px solid var(--border);
   user-select: none;
 
   &:hover {
-    box-shadow: 0 8px 18px rgba(18, 31, 53, 0.08);
+    box-shadow: var(--shadow-md);
     border-color: var(--stat-color, $color-primary);
     transform: translateY(-1px);
   }
@@ -957,38 +949,38 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   min-height: 34px;
-  padding: 0 12px;
-  margin-bottom: 10px;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 77, 79, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 77, 79, 0.045);
+  padding: 0 var(--space-md12);
+  margin-bottom: var(--space-sm8);
+  font-size: var(--font-sm2);
+  color: var(--text-2);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--color-danger-light);
 }
 
 .urgent-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff4d4f;
+  background: var(--color-danger);
   margin-right: 8px;
   flex-shrink: 0;
 }
 
 .urgent-link,
 .expiring-link {
-  color: #cf1322;
+  color: var(--color-danger-text);
   cursor: pointer;
   font-weight: 500;
 
   &:hover {
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 
 .separator {
   margin: 0 4px;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--text-disabled);
 }
 
 // ===== 筛选器栏 =====
@@ -1011,10 +1003,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #f0f5ff;
+  background: var(--color-primary-light);
   border-radius: 6px;
   margin-bottom: 8px;
-  border: 1px solid #adc6ff;
+  border: 1px solid var(--color-primary-border);
   flex-wrap: wrap;
 
   :deep(.ant-divider-vertical) {
@@ -1025,7 +1017,7 @@ onUnmounted(() => {
 
 .batch-info {
   font-weight: 500;
-  color: #1677ff;
+  color: var(--color-primary);
   font-size: 13px;
   margin-right: 4px;
 }
@@ -1053,20 +1045,20 @@ onUnmounted(() => {
 .new-items-banner {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #fff7f0;
-  border: 1px solid rgba(255, 103, 0, 0.24);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #d94f00;
+  gap: var(--space-2xs2);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm8) var(--space-md12);
+  margin-bottom: var(--space-sm8);
+  font-size: var(--font-sm2);
+  color: var(--color-primary-active);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: #fff1e8;
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
 }
 
@@ -1084,7 +1076,7 @@ onUnmounted(() => {
 
   &:hover {
     opacity: 1;
-    background: rgba(22, 119, 255, 0.1);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
 }
 
@@ -1098,9 +1090,9 @@ onUnmounted(() => {
 
 // 选中高亮（中栏与右栏联动）
 :deep(.work-item-card.work-item-card--selected) {
-  background: rgba(255, 103, 0, 0.045);
-  box-shadow: inset 3px 0 0 0 #ff6700, 0 8px 18px rgba(18, 31, 53, 0.08);
-  border-color: rgba(255, 103, 0, 0.22);
+  background: var(--color-primary-light);
+  box-shadow: inset 3px 0 0 0 var(--color-primary), var(--shadow-md);
+  border-color: var(--color-primary-border);
 }
 
 // ===== 加载更多 =====
@@ -1111,19 +1103,19 @@ onUnmounted(() => {
 }
 
 .load-more-btn {
-  color: $color-primary;
+  color: var(--color-primary);
   font-size: 13px;
 }
 
 .no-more-text {
   font-size: 12px;
-  color: $text-secondary;
+  color: var(--text-3);
 }
 
 // ===== 空状态 =====
 .empty-state {
-  background: $bg-card;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   padding: 56px 16px;
   text-align: center;
   display: flex;
@@ -1131,7 +1123,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   margin-top: 20px;
-  border: 1px dashed rgba(18, 31, 53, 0.12);
+  border: 1px dashed var(--border-strong);
 }
 
 .empty-icon {
@@ -1144,19 +1136,19 @@ onUnmounted(() => {
   font-size: 26px;
   line-height: 1;
   margin-bottom: 6px;
-  color: #ff6700;
-  background: rgba(255, 103, 0, 0.08);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .empty-title {
   font-size: 18px;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--text-1);
 }
 
 .empty-desc {
   font-size: 13px;
-  color: $text-secondary;
+  color: var(--text-3);
 }
 
 .empty-actions {
@@ -1174,8 +1166,8 @@ onUnmounted(() => {
   justify-content: center;
   gap: 8px;
   height: 100px;
-  color: $text-secondary;
-  font-size: $font-size-sm;
+  color: var(--text-3);
+  font-size: var(--font-sm);
 }
 
 // ===== 混合列表 =====
@@ -1194,12 +1186,12 @@ onUnmounted(() => {
   transition: background 0.15s;
   border-radius: 8px;
   position: relative;
-  border: 1px solid rgba(18, 31, 53, 0.05);
+  border: 1px solid var(--border);
   background: #fff;
 
   &:hover {
-    background: #fff7f0;
-    border-color: rgba(255, 103, 0, 0.18);
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-border);
   }
 
   &.is-unread {
@@ -1213,11 +1205,11 @@ onUnmounted(() => {
   }
 
   &.mixed-conversation {
-    background: rgba(82, 196, 26, 0.02);
+    background: color-mix(in srgb, var(--color-success) 4%, transparent);
   }
 
   &.mixed-notification.is-unread {
-    background: rgba(255, 77, 79, 0.04);
+    background: var(--color-info-light);
   }
 }
 
@@ -1305,16 +1297,16 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 8px;
-  border: 1px solid rgba(18, 31, 53, 0.05);
+  border: 1px solid var(--border);
   background: #fff;
   margin-bottom: 6px;
 
   &:hover {
-    background: #fff7f0;
+    background: var(--color-primary-light);
   }
 
   &.is-unread {
-    background: rgba(24, 144, 255, 0.04);
+    background: var(--color-info-light);
 
     .notification-title {
       font-weight: 600;
@@ -1368,7 +1360,7 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff4d4f;
+  background: var(--color-info);
   flex-shrink: 0;
   margin-top: 4px;
 }
@@ -1425,10 +1417,10 @@ onUnmounted(() => {
   padding: 0 4px;
   height: auto;
   line-height: 1;
-  color: #4096ff !important;
+  color: var(--color-primary) !important;
 
   &:hover {
-    color: #69b1ff !important;
+    color: var(--color-primary-hover) !important;
   }
 }
 
@@ -1452,7 +1444,7 @@ onUnmounted(() => {
 .confirm-summary {
   margin: 12px 0 0;
   padding: 12px 16px 12px 32px;
-  background: #fff7e6;
+  background: var(--color-warning-light);
   border: 1px solid #ffe7ba;
   border-radius: 6px;
   list-style: disc;

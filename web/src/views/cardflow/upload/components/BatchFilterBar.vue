@@ -102,14 +102,14 @@ const statusTags = [
   user-select: none;
 
   &:hover {
-    color: #1677ff;
-    border-color: #1677ff;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
   }
 
   &.active {
-    background: #1677ff;
+    background: var(--color-primary);
     color: #fff;
-    border-color: #1677ff;
+    border-color: var(--color-primary);
   }
 }
 
@@ -157,7 +157,7 @@ const statusTags = [
 
   &.active {
     background: #fff;
-    color: #1677ff;
+    color: var(--color-primary);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 }

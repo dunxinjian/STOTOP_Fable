@@ -706,7 +706,7 @@ onMounted(() => loadGroups(false))
   transition: $transition-fast;
 
   &:hover .fg-list-row {
-    background: rgba(22, 119, 255, 0.05);
+    background: var(--color-primary-light);
   }
 
   &.active .fg-list-row {
@@ -1026,10 +1026,10 @@ onMounted(() => loadGroups(false))
 
 .fg-link-row {
   padding: 8px 14px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--bg-page);
 
   &:last-child { border-bottom: none; }
-  &:hover { background: rgba(22, 119, 255, 0.04); }
+  &:hover { background: var(--color-primary-light); }
   &.disabled { background: #fafafa; }
 
   :deep(.ant-checkbox-wrapper) {

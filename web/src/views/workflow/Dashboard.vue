@@ -7,7 +7,7 @@
           <a-statistic
             title="待处理"
             :value="overview?.totalPending ?? 0"
-            :value-style="{ color: '#faad14' }"
+            :value-style="{ color: 'var(--color-warning)' }"
           >
             <template #prefix><ClockCircleOutlined /></template>
           </a-statistic>
@@ -18,7 +18,7 @@
           <a-statistic
             title="处理中"
             :value="overview?.totalInProgress ?? 0"
-            :value-style="{ color: '#1890ff' }"
+            :value-style="{ color: 'var(--color-info)' }"
           >
             <template #prefix><SyncOutlined /></template>
           </a-statistic>
@@ -29,7 +29,7 @@
           <a-statistic
             title="今日完成"
             :value="overview?.completedToday ?? 0"
-            :value-style="{ color: '#52c41a' }"
+            :value-style="{ color: 'var(--color-success)' }"
           >
             <template #prefix><CheckCircleOutlined /></template>
           </a-statistic>
@@ -41,14 +41,14 @@
             <a-statistic
               title="超时"
               :value="overview?.overdueCount ?? 0"
-              :value-style="{ color: '#ff4d4f', fontSize: '20px' }"
+              :value-style="{ color: 'var(--color-danger)', fontSize: '20px' }"
             />
             <a-divider type="vertical" style="height: 40px" />
             <a-statistic
               title="SLA达标率"
               :value="overview?.slaRate ?? 0"
               suffix="%"
-              :value-style="{ color: '#722ed1', fontSize: '20px' }"
+              :value-style="{ color: 'var(--color-info)', fontSize: '20px' }"
             />
           </div>
         </a-card>
@@ -114,7 +114,7 @@
                 <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
               </template>
               <template v-if="column.dataIndex === 'overdueHours'">
-                <span style="color: #ff4d4f; font-weight: 500">{{ record.overdueHours }}h</span>
+                <span style="color: var(--color-danger); font-weight: 500">{{ record.overdueHours }}h</span>
               </template>
             </template>
           </a-table>
@@ -175,15 +175,15 @@ const trendChartOption = computed(() => {
         type: 'line',
         data: trend.value.createdCounts,
         smooth: true,
-        itemStyle: { color: '#1890ff' },
-        areaStyle: { color: 'rgba(24,144,255,0.1)' },
+        itemStyle: { color: '#3A6FB0' },
+        areaStyle: { color: 'rgba(58,111,176,0.1)' },
       },
       {
         name: '完成',
         type: 'line',
         data: trend.value.completedCounts,
         smooth: true,
-        itemStyle: { color: '#52c41a' },
+        itemStyle: { color: '#2BA471' },
         areaStyle: { color: 'rgba(82,196,26,0.1)' },
       },
     ],

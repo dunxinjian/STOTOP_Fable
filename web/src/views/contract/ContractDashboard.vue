@@ -163,12 +163,12 @@ const stats = reactive({
 })
 
 const kpiItems = computed(() => [
-  { label: '合同总数', value: stats.total, color: '#1890ff' },
-  { label: '活跃', value: stats.active, color: '#52c41a' },
-  { label: '即将到期', value: stats.expiringSoon, color: '#fa8c16' },
-  { label: '待审批', value: stats.pendingApproval, color: '#722ed1' },
-  { label: '本月新增', value: stats.monthNew, color: '#13c2c2' },
-  { label: '过期', value: stats.expired, color: '#ff4d4f' },
+  { label: '合同总数', value: stats.total, color: 'var(--color-info)' },
+  { label: '活跃', value: stats.active, color: 'var(--color-success)' },
+  { label: '即将到期', value: stats.expiringSoon, color: 'var(--color-warning)' },
+  { label: '待审批', value: stats.pendingApproval, color: 'var(--biz-approval)' },
+  { label: '本月新增', value: stats.monthNew, color: 'var(--color-info)' },
+  { label: '过期', value: stats.expired, color: 'var(--color-danger)' },
 ])
 
 // Tab
@@ -369,7 +369,7 @@ onBeforeUnmount(() => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -452,7 +452,7 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
 }
 
 .chart-container {
@@ -476,16 +476,16 @@ onBeforeUnmount(() => {
   border: 1px solid #f0f0f0;
 }
 .quick-action-item:hover {
-  background: #e6f4ff;
-  border-color: #91caff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  box-shadow: 0 2px 8px var(--color-primary-border);
   transform: translateY(-2px);
 }
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #1890ff;
-  background: #e6f7ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   width: 48px;
   height: 48px;
   border-radius: 50%;

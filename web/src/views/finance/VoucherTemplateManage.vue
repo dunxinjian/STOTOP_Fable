@@ -22,7 +22,7 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <a-button type="link" @click="openEdit(record)">编辑</a-button>
-          <a-button type="link" style="color: #52c41a" @click="openGenerate(record)">生成凭证</a-button>
+          <a-button type="link" style="color: var(--color-success)" @click="openGenerate(record)">生成凭证</a-button>
           <a-button type="link" danger @click="handleDelete(record)">删除</a-button>
         </template>
       </template>
@@ -536,7 +536,7 @@ watch(() => accountSetStore.currentAccountSetId, async (newId) => {
 
   .account-tag {
     font-size: 12px;
-    color: #1677ff;
+    color: var(--color-info);
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -559,7 +559,7 @@ watch(() => accountSetStore.currentAccountSetId, async (newId) => {
     position: relative;
 
     &.active {
-      color: #1677ff;
+      color: var(--color-primary);
       &::after {
         content: '';
         position: absolute;
@@ -567,11 +567,11 @@ watch(() => accountSetStore.currentAccountSetId, async (newId) => {
         left: 0;
         right: 0;
         height: 2px;
-        background: #1677ff;
+        background: var(--color-primary);
       }
     }
 
-    &:hover { color: #1677ff; }
+    &:hover { color: var(--color-primary); }
   }
 }
 

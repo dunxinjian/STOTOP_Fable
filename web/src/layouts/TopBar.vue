@@ -326,7 +326,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   padding: 0 6px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.15s ease;
 
@@ -377,7 +377,7 @@ onBeforeUnmount(() => {
     max-width: 180px;
     padding: 0 6px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.85);
@@ -410,7 +410,7 @@ onBeforeUnmount(() => {
   height: 28px;
   min-width: 0;
   min-height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   gap: 5px;
   color: rgba(255, 255, 255, 0.65);
@@ -423,8 +423,8 @@ onBeforeUnmount(() => {
   }
 
   &.active {
-    background: rgba(255, 103, 0, 0.15);
-    color: #FF8533;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
     font-weight: 600;
   }
 }
@@ -437,7 +437,7 @@ onBeforeUnmount(() => {
   padding: 0 8px !important;
   height: 28px;
   min-height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   gap: 5px;
   color: rgba(255, 255, 255, 0.55);
@@ -470,7 +470,7 @@ onBeforeUnmount(() => {
   padding: 0 10px;
   margin-bottom: -1px;
   background: #ffffff;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -507,7 +507,7 @@ onBeforeUnmount(() => {
 
   .page-tab-icon {
     font-size: 14px;
-    color: $color-primary;
+    color: var(--color-primary);
     flex-shrink: 0;
   }
 
@@ -555,7 +555,7 @@ onBeforeUnmount(() => {
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #FF6700;
+  background: var(--color-primary);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -569,7 +569,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   height: 28px;
   padding: 0 12px;
-  border-radius: 14px; // 全圆角
+  border-radius: var(--radius-pill); // 全圆角
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.20);
   color: rgba(255, 255, 255, 0.65);
@@ -602,13 +602,13 @@ onBeforeUnmount(() => {
     font-size: 10px;
     padding: 1px 5px;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: rgba(255, 255, 255, 0.70);
   }
 
   &:hover {
     background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 103, 0, 0.5);
+    border-color: var(--color-primary-border);
     color: rgba(255, 255, 255, 0.9);
   }
 }
@@ -628,7 +628,7 @@ onBeforeUnmount(() => {
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #FF6700;
+    background: var(--color-primary);
     flex-shrink: 0;
     animation: pulse-dot 2s infinite;
   }

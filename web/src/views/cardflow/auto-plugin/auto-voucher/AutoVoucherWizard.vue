@@ -532,8 +532,8 @@ onBeforeUnmount(() => {
   font-weight: 600;
   color: #262626;
 
-  &.good { color: #52c41a; }
-  &.medium { color: #faad14; }
-  &.low { color: #ff4d4f; }
+  &.good { color: var(--color-success-text); }
+  &.medium { color: var(--color-warning-text); }
+  &.low { color: var(--color-danger-text); }
 }
 </style>

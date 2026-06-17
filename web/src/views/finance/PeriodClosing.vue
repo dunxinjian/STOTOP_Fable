@@ -80,8 +80,8 @@
         <div v-else-if="checkResult" class="check-result">
           <!-- 未审核凭证检查 -->
           <div class="check-item" :class="checkResult.unauditedCount === 0 ? 'check-pass' : 'check-fail'">
-            <CheckCircleOutlined v-if="checkResult.unauditedCount === 0" style="color: #52c41a" />
-            <CloseCircleOutlined v-else style="color: #ff4d4f" />
+            <CheckCircleOutlined v-if="checkResult.unauditedCount === 0" style="color: var(--color-success)" />
+            <CloseCircleOutlined v-else style="color: var(--color-danger)" />
             <span>未审核凭证：</span>
             <span :class="checkResult.unauditedCount === 0 ? 'text-success' : 'text-danger'">
               {{ checkResult.unauditedCount }} 张
@@ -90,8 +90,8 @@
       
           <!-- 借贷不平衡检查 -->
           <div class="check-item" :class="checkResult.unbalancedCount === 0 ? 'check-pass' : 'check-fail'">
-            <CheckCircleOutlined v-if="checkResult.unbalancedCount === 0" style="color: #52c41a" />
-            <CloseCircleOutlined v-else style="color: #ff4d4f" />
+            <CheckCircleOutlined v-if="checkResult.unbalancedCount === 0" style="color: var(--color-success)" />
+            <CloseCircleOutlined v-else style="color: var(--color-danger)" />
             <span>借贷不平衡凭证：</span>
             <span :class="checkResult.unbalancedCount === 0 ? 'text-success' : 'text-danger'">
               {{ checkResult.unbalancedCount }} 张
@@ -103,8 +103,8 @@
       
           <!-- 试算平衡检查 -->
           <div class="check-item" :class="trialBalanceResult?.isBalanced ? 'check-pass' : (trialBalanceResult ? 'check-fail' : '')">
-            <CheckCircleOutlined v-if="trialBalanceResult?.isBalanced" style="color: #52c41a" />
-            <CloseCircleOutlined v-else-if="trialBalanceResult && !trialBalanceResult.isBalanced" style="color: #ff4d4f" />
+            <CheckCircleOutlined v-if="trialBalanceResult?.isBalanced" style="color: var(--color-success)" />
+            <CloseCircleOutlined v-else-if="trialBalanceResult && !trialBalanceResult.isBalanced" style="color: var(--color-danger)" />
             <LoadingOutlined v-else-if="trialBalanceLoading" spin />
             <span>试算平衡：</span>
             <span v-if="trialBalanceResult" :class="trialBalanceResult.isBalanced ? 'text-success' : 'text-danger'">
@@ -121,7 +121,7 @@
             <div class="trial-balance-summary">
               <span>借方合计：<strong>{{ formatAmount(trialBalanceResult.totalDebit) }}</strong></span>
               <span style="margin-left: 24px;">贷方合计：<strong>{{ formatAmount(trialBalanceResult.totalCredit) }}</strong></span>
-              <span v-if="!trialBalanceResult.isBalanced" style="margin-left: 24px; color: #ff4d4f;">
+              <span v-if="!trialBalanceResult.isBalanced" style="margin-left: 24px; color: var(--color-danger);">
                 差额：<strong>{{ formatAmount(Math.abs(trialBalanceResult.totalDebit - trialBalanceResult.totalCredit)) }}</strong>
               </span>
             </div>
@@ -132,8 +132,8 @@
       
           <!-- 整体结果 -->
           <div class="check-summary" :class="canCloseAllowed ? 'summary-pass' : 'summary-fail'">
-            <CheckCircleFilled v-if="canCloseAllowed" style="color: #52c41a" />
-            <ExclamationCircleFilled v-else style="color: #ff4d4f" />
+            <CheckCircleFilled v-if="canCloseAllowed" style="color: var(--color-success)" />
+            <ExclamationCircleFilled v-else style="color: var(--color-danger)" />
             <span v-if="canCloseAllowed">所有检查通过，可以结账</span>
             <span v-else>存在问题，请先处理以下问题再结账</span>
           </div>
@@ -225,7 +225,7 @@
         <div style="margin-top: 12px; padding: 8px 12px; background: #fafafa; border-radius: 4px; display: flex; justify-content: space-between;">
           <span>借方合计：<strong>{{ formatAmount(trialBalanceResult.totalDebit) }}</strong></span>
           <span>贷方合计：<strong>{{ formatAmount(trialBalanceResult.totalCredit) }}</strong></span>
-          <span :style="{ color: trialBalanceResult.isBalanced ? '#52c41a' : '#ff4d4f' }">
+          <span :style="{ color: trialBalanceResult.isBalanced ? 'var(--color-success)' : 'var(--color-danger)' }">
             {{ trialBalanceResult.isBalanced ? '平衡' : '不平衡' }}
           </span>
         </div>
@@ -532,11 +532,11 @@ onMounted(() => {
   border-bottom: none;
 }
 
-.text-success { color: #52c41a; font-weight: 500; }
-.text-danger { color: #ff4d4f; font-weight: 500; }
+.text-success { color: var(--color-success); font-weight: 500; }
+.text-danger { color: var(--color-danger); font-weight: 500; }
 
 .unbalanced-nos {
-  color: #faad14;
+  color: var(--color-warning);
   font-size: 12px;
   margin-left: 4px;
 }
@@ -552,20 +552,20 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.summary-pass { background: #f6ffed; color: #52c41a; }
-.summary-fail { background: #fff2f0; color: #ff4d4f; }
+.summary-pass { background: var(--color-success-light); color: var(--color-success); }
+.summary-fail { background: var(--color-danger-light); color: var(--color-danger); }
 
 .check-messages {
   margin: 8px 0 0 0;
   padding: 10px 12px;
-  background: #fff2f0;
+  background: var(--color-danger-light);
   border-radius: 4px;
   list-style: none;
 }
 
 .check-message-item {
   font-size: 13px;
-  color: #ff4d4f;
+  color: var(--color-danger);
   padding: 2px 0;
 }
 

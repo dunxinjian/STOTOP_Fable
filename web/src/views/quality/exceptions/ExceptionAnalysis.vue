@@ -25,17 +25,17 @@
         </a-col>
         <a-col :span="6">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="总关闭数" :value="efficiency.totalClosed" :value-style="{ color: '#52c41a' }" />
+            <a-statistic title="总关闭数" :value="efficiency.totalClosed" :value-style="{ color: 'var(--color-success)' }" />
           </a-card>
         </a-col>
         <a-col :span="6">
           <a-card :bordered="false" class="stat-card stat-card--danger">
-            <a-statistic title="总超时数" :value="efficiency.totalOverdue" :value-style="{ color: '#ff4d4f' }" />
+            <a-statistic title="总超时数" :value="efficiency.totalOverdue" :value-style="{ color: 'var(--color-danger)' }" />
           </a-card>
         </a-col>
         <a-col :span="6">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="超时率" :value="efficiency.overdueRate" suffix="%" :precision="1" :value-style="{ color: efficiency.overdueRate > 20 ? '#ff4d4f' : '#52c41a' }" />
+            <a-statistic title="超时率" :value="efficiency.overdueRate" suffix="%" :precision="1" :value-style="{ color: efficiency.overdueRate > 20 ? 'var(--color-danger)' : 'var(--color-success)' }" />
           </a-card>
         </a-col>
       </a-row>
@@ -75,7 +75,7 @@
             <template v-if="column.dataIndex === 'rank'">{{ index + 1 }}</template>
             <template v-if="column.dataIndex === 'avgResolutionHours'">{{ record.avgResolutionHours?.toFixed(1) }}</template>
             <template v-if="column.dataIndex === 'overdueRate'">
-              <span :style="{ color: record.overdueRate > 20 ? '#ff4d4f' : '#52c41a' }">{{ record.overdueRate?.toFixed(1) }}%</span>
+              <span :style="{ color: record.overdueRate > 20 ? 'var(--color-danger)' : 'var(--color-success)' }">{{ record.overdueRate?.toFixed(1) }}%</span>
             </template>
           </template>
         </a-table>
@@ -190,7 +190,7 @@ const byTypeOption = computed(() => ({
     {
       type: 'bar',
       data: efficiency.value.byType.map((d: any) => d.avgHours),
-      itemStyle: { color: '#1890ff', borderRadius: [4, 4, 0, 0] },
+      itemStyle: { color: '#3A6FB0', borderRadius: [4, 4, 0, 0] },
       label: { show: true, position: 'top', formatter: (p: any) => efficiency.value.byType[p.dataIndex]?.count ?? '' },
     },
   ],
@@ -216,7 +216,7 @@ const byPriorityOption = computed(() => ({
     {
       type: 'bar',
       data: efficiency.value.byPriority.map((d: any) => d.avgHours),
-      itemStyle: { color: '#faad14', borderRadius: [4, 4, 0, 0] },
+      itemStyle: { color: '#E6A700', borderRadius: [4, 4, 0, 0] },
       label: { show: true, position: 'top', formatter: (p: any) => efficiency.value.byPriority[p.dataIndex]?.count ?? '' },
     },
   ],
@@ -314,7 +314,7 @@ onMounted(() => {
     }
 
     &--danger {
-      border-left: 3px solid #ff4d4f;
+      border-left: 3px solid var(--color-danger);
     }
   }
 }

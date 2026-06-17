@@ -323,7 +323,7 @@ onMounted(loadData)
 }
 
 .overdue {
-  color: #ff4d4f;
+  color: var(--color-danger);
   font-weight: 500;
 }
 </style>

@@ -4,6 +4,10 @@
  *
  * 仅当有待处理异常时显示，无异常时完全隐藏。
  * 点击"查看全部"跳转到 /quality/exceptions。
+ *
+ * 口径区分：本组件为「中栏顶部全员可见的紧急告警条」，数据源 getQualityDashboardStats
+ * （pending/overdue/todayNew）；与右栏 QualitySummaryCard「管理角色质量概览卡」
+ * （数据源 getWorkHubQualitySummary）语义不同，二者并存、视觉统一挂 --biz-quality。
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -79,15 +83,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   height: 40px;
-  background: rgba(250, 84, 28, 0.075);
-  border-left: 3px solid #fa541c;
-  border-radius: 0 8px 8px 0;
-  margin: 8px 18px 0 18px;
-  padding: 0 14px;
+  background: color-mix(in srgb, var(--biz-quality) 8%, transparent);
+  border-left: 3px solid var(--biz-quality);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  margin: var(--space-sm8) var(--space-lg16) 0 var(--space-lg16);
+  padding: 0 var(--space-md12);
   flex-shrink: 0;
-  font-size: 13px;
-  color: $text-regular;
-  box-shadow: 0 1px 2px rgba(250, 84, 28, 0.06);
+  font-size: var(--font-sm2);
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
 }
 
 .alert-left {
@@ -98,36 +102,36 @@ onUnmounted(() => {
 }
 
 .alert-icon {
-  color: #fa541c;
+  color: var(--biz-quality);
   font-size: 14px;
 }
 
 .alert-title {
   font-weight: 600;
   font-size: 14px;
-  color: $text-primary;
+  color: var(--text-1);
 }
 
 .alert-center {
   flex: 1;
   text-align: center;
   font-size: 13px;
-  color: $text-secondary;
+  color: var(--text-2);
 }
 
 .alert-num {
   font-weight: 600;
-  color: #fa541c;
+  color: var(--biz-quality);
 }
 
 .alert-dot {
   margin: 0 6px;
-  color: $text-placeholder;
+  color: var(--text-disabled);
 }
 
 .alert-right {
   font-size: 13px;
-  color: $color-primary;
+  color: var(--color-primary);
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;

@@ -45,27 +45,27 @@ const instanceId = computed(() => Number(route.params.id))
 interface StatusMeta { text: string; color: string }
 
 const INSTANCE_STATUS_META: Record<OrchestrationInstanceStatus, StatusMeta> = {
-  running: { text: '运行中', color: '#1677ff' },
-  completed: { text: '已完成', color: '#52c41a' },
+  running: { text: '运行中', color: 'var(--color-info)' },
+  completed: { text: '已完成', color: 'var(--color-success)' },
   terminated: { text: '已终止', color: '#8c8c8c' },
-  failed: { text: '失败', color: '#ff4d4f' },
+  failed: { text: '失败', color: 'var(--color-danger)' },
   cancelled: { text: '已取消', color: '#bfbfbf' },
-  paused: { text: '已暂停', color: '#faad14' },
+  paused: { text: '已暂停', color: 'var(--color-warning)' },
 }
 
 const NODE_STATUS_META: Record<OrchestrationNodeInstanceStatus, StatusMeta> = {
   pending: { text: '待执行', color: '#8c8c8c' },
-  running: { text: '运行中', color: '#1677ff' },
-  completed: { text: '已完成', color: '#52c41a' },
-  skipped: { text: '已跳过', color: '#faad14' },
-  failed: { text: '失败', color: '#ff4d4f' },
+  running: { text: '运行中', color: 'var(--color-info)' },
+  completed: { text: '已完成', color: 'var(--color-success)' },
+  skipped: { text: '已跳过', color: 'var(--color-warning)' },
+  failed: { text: '失败', color: 'var(--color-danger)' },
 }
 
 const DISPATCH_STATUS_META: Record<DispatchStatus, StatusMeta> = {
   pending: { text: '待派发', color: '#8c8c8c' },
-  triggered: { text: '已触发', color: '#52c41a' },
-  skipped: { text: '已跳过', color: '#faad14' },
-  failed: { text: '失败', color: '#ff4d4f' },
+  triggered: { text: '已触发', color: 'var(--color-success)' },
+  skipped: { text: '已跳过', color: 'var(--color-warning)' },
+  failed: { text: '失败', color: 'var(--color-danger)' },
 }
 
 const DISPATCH_TIMELINE_COLORS: Record<DispatchStatus, string> = {
@@ -258,7 +258,7 @@ onMounted(loadAll)
           <a-descriptions-item label="触发次数">{{ detail.triggerCount }}</a-descriptions-item>
           <a-descriptions-item label="完成原因">{{ detail.completionReason || '-' }}</a-descriptions-item>
           <a-descriptions-item label="失败原因">
-            <span v-if="detail.failureReason" style="color: #ff4d4f">{{ detail.failureReason }}</span>
+            <span v-if="detail.failureReason" style="color: var(--color-danger-text)">{{ detail.failureReason }}</span>
             <span v-else>-</span>
           </a-descriptions-item>
         </a-descriptions>
@@ -449,7 +449,7 @@ onMounted(loadAll)
       margin-right: 2px;
     }
     .arrow {
-      color: #1677ff;
+      color: var(--color-info);
       font-weight: 600;
       margin: 0 4px;
     }
@@ -462,7 +462,7 @@ onMounted(loadAll)
   &__error {
     margin-top: 6px;
     font-size: 12px;
-    color: #ff4d4f;
+    color: var(--color-danger-text);
   }
 }
 </style>

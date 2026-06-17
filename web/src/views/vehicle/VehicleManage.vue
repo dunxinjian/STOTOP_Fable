@@ -27,12 +27,12 @@
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="使用中" :value="getStatusCount(2)" :value-style="{ color: '#52c41a' }" />
+          <a-statistic title="使用中" :value="getStatusCount(2)" :value-style="{ color: 'var(--color-success)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="维修中" :value="getStatusCount(3)" :value-style="{ color: '#faad14' }" />
+          <a-statistic title="维修中" :value="getStatusCount(3)" :value-style="{ color: 'var(--color-warning)' }" />
         </a-card>
       </a-col>
     </a-row>

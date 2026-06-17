@@ -130,7 +130,7 @@ defineExpose({
 
       <div class="field-block">
         <div class="field-label">差额</div>
-        <div class="field-value amount-value" :style="{ color: Number(formData.difference) >= 0 ? '#07c160' : '#ee0a24' }">
+        <div class="field-value amount-value" :style="{ color: Number(formData.difference) >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">
           ¥{{ formatAmount(formData.difference) }}
         </div>
       </div>
@@ -227,8 +227,8 @@ defineExpose({
 
 /* 金额概览卡片 */
 .total-amount-card {
-  background: linear-gradient(135deg, #4d8cf7 0%, #6fa3fb 100%);
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
 }
 .total-label {

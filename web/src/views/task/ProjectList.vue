@@ -36,7 +36,7 @@
     <!-- 卡片视图 -->
     <a-spin :spinning="loading">
       <template v-if="viewMode === 'card'">
-        <a-empty v-if="!loading && tableData.length === 0" description="暂无项目" />
+        <EmptyState v-if="!loading && tableData.length === 0" title="暂无项目" />
         <a-row :gutter="[16, 16]" v-else>
           <a-col :xs="24" :sm="12" :lg="8" :xl="6" v-for="item in tableData" :key="item.id">
             <a-card hoverable class="project-card" @click="goDetail(item.id)">
@@ -63,7 +63,7 @@
                   <a-progress
                     :percent="item.taskCount > 0 ? Math.round((item.completedTaskCount / item.taskCount) * 100) : 0"
                     :size="'small'"
-                    :stroke-color="'#1890ff'"
+                    :stroke-color="'var(--color-info)'"
                   />
                   <span class="project-card__task-count">{{ item.completedTaskCount }}/{{ item.taskCount }} 任务</span>
                 </div>

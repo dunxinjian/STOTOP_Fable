@@ -79,7 +79,7 @@ function formatTime(dateStr: string): string {
 
     .flow-name {
       font-size: 13px;
-      color: #1989fa;
+      color: var(--color-primary);
       font-weight: 500;
       background: rgba(25, 137, 250, 0.08);
       padding: 2px 8px;
@@ -93,7 +93,7 @@ function formatTime(dateStr: string): string {
       border-radius: 4px;
 
       &.approved {
-        color: #07c160;
+        color: var(--color-success);
         background: rgba(7, 193, 96, 0.1);
       }
 

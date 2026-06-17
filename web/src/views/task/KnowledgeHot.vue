@@ -74,7 +74,7 @@
         </div>
       </div>
 
-      <a-empty v-if="!loading && filteredList.length === 0" description="暂无热门知识" />
+      <EmptyState v-if="!loading && filteredList.length === 0" title="暂无热门知识" />
     </a-spin>
   </div>
 </template>
@@ -222,7 +222,7 @@ onMounted(loadData)
     color: #8c8c8c;
 
     &.top-3 {
-      background: linear-gradient(135deg, #faad14, #fa8c16);
+      background: linear-gradient(135deg, var(--biz-points), var(--color-warning));
       color: #fff;
     }
   }

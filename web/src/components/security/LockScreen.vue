@@ -215,7 +215,7 @@ onUnmounted(() => {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #1890ff;
+  background: var(--color-primary);
   color: #fff;
   font-size: 28px;
   font-weight: 600;
@@ -251,8 +251,8 @@ onUnmounted(() => {
 }
 
 .lock-screen__input:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-border);
 }
 
 .lock-screen__input:disabled {
@@ -262,7 +262,7 @@ onUnmounted(() => {
 
 .lock-screen__error {
   font-size: 13px;
-  color: #ff4d4f;
+  color: var(--color-danger);
   margin: 0 0 12px;
 }
 
@@ -294,12 +294,12 @@ onUnmounted(() => {
 }
 
 .lock-screen__btn--primary {
-  background: #1890ff;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .lock-screen__btn--primary:hover:not(:disabled) {
-  background: #40a9ff;
+  background: var(--color-primary-hover);
 }
 
 .lock-screen__btn--ghost {
@@ -309,8 +309,8 @@ onUnmounted(() => {
 }
 
 .lock-screen__btn--ghost:hover:not(:disabled) {
-  color: #1890ff;
-  border-color: #1890ff;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .lock-screen__spinner {

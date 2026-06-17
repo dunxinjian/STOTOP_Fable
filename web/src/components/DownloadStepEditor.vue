@@ -223,7 +223,7 @@ function insertVariable(index: number, varKey: string) {
   overflow: hidden;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 }
 
@@ -237,7 +237,7 @@ function insertVariable(index: number, varKey: string) {
 
   .step-number {
     font-weight: 600;
-    color: #1890ff;
+    color: var(--color-info);
     font-size: 13px;
     min-width: 28px;
   }

@@ -203,7 +203,7 @@ watch(() => accountSetStore.currentAccountSetId, async (newId) => {
 
 .target-code {
   font-family: monospace;
-  color: #1677ff;
+  color: var(--color-info);
   font-weight: 600;
 }
 

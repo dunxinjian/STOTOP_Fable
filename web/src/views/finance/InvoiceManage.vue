@@ -505,12 +505,12 @@ onMounted(() => {
     background: transparent;
 
     &:hover {
-      color: #1890ff;
+      color: var(--color-primary);
     }
 
     &.active {
       color: #fff;
-      background: #1890ff;
+      background: var(--color-primary);
       font-weight: 500;
     }
   }
@@ -524,7 +524,7 @@ onMounted(() => {
     color: #909399;
 
     &:hover {
-      color: #1890ff;
+      color: var(--color-primary);
     }
   }
 }
@@ -535,7 +535,7 @@ onMounted(() => {
 }
 
 .negative-value {
-  color: #f5222d;
+  color: var(--color-danger);
 }
 
 .pagination-wrapper {

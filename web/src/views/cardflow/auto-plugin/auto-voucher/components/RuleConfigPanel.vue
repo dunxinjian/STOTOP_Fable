@@ -21,7 +21,7 @@
     <!-- 分录行概览列表 -->
     <div class="entry-list">
       <div v-if="!currentGroup" class="empty-state">
-        <a-empty description="请选择或新建规则组" />
+        <EmptyState description="请选择或新建规则组" />
       </div>
       <template v-else>
         <div
@@ -305,12 +305,12 @@ function applyTemplate(type: string) {
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 
   &.is-selected {
-    border-color: #1890ff;
-    box-shadow: 0 0 0 1px #1890ff;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
   }
 
   &.is-disabled {
@@ -318,17 +318,17 @@ function applyTemplate(type: string) {
   }
 
   &.has-error {
-    border-color: #ff4d4f;
-    background: #fff2f0;
+    border-color: var(--color-danger);
+    background: var(--color-danger-light);
 
     &:hover {
-      border-color: #ff4d4f;
+      border-color: var(--color-danger);
     }
   }
 
   &.has-error.is-selected {
-    border-color: #ff4d4f;
-    box-shadow: 0 0 0 1px #ff4d4f;
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 1px var(--color-danger);
   }
 }
 
@@ -383,8 +383,8 @@ function applyTemplate(type: string) {
   font-size: 12px;
   font-weight: 500;
 
-  &.balanced { color: #52c41a; }
-  &.unbalanced { color: #faad14; }
+  &.balanced { color: var(--color-success-text); }
+  &.unbalanced { color: var(--color-warning-text); }
 }
 
 .footer-actions {

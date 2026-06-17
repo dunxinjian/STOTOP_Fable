@@ -78,9 +78,9 @@
               </div>
             </template>
             <template #icon>
-              <LoadingOutlined v-if="autoPlugin.status === 'Running'" style="color: #1890ff" />
-              <CheckCircleOutlined v-else-if="autoPlugin.status === 'Completed'" style="color: #52c41a" />
-              <CloseCircleOutlined v-else-if="autoPlugin.status === 'Failed'" style="color: #ff4d4f" />
+              <LoadingOutlined v-if="autoPlugin.status === 'Running'" style="color: var(--color-info)" />
+              <CheckCircleOutlined v-else-if="autoPlugin.status === 'Completed'" style="color: var(--color-success)" />
+              <CloseCircleOutlined v-else-if="autoPlugin.status === 'Failed'" style="color: var(--color-danger)" />
               <ClockCircleOutlined v-else style="color: #d9d9d9" />
             </template>
           </a-step>

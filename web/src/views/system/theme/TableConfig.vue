@@ -128,16 +128,16 @@ const previewTableStyle = computed(() => {
 }
 
 .density-card:hover {
-  border-color: #1677ff;
+  border-color: var(--color-primary-border);
 }
 
 .density-card.active {
-  border-color: #1677ff;
-  background: #e6f4ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .density-card.active .density-card-label {
-  color: #1677ff;
+  color: var(--color-primary);
   font-weight: 500;
 }
 
@@ -170,7 +170,7 @@ const previewTableStyle = computed(() => {
 .density-lines span:last-child { margin-bottom: 0; }
 
 .density-card.active .density-lines span {
-  background: #1677ff;
+  background: var(--color-primary);
 }
 
 .density-card-label {

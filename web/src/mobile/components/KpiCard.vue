@@ -75,10 +75,10 @@ const changeClass = computed(() => ({
   gap: 2px;
 }
 .kpi-change.is-up {
-  color: #52c41a;
+  color: var(--color-success);
 }
 .kpi-change.is-down {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 .kpi-change .hint {
   color: #bfbfbf;

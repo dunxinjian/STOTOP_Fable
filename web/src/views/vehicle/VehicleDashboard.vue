@@ -9,7 +9,7 @@
           <a-statistic
             title="总车辆数"
             :value="kpi.totalVehicles"
-            :value-style="{ color: '#1890ff', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-info)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><CarOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -25,7 +25,7 @@
           <a-statistic
             title="可用车辆"
             :value="kpi.availableVehicles"
-            :value-style="{ color: '#52c41a', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-success)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><CheckCircleOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -39,7 +39,7 @@
           <a-statistic
             title="出租中"
             :value="kpi.rentedVehicles"
-            :value-style="{ color: '#fa8c16', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-warning)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><SwapOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -53,7 +53,7 @@
           <a-statistic
             title="待维护"
             :value="kpi.maintenanceVehicles"
-            :value-style="{ color: '#ff4d4f', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-danger)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><ToolOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -118,7 +118,7 @@
               </a-list-item>
             </template>
           </a-list>
-          <a-empty v-if="!reminders.length" description="暂无提醒" />
+          <EmptyState v-if="!reminders.length" description="暂无提醒" />
         </a-card>
       </a-col>
     </a-row>
@@ -158,28 +158,28 @@ const kpi = ref({
 
 // ===== 快捷操作 =====
 const quickActions = [
-  { key: 'register', label: '车辆登记', icon: PlusCircleOutlined, color: '#1890ff', route: '/vehicle/list' },
-  { key: 'maintenance', label: '维护记录', icon: ToolOutlined, color: '#52c41a', route: '/vehicle/maintenance' },
-  { key: 'insurance', label: '保险管理', icon: SafetyOutlined, color: '#fa8c16', route: '/vehicle/insurance' },
-  { key: 'rental', label: '租赁收费', icon: DollarOutlined, color: '#722ed1', route: '/vehicle/rental' },
+  { key: 'register', label: '车辆登记', icon: PlusCircleOutlined, color: 'var(--color-primary)', route: '/vehicle/list' },
+  { key: 'maintenance', label: '维护记录', icon: ToolOutlined, color: 'var(--color-success)', route: '/vehicle/maintenance' },
+  { key: 'insurance', label: '保险管理', icon: SafetyOutlined, color: 'var(--color-warning)', route: '/vehicle/insurance' },
+  { key: 'rental', label: '租赁收费', icon: DollarOutlined, color: 'var(--biz-waybill)', route: '/vehicle/rental' },
 ]
 
 // ===== 车辆状态分布 =====
 // TODO: 对接真实API
 const statusDistribution = ref([
-  { label: '可用', count: 52, percent: 60, color: '#52c41a' },
-  { label: '出租中', count: 28, percent: 33, color: '#fa8c16' },
-  { label: '维修中', count: 4, percent: 5, color: '#ff4d4f' },
+  { label: '可用', count: 52, percent: 60, color: 'var(--color-success)' },
+  { label: '出租中', count: 28, percent: 33, color: 'var(--color-warning)' },
+  { label: '维修中', count: 4, percent: 5, color: 'var(--color-danger)' },
   { label: '报废', count: 2, percent: 2, color: '#d9d9d9' },
 ])
 
 // ===== 近期提醒 =====
 // TODO: 对接真实API
 const reminders = ref([
-  { label: '保险即将到期', desc: '3辆车保险将在30天内到期', count: 3, color: '#ff4d4f', route: '/vehicle/insurance' },
-  { label: '年检即将到期', desc: '2辆车年检将在30天内到期', count: 2, color: '#fa8c16', route: '/vehicle/list' },
-  { label: '待维护车辆', desc: '6辆车需要进行定期维护', count: 6, color: '#1890ff', route: '/vehicle/maintenance' },
-  { label: '租赁到期', desc: '4辆车租赁合同即将到期', count: 4, color: '#722ed1', route: '/vehicle/rental' },
+  { label: '保险即将到期', desc: '3辆车保险将在30天内到期', count: 3, color: 'var(--color-danger)', route: '/vehicle/insurance' },
+  { label: '年检即将到期', desc: '2辆车年检将在30天内到期', count: 2, color: 'var(--color-warning)', route: '/vehicle/list' },
+  { label: '待维护车辆', desc: '6辆车需要进行定期维护', count: 6, color: 'var(--color-info)', route: '/vehicle/maintenance' },
+  { label: '租赁到期', desc: '4辆车租赁合同即将到期', count: 4, color: 'var(--color-info)', route: '/vehicle/rental' },
 ])
 
 onMounted(async () => {
@@ -217,11 +217,11 @@ onMounted(async () => {
   font-weight: 500;
 
   &.up {
-    color: #52c41a;
+    color: var(--color-success);
   }
 
   &.down {
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 

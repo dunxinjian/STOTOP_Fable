@@ -62,9 +62,9 @@
         </a-col>
       </a-row>
     </template>
-    <a-empty v-else description="暂无活动数据">
+    <EmptyState v-else title="暂无活动数据">
       <a-button type="primary" @click="handleAdd">创建第一个活动</a-button>
-    </a-empty>
+    </EmptyState>
 
     <!-- 新建活动弹窗 -->
     <a-modal

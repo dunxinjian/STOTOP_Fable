@@ -132,12 +132,12 @@ export interface CalendarBoardData {
 
 // 状态颜色映射
 export const STATUS_COLOR_MAP: Record<CalendarEventStatus, string> = {
-  [CalendarEventStatus.Pending]: '#1890ff',    // 蓝
-  [CalendarEventStatus.InProgress]: '#52c41a', // 绿
-  [CalendarEventStatus.Completed]: '#8c8c8c',  // 灰
-  [CalendarEventStatus.Early]: '#13c2c2',      // 青
-  [CalendarEventStatus.Delayed]: '#fa8c16',    // 橙
-  [CalendarEventStatus.Cancelled]: '#ff4d4f'   // 红
+  [CalendarEventStatus.Pending]: 'var(--color-info)',    // 待处理（蓝→信息态）
+  [CalendarEventStatus.InProgress]: 'var(--color-success)', // 进行中（绿）
+  [CalendarEventStatus.Completed]: '#8c8c8c',            // 已召开（中性灰）
+  [CalendarEventStatus.Early]: 'var(--color-info)',      // 提前（青→收敛至信息态）
+  [CalendarEventStatus.Delayed]: 'var(--color-warning)', // 延后（橙黄）
+  [CalendarEventStatus.Cancelled]: 'var(--color-danger)' // 取消（红）
 }
 
 // 状态标签映射

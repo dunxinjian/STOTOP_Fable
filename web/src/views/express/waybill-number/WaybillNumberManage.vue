@@ -64,7 +64,7 @@
           </a-row>
           <a-descriptions v-if="clientBalance" bordered :column="3" size="small">
             <a-descriptions-item label="可用数量">
-              <span style="color: #52c41a; font-weight: 600">{{ clientBalance.available }}</span>
+              <span style="color: var(--color-success); font-weight: 600">{{ clientBalance.available }}</span>
             </a-descriptions-item>
             <a-descriptions-item label="已使用">{{ clientBalance.used }}</a-descriptions-item>
             <a-descriptions-item label="累计分配">{{ clientBalance.totalAllocated }}</a-descriptions-item>

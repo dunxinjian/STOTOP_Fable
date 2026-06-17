@@ -67,6 +67,8 @@ import type { OrganizationDto } from '@/types/organization'
 
 // ==================== 常量 ====================
 
+// G6 canvas 节点分类色板（喂 @antv/g6 的 stroke/fill，canvas 无法解析 CSS 变量），
+// 按"图表分类调色板"排除项跳过去蓝，遗留至数据可视化专项；下方 #1890ff 为色板成员非UI色
 const typeColorMap: Record<string, string> = {
   '集团': '#1a3a5c',
   '子公司': '#1890ff',

@@ -30,7 +30,7 @@ const shortcuts = [
     title: '发起流程',
     description: '创建新的审批卡片',
     icon: PlusCircleOutlined,
-    color: '#1677ff',
+    color: 'var(--color-primary)',
     path: '/cardflow/create',
   },
   {
@@ -44,14 +44,14 @@ const shortcuts = [
     title: '流程管理',
     description: '管理流程定义与版本',
     icon: SettingOutlined,
-    color: '#722ed1',
+    color: 'var(--biz-waybill)',
     path: '/cardflow/definitions',
   },
   {
     title: '监控看板',
     description: '查看流程运行状况',
     icon: BarChartOutlined,
-    color: '#52c41a',
+    color: 'var(--color-success)',
     path: '/cardflow/monitor',
   },
 ]
@@ -129,17 +129,17 @@ onMounted(() => {
     <a-row :gutter="16" style="margin-bottom: 24px;">
       <a-col :span="8">
         <a-card size="small">
-          <a-statistic title="待处理" :value="cardFlowStore.todoCount.todo" :value-style="{ color: '#1677ff' }" />
+          <a-statistic title="待处理" :value="cardFlowStore.todoCount.todo" :value-style="{ color: 'var(--color-info)' }" />
         </a-card>
       </a-col>
       <a-col :span="8">
         <a-card size="small">
-          <a-statistic title="已发起" :value="cardFlowStore.todoCount.initiated" :value-style="{ color: '#722ed1' }" />
+          <a-statistic title="已发起" :value="cardFlowStore.todoCount.initiated" :value-style="{ color: 'var(--biz-waybill)' }" />
         </a-card>
       </a-col>
       <a-col :span="8">
         <a-card size="small">
-          <a-statistic title="抄送我的" :value="cardFlowStore.todoCount.cc" :value-style="{ color: '#fa8c16' }" />
+          <a-statistic title="抄送我的" :value="cardFlowStore.todoCount.cc" :value-style="{ color: 'var(--color-warning)' }" />
         </a-card>
       </a-col>
     </a-row>

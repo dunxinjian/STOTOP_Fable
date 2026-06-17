@@ -119,14 +119,14 @@ const lineOption = computed<EChartsOption>(() => {
       data: trend.map(p => p.value),
       smooth: true,
       symbol: 'none',
-      lineStyle: { width: 2, color: '#722ed1' },
+      lineStyle: { width: 2, color: '#6B4FB0' },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(114,46,209,0.2)' },
-            { offset: 1, color: 'rgba(114,46,209,0.02)' },
+            { offset: 0, color: 'rgba(107,79,176,0.2)' },
+            { offset: 1, color: 'rgba(107,79,176,0.02)' },
           ],
         },
       },

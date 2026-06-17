@@ -94,7 +94,7 @@
         </div>
       </template>
     </component>
-    <a-empty v-if="!localTables.length" description="暂无桌次数据" />
+    <EmptyState v-if="!localTables.length" size="small" title="暂无桌次数据" />
   </div>
 </template>
 
@@ -286,8 +286,8 @@ function handleSeatClick(seat: SeatData, table: TableData) {
     transition: border-color 0.2s, background-color 0.2s;
 
     &.drop-target-active {
-      border: 2px dashed #1677ff;
-      background-color: rgba(22, 119, 255, 0.05);
+      border: 2px dashed var(--color-primary);
+      background-color: var(--color-primary-light);
     }
   }
 
@@ -325,7 +325,7 @@ function handleSeatClick(seat: SeatData, table: TableData) {
   &__seat {
     position: absolute;
     border-radius: 50%;
-    background: #1677ff;
+    background: var(--color-primary);
     color: #fff;
     font-size: 12px;
     font-weight: 500;
@@ -342,9 +342,9 @@ function handleSeatClick(seat: SeatData, table: TableData) {
     }
 
     &--highlight {
-      border: 3px solid #1677ff;
+      border: 3px solid var(--color-primary);
       background: #fff;
-      color: #1677ff;
+      color: var(--color-primary);
       animation: seat-blink 1s ease-in-out infinite alternate;
     }
 
@@ -361,7 +361,7 @@ function handleSeatClick(seat: SeatData, table: TableData) {
   margin-bottom: 2px;
 
   &:hover {
-    color: #1677ff;
+    color: var(--color-primary);
   }
 }
 
@@ -371,10 +371,10 @@ function handleSeatClick(seat: SeatData, table: TableData) {
 
 @keyframes seat-blink {
   from {
-    box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.4);
+    box-shadow: 0 0 0 0 var(--color-primary-border);
   }
   to {
-    box-shadow: 0 0 0 6px rgba(22, 119, 255, 0);
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 </style>

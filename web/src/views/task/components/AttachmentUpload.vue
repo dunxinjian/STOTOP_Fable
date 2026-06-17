@@ -156,7 +156,7 @@ defineExpose({ refresh: loadAttachments })
 
   &__name {
     font-size: 14px;
-    color: #1890ff;
+    color: var(--color-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

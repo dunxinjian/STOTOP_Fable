@@ -127,7 +127,7 @@
           <a-empty v-else description="暂无层级数据" />
         </a-card>
       </template>
-      <a-empty v-else-if="!loading" description="目标不存在" />
+      <EmptyState v-else-if="!loading" title="目标不存在" />
     </a-spin>
 
     <!-- 编辑目标弹窗 -->
@@ -254,7 +254,7 @@ function statusLabel(s: number) { return statusLabels[s] ?? `${s}` }
 function statusColor(s: number) { return statusColors[s] ?? 'default' }
 function taskStatusLabel(s: number) { return taskStatusLabels[s] ?? `${s}` }
 function taskStatusColor(s: number) { return taskStatusColors[s] ?? 'default' }
-function progressColor(p: number) { return p >= 80 ? '#52c41a' : p >= 40 ? '#1890ff' : '#faad14' }
+function progressColor(p: number) { return p >= 80 ? 'var(--color-success)' : p >= 40 ? 'var(--color-info)' : 'var(--color-warning)' }
 function formatDate(d: string) { return d ? d.substring(0, 10) : '' }
 
 const taskColumns = [
@@ -488,7 +488,7 @@ onMounted(() => {
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 
   &__header {
@@ -504,8 +504,8 @@ onMounted(() => {
 
   &__sort {
     display: inline-block;
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--color-info-light);
+    color: var(--color-info);
     font-size: 12px;
     padding: 1px 6px;
     border-radius: 4px;

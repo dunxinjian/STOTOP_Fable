@@ -48,7 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
   progress: undefined,
   progressColor: undefined,
   clickable: true,
-  color: '#1677ff',
+  color: 'var(--color-info)',
 })
 
 const emit = defineEmits<{
@@ -57,10 +57,10 @@ const emit = defineEmits<{
 
 const computedProgressColor = computed(() => {
   if (props.progressColor) return props.progressColor
-  if (props.progress === undefined) return '#1677ff'
-  if (props.progress >= 100) return '#52c41a'
-  if (props.progress >= 50) return '#1677ff'
-  return '#fa8c16'
+  if (props.progress === undefined) return 'var(--color-info)'
+  if (props.progress >= 100) return 'var(--color-success)'
+  if (props.progress >= 50) return 'var(--color-info)'
+  return 'var(--color-warning)'
 })
 
 function handleClick(e: MouseEvent) {
@@ -72,10 +72,10 @@ function handleClick(e: MouseEvent) {
 
 <style scoped lang="scss">
 .stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg16);
+  box-shadow: var(--shadow-sm);
   height: 100%;
   transition: box-shadow 0.3s, transform 0.3s;
 
@@ -83,38 +83,38 @@ function handleClick(e: MouseEvent) {
     cursor: pointer;
 
     &:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-md);
       transform: translateY(-1px);
     }
   }
 
   &__title {
-    color: #8c8c8c;
-    font-size: 14px;
-    margin-bottom: 8px;
+    color: var(--text-3);
+    font-size: var(--font-base);
+    margin-bottom: var(--space-sm8);
     line-height: 1.4;
   }
 
   &__value {
-    font-size: 24px;
+    font-size: var(--font-2xl);
     font-weight: 600;
     line-height: 1.3;
   }
 
   &__suffix {
-    font-size: 14px;
+    font-size: var(--font-base);
     font-weight: 400;
     margin-left: 2px;
   }
 
   &__sub {
-    color: #8c8c8c;
-    font-size: 13px;
-    margin-top: 4px;
+    color: var(--text-3);
+    font-size: var(--font-sm2);
+    margin-top: var(--space-xs4);
   }
 
   &__progress {
-    margin-top: 8px;
+    margin-top: var(--space-sm8);
   }
 }
 </style>

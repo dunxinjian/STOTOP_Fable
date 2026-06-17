@@ -65,20 +65,20 @@
 
             <a-row :gutter="16" style="margin-bottom: 16px">
               <a-col :span="8">
-                <a-statistic title="基础返利" :value="result.baseRebateAmount" :precision="2" prefix="¥" :value-style="{ color: '#1890ff' }" />
+                <a-statistic title="基础返利" :value="result.baseRebateAmount" :precision="2" prefix="¥" :value-style="{ color: 'var(--color-info)' }" />
               </a-col>
               <a-col :span="8">
-                <a-statistic title="奖励金额" :value="result.totalReward" :precision="2" prefix="¥" :value-style="{ color: '#52c41a' }" />
+                <a-statistic title="奖励金额" :value="result.totalReward" :precision="2" prefix="¥" :value-style="{ color: 'var(--color-success)' }" />
               </a-col>
               <a-col :span="8">
-                <a-statistic title="处罚金额" :value="result.totalPenalty" :precision="2" prefix="¥" :value-style="{ color: '#ff4d4f' }" />
+                <a-statistic title="处罚金额" :value="result.totalPenalty" :precision="2" prefix="¥" :value-style="{ color: 'var(--color-danger)' }" />
               </a-col>
             </a-row>
 
             <a-row style="margin-bottom: 20px">
               <a-col :span="24" style="text-align: center">
                 <a-statistic title="最终返利金额" :value="result.finalRebateAmount" :precision="2" prefix="¥"
-                  :value-style="{ color: '#1890ff', fontSize: '28px', fontWeight: 700 }" />
+                  :value-style="{ color: 'var(--color-info)', fontSize: '28px', fontWeight: 700 }" />
               </a-col>
             </a-row>
 
@@ -95,7 +95,7 @@
                   <a-tag :color="record.adjustType === 1 ? 'green' : 'red'">{{ record.adjustType === 1 ? '奖励' : '处罚' }}</a-tag>
                 </template>
                 <template v-if="column.dataIndex === 'adjustAmount'">
-                  <span :style="{ color: record.adjustType === 1 ? '#52c41a' : '#ff4d4f' }">
+                  <span :style="{ color: record.adjustType === 1 ? 'var(--color-success)' : 'var(--color-danger)' }">
                     {{ record.adjustType === 1 ? '+' : '-' }}¥{{ (record.adjustAmount ?? 0).toFixed(2) }}
                   </span>
                 </template>

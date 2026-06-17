@@ -35,7 +35,7 @@
     <!-- 文件区域 -->
     <div v-if="accept === 'file' || accept === 'all'" class="file-section">
       <div v-for="item in fileItems" :key="item.id" class="file-item">
-        <van-icon name="description" size="20" color="#1989fa" />
+        <van-icon name="description" size="20" color="var(--color-primary)" />
         <span class="file-name">{{ item.name }}</span>
         <van-loading v-if="item.uploading" size="16" />
         <span v-else-if="item.progress !== undefined && item.progress < 100" class="file-progress">
@@ -263,7 +263,7 @@ async function uploadSingleFile(itemId: string, file: File) {
 
 .progress-fill {
   height: 100%;
-  background: #1989fa;
+  background: var(--color-primary);
   transition: width 0.3s;
 }
 
@@ -320,7 +320,7 @@ async function uploadSingleFile(itemId: string, file: File) {
 
 .file-progress {
   font-size: 12px;
-  color: #1989fa;
+  color: var(--color-primary);
 }
 
 .file-delete {
@@ -335,7 +335,7 @@ async function uploadSingleFile(itemId: string, file: File) {
   gap: 4px;
   padding: 8px 12px;
   font-size: 13px;
-  color: #1989fa;
+  color: var(--color-primary);
   cursor: pointer;
 }
 </style>

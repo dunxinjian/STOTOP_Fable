@@ -122,7 +122,7 @@
               </a-table-summary-row>
             </template>
           </a-table>
-          <a-empty v-else description="暂无统计数据，点击刷新加载" />
+          <EmptyState v-else size="small" title="暂无统计数据，点击刷新加载" />
         </a-spin>
       </a-tab-pane>
     </a-tabs>
@@ -640,13 +640,13 @@ function getRoomTypeTotalDemand(roomType: string): number {
 function getCellStyle(stat: RoomTypeStat | null): Record<string, string> {
   if (!stat) return {}
   if (stat.available === 0 && stat.allocated === 0 && stat.demand > 0) {
-    return { color: '#faad14', cursor: 'pointer' }  // 橙色警告
+    return { color: 'var(--color-warning)', cursor: 'pointer' }  // 警告
   }
   if (stat.available > 0 && stat.allocated >= stat.available) {
-    return { color: '#52c41a', cursor: 'pointer' }  // 满房绿色
+    return { color: 'var(--color-success)', cursor: 'pointer' }  // 满房绿色
   }
   if (stat.available > 0) {
-    return { color: '#1890ff', cursor: 'pointer' }  // 有空余蓝色
+    return { color: 'var(--color-info)', cursor: 'pointer' }  // 有空余（信息）
   }
   return {}
 }

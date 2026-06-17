@@ -602,7 +602,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
   }
 
   &__required {
-    color: #ff4d4f;
+    color: var(--color-danger);
     margin-right: 2px;
   }
 
@@ -628,7 +628,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
   }
 
   &__file-link {
-    color: #1890ff;
+    color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
@@ -643,7 +643,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
   }
 
   &__card-link {
-    color: #1890ff;
+    color: var(--color-primary);
     cursor: pointer;
 
     &:hover {

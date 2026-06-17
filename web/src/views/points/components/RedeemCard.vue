@@ -125,7 +125,7 @@ function handleExchange() {
     .points-value {
       font-size: 18px;
       font-weight: 700;
-      color: #f5222d;
+      color: var(--color-danger);
     }
     .points-label {
       font-size: 12px;

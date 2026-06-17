@@ -88,7 +88,7 @@
             <a-space>
               <a @click="handleEditTask(record)">编辑</a>
               <a-popconfirm title="确定删除该任务？" @confirm="handleDeleteTask(record.id)">
-                <a style="color: #ff4d4f">删除</a>
+                <a style="color: var(--color-danger)">删除</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -122,7 +122,7 @@
             <a-space>
               <a @click="handleEditVehicle(record)">编辑</a>
               <a-popconfirm title="确定删除该车辆？" @confirm="handleDeleteVehicle(record.id)">
-                <a style="color: #ff4d4f">删除</a>
+                <a style="color: var(--color-danger)">删除</a>
               </a-popconfirm>
             </a-space>
           </template>

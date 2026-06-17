@@ -419,7 +419,7 @@ function handleConfirmAdd() {
 }
 
 .form-error {
-  color: #ff4d4f;
+  color: var(--color-danger);
   font-size: 12px;
   line-height: 1.4;
 }

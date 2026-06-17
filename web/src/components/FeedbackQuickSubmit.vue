@@ -246,10 +246,10 @@ async function submit() {
   gap: 6px;
   height: 40px;
   padding: 0 14px;
-  border: 1px solid #1677ff;
+  border: 1px solid var(--color-primary);
   color: #fff;
-  background: #1677ff;
-  box-shadow: 0 8px 22px rgba(22, 119, 255, 0.22);
+  background: var(--color-primary);
+  box-shadow: 0 8px 22px var(--color-primary-border);
   cursor: pointer;
   touch-action: none;
   user-select: none;

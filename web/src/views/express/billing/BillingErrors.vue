@@ -12,7 +12,7 @@
       </a-col>
       <a-col :span="6">
         <a-card>
-          <a-statistic title="异常运单总数" :value="totalErrors" :value-style="{ color: totalErrors > 0 ? '#cf1322' : '#3f8600' }" />
+          <a-statistic title="异常运单总数" :value="totalErrors" :value-style="{ color: totalErrors > 0 ? 'var(--color-danger)' : 'var(--color-success-text)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
@@ -29,7 +29,7 @@
 
     <!-- 加载状态 -->
     <a-spin :spinning="loading">
-      <a-empty v-if="!loading && errorGroups.length === 0" description="暂无异常数据，所有运单计费正常" />
+      <EmptyState v-if="!loading && errorGroups.length === 0" title="暂无异常数据，所有运单计费正常" />
 
       <!-- 异常分组卡片 -->
       <a-card
@@ -59,7 +59,7 @@
 
         <a-descriptions :column="2" size="small">
           <a-descriptions-item label="影响运单数">
-            <span style="color: #cf1322; font-weight: 500;">{{ group.waybillCount }}</span> 条
+            <span style="color: var(--color-danger); font-weight: 500;">{{ group.waybillCount }}</span> 条
           </a-descriptions-item>
           <a-descriptions-item label="日期范围">
             {{ group.dateRange?.from || '-' }} ~ {{ group.dateRange?.to || '-' }}

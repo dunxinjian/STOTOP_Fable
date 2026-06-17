@@ -163,9 +163,9 @@
             <!-- 结果展示（折叠） -->
             <div v-if="specificSyncResult" class="specific-sync-result">
               <a-space :size="12" wrap>
-                <a-statistic title="成功" :value="specificSyncResult.successCount" :value-style="{ color: '#52c41a', fontSize: '14px' }" />
-                <a-statistic title="跳过" :value="specificSyncResult.skipCount" :value-style="{ color: '#faad14', fontSize: '14px' }" />
-                <a-statistic title="失败" :value="specificSyncResult.failCount" :value-style="{ color: '#ff4d4f', fontSize: '14px' }" />
+                <a-statistic title="成功" :value="specificSyncResult.successCount" :value-style="{ color: 'var(--color-success)', fontSize: '14px' }" />
+                <a-statistic title="跳过" :value="specificSyncResult.skipCount" :value-style="{ color: 'var(--color-warning)', fontSize: '14px' }" />
+                <a-statistic title="失败" :value="specificSyncResult.failCount" :value-style="{ color: 'var(--color-danger)', fontSize: '14px' }" />
               </a-space>
               <div v-if="specificSyncResult.errors?.length" class="specific-sync-errors">
                 <div v-for="(err, i) in specificSyncResult.errors" :key="`specific-${i}-${err}`" class="specific-sync-error-item">
@@ -209,8 +209,8 @@
                 :class="['step-row', `step-${step.status}`]"
               >
                 <span class="step-icon">
-                  <CheckCircleFilled v-if="step.status === 'done'" style="color: #52c41a" />
-                  <LoadingOutlined v-else-if="step.status === 'running'" spin style="color: #1677ff" />
+                  <CheckCircleFilled v-if="step.status === 'done'" style="color: var(--color-success)" />
+                  <LoadingOutlined v-else-if="step.status === 'running'" spin style="color: var(--color-info)" />
                   <ClockCircleOutlined v-else style="color: #d9d9d9" />
                 </span>
                 <span class="step-label">{{ step.label }}：</span>
@@ -231,9 +231,9 @@
                 <a-divider style="margin: 16px 0 12px" />
                 <a-space :size="24" wrap>
                   <a-statistic title="总计" :value="syncResult.totalCount" />
-                  <a-statistic title="成功" :value="syncResult.successCount" :value-style="{ color: '#52c41a' }" />
-                  <a-statistic title="失败" :value="syncResult.failCount" :value-style="{ color: '#ff4d4f' }" />
-                  <a-statistic title="跳过" :value="syncResult.skipCount" :value-style="{ color: '#faad14' }" />
+                  <a-statistic title="成功" :value="syncResult.successCount" :value-style="{ color: 'var(--color-success)' }" />
+                  <a-statistic title="失败" :value="syncResult.failCount" :value-style="{ color: 'var(--color-danger)' }" />
+                  <a-statistic title="跳过" :value="syncResult.skipCount" :value-style="{ color: 'var(--color-warning)' }" />
                 </a-space>
 
                 <!-- 错误详情 -->
@@ -243,7 +243,7 @@
                       <div
                         v-for="(err, i) in syncResult.errors"
                         :key="`sync-${i}-${err}`"
-                        style="color: #ff4d4f; margin-bottom: 4px; font-size: 13px"
+                        style="color: var(--color-danger); margin-bottom: 4px; font-size: 13px"
                       >
                         {{ err }}
                       </div>
@@ -462,8 +462,8 @@ const syncCards = reactive<SyncCard[]>([
     title: '部门同步',
     desc: '同步钉钉部门到本地组织架构',
     icon: markRaw(ApartmentOutlined),
-    color: '#1677ff',
-    bgColor: 'rgba(22,119,255,0.08)',
+    color: 'var(--color-info)',
+    bgColor: 'var(--color-info-light)',
     hover: false,
   },
   {
@@ -471,7 +471,7 @@ const syncCards = reactive<SyncCard[]>([
     title: '人员同步',
     desc: '同步钉钉用户到本地员工信息',
     icon: markRaw(TeamOutlined),
-    color: '#52c41a',
+    color: 'var(--color-success)',
     bgColor: 'rgba(82,196,26,0.08)',
     hover: false,
   },
@@ -480,7 +480,7 @@ const syncCards = reactive<SyncCard[]>([
     title: '职位同步',
     desc: '同步钉钉职位到本地岗位数据',
     icon: markRaw(IdcardOutlined),
-    color: '#faad14',
+    color: 'var(--color-warning)',
     bgColor: 'rgba(250,173,20,0.08)',
     hover: false,
   },
@@ -489,7 +489,7 @@ const syncCards = reactive<SyncCard[]>([
     title: '全量同步',
     desc: '按部门→人员→职位顺序全量同步',
     icon: markRaw(SyncOutlined),
-    color: '#722ed1',
+    color: 'var(--biz-waybill)',
     bgColor: 'rgba(114,46,209,0.08)',
     hover: false,
   },
@@ -539,9 +539,9 @@ const progressBarStatus = computed(() => {
 })
 
 const progressStrokeColor = computed(() => {
-  if (progressStage.value === 'error') return '#ff4d4f'
-  if (progressStage.value === 'completed') return '#52c41a'
-  return '#1677ff'
+  if (progressStage.value === 'error') return 'var(--color-danger)'
+  if (progressStage.value === 'completed') return 'var(--color-success)'
+  return 'var(--color-info)'
 })
 
 /** 重置步骤状态 */
@@ -1033,7 +1033,7 @@ onUnmounted(() => {
 }
 
 .specific-sync-error-item {
-  color: #ff4d4f;
+  color: var(--color-danger);
   font-size: 12px;
   margin-bottom: 2px;
 }
@@ -1061,7 +1061,7 @@ onUnmounted(() => {
   }
 
   &.step-running {
-    background: rgba(22, 119, 255, 0.04);
+    background: var(--color-primary-light);
     color: $color-primary;
   }
 

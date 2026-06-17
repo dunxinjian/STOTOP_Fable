@@ -1406,9 +1406,9 @@ void showDialog
     margin-left: auto;
 
     &--default { background: #f5f5f5; color: #999; }
-    &--warning { background: #fff7e6; color: #fa8c16; }
-    &--success { background: #f6ffed; color: #52c41a; }
-    &--danger  { background: #fff2f0; color: #ff4d4f; }
+    &--warning { background: var(--color-warning-light); color: var(--color-warning); }
+    &--success { background: var(--color-success-light); color: var(--color-success); }
+    &--danger  { background: var(--color-danger-light); color: var(--color-danger); }
   }
 
   // ===== 内容区 =====
@@ -1490,9 +1490,9 @@ void showDialog
     line-height: 20px;
   }
 
-  &__inline-status--warning { background: #fff7e6; color: #ad6800; }
-  &__inline-status--success { background: #f6ffed; color: #389e0d; }
-  &__inline-status--danger { background: #fff1f0; color: #cf1322; }
+  &__inline-status--warning { background: var(--color-warning-light); color: var(--color-warning-text); }
+  &__inline-status--success { background: var(--color-success-light); color: var(--color-success-text); }
+  &__inline-status--danger { background: var(--color-danger-light); color: var(--color-danger-text); }
 
   &__expense-summary {
     display: flex;

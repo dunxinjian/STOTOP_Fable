@@ -131,7 +131,7 @@ const top10ChartOption = computed(() => {
     grid: { left: 80, right: 20, top: 20, bottom: 30 },
     xAxis: { type: 'value' },
     yAxis: { type: 'category', data: names.reverse(), axisLabel: { width: 60, overflow: 'truncate' } },
-    series: [{ type: 'bar', data: counts.reverse(), itemStyle: { color: '#409eff' }, barMaxWidth: 30 }],
+    series: [{ type: 'bar', data: counts.reverse(), itemStyle: { color: '#3A6FB0' }, barMaxWidth: 30 }],
   }
 })
 
@@ -141,7 +141,7 @@ const trendChartOption = computed(() => ({
   grid: { left: 50, right: 20, top: 20, bottom: 30 },
   xAxis: { type: 'category', data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'] },
   yAxis: { type: 'value' },
-  series: [{ type: 'line', data: [3, 5, 4, 6, 5, 7, 4, 3, 5, 6, 4, 3], smooth: true, areaStyle: { opacity: 0.15 }, itemStyle: { color: '#409eff' } }],
+  series: [{ type: 'line', data: [3, 5, 4, 6, 5, 7, 4, 3, 5, 6, 4, 3], smooth: true, areaStyle: { opacity: 0.15 }, itemStyle: { color: '#3A6FB0' } }],
 }))
 
 async function handleFilter() {

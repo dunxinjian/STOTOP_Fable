@@ -235,7 +235,7 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'points'">
-                <span :style="{ color: record.points > 0 ? '#52c41a' : '#ff4d4f' }">
+                <span :style="{ color: record.points > 0 ? 'var(--color-success)' : 'var(--color-danger)' }">
                   {{ record.points > 0 ? '+' : '' }}{{ record.points }}
                 </span>
               </template>
@@ -253,10 +253,10 @@
               <a-statistic title="应收总额" :value="financeStats.receivable" :precision="2" prefix="¥" />
             </a-col>
             <a-col :span="8">
-              <a-statistic title="已收总额" :value="financeStats.received" :precision="2" prefix="¥" :value-style="{ color: '#52c41a' }" />
+              <a-statistic title="已收总额" :value="financeStats.received" :precision="2" prefix="¥" :value-style="{ color: 'var(--color-success)' }" />
             </a-col>
             <a-col :span="8">
-              <a-statistic title="预付余额" :value="financeStats.prepaidBalance" :precision="2" prefix="¥" :value-style="{ color: '#1890ff' }" />
+              <a-statistic title="预付余额" :value="financeStats.prepaidBalance" :precision="2" prefix="¥" :value-style="{ color: 'var(--color-info)' }" />
             </a-col>
           </a-row>
           <a-table

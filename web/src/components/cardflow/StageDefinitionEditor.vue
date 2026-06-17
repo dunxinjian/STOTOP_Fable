@@ -1297,8 +1297,8 @@ const stageCount = computed(() => stages.value.length)
   border-radius: 6px;
   transition: background .15s;
 
-  &:hover { background: #f0f5ff; }
-  &--active { background: #eff6ff; }
+  &:hover { background: var(--color-primary-light); }
+  &--active { background: var(--color-primary-light); }
   &--ghost { opacity: 0.4; }
 }
 
@@ -1364,9 +1364,9 @@ const stageCount = computed(() => stages.value.length)
   &--batch  { border-left: 3px solid #059669; }
 
   &--selected {
-    background: #eff6ff;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-border);
   }
 
   &:hover {

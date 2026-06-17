@@ -358,7 +358,7 @@ function formatDateTime(dateStr: string) {
 .rate-value {
   font-family: 'Courier New', monospace;
   font-size: 14px;
-  color: #e6a23c;
+  color: var(--color-warning);
   font-weight: 600;
 }
 </style>

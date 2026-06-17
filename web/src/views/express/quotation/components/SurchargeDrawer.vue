@@ -268,7 +268,7 @@ async function handleViewDetail(id: number | string) {
   }
 
   &.linked {
-    background: #f6ffed;
+    background: var(--color-success-light);
     border-color: #b7eb8f;
   }
 

@@ -171,7 +171,7 @@
           </template>
 
           <template v-else-if="column.dataIndex === 'findingCount'">
-            <a-badge :count="record.findings?.length || 0" :number-style="{ backgroundColor: record.findings?.length ? '#ff4d4f' : '#52c41a' }" />
+            <a-badge :count="record.findings?.length || 0" :number-style="{ backgroundColor: record.findings?.length ? 'var(--color-danger)' : 'var(--color-success)' }" />
           </template>
 
           <template v-else-if="column.dataIndex === 'action'">
@@ -180,9 +180,9 @@
         </template>
       </a-table>
 
-      <a-empty
+      <EmptyState
         v-if="!running && report && sampleRowsForTable.length === 0"
-        description="暂无抽样数据"
+        title="暂无抽样数据"
         class="result-empty"
       />
     </section>
@@ -265,9 +265,9 @@
         </template>
       </a-table>
 
-      <a-empty
+      <EmptyState
         v-if="!running && report && filteredFindings.length === 0"
-        description="当前筛选无异常"
+        title="当前筛选无异常"
         class="result-empty"
       />
     </section>
@@ -962,9 +962,9 @@ function severityColor(value: ImportValidationFindingDto['severity'] | SeverityK
 }
 
 function confidenceColor(value: number) {
-  if (value >= 0.9) return '#52c41a'
-  if (value >= 0.75) return '#faad14'
-  return '#ff4d4f'
+  if (value >= 0.9) return 'var(--color-success)'
+  if (value >= 0.75) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 function resultFor(
@@ -1166,7 +1166,7 @@ onMounted(async () => {
 .batch-id {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 20px;
-  color: #1677ff;
+  color: var(--color-info);
   white-space: nowrap;
 }
 
@@ -1302,8 +1302,8 @@ onMounted(async () => {
 
   &:hover,
   &.active {
-    border-color: #1677ff;
-    box-shadow: 0 10px 24px rgba(22, 119, 255, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 10px 24px var(--color-primary-border);
     transform: translateY(-1px);
   }
 
@@ -1422,15 +1422,15 @@ onMounted(async () => {
   flex: 0 0 auto;
 
   &[data-status='ok'] {
-    background: #52c41a;
+    background: var(--color-success);
   }
 
   &[data-status='different'] {
-    background: #faad14;
+    background: var(--color-warning);
   }
 
   &[data-status='error'] {
-    background: #ff4d4f;
+    background: var(--color-danger);
   }
 }
 
@@ -1475,7 +1475,7 @@ onMounted(async () => {
 }
 
 .danger {
-  color: #cf1322;
+  color: var(--color-danger-text);
 }
 
 .result-empty {

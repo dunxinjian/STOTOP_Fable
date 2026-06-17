@@ -806,7 +806,7 @@ onMounted(() => {
 }
 
 .cross-module-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;

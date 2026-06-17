@@ -607,7 +607,7 @@ onMounted(() => {
 }
 
 :deep(.row-unconfigured) {
-  background-color: #fff7e6 !important;
+  background-color: var(--color-warning-light) !important;
 }
 
 :deep(.row-unconfigured:hover > td) {

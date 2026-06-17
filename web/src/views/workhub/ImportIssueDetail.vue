@@ -294,7 +294,7 @@ watch(workItemId, () => {
           <a-card size="small" class="stat-card">
             <a-statistic title="影响批次数" :value="batchCount">
               <template #prefix>
-                <FileSearchOutlined style="color: #1677ff" />
+                <FileSearchOutlined style="color: var(--color-info)" />
               </template>
             </a-statistic>
           </a-card>
@@ -312,7 +312,7 @@ watch(workItemId, () => {
           <a-card size="small" class="stat-card">
             <a-statistic title="首次出现时间" :value="formatTime(firstOccurrence)" :value-style="{ fontSize: '14px' }">
               <template #prefix>
-                <ClockCircleOutlined style="color: #faad14" />
+                <ClockCircleOutlined style="color: var(--color-warning)" />
               </template>
             </a-statistic>
           </a-card>
@@ -321,7 +321,7 @@ watch(workItemId, () => {
           <a-card size="small" class="stat-card">
             <a-statistic title="派发人" :value="dispatcher || '系统自动'" :value-style="{ fontSize: '14px' }">
               <template #prefix>
-                <UserSwitchOutlined style="color: #722ed1" />
+                <UserSwitchOutlined style="color: var(--color-info)" />
               </template>
             </a-statistic>
           </a-card>

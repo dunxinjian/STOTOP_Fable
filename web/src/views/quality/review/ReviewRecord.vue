@@ -98,7 +98,7 @@
             </template>
           </template>
         </a-table>
-        <a-empty v-else description="暂无改进措施" />
+        <EmptyState v-else size="small" title="暂无改进措施" />
       </template>
     </a-drawer>
 

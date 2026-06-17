@@ -69,7 +69,7 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'pointValue'">
-                  <span :style="{ color: record.pointValue > 0 ? '#52c41a' : '#ff4d4f', fontWeight: 600 }">
+                  <span :style="{ color: record.pointValue > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }">
                     {{ record.pointValue > 0 ? '+' : '' }}{{ record.pointValue }}
                   </span>
                 </template>
@@ -104,7 +104,7 @@
                 >
                   <template #bodyCell="{ column, record }">
                     <template v-if="column.dataIndex === 'rank'">
-                      <span :style="{ color: record.rank <= 3 ? '#faad14' : undefined, fontWeight: record.rank <= 3 ? 700 : 400 }">
+                      <span :style="{ color: record.rank <= 3 ? 'var(--color-warning)' : undefined, fontWeight: record.rank <= 3 ? 700 : 400 }">
                         {{ record.rank }}
                       </span>
                     </template>
@@ -118,22 +118,22 @@
                 <div v-if="myRanking" class="ranking-summary">
                   <div class="ranking-summary__item">
                     <span class="ranking-summary__label">我的排名</span>
-                    <span class="ranking-summary__value" style="color: #722ed1">第 {{ myRanking.rank }} 名</span>
+                    <span class="ranking-summary__value" style="color: var(--color-info)">第 {{ myRanking.rank }} 名</span>
                   </div>
                   <div class="ranking-summary__item">
                     <span class="ranking-summary__label">总积分</span>
-                    <span class="ranking-summary__value" style="color: #1890ff">{{ myRanking.totalPoints }}</span>
+                    <span class="ranking-summary__value" style="color: var(--color-info)">{{ myRanking.totalPoints }}</span>
                   </div>
                   <div class="ranking-summary__item">
                     <span class="ranking-summary__label">奖分</span>
-                    <span class="ranking-summary__value" style="color: #52c41a">+{{ myRanking.awardPoints }}</span>
+                    <span class="ranking-summary__value" style="color: var(--color-success)">+{{ myRanking.awardPoints }}</span>
                   </div>
                   <div class="ranking-summary__item">
                     <span class="ranking-summary__label">扣分</span>
-                    <span class="ranking-summary__value" style="color: #ff4d4f">-{{ myRanking.deductPoints }}</span>
+                    <span class="ranking-summary__value" style="color: var(--color-danger)">-{{ myRanking.deductPoints }}</span>
                   </div>
                 </div>
-                <a-empty v-else description="暂无排名数据" />
+                <EmptyState v-else size="small" title="暂无排名数据" />
               </div>
             </a-col>
           </a-row>
@@ -177,11 +177,11 @@ const recordsLoading = ref(false)
 const kpiList = computed(() => {
   const a = account.value
   return [
-    { label: '总积分', value: a?.totalPoints ?? 0, color: '#1890ff' },
-    { label: '可用积分', value: a?.availablePoints ?? 0, color: '#52c41a' },
-    { label: '本月获得', value: a?.monthlyAward ?? 0, color: '#13c2c2' },
-    { label: '本月使用', value: a?.monthlyDeduct ?? 0, color: '#fa8c16' },
-    { label: '我的排名', value: myRanking.value?.rank ?? '-', color: '#722ed1' },
+    { label: '总积分', value: a?.totalPoints ?? 0, color: 'var(--color-info)' },
+    { label: '可用积分', value: a?.availablePoints ?? 0, color: 'var(--color-success)' },
+    { label: '本月获得', value: a?.monthlyAward ?? 0, color: 'var(--color-info)' },
+    { label: '本月使用', value: a?.monthlyDeduct ?? 0, color: 'var(--color-warning)' },
+    { label: '我的排名', value: myRanking.value?.rank ?? '-', color: 'var(--color-info)' },
   ]
 })
 
@@ -241,8 +241,8 @@ function renderTrendChart() {
         type: 'line',
         data: nets,
         smooth: true,
-        itemStyle: { color: '#1890ff' },
-        areaStyle: { color: 'rgba(24,144,255,0.1)' },
+        itemStyle: { color: '#3A6FB0' },
+        areaStyle: { color: 'rgba(58,111,176,0.1)' },
         lineStyle: { width: 3 },
       },
     ],
@@ -266,13 +266,13 @@ function renderBarChart() {
         name: '获得',
         type: 'bar',
         data: awards,
-        itemStyle: { color: '#52c41a', borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: '#2BA471', borderRadius: [4, 4, 0, 0] },
       },
       {
         name: '使用',
         type: 'bar',
         data: deducts,
-        itemStyle: { color: '#fa8c16', borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: '#E6A700', borderRadius: [4, 4, 0, 0] },
       },
     ],
   })
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -501,7 +501,7 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
 }
 
 .chart-container {

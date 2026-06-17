@@ -47,10 +47,10 @@ const stats = reactive<TodoStatsDto>({
 })
 
 const statCards = computed(() => [
-  { key: 'total', label: '总待办数', value: stats.totalPending, suffix: '', color: '#1677ff' },
-  { key: 'avg', label: '平均处理时长', value: formatHours(stats.avgProcessHours), suffix: '', color: '#52c41a' },
-  { key: 'rate', label: '超时率', value: stats.timeoutRate, suffix: '%', color: '#faad14' },
-  { key: 'done', label: '今日完成数', value: stats.todayCompleted, suffix: '', color: '#722ed1' },
+  { key: 'total', label: '总待办数', value: stats.totalPending, suffix: '', color: 'var(--color-info)' },
+  { key: 'avg', label: '平均处理时长', value: formatHours(stats.avgProcessHours), suffix: '', color: 'var(--color-success)' },
+  { key: 'rate', label: '超时率', value: stats.timeoutRate, suffix: '%', color: 'var(--color-warning)' },
+  { key: 'done', label: '今日完成数', value: stats.todayCompleted, suffix: '', color: 'var(--biz-waybill)' },
 ])
 
 function formatHours(h: number) {
@@ -152,8 +152,8 @@ function renderBarChart() {
       itemStyle: {
         borderRadius: [6, 6, 0, 0],
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#1677ff' },
-          { offset: 1, color: '#69b1ff' },
+          { offset: 0, color: '#3A6FB0' },
+          { offset: 1, color: '#6B9BD1' },
         ]),
       },
       label: { show: true, position: 'top', color: '#595959', fontSize: 11 },
@@ -199,8 +199,8 @@ function renderLineChart() {
       data: trend.map(t => Number((t.avgProcessHours || 0).toFixed(2))),
       symbol: 'circle',
       symbolSize: 7,
-      itemStyle: { color: '#52c41a' },
-      lineStyle: { width: 2.5, color: '#52c41a' },
+      itemStyle: { color: '#2BA471' },
+      lineStyle: { width: 2.5, color: '#2BA471' },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: 'rgba(82,196,26,0.25)' },
@@ -223,7 +223,7 @@ const tableColumns: TableColumnsType<FlowTodoStat> = [
       const v = Number(text) || 0
       const danger = v > 20
       return h('span', {
-        style: { color: danger ? '#ff4d4f' : '#595959', fontWeight: danger ? 600 : 400 },
+        style: { color: danger ? 'var(--color-danger-text)' : '#595959', fontWeight: danger ? 600 : 400 },
       }, `${v.toFixed(1)}%`)
     } },
 ]

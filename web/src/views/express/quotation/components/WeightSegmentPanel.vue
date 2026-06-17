@@ -326,12 +326,12 @@ function handleMerge(index: number) {
   user-select: none;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 
   &.active {
-    border-color: #1890ff;
-    background: #e6f4ff;
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
   }
 
   &.disabled {
@@ -364,7 +364,7 @@ function handleMerge(index: number) {
   text-align: center;
   font-size: 12px;
   color: #fff;
-  background: #ff4d4f;
+  background: var(--color-danger);
   border-radius: 50%;
   cursor: pointer;
   display: none;
@@ -416,9 +416,9 @@ function handleMerge(index: number) {
 .split-inherit-tip {
   flex-shrink: 0;
   font-size: 11px;
-  color: #1677ff;
-  background: #e6f4ff;
-  border: 1px solid #91caff;
+  color: var(--color-info);
+  background: var(--color-info-light);
+  border: 1px solid var(--color-info);
   border-radius: 3px;
   padding: 1px 5px;
   white-space: nowrap;
@@ -433,14 +433,14 @@ function handleMerge(index: number) {
   white-space: nowrap;
 
   &.left {
-    background: #e6f4ff;
-    color: #1677ff;
-    border: 1px solid #91caff;
+    background: var(--color-info-light);
+    color: var(--color-info);
+    border: 1px solid var(--color-info);
   }
 
   &.right {
-    background: #f6ffed;
-    color: #52c41a;
+    background: var(--color-success-light);
+    color: var(--color-success);
     border: 1px solid #b7eb8f;
   }
 }

@@ -6,6 +6,8 @@ import { setupErrorReport } from './utils/error-report'
 
 // Vant 全局样式
 import 'vant/lib/index.css'
+// Vant 变量桥：映射到统一令牌
+import '@/styles/vant-bridge.scss'
 
 const app = createApp(App)
 const pinia = createPinia()

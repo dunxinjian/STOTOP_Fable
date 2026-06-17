@@ -60,7 +60,7 @@
                   <li><strong>人工分类</strong> — 手动归类</li>
                   <li><strong>未匹配池</strong> — 触发报警机制</li>
                 </ol>
-                <div style="background:#f6ffed;border-radius:4px;padding:6px 8px;margin-top:8px;font-size:12px;border:1px solid #b7eb8f">
+                <div style="background:var(--color-success-light);border-radius:4px;padding:6px 8px;margin-top:8px;font-size:12px;border:1px solid #b7eb8f">
                   <strong>独占规则</strong>：一条凭证只能匹配一个损益项，匹配后自动解除其他历史匹配关系。
                 </div>
               </a-collapse-panel>
@@ -96,11 +96,11 @@
                 <p>覆盖率反映模板配置对实际财务数据的匹配完整度：已匹配的凭证分录数 ÷ 全部凭证分录数。</p>
                 <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
                   <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8">覆盖率</th><th style="padding:4px 8px;border:1px solid #e8e8e8">状态</th><th style="padding:4px 8px;border:1px solid #e8e8e8">建议</th></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 95%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:#52c41a">🟢 优秀</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">无需处理</td></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:#faad14">🟡 良好</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">检查未匹配项</td></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">< 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:#ff4d4f">🔴 需关注</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">补充关联科目/关键词</td></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 95%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-success)">🟢 优秀</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">无需处理</td></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-warning)">🟡 良好</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">检查未匹配项</td></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">< 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-danger)">🔴 需关注</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">补充关联科目/关键词</td></tr>
                 </table>
-                <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:10px 0;font-size:12px">
+                <div style="background:var(--color-success-light);border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:10px 0;font-size:12px">
                   <strong>如何提高覆盖率：</strong>
                   <ol style="margin:4px 0 0;padding-left:18px">
                     <li>为 data 节点补充<strong>关联科目</strong>（覆盖更多科目前缀）</li>
@@ -138,7 +138,7 @@
                   <code style="display:block;margin:4px 0;background:#fff;padding:4px 6px;border-radius:2px">${'${出港收入合计}'} - ${'${出港直接成本合计}'}</code>
                   <p style="margin:4px 0 0">则选中「出港收入合计」时，此处会显示「出港毛利」作为引用方。</p>
                 </div>
-                <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+                <div style="background:var(--color-warning-light);border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
                   <strong>⚠️ 删除保护：</strong>
                   <ul style="margin:4px 0 0;padding-left:18px">
                     <li>被引用的项目<strong>不建议直接删除</strong>，否则引用方公式将求值为 0</li>
@@ -195,7 +195,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
   itemType: {
     title: '项目类型（已融合为节点角色）',
     content: `
-      <p style="color:#faad14;font-size:12px">⚠️ 项目类型已统一为「节点角色」体系，请参考节点角色说明。</p>
+      <p style="color:var(--color-warning);font-size:12px">⚠️ 项目类型已统一为「节点角色」体系，请参考节点角色说明。</p>
       <ul>
         <li><strong>收入</strong> → 对应 data 角色，数据源为 billing 或 voucher</li>
         <li><strong>成本</strong> → 对应 data 角色，数据源为 voucher / estimate / depreciation</li>
@@ -240,7 +240,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     title: '关联科目',
     content: `
       <p>配置凭证分录匹配的科目编码，系统按<strong>最长前缀优先</strong>算法匹配：</p>
-      <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-success-light);border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <strong>匹配优先级（从高到低）：</strong>
         <ol style="margin:4px 0 0;padding-left:18px">
           <li>数据源天然归属（billing → 出港收入）</li>
@@ -274,7 +274,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     title: '摘要关键词',
     content: `
       <p>当凭证的科目编码未匹配到任何损益项时，系统会检查凭证<strong>摘要文本</strong>中是否包含此处的关键词。</p>
-      <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-warning-light);border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <strong>规则说明：</strong>
         <ul style="margin:4px 0 0;padding-left:18px">
           <li>多个关键词为<strong>"或"</strong>关系，匹配任一即归入本项</li>
@@ -305,7 +305,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
         <p style="margin:0"><strong>✅ 正确写法：</strong></p>
         <code style="display:block;margin-top:4px">\${出港收入合计} - \${出港直接成本合计} - \${分摊出港份额}</code>
       </div>
-      <div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-danger-light);border:1px solid #ffa39e;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <p style="margin:0"><strong>❌ 错误写法：</strong></p>
         <code style="display:block;margin-top:4px">出港收入合计 - 出港直接成本合计</code>
         <p style="margin:4px 0 0;color:#8c8c8c">裸名称无法解析为项目引用，会导致求值为 0</p>
@@ -387,7 +387,7 @@ watch(
 
     &:hover {
       background: #f0f5ff;
-      color: #1677ff;
+      color: var(--color-primary);
     }
   }
 
@@ -481,11 +481,11 @@ watch(
   }
 
   &__ref-hint {
-    color: #faad14;
+    color: var(--color-warning);
     margin-bottom: 8px;
     padding: 6px 8px;
-    background: #fffbe6;
-    border-left: 3px solid #faad14;
+    background: var(--color-warning-light);
+    border-left: 3px solid var(--color-warning);
     font-size: 12px;
   }
 

@@ -60,13 +60,13 @@
               danger
               @click.stop="handleUncollect(item)"
             >
-              <StarFilled style="color: #faad14" /> 取消收藏
+              <StarFilled style="color: var(--biz-points)" /> 取消收藏
             </a-button>
           </div>
         </div>
       </div>
 
-      <a-empty v-if="!loading && filteredList.length === 0" description="暂无收藏的知识文章" />
+      <EmptyState v-if="!loading && filteredList.length === 0" title="暂无收藏的知识文章" />
     </a-spin>
   </div>
 </template>

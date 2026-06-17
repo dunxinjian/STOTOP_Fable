@@ -43,7 +43,7 @@
             </div>
           </a-timeline-item>
         </a-timeline>
-        <a-empty v-else description="当天无日程" />
+        <EmptyState v-else size="small" title="当天无日程" />
       </a-card>
     </a-spin>
 

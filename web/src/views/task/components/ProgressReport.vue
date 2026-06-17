@@ -83,7 +83,7 @@ async function handleSubmit() {
   &__percent {
     font-size: 16px;
     font-weight: 600;
-    color: #1890ff;
+    color: var(--color-info);
     min-width: 48px;
     text-align: right;
   }

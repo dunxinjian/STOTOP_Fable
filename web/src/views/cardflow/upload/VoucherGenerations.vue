@@ -27,8 +27,8 @@
 
         <template v-else-if="column.dataIndex === 'rows'">
           <span>{{ record.totalRows }}</span>
-          <span style="color: #52c41a"> / {{ record.matchedRows }}</span>
-          <span style="color: #ff4d4f" :class="{ 'unmatched-link': record.unmatchedRows > 0 }" @click="record.unmatchedRows > 0 && showUnmatched(record)"> / {{ record.unmatchedRows }}</span>
+          <span style="color: var(--color-success-text)"> / {{ record.matchedRows }}</span>
+          <span style="color: var(--color-danger-text)" :class="{ 'unmatched-link': record.unmatchedRows > 0 }" @click="record.unmatchedRows > 0 && showUnmatched(record)"> / {{ record.unmatchedRows }}</span>
         </template>
 
         <template v-else-if="column.dataIndex === 'generatedVoucherCount'">
@@ -157,7 +157,7 @@ function statusText(status: unknown): string {
 }
 
 function statusColor(status: unknown): string {
-  const map: Record<number, string> = { 0: '#1890ff', 1: '#52c41a', 2: '#fa8c16', 3: '#ff4d4f' }
+  const map: Record<number, string> = { 0: 'var(--color-info)', 1: 'var(--color-success)', 2: 'var(--color-warning)', 3: 'var(--color-danger)' }
   return map[Number(status)] ?? '#999'
 }
 
@@ -244,7 +244,7 @@ onMounted(() => {
   opacity: 0.8;
 }
 .voucher-count-link {
-  color: #1890ff;
+  color: var(--color-info);
   cursor: default;
 }
 </style>

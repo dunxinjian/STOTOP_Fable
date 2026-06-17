@@ -96,6 +96,6 @@ const uploadAction = '/api/oa/attachment/upload'
 }
 
 .file-error {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 </style>

@@ -48,7 +48,7 @@
         <template v-else-if="column.key === 'affectedWaybillCount'">
           <span
             v-if="record.affectedWaybillCount > 0"
-            style="color: #cf1322; font-weight: 600; cursor: pointer; text-decoration: underline;"
+            style="color: var(--color-danger); font-weight: 600; cursor: pointer; text-decoration: underline;"
           >{{ record.affectedWaybillCount }}</span>
           <span v-else style="color: rgba(0,0,0,0.25);">0</span>
         </template>

@@ -568,7 +568,7 @@ function handleImportSuccess() {
 }
 
 .plan-name-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;
@@ -623,7 +623,7 @@ function handleImportSuccess() {
 
   :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
     font-weight: 600;
-    color: #1677ff;
+    color: var(--color-primary);
   }
 
   :deep(.ant-tabs-ink-bar) {

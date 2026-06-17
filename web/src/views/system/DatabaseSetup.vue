@@ -4,28 +4,28 @@
     <div v-if="!setupAuthenticated && !pageLoading" class="auth-gate">
       <div class="auth-gate-card">
         <div class="auth-gate-header">
-          <SettingOutlined :style="{ fontSize: '42px', color: '#1890ff' }" />
+          <SettingOutlined :style="{ fontSize: '42px', color: 'var(--color-primary)' }" />
           <h2>系统配置</h2>
           <p class="auth-gate-desc">请选择认证方式以继续</p>
         </div>
         <div class="auth-gate-options">
           <div class="auth-option" @click="handleLoginAuth">
-            <UserOutlined :style="{ fontSize: '32px', color: '#1890ff' }" />
+            <UserOutlined :style="{ fontSize: '32px', color: 'var(--color-primary)' }" />
             <h3>用户登录认证</h3>
             <p>使用系统账号登录后进入配置</p>
           </div>
           <div class="auth-option" @click="showPassphraseInput = true" v-if="!showPassphraseInput">
-            <LockOutlined :style="{ fontSize: '32px', color: '#E6A23C' }" />
+            <LockOutlined :style="{ fontSize: '32px', color: 'var(--color-warning)' }" />
             <h3>管理员口令认证</h3>
             <p>输入管理员口令直接进入配置</p>
           </div>
           <div class="auth-passphrase" v-if="showPassphraseInput">
-            <LockOutlined :style="{ fontSize: '32px', color: '#E6A23C' }" />
+            <LockOutlined :style="{ fontSize: '32px', color: 'var(--color-warning)' }" />
             <h3>管理员口令认证</h3>
             <a-input-password v-model:value="passphrase" placeholder="请输入管理员口令" @pressEnter="handlePassphraseAuth" style="margin-top: 12px;" />
             <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
               <a-button @click="showPassphraseInput = false; passphrase = ''">取消</a-button>
-              <a-button type="primary" style="background: #E6A23C; border-color: #E6A23C" :loading="passphraseLoading" @click="handlePassphraseAuth">验证</a-button>
+              <a-button type="primary" style="background: var(--color-warning); border-color: var(--color-warning)" :loading="passphraseLoading" @click="handlePassphraseAuth">验证</a-button>
             </div>
           </div>
         </div>
@@ -47,7 +47,7 @@
               <ArrowLeftOutlined />返回管理
             </a-button>
           </div>
-          <DollarCircleOutlined :style="{ fontSize: '42px', color: '#1890ff' }" />
+          <DollarCircleOutlined :style="{ fontSize: '42px', color: 'var(--color-primary)' }" />
           <h2>{{ reinitMode ? '全新初始化 - 重新配置数据库' : '系统初始化 - 配置主数据库' }}</h2>
           <p class="guide-desc">请填写 SQL Server 数据库连接信息，完成系统初始化</p>
         </div>
@@ -91,7 +91,7 @@
     <!-- 模式B：管理模式 -->
     <div v-else class="manage-mode">
       <div v-if="!isLoggedIn" class="login-prompt">
-        <WarningOutlined :style="{ fontSize: '48px', color: '#E6A23C' }" />
+        <WarningOutlined :style="{ fontSize: '48px', color: 'var(--color-warning)' }" />
         <h3>需要登录</h3>
         <p>数据库连接管理需要登录权限，请先登录系统。</p>
         <a-button type="primary" @click="$router.push('/login?redirect=/setup')">前往登录</a-button>
@@ -113,7 +113,7 @@
             <template v-if="column.dataIndex === 'action'">
               <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
               <template v-if="record.connectionType === '系统'">
-                <a-button type="link" size="small" style="color: #faad14" @click="handleFullInit(record)">全新初始化</a-button>
+                <a-button type="link" size="small" style="color: var(--color-warning)" @click="handleFullInit(record)">全新初始化</a-button>
                 <a-button type="link" size="small" @click="handlePreserveInit(record)">保留初始化</a-button>
               </template>
               <template v-else>
@@ -121,7 +121,7 @@
               </template>
             </template>
           </template>
-          <template #emptyText><div style="padding: 40px 0; color: #909399;">暂无数据库连接</div></template>
+          <template #emptyText><EmptyState description="暂无数据库连接" /></template>
         </a-table>
 
         <!-- 自动备份配置 -->
@@ -129,7 +129,7 @@
           <a-card class="backup-card">
             <template #title>
               <div class="backup-card-header">
-                <ClockCircleOutlined style="color: #1890ff" />
+                <ClockCircleOutlined style="color: var(--color-info)" />
                 <span>自动备份配置</span>
               </div>
             </template>
@@ -325,25 +325,25 @@
         <a-row :gutter="16" class="dryrun-tables">
           <a-col :span="12" v-if="dryRunResult.tablesToDelete.length > 0">
             <div class="dryrun-section dryrun-section--danger">
-              <div class="dryrun-section-title"><DeleteOutlined style="color: #f56c6c" /> 将删除的非系统表（{{ dryRunResult.tablesToDelete.length }}）</div>
+              <div class="dryrun-section-title"><DeleteOutlined style="color: var(--color-danger)" /> 将删除的非系统表（{{ dryRunResult.tablesToDelete.length }}）</div>
               <div class="dryrun-tag-list"><a-tag v-for="t in dryRunResult.tablesToDelete" :key="t" color="error" class="dryrun-tag">{{ t }}</a-tag></div>
             </div>
           </a-col>
           <a-col :span="12" v-if="dryRunResult.tablesToPreserve.length > 0">
             <div class="dryrun-section dryrun-section--success">
-              <div class="dryrun-section-title"><CheckCircleOutlined style="color: #52c41a" /> 将保留数据的系统表（{{ dryRunResult.tablesToPreserve.length }}）</div>
+              <div class="dryrun-section-title"><CheckCircleOutlined style="color: var(--color-success)" /> 将保留数据的系统表（{{ dryRunResult.tablesToPreserve.length }}）</div>
               <div class="dryrun-tag-list"><a-tag v-for="t in dryRunResult.tablesToPreserve" :key="t" color="success" class="dryrun-tag">{{ t }}</a-tag></div>
             </div>
           </a-col>
           <a-col :span="12" v-if="dryRunResult.tablesToRebuild.length > 0">
             <div class="dryrun-section dryrun-section--warning">
-              <div class="dryrun-section-title"><RedoOutlined style="color: #faad14" /> 将清空重建的系统表（{{ dryRunResult.tablesToRebuild.length }}）</div>
+              <div class="dryrun-section-title"><RedoOutlined style="color: var(--color-warning)" /> 将清空重建的系统表（{{ dryRunResult.tablesToRebuild.length }}）</div>
               <div class="dryrun-tag-list"><a-tag v-for="t in dryRunResult.tablesToRebuild" :key="t" color="warning" class="dryrun-tag">{{ t }}</a-tag></div>
             </div>
           </a-col>
           <a-col :span="12" v-if="dryRunResult.tablesToCreate.length > 0">
             <div class="dryrun-section dryrun-section--primary">
-              <div class="dryrun-section-title"><PlusOutlined style="color: #1890ff" /> 将新建的缺失表（{{ dryRunResult.tablesToCreate.length }}）</div>
+              <div class="dryrun-section-title"><PlusOutlined style="color: var(--color-primary)" /> 将新建的缺失表（{{ dryRunResult.tablesToCreate.length }}）</div>
               <div class="dryrun-tag-list"><a-tag v-for="t in dryRunResult.tablesToCreate" :key="t" color="blue" class="dryrun-tag">{{ t }}</a-tag></div>
             </div>
           </a-col>
@@ -941,7 +941,7 @@ onMounted(async () => {
   border: 1px solid #e4e7ed; border-radius: 8px; padding: 24px; cursor: pointer;
   transition: all .3s; flex: 1; min-width: 200px; max-width: 250px;
 }
-.auth-option:hover { border-color: #1890ff; box-shadow: 0 2px 12px rgba(24,144,255,0.15); }
+.auth-option:hover { border-color: var(--color-primary); box-shadow: 0 2px 12px var(--color-primary-border); }
 .auth-option h3 { margin: 12px 0 4px; font-size: 15px; }
 .auth-option p { color: #909399; font-size: 13px; margin: 0; }
 .auth-passphrase {
@@ -1008,10 +1008,10 @@ onMounted(async () => {
 .dryrun-alert { margin-bottom: 12px; }
 .dryrun-tables { margin-top: 16px; }
 .dryrun-section { border: 1px solid #e4e7ed; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
-.dryrun-section--danger { border-color: #fde2e2; background: #fef0f0; }
-.dryrun-section--success { border-color: #d9f7be; background: #f6ffed; }
-.dryrun-section--warning { border-color: #ffeeba; background: #fffbe6; }
-.dryrun-section--primary { border-color: #bae7ff; background: #e6f7ff; }
+.dryrun-section--danger { border-color: #fde2e2; background: var(--color-danger-light); }
+.dryrun-section--success { border-color: #d9f7be; background: var(--color-success-light); }
+.dryrun-section--warning { border-color: #ffeeba; background: var(--color-warning-light); }
+.dryrun-section--primary { border-color: var(--color-primary-border); background: var(--color-primary-light); }
 .dryrun-section--info { border-color: #e4e7ed; background: #f4f4f5; }
 .dryrun-section-title { font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .dryrun-tag-list { display: flex; flex-wrap: wrap; gap: 4px; }

@@ -10,7 +10,7 @@
     <!-- 统计卡片 -->
     <a-row :gutter="16" style="margin-bottom:16px">
       <a-col :span="6">
-        <StatCard title="总礼金金额" :value="'¥' + summary.totalAmount.toFixed(2)" color="#cf1322" :clickable="false" />
+        <StatCard title="总礼金金额" :value="'¥' + summary.totalAmount.toFixed(2)" color="var(--color-danger)" :clickable="false" />
       </a-col>
       <a-col :span="6">
         <StatCard title="红包/现金份数" :value="summary.cashCount + summary.transferCount" suffix="份" :clickable="false" />
@@ -19,14 +19,14 @@
         <StatCard title="礼物份数" :value="summary.giftCount" suffix="份" :clickable="false" />
       </a-col>
       <a-col :span="6">
-        <StatCard title="待回礼数" :value="summary.pendingReturnCount" suffix="份" color="#fa8c16" :clickable="false" />
+        <StatCard title="待回礼数" :value="summary.pendingReturnCount" suffix="份" color="var(--color-warning)" :clickable="false" />
       </a-col>
     </a-row>
 
     <!-- 分组统计 -->
     <div v-if="summary.campSummaries?.length" class="camp-summary" style="margin-bottom:16px; display:flex; gap:16px; color:#595959; font-size:14px;">
       <span v-for="cs in summary.campSummaries" :key="cs.camp">
-        {{ cs.camp }}：<strong style="color:#1677ff">¥{{ cs.totalAmount.toFixed(2) }}</strong>
+        {{ cs.camp }}：<strong style="color:var(--color-info)">¥{{ cs.totalAmount.toFixed(2) }}</strong>
       </span>
     </div>
 

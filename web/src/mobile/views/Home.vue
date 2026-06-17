@@ -13,11 +13,11 @@
     <!-- 快捷操作区 -->
     <div class="quick-actions">
       <div class="quick-actions__item" @click="$router.push('/m/scan')">
-        <van-icon name="scan" size="28" color="#1989fa" />
+        <van-icon name="scan" size="28" color="var(--color-primary)" />
         <span>扫一扫</span>
       </div>
       <div class="quick-actions__item" @click="$router.push('/m/submit/0')">
-        <van-icon name="add-square" size="28" color="#07c160" />
+        <van-icon name="add-square" size="28" color="var(--color-success)" />
         <span>发起卡片</span>
       </div>
     </div>
@@ -76,7 +76,7 @@ const orgActions = computed(() =>
   authStore.organizations.map(org => ({
     name: org.name,
     value: org.id,
-    color: org.id === authStore.currentOrgId ? '#1989fa' : undefined,
+    color: org.id === authStore.currentOrgId ? 'var(--color-primary)' : undefined,
   }))
 )
 

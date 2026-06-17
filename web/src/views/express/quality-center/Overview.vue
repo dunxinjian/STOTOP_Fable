@@ -11,7 +11,7 @@
       <a-row :gutter="8" class="kpi-row">
         <a-col :span="4">
           <div class="kpi-card" @click="goto('pending-shops')">
-            <span class="kpi-value" :style="{ color: overview.autoCreatedPendingCount > 0 ? '#cf1322' : '#3f8600' }">{{ overview.autoCreatedPendingCount }}</span>
+            <span class="kpi-value" :style="{ color: overview.autoCreatedPendingCount > 0 ? 'var(--color-danger)' : 'var(--color-success-text)' }">{{ overview.autoCreatedPendingCount }}</span>
             <span class="kpi-suffix">个</span>
             <div class="kpi-title">待配置店铺（自动建档）</div>
           </div>
@@ -25,28 +25,28 @@
         </a-col>
         <a-col :span="4">
           <div class="kpi-card" @click="goto('empty-shop-rows')">
-            <span class="kpi-value" :style="{ color: overview.emptyShopRowCount > 0 ? '#cf1322' : '#3f8600' }">{{ overview.emptyShopRowCount }}</span>
+            <span class="kpi-value" :style="{ color: overview.emptyShopRowCount > 0 ? 'var(--color-danger)' : 'var(--color-success-text)' }">{{ overview.emptyShopRowCount }}</span>
             <span class="kpi-suffix">条</span>
             <div class="kpi-title">空账号运单</div>
           </div>
         </a-col>
         <a-col :span="4">
           <div class="kpi-card" @click="goto('unrecognized')">
-            <span class="kpi-value" :style="{ color: (overview.unrecognizedNetworkPointCount || 0) > 0 ? '#cf1322' : '#3f8600' }">{{ overview.unrecognizedNetworkPointCount || 0 }}</span>
+            <span class="kpi-value" :style="{ color: (overview.unrecognizedNetworkPointCount || 0) > 0 ? 'var(--color-danger)' : 'var(--color-success-text)' }">{{ overview.unrecognizedNetworkPointCount || 0 }}</span>
             <span class="kpi-suffix">条</span>
             <div class="kpi-title">未识别网点运单</div>
           </div>
         </a-col>
         <a-col :span="4">
           <div class="kpi-card" @click="goto('mismatch')">
-            <span class="kpi-value" :style="{ color: (overview.networkPointMismatchCount || 0) > 0 ? '#faad14' : '#3f8600' }">{{ overview.networkPointMismatchCount || 0 }}</span>
+            <span class="kpi-value" :style="{ color: (overview.networkPointMismatchCount || 0) > 0 ? 'var(--color-warning)' : 'var(--color-success-text)' }">{{ overview.networkPointMismatchCount || 0 }}</span>
             <span class="kpi-suffix">条</span>
             <div class="kpi-title">网点不一致</div>
           </div>
         </a-col>
         <a-col :span="4">
           <div class="kpi-card">
-            <span class="kpi-value" :style="{ color: overview.affectedBatchCount > 0 ? '#faad14' : '#3f8600' }">{{ overview.affectedBatchCount }}</span>
+            <span class="kpi-value" :style="{ color: overview.affectedBatchCount > 0 ? 'var(--color-warning)' : 'var(--color-success-text)' }">{{ overview.affectedBatchCount }}</span>
             <span class="kpi-suffix">个</span>
             <div class="kpi-title">
               受阻批次
@@ -350,12 +350,12 @@ onMounted(() => {
 
 .flow-link {
   font-size: 13px;
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    color: #40a9ff;
+    color: var(--color-primary-hover);
   }
 }
 </style>

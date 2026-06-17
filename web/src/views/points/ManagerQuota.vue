@@ -6,17 +6,17 @@
     <a-row :gutter="16" class="quota-overview">
       <a-col :span="6">
         <a-card :bordered="false" class="quota-card">
-          <a-statistic title="本月奖分配额" :value="myQuota?.awardQuota ?? 0" suffix="分" :value-style="{ color: '#52c41a' }" />
+          <a-statistic title="本月奖分配额" :value="myQuota?.awardQuota ?? 0" suffix="分" :value-style="{ color: 'var(--color-success)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false" class="quota-card">
-          <a-statistic title="已用奖分" :value="myQuota?.usedAward ?? 0" suffix="分" :value-style="{ color: '#faad14' }" />
+          <a-statistic title="已用奖分" :value="myQuota?.usedAward ?? 0" suffix="分" :value-style="{ color: 'var(--color-warning)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
         <a-card :bordered="false" class="quota-card">
-          <a-statistic title="本月扣分配额" :value="myQuota?.deductQuota ?? 0" suffix="分" :value-style="{ color: '#ff4d4f' }" />
+          <a-statistic title="本月扣分配额" :value="myQuota?.deductQuota ?? 0" suffix="分" :value-style="{ color: 'var(--color-danger)' }" />
         </a-card>
       </a-col>
       <a-col :span="6">
@@ -36,7 +36,7 @@
             <a-progress
               :percent="myQuota.awardQuota ? Math.round((myQuota.usedAward / myQuota.awardQuota) * 100) : 0"
               status="active"
-              stroke-color="#52c41a"
+              stroke-color="var(--color-success)"
             />
           </div>
         </a-col>
@@ -46,7 +46,7 @@
             <a-progress
               :percent="myQuota.deductQuota ? Math.round((myQuota.usedDeduct / myQuota.deductQuota) * 100) : 0"
               status="active"
-              stroke-color="#ff4d4f"
+              stroke-color="var(--color-danger)"
             />
           </div>
         </a-col>

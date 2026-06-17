@@ -1406,7 +1406,7 @@ onMounted(() => {
 }
 
 .danger-link {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .manage-seats {
@@ -1452,7 +1452,7 @@ onMounted(() => {
   }
 
   &__seat-num {
-    color: #1890ff;
+    color: var(--color-info);
     font-weight: 500;
     min-width: 32px;
   }
@@ -1513,31 +1513,31 @@ onMounted(() => {
     }
 
     &.is-under {
-      border-color: #faad14;
-      background: #fffbe6;
+      border-color: var(--color-warning);
+      background: var(--color-warning-light);
 
       .manual-arrange__table-header {
-        background: #fff7e6;
+        background: var(--color-warning-light);
         border-bottom-color: #ffe7ba;
       }
 
       .manual-arrange__table-count {
-        color: #d48806;
+        color: var(--color-warning);
         font-weight: 500;
       }
     }
 
     &.is-full {
-      border-color: #52c41a;
-      background: #f6ffed;
+      border-color: var(--color-success);
+      background: var(--color-success-light);
 
       .manual-arrange__table-header {
-        background: #f6ffed;
+        background: var(--color-success-light);
         border-bottom-color: #d9f7be;
       }
 
       .manual-arrange__table-count {
-        color: #389e0d;
+        color: var(--color-success-text);
         font-weight: 500;
       }
 
@@ -1555,7 +1555,7 @@ onMounted(() => {
     font-size: 11px;
     line-height: 16px;
     color: #fff;
-    background: #52c41a;
+    background: var(--color-success);
     border-radius: 8px;
   }
 
@@ -1586,7 +1586,7 @@ onMounted(() => {
     font-size: 14px;
     transition: color 0.2s;
 
-    &:hover { color: #1677ff; }
+    &:hover { color: var(--color-primary); }
     &:active { cursor: grabbing; }
   }
 
@@ -1614,7 +1614,7 @@ onMounted(() => {
   transition: border-color 0.3s;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
   }
 
   &--unassigned {
@@ -1666,8 +1666,8 @@ onMounted(() => {
 
 .manual-table-ghost {
   opacity: 0.5;
-  background: #e6f4ff !important;
-  border: 1px dashed #1677ff !important;
+  background: var(--color-primary-light) !important;
+  border: 1px dashed var(--color-primary) !important;
 }
 
 .manual-footer {

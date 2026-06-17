@@ -216,12 +216,12 @@ const { has } = usePermission()
 
 const statusOptions = [
   { value: 0, label: '新反馈', color: '#64748b' },
-  { value: 1, label: '待复现', color: '#1677ff' },
-  { value: 2, label: '已确认', color: '#13c2c2' },
-  { value: 3, label: '已排期', color: '#722ed1' },
-  { value: 4, label: '开发中', color: '#fa8c16' },
-  { value: 5, label: '待验证', color: '#2f54eb' },
-  { value: 6, label: '已关闭', color: '#52c41a' },
+  { value: 1, label: '待复现', color: 'var(--color-info)' },
+  { value: 2, label: '已确认', color: 'var(--color-info-text)' },
+  { value: 3, label: '已排期', color: 'var(--biz-approval)' },
+  { value: 4, label: '开发中', color: 'var(--color-warning)' },
+  { value: 5, label: '待验证', color: 'var(--color-primary)' },
+  { value: 6, label: '已关闭', color: 'var(--color-success)' },
 ]
 
 const typeOptions = [
@@ -567,9 +567,9 @@ onMounted(() => {
   cursor: pointer;
 
   &.active {
-    border-color: #1677ff;
-    color: #1677ff;
-    background: #f0f7ff;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-primary-light);
   }
 
   .dot {
@@ -630,7 +630,7 @@ onMounted(() => {
   transition: border-color 0.2s, box-shadow 0.2s;
 
   &:hover {
-    border-color: #1677ff;
+    border-color: var(--color-primary);
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
   }
 }

@@ -1,0 +1,166 @@
+# STOTOP 前端页面骨架范式契约（PATTERNS）
+
+> 阶段7 设计系统层产物。本文件是「页面长什么样」的硬约束：四类页面标准骨架 + 共享组件契约 + 令牌速查 + 红线验收命令。
+> 令牌真源见 `web/docs/TOKENS.md` 与 `src/stores/theme.ts` 的 `applyDesignTokensCSS()`；本文件只规定**怎么用**。
+>
+> 三通道自动继承：任何页面只要用了 `.page-container`/`.page-card`/`.page-toolbar` 全局类、antd 组件、或被 `<a-config-provider>` 包裹，
+> 就自动继承新内外边距、卡片范式、表头/行高/hover/校验态、主色 token——**旧页无需逐页改即继承新视觉**。
+
+---
+
+## 一、四类页面标准骨架
+
+### 1. 列表页（样板：VoucherList / ContractList）
+
+```
+.page-container
+├─ <PageHeader>（#actions 主操作；#toolbar 第二行筛选）
+└─ .table-card / <a-card>
+   ├─ <a-table>（#emptyText = <EmptyState size="small">）
+   └─ <a-pagination>
+```
+
+- 顶部按钮行用全局 `.page-toolbar`（`__group` 主操作 / `__filters` 推右筛选）或 PageHeader 的 `#toolbar` 槽。
+- 表格卡片放 `.page-container` 直接子级，自动获得 flex 滚动链（`.ant-card` → `.ant-table-body`）。
+- 空数据走 `<EmptyState size="small">`，不再手写 `<a-empty>`。
+
+### 2. 详情页（样板：TaskDetail）
+
+```
+.page-container
+├─ <PageHeader :backTo="...">（返回按钮 → #page-toolbar-left）
+└─ <a-row>
+   ├─ <a-col :md=主区16>  正文 / 描述 / 操作
+   └─ <a-col :md=信息栏8>  侧栏 sticky 元信息
+```
+
+- 返回按钮由 `PageHeader` 的 `backTo` prop 渲染，主色 hover 浅橙，禁止页面自造返回按钮。
+
+### 3. 表单页（样板：ExpenseReimburseSubmit）
+
+```
+.page-container
+├─ <PageHeader>（#actions 保存/提交）
+└─ <BaseCard> 或 <a-card>
+   └─ <a-form>（统一 :label-col；冒号由 ConfigProvider 接管）
+```
+
+- 必填星 / 校验错误文案由 `ant-override.scss` 统一令牌化（`--color-danger` / `--color-danger-text`），页面不重复定义。
+- label 字号统一 `--font-sm2`（13）。
+
+### 4. 仪表盘（样板：express/Dashboard）
+
+```
+.page-container（或自定义 flex 容器）
+├─ <PageHeader>（#toolbar 周期/组织筛选）
+├─ KPI 条（.kpi-bar：--bg-card + --radius-lg + --shadow-sm）
+└─ <a-tabs>
+   └─ 内容 panel（.content-panel）/ <StatCard> 网格
+```
+
+- KPI / StatCard 数值色走 `--color-info`/`--biz-*`/`--color-success` 等令牌；echarts 序列色用十六进制字面量（canvas 不吃 CSS 变量，属唯一豁免）。
+
+---
+
+## 二、共享组件契约
+
+### PageHeader —— Teleport 四槽
+
+| 插槽 | 传送目标 id | 用途 |
+| --- | --- | --- |
+| `#left` / `#title-extra` | `#page-toolbar-left` | 标题左侧附加 |
+| `#center` | `#page-toolbar-center` | 居中标题（`--font-lg`/`--text-1`） |
+| `#right` / `#actions` | `#page-toolbar-actions` | 右侧主操作 |
+| `#toolbar` | `#page-toolbar-row2` | 第二行筛选区 |
+| `backTo` prop | `#page-toolbar-left` | 返回按钮（主色 hover 浅橙） |
+
+- 标题不在页内显示，由面包屑承担；不改 keep-alive token 注册机制（`registerToolbar`/`instanceToken`）。
+
+### EmptyState
+
+| prop | 说明 |
+| --- | --- |
+| `size` | `default`（整页 min-height 300）/ `small`（表格内嵌 min-height 160，图 60） |
+| `title` / `description` | 文案，色用 `--text-1` / `--text-3` |
+| `icon` / `iconColor` | 自定义图标，默认色 `--text-disabled` |
+| `actionText` + `actionRoute` + `showAction` | 操作按钮 |
+
+表格空态：`<template #emptyText><EmptyState size="small" title="暂无数据" /></template>`。
+
+### BaseCard
+
+| prop | 默认 | 说明 |
+| --- | --- | --- |
+| `title` / `#title` / `#extra` | — | 卡头标题与操作区 |
+| `bordered` | `true` | 边框 `--border` |
+| `hoverable` | `false` | hover 升 `--shadow-md` |
+| `noPadding` | `false` | 主体去内边距（内嵌表格） |
+
+轻量纯容器仍可直接用全局 `.page-card` 类；带标题/操作/hover 变体用 `BaseCard`。
+
+### StatusTag
+
+| prop | 取值 | 映射 |
+| --- | --- | --- |
+| `type` | `success`/`warning`/`danger`/`info`/`default` | `--color-*-light` 底 + `--color-*-text` 字 |
+| `biz` | `waybill`/`contract`/`quality`/`approval`/`points`/`finance` | 业务色字 + 浅底（优先于 type） |
+| `dot` | 布尔 | 前置状态圆点 |
+
+统一替代手写 `a-tag :color="'success'|'processing'|'error'"`。
+
+---
+
+## 三、令牌速查（唯一权威，禁止再引入字面量）
+
+> 完整清单见 `web/docs/TOKENS.md`。下表为本阶段最常消费项。
+
+| 语义 | 变量 | 值 |
+| --- | --- | --- |
+| 主色 / hover / 浅底 / 边框 | `--color-primary` / `-hover` / `-light` / `-border` | `#E85E00` / `#FF6700` / `#FFF3EA` / `rgba(232,94,0,.30)` |
+| 状态色（底/字） | `--color-success/warning/danger/info-light` `-text` | 见 TOKENS.md |
+| 文字 1/2/3/禁用 | `--text-1` / `--text-2` / `--text-3` / `--text-disabled` | `#1F2329` / `#5A6068` / `#8A9099` / `#BFC3C9` |
+| 表面 / 卡片 / 弱底 / 边框 | `--bg-page` / `--bg-card` / `--bg-muted` / `--border` | `#F5F6F8` / `#FFFFFF` / `#EEF0F3` / `#E6E8EB` |
+| 业务色 | `--biz-waybill/contract/quality/approval/points/finance` | 见 TOKENS.md |
+| 圆角 | `--radius-sm/md/lg/modal/pill` | `4/6/8/12/999px` |
+| 阴影 | `--shadow-sm/md/lg` | `0 1px 2px…` / `0 4px 12px…` / `0 8px 24px…` |
+| 字号 | `--font-xs/sm/sm2/base/lg/xl/2xl` | `11/12/13/14/16/18/24px` |
+| 间距（4 基数） | `--space-2xs2/xs4/sm8/md12/lg16/xl24/2xl32` | `2/4/8/12/16/24/32px` |
+| 布局 | `--toolbar-height` / `--page-pad-x` / `--page-pad-y` | `40px` / `16px` / `12px` |
+
+页面内边距单一真源：`.page-container { padding: var(--page-pad-y) var(--page-pad-x) }`，
+动态轨由 `theme.ts applyPagePaddingCSS` 写变量，**双轨 !important 已收口**。
+
+---
+
+## 四、红线 + 验收命令（PowerShell / rg）
+
+新代码禁止写死颜色字面量；改色一律走令牌。验收命令（worktree `web/` 下执行）：
+
+```powershell
+# 1) 硬编码蓝（旧 antd 主色）应趋零（echarts 序列色、第三方桥除外）
+rg "#1890ff|#1677ff|1890ff|22, ?119, ?255|24, ?144, ?255" src --glob "*.vue" --glob "*.scss"
+
+# 2) 自造空态递减指标（替换为 <EmptyState> 后应下降）
+rg "<a-empty" src/views -c          # 巡检基线：91 文件
+rg -l "class=\"[^\"]*empty[^\"]*\"" src/views   # 手写空态：43 文件
+
+# 3) page-padding 双轨断言：theme.ts 不应再注入 .page-container 的 !important
+rg "page-container.*!important" src/stores/theme.ts   # 预期 0 命中
+
+# 4) 全局范式类存在性
+rg "\.page-toolbar|\.page-card" src/styles/index.scss
+```
+
+### 自造空态摸排台账（阶段7 基线，供逐模块巡检递减）
+
+- `<a-empty>`：**91 文件**（阶段0 前为 167，已替换部分）。
+- 手写 `class="*empty*"`：**43 文件**。
+- 本阶段仅替换样板（Dashboard 待办/预警 2 处 → `EmptyState size="small"`；VoucherList `#emptyText` 已用 `EmptyState`）；
+  其余进逐模块巡检阶段，按上表命令递减。
+
+### preview 抽检清单（四类样板）
+
+- 列表页：VoucherList / ContractList —— 表头灰、行 hover 浅橙、偶数行斑马、内容区四周留白无横向溢出。
+- 详情页：TaskDetail —— 返回按钮橙、侧栏元信息弱底。
+- 表单页：ExpenseReimburseSubmit —— 必填星红、校验错误文案、label 13px。
+- 仪表盘：express/Dashboard 全三 Tab —— KPI 条卡片范式、空态 small、panel 左条主色。

@@ -3402,8 +3402,8 @@ function goBack() {
 
 .fdef-card-canvas-item__icon-btn--danger:hover,
 .fdef-card-canvas-item__icon-btn--danger:focus-visible {
-  background: #fff1f0;
-  color: #cf1322;
+  background: var(--color-danger-light);
+  color: var(--color-danger-text);
 }
 
 .fdef-card-canvas-item__runtime {
@@ -4119,7 +4119,7 @@ function goBack() {
 
   b {
     align-self: center;
-    color: #1677ff;
+    color: var(--color-info);
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;

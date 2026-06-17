@@ -150,7 +150,7 @@ const trendChartOption = computed(() => ({
     data: trendData.value.values,
     smooth: true,
     areaStyle: { opacity: 0.15 },
-    itemStyle: { color: '#1890ff' },
+    itemStyle: { color: '#3A6FB0' },
   }],
 }))
 
@@ -163,7 +163,7 @@ const orgChartOption = computed(() => ({
   series: [{
     type: 'bar',
     data: orgData.value.values,
-    itemStyle: { color: '#722ed1', borderRadius: [4, 4, 0, 0] },
+    itemStyle: { color: '#3A6FB0', borderRadius: [4, 4, 0, 0] },
     barMaxWidth: 40,
   }],
 }))

@@ -7,30 +7,18 @@
 
     <!-- 内容区 -->
     <div class="panel-body">
-      <div class="warehouse-workband">
-        <div>
-          <strong>仓配工作带</strong>
-          <span>运单、入库、异常与结算入口集中处理</span>
-        </div>
-        <div class="dock-bars" aria-hidden="true">
-          <span style="height: 18px"></span>
-          <span style="height: 28px"></span>
-          <span style="height: 22px"></span>
-        </div>
-      </div>
-
-      <!-- 最近访问芯片 -->
+      <!-- 最近访问 -->
       <div class="section-label">最近访问</div>
-      <div class="pages-chips" v-if="recommendationStore.recentPages.length > 0">
+      <div class="frequent-list" v-if="recommendationStore.recentPages.length > 0">
         <div
           v-for="item in recommendationStore.recentPages"
           :key="item.path"
-          class="page-chip"
+          class="frequent-item"
           @click="router.push(item.path)"
         >
-          <component :is="getPageIcon(item.path)" class="chip-icon" />
-          <span class="chip-name">{{ getDisplayTitle(item.title) }}</span>
-          <span class="chip-time">{{ formatRelativeTime(item.lastVisitTime) }}</span>
+          <component :is="getPageIcon(item.path)" class="frequent-icon" />
+          <span class="frequent-name">{{ getDisplayTitle(item.title) }}</span>
+          <span class="frequent-meta">{{ formatRelativeTime(item.lastVisitTime) }}</span>
         </div>
       </div>
       <div class="pages-empty" v-else>
@@ -105,7 +93,7 @@ function formatRelativeTime(timestamp: number): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-left: 0;
   overflow: hidden;
 }
@@ -115,15 +103,15 @@ function formatRelativeTime(timestamp: number): string {
   align-items: center;
   height: 54px;
   padding: 0 20px;
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  background: linear-gradient(180deg, #fff, #fbfcfd);
+  background: var(--bg-card);
 }
 
 .panel-header__title {
   font-size: 15px;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--text-1);
 }
 
 .panel-body {
@@ -143,7 +131,7 @@ function formatRelativeTime(timestamp: number): string {
 
 .section-label {
   font-size: 12px;
-  color: $text-secondary;
+  color: var(--text-2);
   font-weight: 500;
   margin-bottom: 12px;
   letter-spacing: 0;
@@ -151,101 +139,8 @@ function formatRelativeTime(timestamp: number): string {
   &--top {
     margin-top: 18px;
     padding-top: 18px;
-    border-top: 1px solid #edf0f4;
+    border-top: 1px solid var(--border);
   }
-}
-
-.warehouse-workband {
-  min-height: 76px;
-  margin-bottom: 18px;
-  border-radius: 8px;
-  border: 1px solid #e5ebf2;
-  background:
-    linear-gradient(90deg, rgba(255, 103, 0, 0.08), rgba(18, 184, 189, 0.07)),
-    repeating-linear-gradient(90deg, rgba(32, 36, 44, 0.06) 0 1px, transparent 1px 28px),
-    #fbfcfd;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-
-  strong {
-    display: block;
-    color: $text-primary;
-    font-size: 14px;
-    margin-bottom: 5px;
-  }
-
-  span {
-    color: $text-secondary;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-}
-
-.dock-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 5px;
-  flex: 0 0 auto;
-
-  span {
-    width: 20px;
-    border-radius: 4px 4px 2px 2px;
-    background: rgba(255, 103, 0, 0.22);
-    border: 1px solid rgba(255, 103, 0, 0.24);
-  }
-}
-
-.pages-chips {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.page-chip {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  background: #f6f9ff;
-  border: 1px solid rgba(22, 119, 255, 0.12);
-  border-radius: 18px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  max-width: 220px;
-
-  &:hover {
-    background: rgba(22, 119, 255, 0.12);
-    border-color: rgba(22, 119, 255, 0.3);
-    .chip-name { color: $color-primary; }
-    .chip-icon { color: $color-primary; }
-  }
-}
-
-.chip-icon {
-  font-size: 13px;
-  color: $text-secondary;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.chip-name {
-  font-size: 12px;
-  color: $text-regular;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 90px;
-}
-
-.chip-time {
-  font-size: 11px;
-  color: $text-placeholder;
-  flex-shrink: 0;
 }
 
 .pages-empty {
@@ -264,27 +159,27 @@ function formatRelativeTime(timestamp: number): string {
 .frequent-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm8);
   min-height: 38px;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: var(--space-sm8) var(--space-md12);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(22, 119, 255, 0.05);
+    background: var(--color-primary-light);
   }
 }
 
 .frequent-icon {
   font-size: 14px;
-  color: $text-secondary;
+  color: var(--text-3);
   flex-shrink: 0;
 }
 
 .frequent-name {
   font-size: 13px;
-  color: $text-regular;
+  color: var(--text-1);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -292,12 +187,18 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 .visit-count {
-  font-size: 11px;
-  background: rgba(255, 103, 0, 0.08);
-  color: #ff6700;
-  padding: 2px 8px;
-  border-radius: 10px;
+  font-size: var(--font-xs);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 2px var(--space-sm8);
+  border-radius: var(--radius-pill);
   font-weight: 500;
+  flex-shrink: 0;
+}
+
+.frequent-meta {
+  font-size: var(--font-xs);
+  color: var(--text-3);
   flex-shrink: 0;
 }
 </style>

@@ -51,7 +51,7 @@
           <a-badge
             :count="group.lines.length"
             :show-zero="true"
-            :number-style="{ backgroundColor: group.lines.length > 0 ? '#1890ff' : '#d9d9d9', fontSize: '11px' }"
+            :number-style="{ backgroundColor: group.lines.length > 0 ? 'var(--color-info)' : '#d9d9d9', fontSize: '11px' }"
           />
           <CompletenessBadge :score="getGroupScore(group)" />
           <HitRateBadge :rate="null" />
@@ -284,8 +284,8 @@ function getGroupScore(group: RuleGroup): number | null {
   }
 
   &.active {
-    background: #e6f4ff;
-    border-color: #91caff;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-border);
     .group-actions { opacity: 1; }
   }
 }

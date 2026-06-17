@@ -815,8 +815,8 @@
           <div style="margin-bottom: 16px;">
             <a-row :gutter="16">
               <a-col :span="6"><a-statistic title="数据点总数" :value="coverageReport.totalDataPoints" /></a-col>
-              <a-col :span="6"><a-statistic title="已匹配" :value="coverageReport.matchedDataPoints" :value-style="{ color: '#52c41a' }" /></a-col>
-              <a-col :span="6"><a-statistic title="未匹配" :value="coverageReport.unmatchedDataPoints" :value-style="{ color: '#ff4d4f' }" /></a-col>
+              <a-col :span="6"><a-statistic title="已匹配" :value="coverageReport.matchedDataPoints" :value-style="{ color: 'var(--color-success)' }" /></a-col>
+              <a-col :span="6"><a-statistic title="未匹配" :value="coverageReport.unmatchedDataPoints" :value-style="{ color: 'var(--color-danger)' }" /></a-col>
               <a-col :span="6"><a-statistic title="覆盖率" :value="coverageReport.coverageRate" suffix="%" /></a-col>
             </a-row>
           </div>
@@ -3142,7 +3142,7 @@ onMounted(() => {
     transition: background 0.2s;
   }
 
-  &:hover .resizer-line, &:active .resizer-line { background: #1677ff; }
+  &:hover .resizer-line, &:active .resizer-line { background: var(--color-primary); }
 }
 
 .right-panel {
@@ -3169,7 +3169,7 @@ onMounted(() => {
 
 .tree-node-group {
   font-weight: 600;
-  color: #1677ff;
+  color: var(--color-info);
 }
 
 // Tab 横跨容器
@@ -3206,15 +3206,15 @@ onMounted(() => {
   }
   :deep(.ant-tabs-tab:hover) {
     background: #f0f7ff !important;
-    color: #1677ff !important;
+    color: var(--color-primary) !important;
   }
   :deep(.ant-tabs-tab.ant-tabs-tab-active) {
-    background: #e6f4ff !important;
-    border-color: #91caff !important;
-    box-shadow: inset 0 3px 0 0 #1677ff;
+    background: var(--color-primary-light) !important;
+    border-color: var(--color-primary-border) !important;
+    box-shadow: inset 0 3px 0 0 var(--color-primary);
   }
   :deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: #1677ff !important;
+    color: var(--color-primary) !important;
     font-weight: 600;
   }
 }
@@ -3234,7 +3234,7 @@ onMounted(() => {
 }
 
 .indicator-tab--drop-active {
-  outline: 2px dashed #52c41a;
+  outline: 2px dashed var(--color-success);
   outline-offset: 2px;
   border-radius: 4px;
   background: rgba(82, 196, 26, 0.08);
@@ -3250,7 +3250,7 @@ onMounted(() => {
   font-size: 12px;
   margin-left: 2px;
   cursor: pointer;
-  &:hover { color: #1677ff; }
+  &:hover { color: var(--color-primary); }
 }
 
 .dir-tab-del {
@@ -3258,7 +3258,7 @@ onMounted(() => {
   font-size: 11px;
   margin-left: 2px;
   cursor: pointer;
-  &:hover { color: #ff4d4f; }
+  &:hover { color: var(--color-danger); }
 }
 
 // 全局formula区域
@@ -3276,10 +3276,10 @@ onMounted(() => {
   gap: 4px;
   padding: 3px 10px;
   background: #fff;
-  border: 1px solid #722ed1;
+  border: 1px solid #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
   border-radius: 16px;
   font-size: 13px;
-  color: #722ed1;
+  color: #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
   cursor: pointer;
   transition: all 0.2s;
 
@@ -3288,7 +3288,7 @@ onMounted(() => {
   &__name { font-weight: 500; white-space: nowrap; }
   &__fx {
     font-size: 10px;
-    background: #722ed1;
+    background: #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
     color: #fff;
     padding: 0 4px;
     border-radius: 3px;
@@ -3320,7 +3320,7 @@ onMounted(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ff4d4f;
+  background: var(--color-danger);
 }
 
 .edit-form { max-width: 100%; }
@@ -3363,7 +3363,7 @@ onMounted(() => {
   margin-left: 4px;
   cursor: help;
   transition: color 0.2s;
-  &:hover { color: #1890ff; }
+  &:hover { color: var(--color-primary); }
 }
 
 .empty-guide {
@@ -3390,7 +3390,7 @@ onMounted(() => {
 
 .coverage-btn {
   position: relative;
-  &:hover { color: #1677ff; }
+  &:hover { color: var(--color-primary); }
 }
 
 // 辅助核算过滤
@@ -3448,7 +3448,7 @@ onMounted(() => {
   &__code {
     font-family: 'Consolas', monospace;
     font-weight: 600;
-    color: #1677ff;
+    color: var(--color-info);
   }
 
   &__name {
@@ -3470,7 +3470,7 @@ onMounted(() => {
 
     &--active {
       color: #fff;
-      background: #52c41a;
+      background: var(--color-success);
     }
   }
 
@@ -3529,22 +3529,22 @@ onMounted(() => {
     .editor-card__head { background: linear-gradient(to right, rgba(108,117,125,0.06), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
   }
   &--source {
-    &::before { background: #1677ff; }
-    .editor-card__head { background: linear-gradient(to right, rgba(22,119,255,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
-    .editor-card__title { color: #0958d9; }
+    &::before { background: var(--color-info); }
+    .editor-card__head { background: linear-gradient(to right, rgba(58,111,176,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    .editor-card__title { color: var(--color-info-text); }
   }
   &--rule {
-    &::before { background: #52c41a; }
+    &::before { background: var(--color-success); }
     .editor-card__head { background: linear-gradient(to right, rgba(82,196,26,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
-    .editor-card__title { color: #389e0d; }
+    .editor-card__title { color: var(--color-success-text); }
   }
   &--calc {
-    &::before { background: #722ed1; }
+    &::before { background: #722ed1; } // 计算卡分组强调色，无业务语义，保留待阶段5
     .editor-card__head { background: linear-gradient(to right, rgba(114,46,209,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
     .editor-card__title { color: #531dab; }
   }
   &--remark {
-    &::before { background: #fa8c16; }
+    &::before { background: var(--color-warning); }
     .editor-card__head { background: linear-gradient(to right, rgba(250,140,22,0.07), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
     .editor-card__title { color: #d46b08; }
   }
@@ -3559,7 +3559,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 24px;
-  background: #fffbe6;
+  background: var(--color-warning-light);
   border-top: 1px solid #ffe58f;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
 
@@ -3574,7 +3574,7 @@ onMounted(() => {
     display: inline-block;
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: #faad14;
+    background: var(--color-warning);
     box-shadow: 0 0 0 3px rgba(250, 173, 20, 0.16);
     animation: action-bar-pulse 1.6s infinite;
   }

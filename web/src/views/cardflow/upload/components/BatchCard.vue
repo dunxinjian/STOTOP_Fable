@@ -80,7 +80,7 @@
       class="error-fallback"
       v-else-if="batch.status === 'error' && batch.errorMessage"
     >
-      <WarningOutlined style="color: #ff4d4f; margin-right: 4px" />
+      <WarningOutlined style="color: var(--color-danger); margin-right: 4px" />
       <a-tooltip :title="batch.errorMessage">
         <span class="error-text">{{ batch.errorMessage }}</span>
       </a-tooltip>
@@ -185,10 +185,10 @@ const cardClasses = computed(() => ({
   background: #fff;
   transition: border-color 0.2s;
 
-  &--error { border-left: 3px solid #ff4d4f; }
-  &--partial { border-left: 3px solid #faad14; }
-  &--processing { border-left: 3px solid #1677ff; }
-  &--success { border-left: 3px solid #52c41a; }
+  &--error { border-left: 3px solid var(--color-danger); }
+  &--partial { border-left: 3px solid var(--color-warning); }
+  &--processing { border-left: 3px solid var(--color-info); }
+  &--success { border-left: 3px solid var(--color-success); }
 }
 
 .card-row1 {
@@ -228,7 +228,7 @@ const cardClasses = computed(() => ({
   }
 
   .meta-flow {
-    color: #1677ff;
+    color: var(--color-info);
   }
 }
 
@@ -242,24 +242,24 @@ const cardClasses = computed(() => ({
   white-space: nowrap;
 
   &--processing {
-    background: #e6f4ff;
-    color: #1677ff;
+    background: var(--color-info-light);
+    color: var(--color-info);
   }
   &--uploading {
-    background: #e6f4ff;
-    color: #1677ff;
+    background: var(--color-info-light);
+    color: var(--color-info);
   }
   &--success {
-    background: #f6ffed;
-    color: #52c41a;
+    background: var(--color-success-light);
+    color: var(--color-success-text);
   }
   &--error {
-    background: #fff2f0;
-    color: #ff4d4f;
+    background: var(--color-danger-light);
+    color: var(--color-danger-text);
   }
   &--partial {
-    background: #fffbe6;
-    color: #faad14;
+    background: var(--color-warning-light);
+    color: var(--color-warning-text);
   }
   &--pending {
     background: #f5f5f5;
@@ -303,7 +303,7 @@ const cardClasses = computed(() => ({
 }
 
 .error-text {
-  color: #ff4d4f;
+  color: var(--color-danger-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

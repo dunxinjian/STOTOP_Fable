@@ -19,34 +19,34 @@
     <!-- KPI 指标条 -->
     <div class="kpi-bar">
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #1890ff;"></span>
+        <span class="kpi-dot" style="background: var(--color-info);"></span>
         <span class="kpi-label">账户余额</span>
-        <span class="kpi-value" style="color: #1890ff;">{{ formatWan(bankBalance) }}</span>
+        <span class="kpi-value" style="color: var(--color-info);">{{ formatWan(bankBalance) }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #52c41a;"></span>
+        <span class="kpi-dot" style="background: var(--color-success);"></span>
         <span class="kpi-label">应收合计</span>
-        <span class="kpi-value" style="color: #52c41a;">{{ formatWan(receivable) }}</span>
+        <span class="kpi-value" style="color: var(--color-success);">{{ formatWan(receivable) }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #fa8c16;"></span>
+        <span class="kpi-dot" style="background: var(--color-warning);"></span>
         <span class="kpi-label">应付合计</span>
-        <span class="kpi-value" style="color: #fa8c16;">{{ formatWan(payable) }}</span>
+        <span class="kpi-value" style="color: var(--color-warning);">{{ formatWan(payable) }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #13c2c2;"></span>
+        <span class="kpi-dot" style="background: var(--color-info);"></span>
         <span class="kpi-label">本期收入</span>
-        <span class="kpi-value" style="color: #13c2c2;">{{ formatWan(totalRevenue) }}</span>
+        <span class="kpi-value" style="color: var(--color-info);">{{ formatWan(totalRevenue) }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #722ed1;"></span>
+        <span class="kpi-dot" style="background: var(--biz-finance);"></span>
         <span class="kpi-label">本期支出</span>
-        <span class="kpi-value" style="color: #722ed1;">{{ formatWan(totalExpense) }}</span>
+        <span class="kpi-value" style="color: var(--biz-finance);">{{ formatWan(totalExpense) }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" :style="{ background: totalProfit >= 0 ? '#52c41a' : '#ff4d4f' }"></span>
+        <span class="kpi-dot" :style="{ background: totalProfit >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }"></span>
         <span class="kpi-label">本期利润</span>
-        <span class="kpi-value" :style="{ color: totalProfit >= 0 ? '#52c41a' : '#ff4d4f' }">{{ formatWan(totalProfit) }}</span>
+        <span class="kpi-value" :style="{ color: totalProfit >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">{{ formatWan(totalProfit) }}</span>
       </div>
     </div>
 
@@ -155,15 +155,15 @@
             <div class="boss-summary">
               <div class="boss-card">
                 <div class="boss-card-label">总收入</div>
-                <div class="boss-card-value" style="color: #1890ff;">{{ formatWan(totalRevenue) }} <span class="unit">万</span></div>
+                <div class="boss-card-value" style="color: var(--color-info);">{{ formatWan(totalRevenue) }} <span class="unit">万</span></div>
               </div>
               <div class="boss-card">
                 <div class="boss-card-label">总支出</div>
-                <div class="boss-card-value" style="color: #fa8c16;">{{ formatWan(totalExpense) }} <span class="unit">万</span></div>
+                <div class="boss-card-value" style="color: var(--biz-finance);">{{ formatWan(totalExpense) }} <span class="unit">万</span></div>
               </div>
               <div class="boss-card">
                 <div class="boss-card-label">总利润</div>
-                <div class="boss-card-value" :style="{ color: totalProfit >= 0 ? '#52c41a' : '#ff4d4f' }">{{ formatWan(totalProfit) }} <span class="unit">万</span></div>
+                <div class="boss-card-value" :style="{ color: totalProfit >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">{{ formatWan(totalProfit) }} <span class="unit">万</span></div>
               </div>
             </div>
             <!-- 项目收益列表 -->
@@ -182,7 +182,7 @@
               >
                 <template #bodyCell="{ column, record }">
                   <template v-if="column.dataIndex === 'value'">
-                    <span :style="{ color: record.value >= 0 ? '#52c41a' : '#ff4d4f', fontWeight: 600 }">
+                    <span :style="{ color: record.value >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }">
                       {{ (record.value / 10000).toFixed(2) }} 万
                     </span>
                   </template>
@@ -566,7 +566,7 @@ function updateBarChart() {
       type: 'bar',
       data: bankAccounts.value.map((b) => ({
         value: b.value,
-        itemStyle: { color: '#1890ff' },
+        itemStyle: { color: '#3A6FB0' },
       })),
       barWidth: 16,
       label: { show: true, position: 'right', formatter: '{c}', color: '#666', fontSize: 12 },
@@ -602,14 +602,14 @@ function updateLineChart() {
         name: '收入',
         type: 'line',
         data: [totalRevenue.value],
-        itemStyle: { color: '#52c41a' },
+        itemStyle: { color: '#2BA471' },
         smooth: true,
       },
       {
         name: '支出',
         type: 'line',
         data: [totalExpense.value],
-        itemStyle: { color: '#ff4d4f' },
+        itemStyle: { color: '#E5484D' },
         smooth: true,
       },
     ],
@@ -649,7 +649,7 @@ onUnmounted(() => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -732,7 +732,7 @@ onUnmounted(() => {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -765,15 +765,15 @@ onUnmounted(() => {
   border: 1px solid #f0f0f0;
 }
 .report-item:hover {
-  background: #e6f4ff;
-  border-color: #91caff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  box-shadow: 0 2px 8px var(--color-primary-border);
   transform: translateY(-2px);
 }
 .report-icon {
   font-size: 32px;
   margin-bottom: 8px;
-  color: #1890ff;
+  color: var(--color-primary);
 }
 .report-name {
   font-size: 14px;

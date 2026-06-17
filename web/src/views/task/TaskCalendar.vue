@@ -183,12 +183,12 @@ onMounted(loadTasks)
     transition: background 0.2s;
 
     &:hover {
-      background: #e6f7ff;
+      background: var(--color-primary-light);
     }
 
-    &--p3 { border-left: 3px solid #ff4d4f; }
-    &--p2 { border-left: 3px solid #fa8c16; }
-    &--p1 { border-left: 3px solid #1890ff; }
+    &--p3 { border-left: 3px solid var(--color-danger); }
+    &--p2 { border-left: 3px solid var(--color-warning); }
+    &--p1 { border-left: 3px solid var(--color-info); }
     &--p0 { border-left: 3px solid #d9d9d9; }
   }
 
@@ -211,7 +211,7 @@ onMounted(loadTasks)
 
   &__month-count {
     font-size: 13px;
-    color: #1890ff;
+    color: var(--color-info);
     font-weight: 500;
   }
 }

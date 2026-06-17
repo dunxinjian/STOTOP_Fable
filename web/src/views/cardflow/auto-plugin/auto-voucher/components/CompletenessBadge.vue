@@ -33,9 +33,9 @@ const displayText = computed(() => props.score != null ? `${props.score}%` : '--
 
 const ringColor = computed(() => {
   if (props.score == null) return '#d9d9d9'
-  if (props.score >= 80) return '#52c41a'
-  if (props.score >= 50) return '#faad14'
-  return '#ff4d4f'
+  if (props.score >= 80) return 'var(--color-success)'
+  if (props.score >= 50) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 })
 </script>
 

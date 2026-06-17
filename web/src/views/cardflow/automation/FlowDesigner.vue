@@ -26,7 +26,7 @@
       </div>
       <div class="toolbar__right">
         <a-button @click="handleViewLogs"><EyeOutlined /> 运行日志</a-button>
-        <a-button type="primary" style="background: #52c41a; border-color: #52c41a" @click="handleTestRun" :loading="testRunning"><CaretRightOutlined /> 测试运行</a-button>
+        <a-button type="primary" style="background: var(--color-success); border-color: var(--color-success)" @click="handleTestRun" :loading="testRunning"><CaretRightOutlined /> 测试运行</a-button>
         <a-button type="primary" @click="handleSave" :loading="saving"><CheckOutlined /> 保存</a-button>
       </div>
     </div>
@@ -95,7 +95,7 @@
             <div
               class="custom-node action-node"
               :class="{ selected: selectedNodeId === nodeProps.id }"
-              :style="{ '--node-color': nodeProps.data.color || '#409eff' }"
+              :style="{ '--node-color': nodeProps.data.color || 'var(--color-primary)' }"
             >
               <div class="custom-node__stripe"></div>
               <div class="custom-node__body">
@@ -114,7 +114,7 @@
             <div
               class="custom-node condition-node"
               :class="{ selected: selectedNodeId === nodeProps.id }"
-              :style="{ '--node-color': nodeProps.data.color || '#e6a23c' }"
+              :style="{ '--node-color': nodeProps.data.color || 'var(--color-warning)' }"
             >
               <div class="custom-node__stripe"></div>
               <div class="custom-node__body">
@@ -291,18 +291,18 @@ interface NodeTypeItem {
 }
 
 const nodeTypeList: NodeTypeItem[] = [
-  { type: 'Navigate', label: '打开网页', icon: LinkOutlined, color: '#409eff', description: '导航到指定URL', category: '基础操作' },
-  { type: 'Click', label: '点击', icon: AimOutlined, color: '#409eff', description: '点击页面元素', category: '基础操作' },
-  { type: 'Fill', label: '填写', icon: EditOutlined, color: '#409eff', description: '填写表单输入', category: '基础操作' },
-  { type: 'Wait', label: '等待', icon: ClockCircleOutlined, color: '#409eff', description: '等待时间或元素', category: '基础操作' },
-  { type: 'Select', label: '选择', icon: CheckCircleOutlined, color: '#409eff', description: '下拉框选择', category: '基础操作' },
-  { type: 'Download', label: '下载', icon: DownloadOutlined, color: '#409eff', description: '触发文件下载', category: '基础操作' },
-  { type: 'Condition', label: '条件判断', icon: SwapOutlined, color: '#e6a23c', description: '根据条件分支', category: '高级操作' },
-  { type: 'Loop', label: '循环', icon: RedoOutlined, color: '#e6a23c', description: '循环执行操作', category: '高级操作' },
-  { type: 'Extract', label: '数据提取', icon: BarChartOutlined, color: '#e6a23c', description: '提取页面数据', category: '高级操作' },
-  { type: 'Notify', label: '通知', icon: BellOutlined, color: '#e6a23c', description: '发送通知消息', category: '高级操作' },
-  { type: 'Login', label: '登录', icon: LockOutlined, color: '#67c23a', description: '网站登录认证', category: '认证' },
-  { type: 'DateFilter', label: '日期筛选', icon: CalendarOutlined, color: '#67c23a', description: '设置日期过滤', category: '日期' },
+  { type: 'Navigate', label: '打开网页', icon: LinkOutlined, color: 'var(--color-primary)', description: '导航到指定URL', category: '基础操作' },
+  { type: 'Click', label: '点击', icon: AimOutlined, color: 'var(--color-primary)', description: '点击页面元素', category: '基础操作' },
+  { type: 'Fill', label: '填写', icon: EditOutlined, color: 'var(--color-primary)', description: '填写表单输入', category: '基础操作' },
+  { type: 'Wait', label: '等待', icon: ClockCircleOutlined, color: 'var(--color-primary)', description: '等待时间或元素', category: '基础操作' },
+  { type: 'Select', label: '选择', icon: CheckCircleOutlined, color: 'var(--color-primary)', description: '下拉框选择', category: '基础操作' },
+  { type: 'Download', label: '下载', icon: DownloadOutlined, color: 'var(--color-primary)', description: '触发文件下载', category: '基础操作' },
+  { type: 'Condition', label: '条件判断', icon: SwapOutlined, color: 'var(--color-warning)', description: '根据条件分支', category: '高级操作' },
+  { type: 'Loop', label: '循环', icon: RedoOutlined, color: 'var(--color-warning)', description: '循环执行操作', category: '高级操作' },
+  { type: 'Extract', label: '数据提取', icon: BarChartOutlined, color: 'var(--color-warning)', description: '提取页面数据', category: '高级操作' },
+  { type: 'Notify', label: '通知', icon: BellOutlined, color: 'var(--color-warning)', description: '发送通知消息', category: '高级操作' },
+  { type: 'Login', label: '登录', icon: LockOutlined, color: 'var(--color-success)', description: '网站登录认证', category: '认证' },
+  { type: 'DateFilter', label: '日期筛选', icon: CalendarOutlined, color: 'var(--color-success)', description: '设置日期过滤', category: '日期' },
 ]
 
 const nodeGroups = computed(() => {
@@ -594,7 +594,7 @@ async function loadTask() {
           data: {
             ...n.data,
             icon: getNodeMeta(n.data.iconName || n.data.nodeType)?.icon || LinkOutlined,
-            color: n.data.color || getNodeMeta(n.data.nodeType)?.color || '#409eff',
+            color: n.data.color || getNodeMeta(n.data.nodeType)?.color || 'var(--color-primary)',
           },
         }))
         edges.value = config.edges || []

@@ -104,10 +104,10 @@ const labelWidth = 140
 // Status color map
 const statusColorMap: Record<string, string> = {
   '待安排': '#d9d9d9',
-  '已安排': '#1677ff',
-  '进行中': '#52c41a',
+  '已安排': 'var(--color-info)',
+  '进行中': 'var(--color-success)',
   '已完成': '#8c8c8c',
-  '异常': '#ff4d4f',
+  '异常': 'var(--color-danger)',
 }
 
 // Calculate total duration in ms
@@ -197,7 +197,7 @@ function getTaskStyle(task: GanttTask) {
   return {
     left: `${Math.max(0, startOffset)}px`,
     width: `${Math.max(24, width)}px`,
-    backgroundColor: statusColorMap[task.status] || '#1677ff',
+    backgroundColor: statusColorMap[task.status] || 'var(--color-info)',
   }
 }
 

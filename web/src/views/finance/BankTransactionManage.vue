@@ -581,12 +581,12 @@ onMounted(() => {
     background: transparent;
 
     &:hover {
-      color: #1890ff;
+      color: var(--color-primary);
     }
 
     &.active {
       color: #fff;
-      background: #1890ff;
+      background: var(--color-primary);
       font-weight: 500;
     }
   }

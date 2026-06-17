@@ -17,7 +17,7 @@
               <a-list-item class="config-item" @click="router.push(item.route)">
                 <a-list-item-meta :title="item.name" :description="item.description">
                   <template #avatar>
-                    <component :is="item.icon" style="font-size: 18px; color: #1677ff;" />
+                    <component :is="item.icon" style="font-size: 18px; color: var(--color-primary);" />
                   </template>
                 </a-list-item-meta>
                 <template #actions>

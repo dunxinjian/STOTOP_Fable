@@ -35,17 +35,17 @@
           <a-statistic title="总行数" :value="result.totalRows" />
         </div>
         <div class="stat-card">
-          <a-statistic title="已匹配" :value="result.matchedRows" :value-style="{ color: '#52c41a' }" />
+          <a-statistic title="已匹配" :value="result.matchedRows" :value-style="{ color: 'var(--color-success-text)' }" />
         </div>
         <div class="stat-card">
           <a-statistic
             title="未匹配"
             :value="result.unmatchedRows"
-            :value-style="{ color: result.unmatchedRows > 0 ? '#ff4d4f' : undefined }"
+            :value-style="{ color: result.unmatchedRows > 0 ? 'var(--color-danger-text)' : undefined }"
           />
         </div>
         <div class="stat-card">
-          <a-statistic title="预计凭证" :value="result.estimatedVouchers" :value-style="{ color: '#1890ff' }" />
+          <a-statistic title="预计凭证" :value="result.estimatedVouchers" :value-style="{ color: 'var(--color-info)' }" />
         </div>
       </div>
 

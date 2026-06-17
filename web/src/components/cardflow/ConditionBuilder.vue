@@ -457,16 +457,16 @@ defineExpose({ conditionSummary })
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   padding: 12px;
-  border-left: 3px solid #1677ff;
+  border-left: 3px solid var(--color-info);
 
   &.depth-0 {
     background: #fafafa;
-    border-left-color: #1677ff;
+    border-left-color: var(--color-info);
   }
 
   &.depth-1 {
     background: #f5f5f5;
-    border-left-color: #52c41a;
+    border-left-color: var(--color-success);
   }
 }
 

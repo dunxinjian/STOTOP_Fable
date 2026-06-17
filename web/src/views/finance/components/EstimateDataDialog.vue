@@ -470,7 +470,7 @@ watch(
   .amount-cell {
     font-variant-numeric: tabular-nums;
     &.negative {
-      color: #cf1322;
+      color: var(--color-danger-text);
     }
   }
   .muted {

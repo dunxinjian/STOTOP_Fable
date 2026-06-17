@@ -570,16 +570,16 @@ function formatJournalFileSize(bytes: number): string {
 .filter-bar {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px;
   .filter-left { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .filter-right { display: flex; align-items: center; gap: 8px; .search-icon { cursor: pointer; color: #909399; &:hover { color: #409eff; } } }
+  .filter-right { display: flex; align-items: center; gap: 8px; .search-icon { cursor: pointer; color: #909399; &:hover { color: var(--color-primary); } } }
 }
 .query-mode-btn { padding: 8px; min-width: 32px; }
 .range-sep { color: #909399; margin: 0 2px; }
-.is-active-mode { background-color: #fdf6ec !important; color: #e6a23c !important; font-weight: 500; }
+.is-active-mode { background-color: var(--color-warning-light) !important; color: var(--color-warning) !important; font-weight: 500; }
 .amount { font-family: 'Courier New', monospace; font-weight: 500; }
-.negative-value { color: #f56c6c; }
+.negative-value { color: var(--color-danger); }
 .initial-label { font-size: 12px; color: #909399; background: #f4f4f5; padding: 2px 6px; border-radius: 3px; }
 :deep(.initial-balance-row) { background-color: #f9f9f9 !important; font-style: italic; color: #909399; }
-.voucher-no { font-size: 13px; color: #409eff; }
+.voucher-no { font-size: 13px; color: var(--color-primary); }
 .pagination-wrapper { display: flex; justify-content: flex-end; padding-top: $section-gap; }
 
 // 表格容器 - 填充剩余空间

@@ -193,8 +193,8 @@ const marginItems = [
 }
 
 .spacing-box {
-  background: #e6f4ff;
-  border: 1px dashed #1677ff;
+  background: var(--color-primary-light);
+  border: 1px dashed var(--color-primary);
   border-radius: 4px;
   min-width: 80px;
   flex: 1;

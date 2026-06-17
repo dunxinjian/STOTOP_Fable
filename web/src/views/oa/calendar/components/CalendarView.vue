@@ -118,12 +118,12 @@ watch(() => props.events, () => {
     }
 
     .fc-button {
-      background-color: #1890ff;
-      border-color: #1890ff;
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
 
       &:hover {
-        background-color: #40a9ff;
-        border-color: #40a9ff;
+        background-color: var(--color-primary-hover);
+        border-color: var(--color-primary-hover);
       }
 
       &:disabled {
@@ -135,12 +135,12 @@ watch(() => props.events, () => {
 
     .fc-button-primary:not(:disabled).fc-button-active,
     .fc-button-primary:not(:disabled):active {
-      background-color: #096dd9;
-      border-color: #096dd9;
+      background-color: var(--color-primary-active);
+      border-color: var(--color-primary-active);
     }
 
     .fc-day-today {
-      background-color: rgba(24, 144, 255, 0.05);
+      background-color: var(--color-primary-light);
     }
 
     .fc-event {

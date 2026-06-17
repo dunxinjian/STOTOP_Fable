@@ -175,12 +175,12 @@ const stats = ref({
 })
 
 const kpiList = computed(() => [
-  { label: '异常总数', value: stats.value.totalExceptions.toLocaleString(), color: '#ff4d4f' },
-  { label: '待处理', value: stats.value.pendingCount.toLocaleString(), color: '#fa8c16' },
-  { label: '超时', value: stats.value.overdueCount.toLocaleString(), color: '#722ed1' },
-  { label: '今日新增', value: stats.value.todayNewCount.toLocaleString(), color: '#1890ff' },
-  { label: '平均处理时长', value: stats.value.avgResolutionHours.toFixed(1) + 'h', color: '#13c2c2' },
-  { label: '超时率', value: stats.value.overdueRate.toFixed(1) + '%', color: '#f5222d' },
+  { label: '异常总数', value: stats.value.totalExceptions.toLocaleString(), color: 'var(--color-danger)' },
+  { label: '待处理', value: stats.value.pendingCount.toLocaleString(), color: 'var(--color-warning)' },
+  { label: '超时', value: stats.value.overdueCount.toLocaleString(), color: 'var(--color-danger)' },
+  { label: '今日新增', value: stats.value.todayNewCount.toLocaleString(), color: 'var(--color-info)' },
+  { label: '平均处理时长', value: stats.value.avgResolutionHours.toFixed(1) + 'h', color: 'var(--color-info)' },
+  { label: '超时率', value: stats.value.overdueRate.toFixed(1) + '%', color: 'var(--color-danger)' },
 ])
 
 // --- Chart refs ---
@@ -292,10 +292,10 @@ function initTrendChart() {
       data: trendData.value.map((d) => d.count),
       smooth: true,
       areaStyle: {
-        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(24,144,255,0.25)' }, { offset: 1, color: 'rgba(24,144,255,0.02)' }] },
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(58,111,176,0.25)' }, { offset: 1, color: 'rgba(58,111,176,0.02)' }] },
       },
-      lineStyle: { color: '#1890ff', width: 2 },
-      itemStyle: { color: '#1890ff' },
+      lineStyle: { color: '#3A6FB0', width: 2 },
+      itemStyle: { color: '#3A6FB0' },
       symbol: 'circle',
       symbolSize: 6,
     }],
@@ -441,7 +441,7 @@ onBeforeUnmount(() => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
 }
 
 .chart-container {
@@ -534,7 +534,7 @@ onBeforeUnmount(() => {
 
 /* 异常详情表格样式 */
 .exception-link {
-  color: #1890ff;
+  color: var(--color-primary);
   font-weight: 500;
   cursor: pointer;
 }
@@ -550,16 +550,16 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 .priority-1 {
-  background: rgba(255, 77, 79, 0.1);
-  color: #ff4d4f;
+  background: var(--color-danger-light);
+  color: var(--color-danger);
 }
 .priority-2 {
-  background: rgba(250, 140, 22, 0.1);
-  color: #fa8c16;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
 }
 .priority-3 {
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  background: var(--color-info-light);
+  color: var(--color-info);
 }
 .priority-4 {
   background: rgba(0, 0, 0, 0.06);
@@ -578,16 +578,16 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.45);
 }
 .status-1 {
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  background: var(--color-info-light);
+  color: var(--color-info);
 }
 .status-2 {
-  background: rgba(250, 140, 22, 0.1);
-  color: #fa8c16;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
 }
 .status-3 {
   background: rgba(82, 196, 26, 0.1);
-  color: #52c41a;
+  color: var(--color-success);
 }
 
 .rank-badge {
@@ -603,7 +603,7 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.45);
 }
 .rank-badge.top {
-  background: #1890ff;
+  background: var(--color-info);
   color: #fff;
 }
 </style>

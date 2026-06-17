@@ -135,7 +135,7 @@ const staffChartOption = computed(() => ({
   series: [{
     type: 'bar',
     data: staffData.value.slice(0, 10).map(d => d.count),
-    itemStyle: { color: '#1890ff', borderRadius: [4, 4, 0, 0] },
+    itemStyle: { color: '#3A6FB0', borderRadius: [4, 4, 0, 0] },
     barMaxWidth: 40,
   }],
 }))

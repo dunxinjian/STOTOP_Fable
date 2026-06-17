@@ -682,7 +682,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .mobile-fill-page {
   min-height: 100vh;
-  background: #f4f5f7;
+  background: var(--bg-page);
   padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
@@ -705,19 +705,19 @@ onBeforeUnmount(() => {
   transition: background 0.2s, color 0.2s;
 
   &--saving {
-    background: #fff7e6;
-    color: #fa8c16;
+    background: var(--color-warning-light);
+    color: var(--color-warning);
   }
   &--saved {
     background: #e6fffb;
-    color: #07c160;
+    color: var(--color-success);
   }
   &--dirty {
-    background: #fff1f0;
+    background: var(--color-danger-light);
     color: #ee0a24;
   }
   &--offline {
-    background: #fff7e6;
+    background: var(--color-warning-light);
     color: #d46b08;
   }
 }
@@ -749,7 +749,7 @@ onBeforeUnmount(() => {
   color: #333;
 
   b {
-    color: #07c160;
+    color: var(--color-success);
     margin-left: 2px;
   }
 }

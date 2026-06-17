@@ -245,7 +245,7 @@
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; margin-bottom: 8px;">
             <span style="font-weight: 600;" :style="formData.outputMode === 'batchRow' ? { color: '#bfbfbf' } : {}">暂存表</span>
-            <span v-if="formData.outputMode !== 'batchRow'" style="color: #ff4d4f; margin-left: 4px; font-size: 14px;">*</span>
+            <span v-if="formData.outputMode !== 'batchRow'" style="color: var(--color-danger); margin-left: 4px; font-size: 14px;">*</span>
           </div>
           <template v-if="formData.outputMode === 'batchRow'">
             <a-input disabled placeholder="batchRow 模式无需配置暂存表" style="color: #bfbfbf; background: #f5f5f5;" />
@@ -1053,7 +1053,7 @@ const extractColumnsFromFile = async (file: File) => {
 
 .rule-index {
   font-weight: 600;
-  color: #1890ff;
+  color: var(--color-info);
   font-size: 14px;
 }
 

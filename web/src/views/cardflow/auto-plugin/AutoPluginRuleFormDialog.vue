@@ -127,7 +127,7 @@
                     style="display: flex; align-items: center; margin-bottom: 8px;"
                   >
                     <span style="width: 140px; text-align: right; margin-right: 8px; flex-shrink: 0;">
-                      <span v-if="sf.required" style="color: #ff4d4f;">* </span>
+                      <span v-if="sf.required" style="color: var(--color-danger);">* </span>
                       {{ sf.label }}：
                     </span>
                     <a-select

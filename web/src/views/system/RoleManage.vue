@@ -50,7 +50,7 @@
             <a-button type="link" size="small" @click="handleEdit(record)">
               <EditOutlined />编辑
             </a-button>
-            <a-button type="link" size="small" @click="handleAssignPermission(record)" style="color: #52c41a">
+            <a-button type="link" size="small" @click="handleAssignPermission(record)" style="color: var(--color-success)">
               <KeyOutlined />分配权限
             </a-button>
             <a-button type="link" size="small" @click="handleViewRoleUsers(record)" style="color: #8c8c8c">

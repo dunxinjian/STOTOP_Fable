@@ -389,7 +389,7 @@ function exportToExcel() {
 }
 
 .drill-link {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover { text-decoration: underline; }
 }
@@ -423,7 +423,7 @@ function exportToExcel() {
 }
 
 .drill-link {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
 

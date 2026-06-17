@@ -885,7 +885,7 @@ function confirmSplit() {
   margin-bottom: 4px;
 
   :deep(.anticon) {
-    color: #1677ff;
+    color: var(--color-info);
   }
 }
 
@@ -903,8 +903,8 @@ function confirmSplit() {
 
 .ruler-seg {
   position: relative;
-  border-right: 2px solid #1677ff;
-  background: linear-gradient(to bottom, #f0f7ff 0%, #e6f4ff 100%);
+  border-right: 2px solid var(--color-primary);
+  background: linear-gradient(to bottom, #f0f7ff 0%, var(--color-primary-light) 100%);
   min-width: 0;
 
   &:last-child {
@@ -912,15 +912,15 @@ function confirmSplit() {
   }
 
   &.infinity {
-    background: linear-gradient(to right, #e6f4ff 0%, #f5f5f5 70%, #fafafa 100%);
+    background: linear-gradient(to right, var(--color-primary-light) 0%, #f5f5f5 70%, #fafafa 100%);
   }
 
   &:hover {
-    background: linear-gradient(to bottom, #e6f4ff 0%, #bae0ff 100%);
+    background: linear-gradient(to bottom, var(--color-primary-light) 0%, #bae0ff 100%);
   }
 
   &.infinity:hover {
-    background: linear-gradient(to right, #bae0ff 0%, #e6f4ff 70%, #fafafa 100%);
+    background: linear-gradient(to right, #bae0ff 0%, var(--color-primary-light) 70%, #fafafa 100%);
   }
 }
 
@@ -951,12 +951,12 @@ function confirmSplit() {
 .ruler-density-divider-line {
   width: 1px;
   height: 100%;
-  border-left: 1px dashed rgba(22, 119, 255, 0.45);
+  border-left: 1px dashed var(--color-primary-border);
   pointer-events: none;
 }
 
 .ruler-density-divider:hover .ruler-density-divider-line {
-  border-left-color: rgba(22, 119, 255, 0.85);
+  border-left-color: var(--color-primary);
 }
 
 .ruler-mark {
@@ -1022,7 +1022,7 @@ function confirmSplit() {
   bottom: 0;
   left: -1px;
   width: 2px;
-  background: #ff4d4f;
+  background: var(--color-danger);
   box-shadow: 0 0 4px rgba(255, 77, 79, 0.5);
   transition: background-color 0.12s, box-shadow 0.12s;
 }
@@ -1032,7 +1032,7 @@ function confirmSplit() {
   top: -22px;
   left: 50%;
   transform: translateX(-50%);
-  background: #ff4d4f;
+  background: var(--color-danger);
   color: #fff;
   font-size: 11px;
   padding: 1px 6px;
@@ -1052,7 +1052,7 @@ function confirmSplit() {
     left: 50%;
     transform: translateX(-50%);
     border: 4px solid transparent;
-    border-top-color: #ff4d4f;
+    border-top-color: var(--color-danger);
     transition: border-top-color 0.12s;
   }
 }
@@ -1065,13 +1065,13 @@ function confirmSplit() {
 // 吸附态：游标变绿色，提示用户已贴合到常用值
 .ruler-cursor.snapped {
   .ruler-cursor-line {
-    background: #52c41a;
+    background: var(--color-success);
     box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
   }
   .ruler-cursor-bubble {
-    background: #52c41a;
+    background: var(--color-success);
     &::after {
-      border-top-color: #52c41a;
+      border-top-color: var(--color-success);
     }
   }
 }
@@ -1127,7 +1127,7 @@ function confirmSplit() {
   line-height: 1.4;
 
   &:hover {
-    border-color: #1890ff;
+    border-color: var(--color-primary);
     background: #f0f9ff;
 
     .segment-edit-hint {
@@ -1136,8 +1136,8 @@ function confirmSplit() {
   }
 
   &.active {
-    border-color: #1890ff;
-    background: #e6f4ff;
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
   }
 }
 
@@ -1162,7 +1162,7 @@ function confirmSplit() {
 
 .segment-edit-hint {
   font-size: 11px;
-  color: #1677ff;
+  color: var(--color-primary);
   opacity: 0;
   transition: opacity 0.15s;
   margin-left: 2px;
@@ -1190,7 +1190,7 @@ function confirmSplit() {
   }
 
   &:hover {
-    background: #ff4d4f;
+    background: var(--color-danger);
     transform: scale(1.1);
   }
 }
@@ -1218,14 +1218,14 @@ function confirmSplit() {
   white-space: nowrap;
 
   &.left {
-    background: #e6f4ff;
-    color: #1677ff;
-    border: 1px solid #91caff;
+    background: var(--color-primary-light);
+    color: var(--color-info);
+    border: 1px solid var(--color-primary-border);
   }
 
   &.right {
-    background: #f6ffed;
-    color: #52c41a;
+    background: var(--color-success-light);
+    color: var(--color-success);
     border: 1px solid #b7eb8f;
   }
 }
@@ -1246,9 +1246,9 @@ function confirmSplit() {
 .split-tip {
   flex-shrink: 0;
   font-size: 11px;
-  color: #1677ff;
-  background: #e6f4ff;
-  border: 1px solid #91caff;
+  color: var(--color-info);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
   border-radius: 3px;
   padding: 1px 5px;
   white-space: nowrap;
@@ -1275,8 +1275,8 @@ function confirmSplit() {
   transition: all 0.15s;
 
   &:hover {
-    color: #1677ff;
-    border-color: #1677ff;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
   }
 }
 </style>

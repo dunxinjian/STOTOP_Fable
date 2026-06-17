@@ -561,7 +561,7 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
     margin: 0;
     border-radius: 5px;
     padding: 6px 8px;
-    background: #fff7e6;
+    background: var(--color-warning-light);
     color: #8a4b00;
     font-size: 12px;
     line-height: 18px;

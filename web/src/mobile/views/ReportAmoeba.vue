@@ -193,10 +193,10 @@ onMounted(() => loadReport())
   color: #1a1a1a;
 }
 .text-green {
-  color: #52c41a;
+  color: var(--color-success);
 }
 .text-red {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 .page-loading {
   display: flex;

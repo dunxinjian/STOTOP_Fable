@@ -41,7 +41,7 @@
         <a-badge
           v-if="(detailCounts[item.id] ?? 0) > 0"
           :count="detailCounts[item.id]"
-          :number-style="{ backgroundColor: item.id === activeId ? '#1677ff' : '#bfbfbf' }"
+          :number-style="{ backgroundColor: item.id === activeId ? 'var(--color-primary)' : '#bfbfbf' }"
           class="item-badge"
         />
       </div>
@@ -180,13 +180,13 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   &.is-active {
-    background-color: #e6f4ff;
-    border-left-color: #1677ff;
-    color: #1677ff;
+    background-color: var(--color-primary-light);
+    border-left-color: var(--color-primary);
+    color: var(--color-primary);
     font-weight: 500;
 
     &:hover {
-      background-color: #e6f4ff;
+      background-color: var(--color-primary-light);
     }
   }
 
@@ -224,7 +224,7 @@ function handleKeydown(e: KeyboardEvent) {
 .item-name-input {
   flex: 1;
   min-width: 0;
-  border: 1px solid #1677ff;
+  border: 1px solid var(--color-primary);
   border-radius: 3px;
   padding: 1px 5px;
   font-size: 13px;

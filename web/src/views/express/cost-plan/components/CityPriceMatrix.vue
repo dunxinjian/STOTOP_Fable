@@ -280,16 +280,16 @@ function handleFixedPriceChange(cityId: number, value: number | null) {
   flex-shrink: 0;
 
   &:hover {
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 
 .city-row-confirm {
-  color: #1890ff;
+  color: var(--color-primary);
   flex-shrink: 0;
 
   &:hover:not(:disabled) {
-    color: #40a9ff;
+    color: var(--color-primary-hover);
   }
 
   &:disabled {
@@ -308,7 +308,7 @@ function handleFixedPriceChange(cityId: number, value: number | null) {
     }
 
     :deep(.ant-select-focused .ant-select-selector) {
-      border-color: #1890ff !important;
+      border-color: var(--color-primary) !important;
       background: #fff !important;
     }
   }

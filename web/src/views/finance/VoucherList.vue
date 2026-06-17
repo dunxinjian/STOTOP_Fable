@@ -264,7 +264,7 @@
         <p class="ant-upload-text">点击或拖拽Excel文件到此区域</p>
       </a-upload-dragger>
       <div style="margin-top: 12px;">
-        <a @click="downloadImportTemplate" style="color: #1890ff;">下载导入模板</a>
+        <a @click="downloadImportTemplate" style="color: var(--color-primary);">下载导入模板</a>
       </div>
     </a-modal>
     </template>
@@ -976,7 +976,7 @@ onMounted(() => {
       line-height: 16px;
       padding: 0 4px;
       font-size: 11px;
-      background: #ff4d4f;
+      background: var(--color-danger);
       color: #fff;
       border-radius: 8px;
       text-align: center;

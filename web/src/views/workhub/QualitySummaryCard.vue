@@ -93,19 +93,14 @@ onUnmounted(() => {
 
 <style scoped>
 .quality-summary-card {
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
-  background:
-    linear-gradient(135deg, rgba(255, 103, 0, 0.08), rgba(255, 255, 255, 0) 42%),
-    #fff;
+  background: var(--bg-card);
 }
 
 .quality-summary-card:hover {
-  background:
-    linear-gradient(135deg, rgba(255, 103, 0, 0.11), rgba(255, 255, 255, 0) 42%),
-    #fff;
-  box-shadow: inset 0 -1px 0 rgba(255, 103, 0, 0.12);
+  background: var(--bg-muted);
 }
 
 .card-header {
@@ -117,19 +112,19 @@ onUnmounted(() => {
 
 .card-header__icon {
   font-size: 14px;
-  color: #fa541c;
+  color: var(--biz-quality);
 }
 
 .card-header__title {
   font-size: 15px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
   flex: 1;
 }
 
 .card-header__arrow {
   font-size: 11px;
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 .card-body {
@@ -146,7 +141,7 @@ onUnmounted(() => {
 
 .empty-text {
   font-size: 12px;
-  color: #999;
+  color: var(--text-3);
 }
 
 .metric-item {
@@ -156,10 +151,10 @@ onUnmounted(() => {
   gap: 10px;
   min-width: 0;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(18, 31, 53, 0.06);
-  box-shadow: 0 1px 2px rgba(18, 31, 53, 0.04);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .metric-icon {
@@ -168,15 +163,15 @@ onUnmounted(() => {
 }
 
 .metric-icon.pending {
-  color: #faad14;
+  color: var(--color-warning);
 }
 
 .metric-icon.new {
-  color: #1890ff;
+  color: var(--color-info);
 }
 
 .metric-icon.overdue {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .metric-info {
@@ -188,16 +183,16 @@ onUnmounted(() => {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .metric-value.has-warning {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .metric-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   line-height: 1.3;
   white-space: nowrap;
 }

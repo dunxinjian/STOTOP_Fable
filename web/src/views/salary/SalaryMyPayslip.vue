@@ -52,7 +52,7 @@
             <template #renderItem="{ item }">
               <a-list-item>
                 <span>{{ item.name }}</span>
-                <span style="color: #52c41a">+{{ item.amount }}</span>
+                <span style="color: var(--color-success)">+{{ item.amount }}</span>
               </a-list-item>
             </template>
             <template #header><a-empty v-if="!addItems.length" description="暂无加项" /></template>
@@ -65,7 +65,7 @@
             <template #renderItem="{ item }">
               <a-list-item>
                 <span>{{ item.name }}</span>
-                <span style="color: #ff4d4f">-{{ item.amount }}</span>
+                <span style="color: var(--color-danger)">-{{ item.amount }}</span>
               </a-list-item>
             </template>
             <template #header><a-empty v-if="!deductItems.length" description="暂无扣项" /></template>

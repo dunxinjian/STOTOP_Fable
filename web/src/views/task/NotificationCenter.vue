@@ -155,12 +155,12 @@ function getEventIcon(eventType: number) {
 // 事件类型颜色映射
 function getEventColor(eventType: number) {
   const map: Record<number, string> = {
-    1: '#1890ff',
-    2: '#fa8c16',
-    3: '#52c41a',
-    4: '#722ed1',
+    1: 'var(--color-info)',
+    2: 'var(--color-warning)',
+    3: 'var(--color-success)',
+    4: 'var(--biz-points)',
     5: '#eb2f96',
-    6: '#13c2c2',
+    6: 'var(--color-info)',
   }
   return map[eventType] || '#999'
 }
@@ -346,7 +346,7 @@ onMounted(() => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #1890ff;
+    background: var(--color-info);
   }
 
   &__icon {

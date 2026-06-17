@@ -25,6 +25,10 @@ const currentStep = computed(() => {
   return idx >= 0 ? idx : props.tasks.length
 })
 
+// 已完成步骤的激活色走成功令牌（vant active-color 接受任意 CSS 颜色字符串，
+// var(--color-success) 经内联 style 注入到 .van-step 上解析到 :root 单一真源）
+const activeColor = 'var(--color-success)'
+
 function getTagType(status: string): 'success' | 'danger' | 'warning' | 'primary' | 'default' {
   switch (status) {
     case 'Completed':
@@ -52,7 +56,7 @@ function formatTime(time?: string): string {
 
 <template>
   <div class="mobile-timeline">
-    <VanSteps direction="vertical" :active="currentStep" active-color="#07c160">
+    <VanSteps direction="vertical" :active="currentStep" :active-color="activeColor">
       <VanStep v-for="task in tasks" :key="task.id">
         <div class="step-header">
           <span class="step-title">{{ task.nodeDisplayName }}</span>
@@ -80,25 +84,25 @@ function formatTime(time?: string): string {
   justify-content: space-between;
 }
 .step-title {
-  font-size: 14px;
+  font-size: var(--font-base);
   font-weight: 500;
-  color: #323233;
+  color: var(--text-1);
 }
 .step-meta {
-  font-size: 12px;
-  color: #969799;
+  font-size: var(--font-sm);
+  color: var(--text-3);
   margin-top: 4px;
 }
 .step-time {
-  color: #c8c9cc;
+  color: var(--text-disabled);
 }
 .step-comment {
-  font-size: 13px;
-  color: #646566;
+  font-size: var(--font-sm2);
+  color: var(--text-2);
   margin-top: 4px;
   padding: 6px 10px;
-  background: #f7f8fa;
-  border-radius: 4px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
   font-style: italic;
 }
 </style>

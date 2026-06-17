@@ -57,10 +57,10 @@ onUnmounted(() => {
   >
     <div class="idle-warning">
       <div class="idle-warning__icon">
-        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#faad14" stroke-width="2">
-          <path d="M12 2L2 22h20L12 2z" fill="#fff7e6" stroke="#faad14" />
-          <line x1="12" y1="9" x2="12" y2="14" stroke="#faad14" stroke-linecap="round" />
-          <circle cx="12" cy="17" r="0.5" fill="#faad14" stroke="none" />
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--color-warning)" stroke-width="2">
+          <path d="M12 2L2 22h20L12 2z" fill="var(--color-warning-light)" stroke="var(--color-warning)" />
+          <line x1="12" y1="9" x2="12" y2="14" stroke="var(--color-warning)" stroke-linecap="round" />
+          <circle cx="12" cy="17" r="0.5" fill="var(--color-warning)" stroke="none" />
         </svg>
       </div>
       <h3 class="idle-warning__title">会话即将过期</h3>
@@ -103,7 +103,7 @@ onUnmounted(() => {
 .idle-warning__countdown {
   font-size: 20px;
   font-weight: 700;
-  color: #faad14;
+  color: var(--color-warning);
   padding: 0 4px;
 }
 </style>

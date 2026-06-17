@@ -509,8 +509,8 @@ onMounted(() => {
     gap: 12px;
     margin-bottom: 12px;
     padding: 10px 16px;
-    background: #e6f7ff;
-    border: 1px solid #91d5ff;
+    background: var(--color-primary-light);
+    border: 1px solid var(--color-primary-border);
     border-radius: 6px;
   }
 
@@ -519,12 +519,12 @@ onMounted(() => {
     font-weight: 500;
 
     &:hover {
-      color: #1890ff;
+      color: var(--color-primary);
     }
   }
 
   &__overdue {
-    color: #ff4d4f;
+    color: var(--color-danger);
     font-weight: 500;
   }
 }

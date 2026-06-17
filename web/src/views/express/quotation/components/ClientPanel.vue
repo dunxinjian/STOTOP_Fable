@@ -46,7 +46,7 @@
         <a-badge
           v-if="item.quotationCount > 0"
           :count="item.quotationCount"
-          :number-style="{ backgroundColor: '#1677ff' }"
+          :number-style="{ backgroundColor: 'var(--color-info)' }"
         />
       </div>
       <div v-if="loading" class="list-loading">

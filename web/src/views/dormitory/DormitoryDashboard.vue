@@ -8,7 +8,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="总楼栋数" :value="statistics.totalBuildings" suffix="栋">
             <template #prefix>
-              <HomeOutlined style="color: #1890ff" />
+              <HomeOutlined style="color: var(--color-info)" />
             </template>
           </a-statistic>
         </a-card>
@@ -17,7 +17,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="总房间数" :value="statistics.totalRooms" suffix="间">
             <template #prefix>
-              <AppstoreOutlined style="color: #52c41a" />
+              <AppstoreOutlined style="color: var(--color-success)" />
             </template>
           </a-statistic>
         </a-card>
@@ -26,7 +26,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="总床位数" :value="statistics.totalBeds" suffix="床">
             <template #prefix>
-              <UserOutlined style="color: #722ed1" />
+              <UserOutlined style="color: var(--color-info)" />
             </template>
           </a-statistic>
         </a-card>
@@ -55,7 +55,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="待处理报修工单" :value="statistics.pendingRepairOrders" suffix="单">
             <template #prefix>
-              <ToolOutlined :style="{ color: statistics.pendingRepairOrders > 0 ? '#faad14' : '#52c41a' }" />
+              <ToolOutlined :style="{ color: statistics.pendingRepairOrders > 0 ? 'var(--color-warning)' : 'var(--color-success)' }" />
             </template>
           </a-statistic>
         </a-card>
@@ -64,7 +64,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="今日访客" :value="statistics.todayVisitors" suffix="人">
             <template #prefix>
-              <TeamOutlined style="color: #13c2c2" />
+              <TeamOutlined style="color: var(--color-info)" />
             </template>
           </a-statistic>
         </a-card>
@@ -73,7 +73,7 @@
         <a-card :bordered="false" :loading="loading">
           <a-statistic title="待缴费用" :value="statistics.pendingExpenses" suffix="元" :precision="2">
             <template #prefix>
-              <AccountBookOutlined :style="{ color: statistics.pendingExpenses > 0 ? '#ff4d4f' : '#52c41a' }" />
+              <AccountBookOutlined :style="{ color: statistics.pendingExpenses > 0 ? 'var(--color-danger)' : 'var(--color-success)' }" />
             </template>
           </a-statistic>
         </a-card>
@@ -126,7 +126,7 @@
           </div>
         </a-col>
       </a-row>
-      <a-empty v-if="expenseSummary.length === 0 && !expenseLoading" description="暂无本月费用数据" />
+      <EmptyState v-if="expenseSummary.length === 0 && !expenseLoading" description="暂无本月费用数据" />
     </a-card>
   </div>
 </template>
@@ -173,10 +173,10 @@ const occupancyRatePercent = computed(() => {
 // 根据入住率获取颜色
 const occupancyRateColor = computed(() => {
   const rate = occupancyRatePercent.value
-  if (rate >= 90) return '#52c41a'
-  if (rate >= 70) return '#1890ff'
-  if (rate >= 50) return '#faad14'
-  return '#ff4d4f'
+  if (rate >= 90) return 'var(--color-success)'
+  if (rate >= 70) return 'var(--color-info)'
+  if (rate >= 50) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 })
 
 // 楼栋数据
@@ -210,10 +210,10 @@ function getExpenseTypeText(type: string): string {
 
 // 获取入住率颜色
 function getOccupancyColor(rate: number): string {
-  if (rate >= 90) return '#52c41a'
-  if (rate >= 70) return '#1890ff'
-  if (rate >= 50) return '#faad14'
-  return '#ff4d4f'
+  if (rate >= 90) return 'var(--color-success)'
+  if (rate >= 70) return 'var(--color-info)'
+  if (rate >= 50) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 // 获取统计数据

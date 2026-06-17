@@ -80,8 +80,8 @@ const emit = defineEmits<{
     font-weight: 500;
 
     &--approve {
-      background: #07c160;
-      border-color: #07c160;
+      background: var(--color-success);
+      border-color: var(--color-success);
     }
   }
 }

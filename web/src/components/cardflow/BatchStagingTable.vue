@@ -289,7 +289,7 @@ function handleConfirm() {
   }
 
   :deep(.cf-staging__row--failed) {
-    background-color: #fff1f0;
+    background-color: var(--color-danger-light);
 
     &:hover > td {
       background-color: #ffd9d6 !important;

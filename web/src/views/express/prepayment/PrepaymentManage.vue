@@ -35,11 +35,11 @@
           <a-row v-if="balanceInfo" :gutter="24">
             <a-col :span="8">
               <a-statistic title="当前余额" :value="balanceInfo.balance" :precision="2" prefix="¥"
-                :value-style="{ color: balanceInfo.balance > 0 ? '#52c41a' : '#ff4d4f' }" />
+                :value-style="{ color: balanceInfo.balance > 0 ? 'var(--color-success)' : 'var(--color-danger)' }" />
             </a-col>
             <a-col :span="8">
               <a-statistic title="累计充值" :value="balanceInfo.totalRecharge" :precision="2" prefix="¥"
-                :value-style="{ color: '#1890ff' }" />
+                :value-style="{ color: 'var(--color-info)' }" />
             </a-col>
             <a-col :span="8">
               <a-statistic title="累计消费" :value="balanceInfo.totalConsume" :precision="2" prefix="¥" />
@@ -71,7 +71,7 @@
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'amount'">
-            <span :style="{ color: record.transactionType === 1 ? '#52c41a' : '#ff4d4f' }">
+            <span :style="{ color: record.transactionType === 1 ? 'var(--color-success)' : 'var(--color-danger)' }">
               {{ record.transactionType === 1 ? '+' : '-' }}¥{{ record.amount.toFixed(2) }}
             </span>
           </template>

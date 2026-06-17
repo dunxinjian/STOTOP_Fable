@@ -19,11 +19,11 @@
         <a-button type="primary" @click="saveAndNew" :disabled="!isBalanced || isClosedPeriod">保存并新增</a-button>
         <a-button @click="saveDraft">暂存</a-button>
         <a-button @click="showDrafts">草稿箱</a-button>
-        <a-button ghost @click="auditVoucher" style="color: #faad14; border-color: #faad14;">审核</a-button>
+        <a-button ghost @click="auditVoucher" style="color: var(--color-warning); border-color: var(--color-warning);">审核</a-button>
         <a-button
           v-if="isRecordingVoucher"
           type="primary"
-          style="background: #fa8c16; border-color: #fa8c16;"
+          style="background: var(--color-warning); border-color: var(--color-warning);"
           @click="handleCompleteRecord"
         >
           补录完成并提交
@@ -42,7 +42,7 @@
         </a-dropdown>
         <!-- 选择模板 -->
         <a-dropdown :disabled="templateList.length === 0">
-          <a-button ghost style="color: #52c41a; border-color: #52c41a;">
+          <a-button ghost style="color: var(--color-success); border-color: var(--color-success);">
             选择模板 <DownOutlined />
           </a-button>
           <template #overlay>
@@ -1929,7 +1929,7 @@ function formatDate(dateStr: string): string {
       }
 
       :deep(.ant-input-number) {
-        border-color: #409EFF;
+        border-color: var(--color-primary);
       }
     }
   }
@@ -1992,18 +1992,18 @@ function formatDate(dateStr: string): string {
         transition: all 0.2s;
         
         &:hover {
-          border-color: #409EFF;
-          color: #409EFF;
+          border-color: var(--color-primary);
+          color: var(--color-primary);
         }
-        
+
         &.add:hover {
-          border-color: #67C23A;
-          color: #67C23A;
+          border-color: var(--color-success);
+          color: var(--color-success);
         }
-        
+
         &.delete:hover {
-          border-color: #F56C6C;
-          color: #F56C6C;
+          border-color: var(--color-danger);
+          color: var(--color-danger);
         }
         
         span {
@@ -2104,7 +2104,7 @@ function formatDate(dateStr: string): string {
   }
   
   .active-row {
-    background: #e6f7ff;
+    background: var(--color-primary-light);
   }
   
   .total-row {
@@ -2138,11 +2138,11 @@ function formatDate(dateStr: string): string {
         }
         
         &.red-line {
-          border-right: 2px solid #ff4d4f !important;
+          border-right: 2px solid var(--color-danger) !important;
         }
-        
+
         &.blue-line {
-          border-right: 2px solid #1890ff !important;
+          border-right: 2px solid var(--color-info) !important;
         }
       }
     }
@@ -2167,12 +2167,12 @@ function formatDate(dateStr: string): string {
   }
 
   .diff-balanced {
-    color: #52c41a;
+    color: var(--color-success);
     font-weight: 600;
   }
 
   .diff-unbalanced {
-    color: #ff4d4f;
+    color: var(--color-danger);
     font-weight: 600;
   }
 }
@@ -2190,13 +2190,13 @@ function formatDate(dateStr: string): string {
 }
 
 .balance-warning {
-  background: #fff2f0;
+  background: var(--color-danger-light);
   border: 1px solid #ffccc7;
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .closed-period-warning {
-  background: #fff7e6;
+  background: var(--color-warning-light);
   border: 1px solid #ffd591;
   color: #d46b08;
 }
@@ -2242,7 +2242,7 @@ function formatDate(dateStr: string): string {
         cursor: pointer;
         padding: 16px;
         &:hover {
-          border-color: #1890ff;
+          border-color: var(--color-primary);
         }
         .upload-icon {
           font-size: 28px;
@@ -2250,7 +2250,7 @@ function formatDate(dateStr: string): string {
         }
         .upload-text {
           font-size: 13px;
-          em { color: #1890ff; }
+          em { color: var(--color-primary); }
         }
         .upload-tip {
           font-size: 11px;
@@ -2286,12 +2286,12 @@ function formatDate(dateStr: string): string {
       border: 1px solid #e4e7ed;
 
       &.pending {
-        border-color: #e6a23c;
-        background: #fdf6ec;
+        border-color: var(--color-warning);
+        background: var(--color-warning-light);
       }
 
       .att-icon {
-        color: #409EFF;
+        color: var(--color-info);
         flex-shrink: 0;
       }
 
@@ -2321,7 +2321,7 @@ function formatDate(dateStr: string): string {
 
       .att-status {
         font-size: 12px;
-        color: #e6a23c;
+        color: var(--color-warning);
         flex-shrink: 0;
       }
     }
@@ -2391,12 +2391,12 @@ function formatDate(dateStr: string): string {
     text-overflow: ellipsis;
     max-width: 100%;
     background: #fff3f3;
-    color: #e6a23c;
-    border: 1px dashed #e6a23c;
+    color: var(--color-warning);
+    border: 1px dashed var(--color-warning);
     
     &.has-value {
       background: #ecf5ff;
-      color: #409EFF;
+      color: var(--color-info);
       border: 1px solid #b3d8ff;
     }
     
@@ -2418,7 +2418,7 @@ function formatDate(dateStr: string): string {
       cursor: pointer;
       padding: 2px 6px;
       &:hover {
-        color: #409EFF;
+        color: var(--color-primary);
       }
     }
   }
@@ -2449,7 +2449,7 @@ function formatDate(dateStr: string): string {
       position: relative;
       
       &.active {
-        color: #409EFF;
+        color: var(--color-primary);
         &::after {
           content: '';
           position: absolute;
@@ -2457,11 +2457,11 @@ function formatDate(dateStr: string): string {
           left: 0;
           right: 0;
           height: 2px;
-          background: #409EFF;
+          background: var(--color-primary);
         }
       }
       &:hover {
-        color: #409EFF;
+        color: var(--color-primary);
       }
     }
   }
@@ -2518,7 +2518,7 @@ function formatDate(dateStr: string): string {
 
   .info-tip {
     background-color: #f4f7fe;
-    border-left: 3px solid #409EFF;
+    border-left: 3px solid var(--color-info);
     padding: 10px 15px;
     margin: 8px 0 16px 85px;
     font-size: 13px;
@@ -2556,7 +2556,7 @@ function formatDate(dateStr: string): string {
 
 // 外币面板样式
 .foreign-currency-panel {
-  background: #fffbe6;
+  background: var(--color-warning-light);
   border: 1px solid #ffe58f;
   border-radius: 6px;
   padding: 6px 8px;

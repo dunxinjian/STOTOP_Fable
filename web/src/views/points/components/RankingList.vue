@@ -65,8 +65,8 @@ const medalColors = ['#faad14', '#bfbfbf', '#d48806']
   }
 
   &--me {
-    background: #e6f7ff;
-    border: 1px solid #91d5ff;
+    background: var(--color-info-light);
+    border: 1px solid var(--color-info);
   }
 
   &__rank {
@@ -84,7 +84,7 @@ const medalColors = ['#faad14', '#bfbfbf', '#d48806']
   &__avatar {
     margin-left: 8px;
     flex-shrink: 0;
-    background: #1890ff;
+    background: var(--color-info);
   }
 
   &__info {
@@ -117,7 +117,7 @@ const medalColors = ['#faad14', '#bfbfbf', '#d48806']
   &__points-value {
     font-size: 20px;
     font-weight: 700;
-    color: #1890ff;
+    color: var(--color-info);
   }
 
   &__points-label {

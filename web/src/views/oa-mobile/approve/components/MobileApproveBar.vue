@@ -86,11 +86,11 @@ async function handleSubmit() {
   padding: 16px;
 }
 .popup-title {
-  font-size: 16px;
+  font-size: var(--font-lg);
   font-weight: 600;
   text-align: center;
-  margin-bottom: 16px;
-  color: #323233;
+  margin-bottom: var(--space-lg16);
+  color: var(--text-1);
 }
 .popup-actions {
   display: flex;

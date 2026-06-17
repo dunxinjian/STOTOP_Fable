@@ -127,7 +127,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-toggle {
   cursor: pointer;
-  color: #1677ff;
+  color: var(--color-primary);
   font-size: 13px;
   user-select: none;
   display: flex;
@@ -147,7 +147,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
     transition: all 0.3s;
 
     &:hover {
-      border-color: #1677ff;
+      border-color: var(--color-primary);
       background: #f0f7ff;
     }
   }
@@ -155,7 +155,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-icon {
   font-size: 48px;
-  color: #1677ff;
+  color: var(--color-primary);
   margin-bottom: 8px;
 }
 

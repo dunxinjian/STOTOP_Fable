@@ -240,9 +240,9 @@ const showStagingForExpand = (b: CfBatch) => b.status === 1 || b.status === 2 ||
           <a-tag v-if="record.isRevoked" color="default">已撤销</a-tag>
         </template>
         <template v-else-if="column.key === 'rowsResult'">
-          <span style="color: #52c41a">{{ record.successRows }}</span>
+          <span style="color: var(--color-success-text)">{{ record.successRows }}</span>
           <span style="margin: 0 4px; color: #ccc">/</span>
-          <span :style="{ color: record.failedRows > 0 ? '#ff4d4f' : '#999' }">
+          <span :style="{ color: record.failedRows > 0 ? 'var(--color-danger-text)' : '#999' }">
             {{ record.failedRows }}
           </span>
         </template>

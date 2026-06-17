@@ -39,7 +39,7 @@
           </template>
         </template>
         <template #emptyText>
-          <a-empty description="暂无分摊配置" />
+          <EmptyState description="暂无分摊配置" />
         </template>
       </a-table>
     </a-card>

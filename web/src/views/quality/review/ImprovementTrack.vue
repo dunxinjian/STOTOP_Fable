@@ -46,7 +46,7 @@
             {{ record.assigneeName || '-' }}
           </template>
           <template v-if="column.dataIndex === 'deadline'">
-            <span :style="isOverdue(record) ? { color: '#ff4d4f', fontWeight: 600 } : {}">
+            <span :style="isOverdue(record) ? { color: 'var(--color-danger)', fontWeight: 600 } : {}">
               {{ record.deadline || '-' }}
             </span>
           </template>
@@ -278,6 +278,6 @@ onMounted(() => {
 
 <style scoped>
 :deep(.row-overdue td) {
-  background-color: #fff2f0 !important;
+  background-color: var(--color-danger-light) !important;
 }
 </style>

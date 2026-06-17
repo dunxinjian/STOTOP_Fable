@@ -44,6 +44,7 @@ watch(() => enterpriseInfoStore.displayName, (name) => {
 </script>
 
 <template>
+  <!-- antdTheme 已启用 cssVar(prefix='sto') 与 hashed:false，组件样式以 CSS 变量输出，与 :root 设计令牌协同 -->
   <a-config-provider :locale="zhCN" :theme="themeStore.antdTheme">
     <router-view />
     <IdleWarningDialog v-if="securityStore.idleState === 'warning'" />

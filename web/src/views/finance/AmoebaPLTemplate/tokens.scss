@@ -25,9 +25,9 @@ $amoeba-text-disabled: #bfbfbf;
 
 // ---------- 语义色（≤5 个） ----------
 $amoeba-primary: #1677ff;
-$amoeba-success: #52c41a;
-$amoeba-warning: #faad14;
-$amoeba-error:   #ff4d4f;
+$amoeba-success: var(--color-success, #2BA471);
+$amoeba-warning: var(--color-warning, #E6A700);
+$amoeba-error:   var(--color-danger, #E5484D);
 $amoeba-info:    #13c2c2;
 
 // ---------- 边框 ----------

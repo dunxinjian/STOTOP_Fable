@@ -39,7 +39,7 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-button type="link" size="small" @click="handleEdit(record)"><EditOutlined /> 编辑</a-button>
-            <a-button type="link" size="small" style="color: #faad14" @click="handleTrigger(record)"><CaretRightOutlined /> 触发</a-button>
+            <a-button type="link" size="small" style="color: var(--color-warning-text)" @click="handleTrigger(record)"><CaretRightOutlined /> 触发</a-button>
             <a-button type="link" size="small" @click="handleViewLogs(record)"><FileOutlined /> 日志</a-button>
             <a-button type="link" size="small" danger @click="handleDelete(record)"><DeleteOutlined /> 删除</a-button>
           </template>

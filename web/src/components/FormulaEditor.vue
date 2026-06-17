@@ -224,8 +224,8 @@ function clearFormula() {
 }
 
 .formula-editor__textarea:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-border);
 }
 
 .formula-editor__panel {
@@ -291,7 +291,7 @@ function clearFormula() {
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-primary);
   margin: 4px 6px;
   border-radius: 3px;
   background: #fafafa;
@@ -301,8 +301,8 @@ function clearFormula() {
 }
 
 .formula-editor__item:hover {
-  background: #e6f7ff;
-  border-left-color: #096dd9;
+  background: var(--color-primary-light);
+  border-left-color: var(--color-primary-hover);
 }
 
 .formula-editor__item:active {

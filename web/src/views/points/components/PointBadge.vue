@@ -22,7 +22,7 @@ const badgeClass = computed(() => `point-badge--${props.size || 'default'}`)
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(135deg, #fff7e6, #ffe7ba);
+  background: linear-gradient(135deg, var(--color-warning-light), #ffe7ba);
   border: 1px solid #ffd591;
   border-radius: 16px;
   color: #d46b08;

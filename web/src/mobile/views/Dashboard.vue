@@ -26,19 +26,19 @@
       <!-- 快捷入口 -->
       <div class="shortcut-grid">
         <div class="shortcut-item" @click="$router.push('/m/report/amoeba')">
-          <van-icon name="bar-chart-o" size="24" color="#1677ff" />
+          <van-icon name="bar-chart-o" size="24" color="var(--color-info)" />
           <span>阿米巴损益</span>
         </div>
         <div class="shortcut-item" @click="$router.push('/m/report/profit')">
-          <van-icon name="gold-coin-o" size="24" color="#52c41a" />
+          <van-icon name="gold-coin-o" size="24" color="var(--color-success)" />
           <span>毛利分析</span>
         </div>
         <div class="shortcut-item" @click="$router.push('/m/report/cost')">
-          <van-icon name="balance-list-o" size="24" color="#fa8c16" />
+          <van-icon name="balance-list-o" size="24" color="var(--color-warning)" />
           <span>成本明细</span>
         </div>
         <div class="shortcut-item" @click="$router.push('/m/report/express')">
-          <van-icon name="logistics" size="24" color="#722ed1" />
+          <van-icon name="logistics" size="24" color="var(--biz-waybill)" />
           <span>快递统计</span>
         </div>
       </div>
@@ -130,14 +130,14 @@ const trendOption = computed<EChartsOption>(() => ({
     data: trendPoints.value.map(p => p.value),
     smooth: true,
     symbol: 'none',
-    lineStyle: { width: 2.5, color: '#1677ff' },
+    lineStyle: { width: 2.5, color: '#3A6FB0' },
     areaStyle: {
       color: {
         type: 'linear',
         x: 0, y: 0, x2: 0, y2: 1,
         colorStops: [
-          { offset: 0, color: 'rgba(22,119,255,0.25)' },
-          { offset: 1, color: 'rgba(22,119,255,0.02)' },
+          { offset: 0, color: 'rgba(58,111,176,0.25)' },
+          { offset: 1, color: 'rgba(58,111,176,0.02)' },
         ],
       },
     },
@@ -214,7 +214,7 @@ onMounted(() => loadData())
 }
 .period-btn {
   font-size: 14px;
-  color: #1677ff;
+  color: var(--color-primary);
 }
 .kpi-grid {
   display: grid;

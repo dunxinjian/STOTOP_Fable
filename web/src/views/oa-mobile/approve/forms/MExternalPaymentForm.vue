@@ -196,7 +196,7 @@ defineExpose({
       <div class="detail-tab">
         <span class="detail-tab-text">付款明细 {{ index + 1 }}</span>
         <span v-if="!props.readonly" class="detail-remove-btn" @click="removeDetail(index)">
-          <VanIcon name="cross" size="16" color="#f56c6c" />
+          <VanIcon name="cross" size="16" color="var(--color-danger)" />
         </span>
       </div>
 
@@ -447,8 +447,8 @@ defineExpose({
 
 /* 付款总额卡片 */
 .total-amount-card {
-  background: linear-gradient(135deg, #4d8cf7 0%, #6fa3fb 100%);
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
 }
 .total-label {
@@ -475,7 +475,7 @@ defineExpose({
   font-size: 13px;
   color: #999;
   padding: 4px 0;
-  border-bottom: 2px solid #4d8cf7;
+  border-bottom: 2px solid var(--color-primary);
 }
 .detail-remove-btn {
   display: flex;
@@ -506,7 +506,7 @@ defineExpose({
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f56c6c;
+  background: var(--color-danger);
   display: inline-block;
   flex-shrink: 0;
 }

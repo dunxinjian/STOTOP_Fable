@@ -139,16 +139,14 @@ onUnmounted(() => {
   display: flex;
   height: calc(100vh - 48px);
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(255, 103, 0, 0.035), rgba(255, 255, 255, 0) 180px),
-    #f4f6f8;
+  background: var(--bg-page);
 }
 
 .workhub-left {
   width: 238px;
   flex-shrink: 0;
-  background: #f7f8fa;
-  border-right: 1px solid #e8edf3;
+  background: var(--bg-page);
+  border-right: 1px solid var(--border);
   transition: width 0.2s ease;
 }
 
@@ -169,8 +167,8 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-left: 1px solid #e8edf3;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
 }
 
 .workhub-right__default {

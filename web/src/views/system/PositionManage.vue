@@ -50,10 +50,10 @@
           </template>
           <template v-if="column.dataIndex === 'action'">
             <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-              <a-button type="link" size="small" @click="handleManageDepts(record)" style="color: #52c41a">
+              <a-button type="link" size="small" @click="handleManageDepts(record)" style="color: var(--color-success)">
                 <BankOutlined />组织
               </a-button>
-              <a-button type="link" size="small" @click="handleManageUsers(record)" style="color: #faad14">
+              <a-button type="link" size="small" @click="handleManageUsers(record)" style="color: var(--color-warning)">
                 <UserOutlined />人员
               </a-button>
               <a-button type="link" size="small" @click="handleViewLogs(record)" style="color: #8c8c8c">

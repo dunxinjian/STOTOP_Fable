@@ -50,7 +50,7 @@ function renderChart() {
         type: 'line',
         data: awards,
         smooth: true,
-        itemStyle: { color: '#52c41a' },
+        itemStyle: { color: '#2BA471' },
         areaStyle: { color: 'rgba(82,196,26,0.1)' },
       },
       {
@@ -58,7 +58,7 @@ function renderChart() {
         type: 'line',
         data: deducts,
         smooth: true,
-        itemStyle: { color: '#ff4d4f' },
+        itemStyle: { color: '#E5484D' },
         areaStyle: { color: 'rgba(255,77,79,0.1)' },
       },
       {
@@ -66,7 +66,7 @@ function renderChart() {
         type: 'line',
         data: nets,
         smooth: true,
-        itemStyle: { color: '#1890ff' },
+        itemStyle: { color: '#3A6FB0' },
         lineStyle: { width: 3 },
       },
     ],

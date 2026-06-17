@@ -170,19 +170,19 @@ export function getProgressBarInfo(batch: BatchItem): ProgressBarInfo {
 
   if (batch.status === 'uploading') {
     percent = batch.uploadProgress || 0
-    color = '#1677ff'
+    color = 'var(--color-info)'
   } else if (batch.status === 'processing') {
     percent = getFlowProgress(batch)
-    color = (batch.waitHours ?? 0) >= 4 ? '#722ed1' : '#1677ff'
+    color = (batch.waitHours ?? 0) >= 4 ? 'var(--biz-waybill)' : 'var(--color-info)'
   } else if (batch.status === 'success') {
     percent = 100
-    color = '#52c41a'
+    color = 'var(--color-success)'
   } else if (batch.status === 'error') {
     percent = 100
-    color = '#ff4d4f'
+    color = 'var(--color-danger)'
   } else if (batch.status === 'partial') {
     percent = 100
-    color = '#faad14'
+    color = 'var(--color-warning)'
   }
 
   return { percent, color }
@@ -199,21 +199,21 @@ export function getProgressRing(batch: BatchItem): ProgressRingInfo {
 
   if (batch.status === 'uploading') {
     percent = batch.uploadProgress || 0
-    color = '#1677ff'
+    color = 'var(--color-info)'
   } else if (batch.status === 'processing') {
     percent = getFlowProgress(batch)
-    color = (batch.waitHours ?? 0) >= 4 ? '#722ed1' : '#1677ff'
+    color = (batch.waitHours ?? 0) >= 4 ? 'var(--biz-waybill)' : 'var(--color-info)'
   } else if (batch.status === 'success') {
     percent = 100
-    color = '#52c41a'
+    color = 'var(--color-success)'
     cssClass = 'completed'
   } else if (batch.status === 'error') {
     percent = 100
-    color = '#ff4d4f'
+    color = 'var(--color-danger)'
     cssClass = 'error'
   } else if (batch.status === 'partial') {
     percent = 100
-    color = '#faad14'
+    color = 'var(--color-warning)'
   }
 
   return { percent, color, cssClass }

@@ -21,7 +21,7 @@
       <a-table :columns="columns" :data-source="dataList" :loading="loading" row-key="id" :pagination="false">
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'weight'">
-            <a-progress :percent="record.weight" :size="[120, 8]" :stroke-color="record.weight > 0 ? '#1890ff' : '#d9d9d9'" />
+            <a-progress :percent="record.weight" :size="[120, 8]" :stroke-color="record.weight > 0 ? 'var(--color-info)' : '#d9d9d9'" />
             <span style="margin-left: 4px">{{ record.weight }}%</span>
           </template>
           <template v-else-if="column.dataIndex === 'dataSource'">
@@ -34,7 +34,7 @@
             <a-space>
               <a @click="openModal(record as PerformanceDimensionListDto)">编辑</a>
               <a-popconfirm title="确认删除此维度？" @confirm="handleDelete(record.id)">
-                <a style="color: #ff4d4f">删除</a>
+                <a style="color: var(--color-danger)">删除</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -223,8 +223,8 @@ onMounted(fetchData)
     margin-top: 12px;
     text-align: right;
     font-size: 14px;
-    .weight-ok { color: #52c41a; font-weight: 600; }
-    .weight-bad { color: #ff4d4f; font-weight: 600; }
+    .weight-ok { color: var(--color-success); font-weight: 600; }
+    .weight-bad { color: var(--color-danger); font-weight: 600; }
   }
 }
 </style>

@@ -26,7 +26,7 @@
       <!-- 流程进度 -->
       <div class="steps-section">
         <div class="section-title">流程进度</div>
-        <van-steps :active="activeStep" active-color="#07c160">
+        <van-steps :active="activeStep" active-color="var(--color-success)">
           <van-step v-for="(node, idx) in detail.steps" :key="idx">
             {{ node.name }}
           </van-step>

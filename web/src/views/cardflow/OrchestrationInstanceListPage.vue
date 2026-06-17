@@ -38,12 +38,12 @@ const router = useRouter()
 
 interface StatusMeta { text: string; color: string }
 const STATUS_META: Record<OrchestrationInstanceStatus, StatusMeta> = {
-  running: { text: '运行中', color: '#1677ff' },
-  completed: { text: '已完成', color: '#52c41a' },
+  running: { text: '运行中', color: 'var(--color-info)' },
+  completed: { text: '已完成', color: 'var(--color-success)' },
   terminated: { text: '已终止', color: '#8c8c8c' },
-  failed: { text: '失败', color: '#ff4d4f' },
+  failed: { text: '失败', color: 'var(--color-danger)' },
   cancelled: { text: '已取消', color: '#bfbfbf' },
-  paused: { text: '已暂停', color: '#faad14' },
+  paused: { text: '已暂停', color: 'var(--color-warning)' },
 }
 const STATUS_OPTIONS = (Object.keys(STATUS_META) as OrchestrationInstanceStatus[]).map(k => ({
   label: STATUS_META[k].text,
@@ -342,7 +342,7 @@ onMounted(async () => {
 }
 
 .link-name {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   font-weight: 500;
   &:hover { text-decoration: underline; }

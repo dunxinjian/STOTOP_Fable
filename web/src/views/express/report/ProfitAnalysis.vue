@@ -791,10 +791,10 @@ function renderTrendChart() {
       { type: 'value', name: '毛利率(%)', axisLabel: { color: '#999', formatter: (v: number) => v.toFixed(0) + '%' }, splitLine: { show: false } },
     ],
     series: [
-      { name: '应收', type: 'line', data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#1890ff' }, lineStyle: { width: 2 } },
-      { name: '成本', type: 'line', data: trendData.value.map(d => d.totalCost), smooth: true, itemStyle: { color: '#ff4d4f' }, lineStyle: { width: 2 } },
-      { name: '毛利', type: 'line', data: trendData.value.map(d => d.profit), smooth: true, itemStyle: { color: '#52c41a' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(82,196,26,0.25)' }, { offset: 1, color: 'rgba(82,196,26,0.02)' }] } } },
-      { name: '毛利率', type: 'bar', yAxisIndex: 1, data: trendData.value.map(d => d.profitRate), barWidth: 20, itemStyle: { color: '#faad14', borderRadius: [4, 4, 0, 0] } },
+      { name: '应收', type: 'line', data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#3A6FB0' }, lineStyle: { width: 2 } },
+      { name: '成本', type: 'line', data: trendData.value.map(d => d.totalCost), smooth: true, itemStyle: { color: '#E5484D' }, lineStyle: { width: 2 } },
+      { name: '毛利', type: 'line', data: trendData.value.map(d => d.profit), smooth: true, itemStyle: { color: '#2BA471' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(82,196,26,0.25)' }, { offset: 1, color: 'rgba(82,196,26,0.02)' }] } } },
+      { name: '毛利率', type: 'bar', yAxisIndex: 1, data: trendData.value.map(d => d.profitRate), barWidth: 20, itemStyle: { color: '#E6A700', borderRadius: [4, 4, 0, 0] } },
     ],
   }, true)
 }
@@ -992,12 +992,12 @@ onBeforeUnmount(() => {
   }
 }
 
-.kpi-positive { color: #52c41a; }
-.kpi-negative { color: #ff4d4f; }
-.val-positive { color: #52c41a; }
-.val-negative { color: #ff4d4f; }
+.kpi-positive { color: var(--color-success); }
+.kpi-negative { color: var(--color-danger); }
+.val-positive { color: var(--color-success); }
+.val-negative { color: var(--color-danger); }
 /* 低正毛利用橙/黄，与亏损的红区分开 */
-.val-warning { color: #fa8c16; }
+.val-warning { color: var(--color-warning); }
 .val-caution { color: #d4a106; }
 
 /* 内容区 */

@@ -71,7 +71,7 @@
           {{ (pageIndex - 1) * pageSize + index + 1 }}
         </template>
         <template v-if="column.dataIndex === 'pointValue'">
-          <span :style="{ color: record.pointValue > 0 ? '#52c41a' : '#ff4d4f', fontWeight: 600 }">
+          <span :style="{ color: record.pointValue > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }">
             {{ record.pointValue > 0 ? '+' : '' }}{{ record.pointValue }}
           </span>
         </template>

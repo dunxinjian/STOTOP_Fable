@@ -25,7 +25,7 @@
           sub-title="该功能将支持车辆实时定位和历史轨迹查看，待对接第三方GPS平台后开放使用。"
         >
           <template #icon>
-            <EnvironmentOutlined style="color: #1890ff" />
+            <EnvironmentOutlined style="color: var(--color-info)" />
           </template>
           <template #extra>
             <a-button type="primary" disabled>

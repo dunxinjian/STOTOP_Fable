@@ -4,37 +4,7 @@
     <div class="login-split" :class="{ 'is-transitioning': transitioning }">
 
       <!-- 左侧：品牌区 -->
-      <div class="login-brand" :class="`brand-${seasonTheme.season}`" :style="brandStyle">
-        <!-- 季节粒子动画层 -->
-        <div class="season-particles" :class="seasonTheme.particleClass" aria-hidden="true">
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-          <span class="particle"></span>
-        </div>
-        <div class="logistics-route-map" aria-hidden="true">
-          <svg viewBox="0 0 720 220" focusable="false">
-            <path class="route-path" d="M18 166 C118 84, 202 196, 312 108 S494 60, 682 126" />
-            <path class="route-path route-path--secondary" d="M92 42 C192 82, 254 28, 348 82 S508 174, 648 58" />
-            <line class="warehouse-line" x1="36" y1="198" x2="210" y2="198" />
-            <line class="warehouse-line" x1="36" y1="178" x2="210" y2="178" />
-            <line class="warehouse-line" x1="52" y1="160" x2="52" y2="210" />
-            <line class="warehouse-line" x1="96" y1="160" x2="96" y2="210" />
-            <line class="warehouse-line" x1="140" y1="160" x2="140" y2="210" />
-            <circle class="hub-node" cx="18" cy="166" r="5" />
-            <circle class="hub-node" cx="312" cy="108" r="5" />
-            <circle class="hub-node" cx="682" cy="126" r="5" />
-            <circle class="hub-node" cx="648" cy="58" r="5" />
-          </svg>
-        </div>
+      <div class="login-brand">
         <div class="brand-inner">
           <div class="brand-logo">
             <img
@@ -60,14 +30,6 @@
               <span>运单质量、库存状态、经营分析实时联动</span>
             </div>
           </div>
-        </div>
-        <!-- 抽象几何装饰图形（左栏中下部） -->
-        <div class="brand-decoration" aria-hidden="true">
-          <div class="deco-ring deco-ring-1"></div>
-          <div class="deco-ring deco-ring-2"></div>
-          <div class="deco-ring deco-ring-3"></div>
-          <div class="deco-line deco-line-1"></div>
-          <div class="deco-line deco-line-2"></div>
         </div>
         <div class="brand-footer">{{ enterpriseInfoStore.name }} Enterprise System</div>
       </div>
@@ -251,7 +213,6 @@ import { checkDbConnectionStatus } from '@/api/system'
 import { getDingtalkConfig } from '@/api/auth'
 import OrgSelectModal from '@/components/OrgSelectModal.vue'
 import type { UserOrganizationDto } from '@/types/organization'
-import { getCurrentSeasonTheme } from '@/utils/seasonTheme'
 
 const router = useRouter()
 const route = useRoute()
@@ -260,26 +221,14 @@ const orgContextStore = useOrgContextStore()
 const enterpriseInfoStore = useEnterpriseInfoStore()
 const securityStore = useSecurityStore()
 
-// 季节主题（按当前月份自动切换）
-const seasonTheme = getCurrentSeasonTheme()
-const brandStyle = {
-  '--season-bg-1': seasonTheme.bgGradient[0],
-  '--season-bg-2': seasonTheme.bgGradient[1],
-  '--season-bg-3': seasonTheme.bgGradient[2],
-  '--season-glow-primary': seasonTheme.glowPrimary,
-  '--season-glow-secondary': seasonTheme.glowSecondary,
-  '--season-dot-1': seasonTheme.dotGradient[0],
-  '--season-dot-2': seasonTheme.dotGradient[1],
-} as Record<string, string>
-
 const TRANSITION_STEP_TEXTS = [
   '已加载组织与权限',
   '已恢复网点、仓库与快捷入口',
   '正在同步今日运单与待办',
   '即将进入工作台',
 ] as const
-const TRANSITION_STEP_DELAYS = [0, 450, 900, 1350] as const
-const MIN_TRANSITION_DURATION = 1500
+const TRANSITION_STEP_DELAYS = [0, 700, 1400, 2100] as const
+const MIN_TRANSITION_DURATION = 2300
 
 type LoginNextAction =
   | { type: 'redirect'; redirect: string }
@@ -562,37 +511,8 @@ async function handleDingtalkLogin() {
   padding: 56px 52px 40px;
   position: relative;
   overflow: hidden;
-  // 季节主题渐变背景（变量由脚本注入）
-  background: linear-gradient(
-    145deg,
-    var(--season-bg-1, #1E1F26) 0%,
-    var(--season-bg-2, #23242D) 60%,
-    var(--season-bg-3, #1A1B22) 100%
-  );
-  transition: background 0.6s ease;
-
-  // 右上装饰光晓
-  &::before {
-    content: '';
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(ellipse at 90% 10%, var(--season-glow-primary, rgba(255, 103, 0, 0.18)), transparent 60%);
-    top: -120px;
-    right: -80px;
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(ellipse at 10% 90%, var(--season-glow-secondary, rgba(99, 102, 241, 0.12)), transparent 55%);
-    bottom: -80px;
-    left: -60px;
-    pointer-events: none;
-  }
+  // 静态精致深墨外壳，跟随权威外壳令牌
+  background: var(--topbar-ink, #1F2430);
 }
 
 .brand-inner {
@@ -612,7 +532,6 @@ async function handleDingtalkLogin() {
   max-height: 56px;
   max-width: 240px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(255, 103, 0, 0.25));
 }
 
 .brand-logo-text {
@@ -620,11 +539,6 @@ async function handleDingtalkLogin() {
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 5px;
-  background: linear-gradient(135deg, #FF6700 0%, #FFAA44 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
 }
 
 .brand-tagline {
@@ -661,257 +575,8 @@ async function handleDingtalkLogin() {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--season-dot-1, #FF6700),
-    var(--season-dot-2, #FFAA44)
-  );
+  background: var(--color-primary, #E85E00);
   flex: 0 0 auto;
-  box-shadow: 0 0 6px var(--season-dot-1, rgba(255, 103, 0, 0.5));
-}
-
-// ======================================================
-// 季节粒子动画层
-// ======================================================
-.season-particles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-
-  .particle {
-    position: absolute;
-    display: block;
-    will-change: transform, opacity;
-  }
-}
-
-.logistics-route-map {
-  position: absolute;
-  left: 52px;
-  right: 72px;
-  bottom: 92px;
-  height: 210px;
-  opacity: 0.34;
-  z-index: 0;
-  pointer-events: none;
-
-  svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-
-  .route-path {
-    fill: none;
-    stroke: var(--season-glow-primary, rgba(255, 138, 52, 0.5));
-    stroke-width: 1.5;
-    stroke-dasharray: 7 9;
-  }
-
-  .route-path--secondary {
-    opacity: 0.65;
-  }
-
-  .hub-node {
-    fill: var(--season-dot-1, #FF6700);
-    filter: drop-shadow(0 0 8px rgba(255, 103, 0, 0.55));
-  }
-
-  .warehouse-line {
-    stroke: rgba(255, 255, 255, 0.16);
-    stroke-width: 1;
-  }
-}
-
-// --- 春：嵫绿气泡缓缓上浮 ---
-.particles-spring {
-  .particle {
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(210, 250, 200, 0.95), rgba(140, 212, 138, 0.2) 70%);
-    box-shadow: 0 0 10px rgba(140, 212, 138, 0.45);
-    bottom: -24px;
-    opacity: 0;
-    animation: spring-rise 8s linear infinite;
-  }
-  .particle:nth-child(1) { left: 6%;  width: 7px;  height: 7px;  animation-duration: 8s;   animation-delay: 0s; }
-  .particle:nth-child(2) { left: 18%; width: 11px; height: 11px; animation-duration: 7s;   animation-delay: 2s; }
-  .particle:nth-child(3) { left: 30%; width: 5px;  height: 5px;  animation-duration: 9s;   animation-delay: 4s; }
-  .particle:nth-child(4) { left: 44%; width: 9px;  height: 9px;  animation-duration: 7.5s; animation-delay: 1.2s; }
-  .particle:nth-child(5) { left: 58%; width: 6px;  height: 6px;  animation-duration: 8.5s; animation-delay: 3.4s; }
-  .particle:nth-child(6) { left: 72%; width: 10px; height: 10px; animation-duration: 7.2s; animation-delay: 5.8s; }
-  .particle:nth-child(7) { left: 84%; width: 5px;  height: 5px;  animation-duration: 8.8s; animation-delay: 0.6s; }
-  .particle:nth-child(8) { left: 92%; width: 8px;  height: 8px;  animation-duration: 7.8s; animation-delay: 2.6s; }
-  // 极小点缀粒子（9-12）
-  .particle:nth-child(9)  { left: 12%; width: 3px; height: 3px; animation-duration: 8.2s; animation-delay: 1.8s; opacity: 0; }
-  .particle:nth-child(10) { left: 38%; width: 4px; height: 4px; animation-duration: 7.6s; animation-delay: 4.6s; opacity: 0; }
-  .particle:nth-child(11) { left: 64%; width: 3px; height: 3px; animation-duration: 8.6s; animation-delay: 2.2s; opacity: 0; }
-  .particle:nth-child(12) { left: 88%; width: 4px; height: 4px; animation-duration: 7.4s; animation-delay: 5.2s; opacity: 0; }
-  .particle:nth-child(9),
-  .particle:nth-child(10),
-  .particle:nth-child(11),
-  .particle:nth-child(12) {
-    box-shadow: 0 0 4px rgba(140, 212, 138, 0.25);
-    animation-name: spring-rise-faint;
-  }
-}
-
-@keyframes spring-rise-faint {
-  0%   { transform: translate3d(0, 0, 0);            opacity: 0; }
-  15%  { opacity: 0.28; }
-  50%  { transform: translate3d(12px, -45vh, 0);     opacity: 0.22; }
-  85%  { opacity: 0.2; }
-  100% { transform: translate3d(-8px, -100vh, 0);    opacity: 0; }
-}
-
-@keyframes spring-rise {
-  0%   { transform: translate3d(0, 0, 0);            opacity: 0; }
-  12%  { opacity: 0.7; }
-  50%  { transform: translate3d(18px, -45vh, 0);     opacity: 0.55; }
-  88%  { opacity: 0.4; }
-  100% { transform: translate3d(-12px, -100vh, 0);   opacity: 0; }
-}
-
-// --- 夏：金色光斑闪烁 ---
-.particles-summer {
-  .particle {
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 235, 150, 1), rgba(255, 196, 76, 0) 70%);
-    box-shadow: 0 0 14px rgba(255, 210, 110, 0.55);
-    opacity: 0;
-    animation: summer-twinkle 7s ease-in-out infinite;
-  }
-  .particle:nth-child(1) { top: 14%; left: 12%; width: 6px;  height: 6px;  animation-delay: 0s;   animation-duration: 6.2s; }
-  .particle:nth-child(2) { top: 28%; left: 78%; width: 10px; height: 10px; animation-delay: 0.8s; animation-duration: 7.4s; }
-  .particle:nth-child(3) { top: 46%; left: 22%; width: 5px;  height: 5px;  animation-delay: 1.6s; animation-duration: 6.6s; }
-  .particle:nth-child(4) { top: 36%; left: 60%; width: 8px;  height: 8px;  animation-delay: 2.2s; animation-duration: 7.8s; }
-  .particle:nth-child(5) { top: 62%; left: 14%; width: 7px;  height: 7px;  animation-delay: 0.4s; animation-duration: 7.2s; }
-  .particle:nth-child(6) { top: 70%; left: 70%; width: 5px;  height: 5px;  animation-delay: 1.2s; animation-duration: 6.4s; }
-  .particle:nth-child(7) { top: 82%; left: 40%; width: 9px;  height: 9px;  animation-delay: 2.8s; animation-duration: 7.6s; }
-  .particle:nth-child(8) { top: 18%; left: 50%; width: 6px;  height: 6px;  animation-delay: 3.4s; animation-duration: 6.8s; }
-  // 极小点缀粒子（9-12）
-  .particle:nth-child(9)  { top: 22%; left: 32%; width: 3px; height: 3px; animation-delay: 0.6s; animation-duration: 6.5s; }
-  .particle:nth-child(10) { top: 54%; left: 86%; width: 4px; height: 4px; animation-delay: 2.0s; animation-duration: 7.5s; }
-  .particle:nth-child(11) { top: 76%; left: 56%; width: 3px; height: 3px; animation-delay: 1.4s; animation-duration: 6.2s; }
-  .particle:nth-child(12) { top: 40%; left: 8%;  width: 4px; height: 4px; animation-delay: 3.0s; animation-duration: 7.8s; }
-  .particle:nth-child(9),
-  .particle:nth-child(10),
-  .particle:nth-child(11),
-  .particle:nth-child(12) {
-    box-shadow: 0 0 6px rgba(255, 210, 110, 0.3);
-    animation-name: summer-twinkle-faint;
-  }
-}
-
-@keyframes summer-twinkle-faint {
-  0%, 100% { opacity: 0;    transform: scale(0.6); }
-  50%      { opacity: 0.28; transform: scale(1.05); }
-}
-
-@keyframes summer-twinkle {
-  0%, 100% { opacity: 0;    transform: scale(0.7); }
-  50%      { opacity: 0.85; transform: scale(1.25); }
-}
-
-// --- 秋：叶片飘落 ---
-.particles-autumn {
-  .particle {
-    width: 11px;
-    height: 14px;
-    border-radius: 0 100% 0 100%;
-    background: linear-gradient(135deg, #FFB266 0%, #FF7A1F 60%, #B84A0F 100%);
-    box-shadow: 0 0 6px rgba(255, 138, 40, 0.4);
-    top: -32px;
-    opacity: 0;
-    transform-origin: 50% 50%;
-    animation: autumn-fall 9s linear infinite;
-  }
-  .particle:nth-child(1) { left: 8%;  width: 11px; height: 14px; animation-duration: 9s;   animation-delay: 0s; }
-  .particle:nth-child(2) { left: 20%; width: 9px;  height: 12px; animation-duration: 10s;  animation-delay: 2.4s; }
-  .particle:nth-child(3) { left: 33%; width: 13px; height: 16px; animation-duration: 8s;   animation-delay: 4.8s; }
-  .particle:nth-child(4) { left: 46%; width: 10px; height: 13px; animation-duration: 9.5s; animation-delay: 1.6s; }
-  .particle:nth-child(5) { left: 58%; width: 8px;  height: 11px; animation-duration: 8.4s; animation-delay: 3.2s; }
-  .particle:nth-child(6) { left: 70%; width: 12px; height: 15px; animation-duration: 9.8s; animation-delay: 5.6s; }
-  .particle:nth-child(7) { left: 82%; width: 11px; height: 14px; animation-duration: 8.6s; animation-delay: 0.8s; }
-  .particle:nth-child(8) { left: 92%; width: 9px;  height: 12px; animation-duration: 9.2s; animation-delay: 2.0s; }
-  // 极小点缀粒子（9-12）
-  .particle:nth-child(9)  { left: 14%; width: 3px; height: 4px; animation-duration: 9.4s; animation-delay: 1.0s; }
-  .particle:nth-child(10) { left: 40%; width: 4px; height: 4px; animation-duration: 8.2s; animation-delay: 3.6s; }
-  .particle:nth-child(11) { left: 65%; width: 3px; height: 4px; animation-duration: 9.6s; animation-delay: 2.2s; }
-  .particle:nth-child(12) { left: 88%; width: 4px; height: 4px; animation-duration: 8.8s; animation-delay: 5.0s; }
-  .particle:nth-child(9),
-  .particle:nth-child(10),
-  .particle:nth-child(11),
-  .particle:nth-child(12) {
-    background: linear-gradient(135deg, #FFB266 0%, #FF7A1F 100%);
-    box-shadow: 0 0 3px rgba(255, 138, 40, 0.25);
-    animation-name: autumn-fall-faint;
-  }
-}
-
-@keyframes autumn-fall-faint {
-  0%   { transform: translate3d(0, 0, 0)         rotate(0deg);    opacity: 0; }
-  12%  { opacity: 0.28; }
-  50%  { transform: translate3d(10px, 50vh, 0)   rotate(220deg);  opacity: 0.22; }
-  90%  { opacity: 0.2; }
-  100% { transform: translate3d(-12px, 110vh, 0) rotate(440deg);  opacity: 0; }
-}
-
-@keyframes autumn-fall {
-  0%   { transform: translate3d(0, 0, 0)         rotate(0deg);    opacity: 0; }
-  10%  { opacity: 0.85; }
-  25%  { transform: translate3d(-22px, 25vh, 0)  rotate(120deg); }
-  50%  { transform: translate3d(18px, 50vh, 0)   rotate(240deg); }
-  75%  { transform: translate3d(-14px, 75vh, 0)  rotate(360deg); }
-  92%  { opacity: 0.6; }
-  100% { transform: translate3d(22px, 110vh, 0)  rotate(540deg);  opacity: 0; }
-}
-
-// --- 冬：雪点飘落 ---
-.particles-winter {
-  .particle {
-    border-radius: 50%;
-    background: radial-gradient(circle, #ffffff 0%, rgba(210, 230, 255, 0.4) 60%, rgba(160, 200, 240, 0) 100%);
-    box-shadow: 0 0 8px rgba(220, 235, 255, 0.55);
-    top: -24px;
-    opacity: 0;
-    animation: winter-snow 8s linear infinite;
-  }
-  .particle:nth-child(1) { left: 7%;  width: 5px; height: 5px; animation-duration: 8s;   animation-delay: 0s; }
-  .particle:nth-child(2) { left: 19%; width: 8px; height: 8px; animation-duration: 7s;   animation-delay: 2.6s; }
-  .particle:nth-child(3) { left: 31%; width: 4px; height: 4px; animation-duration: 9s;   animation-delay: 4.2s; }
-  .particle:nth-child(4) { left: 44%; width: 7px; height: 7px; animation-duration: 7.5s; animation-delay: 1.4s; }
-  .particle:nth-child(5) { left: 57%; width: 5px; height: 5px; animation-duration: 8.6s; animation-delay: 3.6s; }
-  .particle:nth-child(6) { left: 71%; width: 9px; height: 9px; animation-duration: 7.2s; animation-delay: 5.4s; }
-  .particle:nth-child(7) { left: 84%; width: 4px; height: 4px; animation-duration: 8.8s; animation-delay: 0.7s; }
-  .particle:nth-child(8) { left: 93%; width: 6px; height: 6px; animation-duration: 7.8s; animation-delay: 2.2s; }
-  // 极小点缀粒子（9-12）
-  .particle:nth-child(9)  { left: 13%; width: 3px; height: 3px; animation-duration: 8.4s; animation-delay: 1.8s; }
-  .particle:nth-child(10) { left: 38%; width: 4px; height: 4px; animation-duration: 7.6s; animation-delay: 4.6s; }
-  .particle:nth-child(11) { left: 64%; width: 3px; height: 3px; animation-duration: 8.2s; animation-delay: 2.2s; }
-  .particle:nth-child(12) { left: 88%; width: 4px; height: 4px; animation-duration: 7.4s; animation-delay: 5.0s; }
-  .particle:nth-child(9),
-  .particle:nth-child(10),
-  .particle:nth-child(11),
-  .particle:nth-child(12) {
-    box-shadow: 0 0 4px rgba(220, 235, 255, 0.3);
-    animation-name: winter-snow-faint;
-  }
-}
-
-@keyframes winter-snow-faint {
-  0%   { transform: translate3d(0, 0, 0);          opacity: 0; }
-  15%  { opacity: 0.28; }
-  50%  { transform: translate3d(12px, 50vh, 0);    opacity: 0.22; }
-  100% { transform: translate3d(-10px, 110vh, 0);  opacity: 0; }
-}
-
-@keyframes winter-snow {
-  0%   { transform: translate3d(0, 0, 0);          opacity: 0; }
-  10%  { opacity: 0.85; }
-  50%  { transform: translate3d(20px, 50vh, 0);    opacity: 0.7; }
-  100% { transform: translate3d(-18px, 110vh, 0);  opacity: 0; }
 }
 
 .brand-footer {
@@ -921,79 +586,6 @@ async function handleDingtalkLogin() {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 1.5px;
-}
-
-// ======================================================
-// 抽象几何装饰图形（左栏中下部，增加层次与科技感）
-// ======================================================
-.brand-decoration {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 60%;
-  bottom: 15%;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-
-  .deco-ring {
-    position: absolute;
-    border-radius: 50%;
-    border-style: solid;
-    background: transparent;
-  }
-
-  .deco-ring-1 {
-    width: 120px;
-    height: 120px;
-    border-width: 2px;
-    border-color: var(--season-glow-primary, rgba(255, 103, 0, 0.18));
-    opacity: 0.18;
-    left: 8%;
-    top: 18%;
-  }
-
-  .deco-ring-2 {
-    width: 80px;
-    height: 80px;
-    border-width: 2px;
-    border-color: var(--season-glow-primary, rgba(255, 103, 0, 0.18));
-    opacity: 0.14;
-    left: 22%;
-    top: 50%;
-  }
-
-  .deco-ring-3 {
-    width: 56px;
-    height: 56px;
-    border-width: 1px;
-    border-color: var(--season-glow-primary, rgba(255, 103, 0, 0.18));
-    opacity: 0.22;
-    left: 14%;
-    top: 8%;
-  }
-
-  .deco-line {
-    position: absolute;
-    width: 1px;
-    background: var(--season-glow-primary, rgba(255, 103, 0, 0.18));
-  }
-
-  .deco-line-1 {
-    height: 80px;
-    left: 38%;
-    top: 20%;
-    transform: rotate(35deg);
-    opacity: 0.16;
-  }
-
-  .deco-line-2 {
-    height: 64px;
-    left: 18%;
-    top: 70%;
-    transform: rotate(-42deg);
-    opacity: 0.14;
-  }
 }
 
 // ======================================================
@@ -1014,8 +606,7 @@ async function handleDingtalkLogin() {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #FF6700, #FF9A44);
-    border-radius: 0;
+    background: var(--color-primary, #E85E00);
     z-index: 2;
   }
 }
@@ -1088,14 +679,14 @@ async function handleDingtalkLogin() {
 
   :deep(.ant-input-affix-wrapper) {
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid #d9d9d9;
-    border-radius: 6px;
+    border: 1px solid var(--border, #E6E8EB);
+    border-radius: var(--radius-md, 6px);
   }
 
   :deep(.ant-input-affix-wrapper:focus),
   :deep(.ant-input-affix-wrapper.ant-input-affix-wrapper-focused) {
-    border-color: #FF6700;
-    box-shadow: 0 0 0 2px rgba(255, 103, 0, 0.1);
+    border-color: var(--color-primary, #E85E00);
+    box-shadow: 0 0 0 2px var(--color-primary-border, rgba(232, 94, 0, 0.30));
   }
 
   .remember-row {
@@ -1116,7 +707,7 @@ async function handleDingtalkLogin() {
       transition: color 0.2s ease;
 
       &:hover {
-        color: #FF6700;
+        color: var(--color-primary, #E85E00);
       }
     }
   }
@@ -1124,9 +715,9 @@ async function handleDingtalkLogin() {
 
 // 焦点指示器优化
 .login-form :deep(*:focus-visible) {
-  outline: 2px solid rgba(255, 103, 0, 0.5);
+  outline: 2px solid var(--color-primary, #E85E00);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
 }
 
 .login-btn {
@@ -1134,15 +725,14 @@ async function handleDingtalkLogin() {
   height: 40px;
   font-size: 15px;
   font-weight: 600;
-  background: linear-gradient(135deg, #FF6700, #FF8533);
+  background: var(--color-primary, #E85E00);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg, 8px);
   letter-spacing: 2px;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 103, 0, 0.3);
+    background: var(--color-primary-hover, #FF6700);
   }
 }
 
@@ -1188,7 +778,7 @@ async function handleDingtalkLogin() {
   z-index: 3;
 
   :deep(.ant-spin-dot-item) {
-    background-color: $color-primary;
+    background-color: var(--color-primary, #E85E00);
   }
 }
 
@@ -1209,31 +799,9 @@ async function handleDingtalkLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1A1B23;
+  background: var(--topbar-ink, #1F2430);
   z-index: 9999;
   overflow: hidden;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 103, 0, 0.05);
-  }
-
-  &::before {
-    width: 600px;
-    height: 600px;
-    top: -200px;
-    right: -100px;
-  }
-
-  &::after {
-    width: 400px;
-    height: 400px;
-    bottom: -150px;
-    left: -100px;
-  }
 }
 
 .login-transition-content {
@@ -1276,24 +844,13 @@ async function handleDingtalkLogin() {
   position: relative;
   background: conic-gradient(
     from 0deg,
-    rgba(255, 103, 0, 0.04) 0deg,
-    rgba(255, 103, 0, 0.3) 150deg,
-    rgba(255, 154, 68, 0.9) 315deg,
-    rgba(255, 103, 0, 0.04) 360deg
+    transparent 0deg,
+    var(--color-primary, #E85E00) 315deg,
+    transparent 360deg
   );
   animation: ring-spin 1s linear infinite;
-  box-shadow: 0 0 24px rgba(255, 103, 0, 0.18);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 12px;
-    border-radius: 50%;
-    background: rgba(255, 103, 0, 0.08);
-    filter: blur(8px);
-  }
 }
 
 .transition-step-text {
@@ -1345,29 +902,28 @@ async function handleDingtalkLogin() {
 }
 
 .transition-stage-item.done .transition-stage-dot {
-  border-color: rgba(53, 182, 90, 0.7);
-  background: rgba(53, 182, 90, 0.16);
+  border-color: var(--color-success, #2BA471);
+  background: var(--color-success-light, #E7F5EF);
 
   &::after {
     content: '';
     position: absolute;
     inset: 4px;
     border-radius: 50%;
-    background: #35b65a;
+    background: var(--color-success, #2BA471);
   }
 }
 
 .transition-stage-item.active .transition-stage-dot {
-  border-color: #FF8533;
-  background: rgba(255, 103, 0, 0.16);
-  box-shadow: 0 0 16px rgba(255, 103, 0, 0.35);
+  border-color: var(--color-primary, #E85E00);
+  background: var(--color-primary-light, #FFF3EA);
 
   &::after {
     content: '';
     position: absolute;
     inset: 4px;
     border-radius: 50%;
-    background: #FF8533;
+    background: var(--color-primary, #E85E00);
   }
 }
 
@@ -1385,12 +941,12 @@ async function handleDingtalkLogin() {
     transition: all 0.3s ease;
 
     &.active {
-      background: #FF6700;
+      background: var(--color-primary, #E85E00);
       transform: scale(1.3);
     }
 
     &.done {
-      background: #FF6700;
+      background: var(--color-primary, #E85E00);
       opacity: 0.5;
     }
   }
@@ -1399,9 +955,12 @@ async function handleDingtalkLogin() {
 // ======================================================
 // 过渡动画
 // ======================================================
-.screen-fade-enter-active,
-.screen-fade-leave-active {
+.screen-fade-enter-active {
   transition: opacity 0.35s ease;
+}
+
+.screen-fade-leave-active {
+  transition: opacity 0.6s ease;
 }
 
 .screen-fade-enter-from,
@@ -1461,15 +1020,16 @@ async function handleDingtalkLogin() {
 }
 
 .login-form-panel .login-btn.ant-btn-primary {
-  background: linear-gradient(135deg, #FF6700, #FF8533) !important;
+  background: var(--color-primary, #E85E00) !important;
   border: none;
-  box-shadow: 0 4px 12px rgba(255, 103, 0, 0.3);
 
   &:hover,
   &:focus {
-    background: linear-gradient(135deg, #FF8533, #FF9A44) !important;
-    box-shadow: 0 6px 16px rgba(255, 103, 0, 0.4);
-    transform: translateY(-1px);
+    background: var(--color-primary-hover, #FF6700) !important;
+  }
+
+  &:active {
+    background: var(--color-primary-active, #C94E00) !important;
   }
 }
 </style>

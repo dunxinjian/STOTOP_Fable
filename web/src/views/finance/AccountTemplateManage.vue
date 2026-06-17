@@ -570,12 +570,12 @@ onMounted(() => {
   margin-bottom: 4px;
 
   &:hover {
-    background: rgba(22, 119, 255, 0.04);
+    background: var(--color-primary-light);
   }
 
   &.active {
-    background: rgba(22, 119, 255, 0.08);
-    border-left: 3px solid #1677FF;
+    background: var(--color-primary-light);
+    border-left: 3px solid var(--color-primary);
   }
 }
 
@@ -632,7 +632,7 @@ onMounted(() => {
 
   &:hover {
     background: rgba(255, 77, 79, 0.08);
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 
@@ -694,7 +694,7 @@ onMounted(() => {
     transition: all 0.15s;
 
     &:hover {
-      background: rgba(22, 119, 255, 0.04);
+      background: var(--color-primary-light);
 
       .row-actions {
         opacity: 1;
@@ -733,8 +733,8 @@ onMounted(() => {
     transition: all 0.15s;
 
     &:hover {
-      color: #1677FF;
-      background: rgba(22, 119, 255, 0.08);
+      color: var(--color-primary);
+      background: var(--color-primary-light);
     }
   }
 
@@ -765,13 +765,13 @@ onMounted(() => {
     transition: all 0.15s;
 
     &:hover {
-      background: rgba(22, 119, 255, 0.08);
-      color: #1677FF;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
     }
 
     &.danger:hover {
-      background: rgba(255, 77, 79, 0.08);
-      color: #ff4d4f;
+      background: var(--color-danger-light);
+      color: var(--color-danger);
     }
   }
 }

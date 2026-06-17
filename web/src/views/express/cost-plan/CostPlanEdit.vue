@@ -544,7 +544,7 @@ onMounted(() => {
 }
 
 .count-badge {
-  color: #1677ff;
+  color: var(--color-info);
   font-weight: 500;
 }
 
@@ -560,12 +560,12 @@ onMounted(() => {
 
 // Tab 指示条橙色
 :deep(.ant-tabs-ink-bar) {
-  background: #FF6700;
+  background: var(--color-primary);
 }
 
 // Tab 选中文字橙色
 :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-  color: #FF6700 !important;
+  color: var(--color-primary) !important;
 }
 
 .exclusion-item-row {

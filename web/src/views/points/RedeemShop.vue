@@ -6,22 +6,22 @@
     <a-card :bordered="false" class="points-overview">
       <a-row :gutter="24">
         <a-col :span="6">
-          <a-statistic title="可用积分" :value="account.availablePoints" :value-style="{ color: '#1890ff', fontWeight: 700, fontSize: '28px' }">
+          <a-statistic title="可用积分" :value="account.availablePoints" :value-style="{ color: 'var(--color-info)', fontWeight: 700, fontSize: '28px' }">
             <template #prefix><WalletOutlined /></template>
           </a-statistic>
         </a-col>
         <a-col :span="6">
-          <a-statistic title="累计获得" :value="account.totalPoints" :value-style="{ color: '#52c41a' }">
+          <a-statistic title="累计获得" :value="account.totalPoints" :value-style="{ color: 'var(--color-success)' }">
             <template #prefix><RiseOutlined /></template>
           </a-statistic>
         </a-col>
         <a-col :span="6">
-          <a-statistic title="已使用" :value="account.usedPoints" :value-style="{ color: '#faad14' }">
+          <a-statistic title="已使用" :value="account.usedPoints" :value-style="{ color: 'var(--color-warning)' }">
             <template #prefix><ShoppingOutlined /></template>
           </a-statistic>
         </a-col>
         <a-col :span="6">
-          <a-statistic title="本月获得" :value="account.monthlyAward" :value-style="{ color: '#722ed1' }">
+          <a-statistic title="本月获得" :value="account.monthlyAward" :value-style="{ color: 'var(--color-info)' }">
             <template #prefix><TrophyOutlined /></template>
           </a-statistic>
         </a-col>
@@ -44,7 +44,7 @@
 
         <!-- 商品网格 -->
         <a-spin :spinning="loadingItems">
-          <a-empty v-if="!loadingItems && items.length === 0" description="暂无商品" />
+          <EmptyState v-if="!loadingItems && items.length === 0" title="暂无商品" />
           <a-row v-else :gutter="[16, 16]" class="shop-grid">
             <a-col v-for="item in items" :key="item.id" :xs="24" :sm="12" :md="8" :lg="6">
               <RedeemCard :item="item" :my-points="account.availablePoints" @exchange="openExchangeConfirm" />
@@ -316,7 +316,7 @@ watch(activeTab, (val) => {
 .points-overview {
   margin-bottom: 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+  background: linear-gradient(135deg, #f0f5ff 0%, var(--color-info-light) 100%);
 }
 
 .category-filter {
@@ -341,12 +341,12 @@ watch(activeTab, (val) => {
   .exchange-points {
     font-size: 20px;
     font-weight: 700;
-    color: #f5222d;
+    color: var(--color-danger);
   }
   .exchange-remaining {
     font-size: 16px;
     font-weight: 600;
-    color: #1890ff;
+    color: var(--color-info);
   }
 }
 </style>

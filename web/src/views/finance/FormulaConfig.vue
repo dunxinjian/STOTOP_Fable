@@ -545,12 +545,12 @@ onMounted(() => {
   color: #909399;
 
   &:hover {
-    color: #1890ff;
+    color: var(--color-primary);
   }
 }
 
 .link-text {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
 }
@@ -560,7 +560,7 @@ onMounted(() => {
 }
 
 .danger-link {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .formula-text {

@@ -91,9 +91,9 @@ async function handleAdd(emoji: string) {
   }
 
   &--active {
-    background: #e6f7ff;
-    border-color: #91d5ff;
-    color: #1890ff;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-border);
+    color: var(--color-primary);
   }
 }
 

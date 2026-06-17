@@ -42,7 +42,7 @@ const features = [
   flex-direction: column;
   height: 100%;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 .placeholder-content {
   flex: 1;
@@ -91,7 +91,7 @@ const features = [
 }
 .feature-icon {
   font-size: 28px;
-  color: #1890ff;
+  color: var(--color-info);
   margin-bottom: 12px;
 }
 .feature-card h4 {

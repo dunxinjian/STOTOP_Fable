@@ -37,8 +37,8 @@ function renderChart() {
     series: [
       { name: '收入', type: 'line', data: props.data.map(d => d.revenue), smooth: true, itemStyle: { color: '#1890ff' }, lineStyle: { width: 2 } },
       { name: '成本', type: 'line', data: props.data.map(d => d.cost), smooth: true, itemStyle: { color: '#f5222d' }, lineStyle: { width: 2 } },
-      { name: '费用', type: 'line', data: props.data.map(d => d.expense), smooth: true, itemStyle: { color: '#fa8c16' }, lineStyle: { width: 2 } },
-      { name: '利润', type: 'line', data: props.data.map(d => d.profit), smooth: true, itemStyle: { color: '#52c41a' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(82,196,26,0.25)' }, { offset: 1, color: 'rgba(82,196,26,0.02)' }] } } }
+      { name: '费用', type: 'line', data: props.data.map(d => d.expense), smooth: true, itemStyle: { color: '#E6A700' }, lineStyle: { width: 2 } },
+      { name: '利润', type: 'line', data: props.data.map(d => d.profit), smooth: true, itemStyle: { color: '#2BA471' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(43,164,113,0.25)' }, { offset: 1, color: 'rgba(43,164,113,0.02)' }] } } }
     ]
   })
 }

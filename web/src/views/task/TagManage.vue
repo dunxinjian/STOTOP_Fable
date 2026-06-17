@@ -34,7 +34,7 @@
           </div>
         </div>
       </div>
-      <a-empty v-else description="暂无标签" />
+      <EmptyState v-else title="暂无标签" />
     </a-spin>
 
     <!-- 新建/编辑弹窗 -->

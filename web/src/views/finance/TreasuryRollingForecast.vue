@@ -398,7 +398,7 @@ function weekStart(value: string) {
 
 .metric-cell strong.danger,
 .money.danger {
-  color: #cf1322;
+  color: var(--color-danger-text);
 }
 
 .money {
@@ -406,11 +406,11 @@ function weekStart(value: string) {
 }
 
 .money.income {
-  color: #237804;
+  color: var(--color-success-text);
 }
 
 .money.outcome {
-  color: #ad6800;
+  color: var(--color-warning-text);
 }
 
 .plan-card {

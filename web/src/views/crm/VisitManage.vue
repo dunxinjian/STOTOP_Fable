@@ -427,7 +427,7 @@ onMounted(() => {
 }
 
 .overdue-text {
-  color: #ff4d4f;
+  color: var(--color-danger);
   font-weight: 600;
 }
 </style>

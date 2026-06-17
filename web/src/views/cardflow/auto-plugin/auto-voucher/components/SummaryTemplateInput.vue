@@ -124,8 +124,8 @@ const previewText = computed(() => {
 .field-tag {
   cursor: pointer;
   &:hover {
-    color: #1890ff;
-    border-color: #1890ff;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
   }
 }
 
@@ -134,14 +134,14 @@ const previewText = computed(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 10px;
-  background: #f6ffed;
+  background: var(--color-success-light);
   border: 1px solid #b7eb8f;
   border-radius: 4px;
   font-size: 12px;
 }
 
 .preview-label {
-  color: #52c41a;
+  color: var(--color-success-text);
   font-weight: 500;
   white-space: nowrap;
 }

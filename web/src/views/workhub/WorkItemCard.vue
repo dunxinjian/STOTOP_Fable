@@ -22,7 +22,7 @@
     <div class="priority-bar" :style="{ background: priorityColor }"></div>
 
     <!-- 来源图标区域 -->
-    <div class="source-icon-wrap" :style="{ background: sourceColor + '15' }">
+    <div class="source-icon-wrap" :style="{ background: `color-mix(in srgb, ${sourceColor} 9%, transparent)` }">
       <component :is="sourceIcon" class="source-icon" :style="{ color: sourceColor }" />
     </div>
 
@@ -30,7 +30,7 @@
     <div class="card-content" @click="handleCardClick">
       <!-- 标题行：来源标签 + 标题 + 时间 -->
       <div class="card-header">
-        <span class="source-tag" :style="{ background: sourceColor + '18', color: sourceColor }">
+        <span class="source-tag" :style="{ background: `color-mix(in srgb, ${sourceColor} 12%, transparent)`, color: sourceColor }">
           {{ sourceLabel }}
         </span>
         <a-tag
@@ -44,7 +44,7 @@
 
       <!-- 关联链接行 - 仅 relatedLinks 非空时渲染 -->
       <div class="related-links-row" v-if="item.relatedLinks && item.relatedLinks.length > 0">
-        <template v-for="(link, idx) in item.relatedLinks" :key="link.route">
+        <template v-for="(link, idx) in visibleLinks" :key="link.route">
           <a-popover
             v-if="link.summary"
             placement="top"
@@ -73,8 +73,9 @@
             <component :is="getIconComponent(link.icon)" class="link-icon" />
             {{ link.label }}
           </span>
-          <span v-if="idx < item.relatedLinks!.length - 1" class="link-separator">·</span>
+          <span v-if="idx < visibleLinks.length - 1" class="link-separator">·</span>
         </template>
+        <span v-if="hiddenLinkCount > 0" class="related-link link-more">+{{ hiddenLinkCount }}</span>
       </div>
 
       <!-- ===== OA 审批增强渲染 ===== -->
@@ -152,7 +153,7 @@
           <div class="di-stats">
             <a-progress
               :percent="diSuccessPercent"
-              :stroke-color="'#52c41a'"
+              :stroke-color="'var(--color-success)'"
               size="small"
               :format="() => `${meta.successRows ?? 0}/${meta.totalRows ?? 0}`"
             />
@@ -399,33 +400,33 @@ const router = useRouter()
 type SourceEntry = { label: string; color: string; icon: ReturnType<typeof h> }
 
 const sourceConfig: Record<WorkItem['source'], { label: string; color: string; icon: any }> = {
-  oa: { label: 'OA审批', color: '#1677ff', icon: AuditOutlined },
-  quality: { label: '质量异常', color: '#fa541c', icon: WarningOutlined },
-  task: { label: '任务', color: '#52c41a', icon: CheckSquareOutlined },
-  datacenter: { label: 'CardFlow', color: '#722ed1', icon: ImportOutlined },
-  cardflow: { label: 'CardFlow审批', color: '#1677ff', icon: AuditOutlined },
-  contract: { label: '合同', color: '#7B5B3A', icon: FileTextOutlined },
-  points: { label: '积分', color: '#d4b106', icon: TrophyOutlined },
-  finance: { label: '财务', color: '#faad14', icon: DollarOutlined },
-  system: { label: '系统', color: '#595959', icon: SettingOutlined },
-  workflow: { label: '工作流', color: '#13c2c2', icon: CheckSquareOutlined },
+  oa: { label: 'OA审批', color: 'var(--biz-approval)', icon: AuditOutlined },
+  quality: { label: '质量异常', color: 'var(--biz-quality)', icon: WarningOutlined },
+  task: { label: '任务', color: 'var(--color-success)', icon: CheckSquareOutlined },
+  datacenter: { label: '运单', color: 'var(--biz-waybill)', icon: ImportOutlined },
+  cardflow: { label: 'CardFlow审批', color: 'var(--biz-approval)', icon: AuditOutlined },
+  contract: { label: '合同', color: 'var(--biz-contract)', icon: FileTextOutlined },
+  points: { label: '积分', color: 'var(--biz-points)', icon: TrophyOutlined },
+  finance: { label: '财务', color: 'var(--biz-finance)', icon: DollarOutlined },
+  system: { label: '系统', color: 'var(--text-3)', icon: SettingOutlined },
+  workflow: { label: '工作流', color: 'var(--color-success)', icon: CheckSquareOutlined },
 }
 
 const sourceLabel = computed(() => sourceConfig[props.item.source]?.label ?? props.item.source)
-const sourceColor = computed(() => sourceConfig[props.item.source]?.color ?? '#595959')
+const sourceColor = computed(() => sourceConfig[props.item.source]?.color ?? 'var(--text-3)')
 const sourceIcon = computed(() => sourceConfig[props.item.source]?.icon ?? SettingOutlined)
 
 // ===== 优先级配置 =====
 const priorityConfig = {
-  urgent: { label: '紧急', color: '#ff4d4f', tagColor: 'error' },
-  high: { label: '高', color: '#fa8c16', tagColor: 'warning' },
-  normal: { label: '普通', color: '#1890ff', tagColor: 'processing' },
-  low: { label: '低', color: '#8c8c8c', tagColor: 'default' },
+  urgent: { label: '紧急', color: 'var(--color-danger)', tagColor: 'error' },
+  high: { label: '高', color: 'var(--color-warning)', tagColor: 'warning' },
+  normal: { label: '普通', color: 'var(--color-primary)', tagColor: 'processing' },
+  low: { label: '低', color: 'var(--text-3)', tagColor: 'default' },
 } as const
 
 type PriorityKey = keyof typeof priorityConfig
 
-const priorityColor = computed(() => priorityConfig[props.item.priority as PriorityKey]?.color ?? '#8c8c8c')
+const priorityColor = computed(() => priorityConfig[props.item.priority as PriorityKey]?.color ?? 'var(--text-3)')
 const priorityLabel = computed(() => priorityConfig[props.item.priority as PriorityKey]?.label ?? String(props.item.priority))
 const priorityTagColor = computed(() => priorityConfig[props.item.priority as PriorityKey]?.tagColor ?? 'default')
 
@@ -583,6 +584,11 @@ function handleWithdraw() {
     },
   })
 }
+
+// 关联链接最多展示 3 条，超出折叠为「+N」
+const MAX_VISIBLE_LINKS = 3
+const visibleLinks = computed(() => (props.item.relatedLinks || []).slice(0, MAX_VISIBLE_LINKS))
+const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.length || 0) - MAX_VISIBLE_LINKS))
 </script>
 
 <style scoped lang="scss">
@@ -590,17 +596,21 @@ function handleWithdraw() {
 
 .work-item-card {
   background: $bg-card;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(18, 31, 53, 0.04);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   display: flex;
   overflow: hidden;
   transition: box-shadow 0.18s ease, transform 0.15s ease, background-color 0.15s ease, border-color 0.18s ease;
-  border: 1px solid rgba(18, 31, 53, 0.07);
+  border: 1px solid var(--border);
 
   &:hover {
-    border-color: rgba(255, 103, 0, 0.18);
-    box-shadow: 0 8px 18px rgba(18, 31, 53, 0.08);
+    border-color: var(--color-primary-border);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
+
+    .more-actions-btn {
+      opacity: 1;
+    }
   }
 
   &.clickable {
@@ -608,8 +618,8 @@ function handleWithdraw() {
   }
 
   &.work-item-card--multi-selected {
-    background-color: #e6f4ff;
-    border-color: #91caff;
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary-border);
   }
 }
 
@@ -646,10 +656,10 @@ function handleWithdraw() {
 // ===== 卡片内容 =====
 .card-content {
   flex: 1;
-  padding: 14px 18px 14px 14px;
+  padding: var(--space-md12) var(--space-lg16) var(--space-md12) var(--space-md12);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm8);
   min-width: 0;
 }
 
@@ -657,7 +667,7 @@ function handleWithdraw() {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-sm8);
   min-width: 0;
 }
 
@@ -684,9 +694,9 @@ function handleWithdraw() {
 
 .card-title {
   flex: 1;
-  font-size: 15px;
-  font-weight: 600;
-  color: $text-primary;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -695,14 +705,14 @@ function handleWithdraw() {
 .card-time {
   flex-shrink: 0;
   font-size: 12px;
-  color: $text-placeholder;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
 // ===== 摘要 =====
 .card-summary {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.56);
+  font-size: var(--font-sm2);
+  color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -713,14 +723,14 @@ function handleWithdraw() {
 .card-footer {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: var(--space-sm8);
+  margin-top: var(--space-xs4);
 }
 
 .card-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm8);
   flex: 1;
   min-width: 0;
 }
@@ -730,11 +740,11 @@ function handleWithdraw() {
   align-items: center;
   gap: 3px;
   font-size: 12px;
-  color: $text-secondary;
+  color: var(--text-3);
   white-space: nowrap;
 
   &.overdue {
-    color: #ff4d4f;
+    color: var(--color-danger);
     font-weight: 500;
   }
 }
@@ -753,26 +763,32 @@ function handleWithdraw() {
     height: 28px;
     font-size: 12px;
     padding: 0 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   :deep(.ant-btn-primary) {
-    background: #ff6700;
-    border-color: #ff6700;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
 
     &:hover,
     &:focus {
-      background: #ff8533;
-      border-color: #ff8533;
+      background: var(--color-primary-hover);
+      border-color: var(--color-primary-hover);
     }
   }
 
   .more-actions-btn {
     padding: 0 6px;
-    color: $text-secondary;
+    color: var(--text-3);
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
 
     &:hover {
-      color: $text-primary;
+      color: var(--text-1);
+    }
+
+    &:focus-visible {
+      opacity: 1;
     }
   }
 }
@@ -781,7 +797,7 @@ function handleWithdraw() {
 .process-no {
   flex-shrink: 0;
   font-size: 12px;
-  color: $text-secondary;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
@@ -836,7 +852,7 @@ function handleWithdraw() {
 
 .di-extra-icon {
   font-size: 12px;
-  color: #52c41a;
+  color: var(--color-success);
 }
 
 .di-error {
@@ -844,7 +860,7 @@ function handleWithdraw() {
   align-items: flex-start;
   gap: 6px;
   font-size: 13px;
-  color: #ff4d4f;
+  color: var(--color-danger);
   line-height: 1.5;
 }
 
@@ -902,17 +918,17 @@ function handleWithdraw() {
 }
 
 .related-link {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-sm2);
+  color: var(--text-3);
   cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: #1677ff;
+    color: var(--color-primary);
   }
 
   &.disabled {
-    color: rgba(0, 0, 0, 0.25);
+    color: var(--text-disabled);
     cursor: not-allowed;
   }
 }
@@ -924,13 +940,18 @@ function handleWithdraw() {
 
 .link-separator {
   margin: 0 6px;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--text-disabled);
+}
+
+.link-more {
+  color: var(--text-3);
+  font-weight: 500;
 }
 
 .related-link-summary {
   white-space: pre-wrap;
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-2);
   max-width: 280px;
   line-height: 1.5;
 }

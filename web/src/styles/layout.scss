@@ -21,8 +21,8 @@
   align-items: stretch;
   height: $topbar-height;
   padding: 0 12px;
-  background: $topbar-bg;
-  border-bottom: $topbar-bottom-border;
+  background: var(--topbar-ink);
+  border-bottom: 1px solid var(--topbar-border);
   flex-shrink: 0;
   z-index: 100;
   position: relative;
@@ -97,7 +97,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ff4d4f;
+  background: var(--color-danger);
   border: 1.5px solid #1E1F26; // 与顶栏背景色匹配的描边，确保可见
   box-sizing: border-box;
 }
@@ -177,7 +177,7 @@
   flex: 0 0 auto;
   width: var(--sidebar-width, #{$sidebar-width});
   height: 100%;
-  background: $sidebar-bg;
+  background: var(--sidebar-bg);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   position: relative;
@@ -229,7 +229,7 @@
 // 分区分隔线（替代文字标题）
 .section-divider {
   height: 1px;
-  background: $sidebar-divider;
+  background: var(--border);
   margin: 6px 12px;
 }
 
@@ -240,28 +240,28 @@
 
 .nav-item {
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: $font-size-base;
-  color: $sidebar-text;
+  font-size: var(--font-sm2);
+  color: var(--text-2);
   transition: background 0.15s ease, color 0.15s ease;
 
   &:hover:not(.active) {
-    background: rgba(0, 0, 0, 0.04);
-    color: $sidebar-text-hover;
+    background: var(--sidebar-item-hover);
+    color: var(--text-1);
   }
 
   &.active {
-    background: $sidebar-item-active-bg;
-    color: $sidebar-text-active;
+    background: var(--sidebar-item-active-bg);
+    color: var(--sidebar-item-active-text);
   }
 
   &:focus-visible {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: -2px;
   }
 

@@ -106,7 +106,7 @@ defineProps<{
             class="sidebar-preview-item sidebar-preview-item--active"
             :style="{ background: editConfig.sidebarActiveBgColor }"
           >
-            <div class="sidebar-preview-indicator" :style="{ background: editConfig.sidebarBgColor === '#001529' ? '#1677FF' : '#fff' }" />
+            <div class="sidebar-preview-indicator" :style="{ background: editConfig.sidebarBgColor === '#001529' ? 'var(--sidebar-item-active-text)' : '#fff' }" />
             <div class="sidebar-preview-icon" />
             <span class="sidebar-preview-text">当前页面</span>
           </div>

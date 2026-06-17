@@ -225,7 +225,7 @@
       <!-- Step 7: 提交生成 -->
       <div v-if="currentStepKey === 'commit'" class="step-panel">
         <div v-if="commitStatus === 'idle'" style="text-align: center; padding: 40px 0;">
-          <ThunderboltOutlined style="font-size: 48px; color: #1677ff;" />
+          <ThunderboltOutlined style="font-size: 48px; color: var(--color-info);" />
           <p style="margin-top: 16px; font-size: 16px;">所有配置已就绪，点击「提交」开始生成迁移数据。</p>
         </div>
         <div v-if="commitStatus === 'loading'" style="text-align: center; padding: 40px 0;">
@@ -233,7 +233,7 @@
           <p style="margin-top: 16px;">正在生成迁移凭证...</p>
         </div>
         <div v-if="commitStatus === 'success'" style="text-align: center; padding: 40px 0;">
-          <CheckCircleOutlined style="font-size: 48px; color: #52c41a;" />
+          <CheckCircleOutlined style="font-size: 48px; color: var(--color-success);" />
           <p style="margin-top: 16px; font-size: 16px;">迁移完成！</p>
           <p v-if="commitResult">共生成 {{ commitResult.voucherCount }} 张凭证，{{ commitResult.entryCount }} 条分录</p>
           <a-space style="margin-top: 24px;">
@@ -241,8 +241,8 @@
           </a-space>
         </div>
         <div v-if="commitStatus === 'error'" style="text-align: center; padding: 40px 0;">
-          <CloseCircleOutlined style="font-size: 48px; color: #ff4d4f;" />
-          <p style="margin-top: 16px; color: #ff4d4f;">{{ commitError || '提交失败，请重试' }}</p>
+          <CloseCircleOutlined style="font-size: 48px; color: var(--color-danger);" />
+          <p style="margin-top: 16px; color: var(--color-danger);">{{ commitError || '提交失败，请重试' }}</p>
           <a-button style="margin-top: 16px;" @click="commitStatus = 'idle'">重试</a-button>
         </div>
       </div>

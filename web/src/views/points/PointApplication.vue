@@ -33,7 +33,7 @@
               <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
             </template>
             <template v-if="column.dataIndex === 'pointValue'">
-              <span style="font-weight: 600; color: #1890ff">+{{ record.pointValue }}</span>
+              <span style="font-weight: 600; color: var(--color-info)">+{{ record.pointValue }}</span>
             </template>
             <template v-if="column.dataIndex === 'createTime'">
               {{ formatTime(record.createTime) }}
@@ -59,7 +59,7 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'pointValue'">
-              <span style="font-weight: 600; color: #1890ff">+{{ record.pointValue }}</span>
+              <span style="font-weight: 600; color: var(--color-info)">+{{ record.pointValue }}</span>
             </template>
             <template v-if="column.dataIndex === 'createTime'">
               {{ formatTime(record.createTime) }}

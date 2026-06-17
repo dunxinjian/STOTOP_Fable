@@ -124,7 +124,7 @@ function onContextMenu(key: string, index: number) {
 
   &.active {
     background: transparent;
-    border-bottom-color: #FF6700;
+    border-bottom-color: var(--color-primary);
 
     .nav-tab__label {
       color: #fff;

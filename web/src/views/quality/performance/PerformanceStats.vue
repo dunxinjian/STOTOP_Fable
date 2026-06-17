@@ -24,17 +24,17 @@
       <a-row :gutter="16" class="stat-row">
         <a-col :span="4">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="平均分" :value="stats.avgScore" :precision="1" :value-style="{ color: '#1890ff' }" />
+            <a-statistic title="平均分" :value="stats.avgScore" :precision="1" :value-style="{ color: 'var(--color-info)' }" />
           </a-card>
         </a-col>
         <a-col :span="4">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="最高分" :value="stats.maxScore" :precision="1" :value-style="{ color: '#52c41a' }" />
+            <a-statistic title="最高分" :value="stats.maxScore" :precision="1" :value-style="{ color: 'var(--color-success)' }" />
           </a-card>
         </a-col>
         <a-col :span="4">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="总处理数" :value="stats.totalHandled" :value-style="{ color: '#1890ff' }" />
+            <a-statistic title="总处理数" :value="stats.totalHandled" :value-style="{ color: 'var(--color-info)' }" />
           </a-card>
         </a-col>
         <a-col :span="4">
@@ -44,13 +44,13 @@
               :value="stats.overdueRate"
               suffix="%"
               :precision="1"
-              :value-style="{ color: stats.overdueRate > 20 ? '#ff4d4f' : '#52c41a' }"
+              :value-style="{ color: stats.overdueRate > 20 ? 'var(--color-danger)' : 'var(--color-success)' }"
             />
           </a-card>
         </a-col>
         <a-col :span="4">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="我的排名" :value-style="{ color: '#faad14' }">
+            <a-statistic title="我的排名" :value-style="{ color: 'var(--color-warning)' }">
               <template #default>
                 <span v-if="stats.myRank">第{{ stats.myRank }}名</span>
                 <span v-else>-</span>
@@ -60,7 +60,7 @@
         </a-col>
         <a-col :span="4">
           <a-card :bordered="false" class="stat-card">
-            <a-statistic title="参与人数" :value="stats.totalUsers" suffix="人" :value-style="{ color: '#1890ff' }" />
+            <a-statistic title="参与人数" :value="stats.totalUsers" suffix="人" :value-style="{ color: 'var(--color-info)' }" />
           </a-card>
         </a-col>
       </a-row>
@@ -70,7 +70,7 @@
         <a-col :span="24">
           <a-card title="个人绩效趋势" :bordered="false">
             <v-chart v-if="trendData.length" :option="trendOption" style="height: 360px" autoresize />
-            <a-empty v-else description="暂无趋势数据" />
+            <EmptyState v-else title="暂无趋势数据" />
           </a-card>
         </a-col>
       </a-row>
@@ -171,8 +171,8 @@ const trendOption = computed(() => ({
       type: 'line',
       data: trendData.value.map((d) => d.score),
       smooth: true,
-      itemStyle: { color: '#1890ff' },
-      areaStyle: { color: 'rgba(24,144,255,0.1)' },
+      itemStyle: { color: '#3A6FB0' },
+      areaStyle: { color: 'rgba(58,111,176,0.1)' },
     },
     {
       name: '处理数',
@@ -196,10 +196,10 @@ const rankColumns = [
 ]
 
 function scoreColor(score: number): string {
-  if (score >= 90) return '#52c41a'
-  if (score >= 70) return '#1890ff'
-  if (score >= 60) return '#faad14'
-  return '#ff4d4f'
+  if (score >= 90) return 'var(--color-success)'
+  if (score >= 70) return 'var(--color-info)'
+  if (score >= 60) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 function rankColor(rank: number): string {

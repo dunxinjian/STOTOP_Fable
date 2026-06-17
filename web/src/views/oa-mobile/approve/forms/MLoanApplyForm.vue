@@ -179,6 +179,6 @@ defineExpose({
 .amount-highlight .amount {
   font-size: 20px;
   font-weight: bold;
-  color: #ee0a24;
+  color: var(--color-danger);
 }
 </style>

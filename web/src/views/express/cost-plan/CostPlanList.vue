@@ -280,7 +280,7 @@ onMounted(() => {
 @use '@/styles/variables.scss' as *;
 
 .plan-name-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;

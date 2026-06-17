@@ -45,7 +45,7 @@
                   {{ getClientTypeLabel(group.clientType) }}
                 </a-tag>
                 <span class="panel-client-name">{{ group.clientName }}</span>
-                <a-badge :count="group.quotations.length" :number-style="{ backgroundColor: '#1677ff' }" />
+                <a-badge :count="group.quotations.length" :number-style="{ backgroundColor: 'var(--color-info)' }" />
               </div>
             </template>
             <a-table
@@ -243,7 +243,7 @@ async function fetchGroups(shopName: string) {
 }
 
 .plan-name-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;

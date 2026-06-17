@@ -97,9 +97,9 @@ const statusClass = computed(() => {
 const statusBarColor = computed(() => {
   const gs = props.room.guests.length
   const max = props.room.maxGuests
-  if (gs === 0) return '#52c41a'       // 空闲绿
-  if (gs >= max) return '#1677ff'       // 已满蓝
-  if (gs > 0 && gs < max) return '#faad14' // 部分黄
+  if (gs === 0) return 'var(--color-success)'       // 空闲绿
+  if (gs >= max) return 'var(--color-info)'       // 已满（信息）
+  if (gs > 0 && gs < max) return 'var(--color-warning)' // 部分（警告）
   return '#d9d9d9'                      // 已退灰
 })
 
@@ -146,7 +146,7 @@ function handleDrop(event: DragEvent) {
 
   &--draggable {
     &[dragover] {
-      border: 2px dashed #1677ff;
+      border: 2px dashed var(--color-primary);
     }
   }
 

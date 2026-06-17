@@ -604,7 +604,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 }
 
 .cf-runtime-rating span {
-  color: #d48806;
+  color: var(--color-warning);
   letter-spacing: 0;
 }
 
@@ -614,7 +614,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   margin-right: 3px;
 
   &.is-active {
-    color: #d48806;
+    color: var(--color-warning);
   }
 }
 

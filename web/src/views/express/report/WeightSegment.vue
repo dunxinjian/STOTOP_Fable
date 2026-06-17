@@ -179,7 +179,7 @@ function renderTrendChart() {
     xAxis: { type: 'category', data: trendData.value.map(d => d.date?.slice(0, 10)), axisLabel: { color: '#666' } },
     yAxis: { type: 'value', name: '均重(kg)', axisLabel: { color: '#999' }, splitLine: { lineStyle: { type: 'dashed' } } },
     series: [
-      { name: '均重', type: 'line', data: trendData.value.map(d => d.avgWeight), smooth: true, itemStyle: { color: '#1890ff' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(24,144,255,0.25)' }, { offset: 1, color: 'rgba(24,144,255,0.02)' }] } } },
+      { name: '均重', type: 'line', data: trendData.value.map(d => d.avgWeight), smooth: true, itemStyle: { color: '#3A6FB0' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(58,111,176,0.25)' }, { offset: 1, color: 'rgba(58,111,176,0.02)' }] } } },
     ],
   }, true)
 }

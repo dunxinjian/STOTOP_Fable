@@ -74,12 +74,12 @@ onMounted(() => {
 }
 
 .old-value {
-  color: #ff4d4f;
+  color: var(--color-danger);
   text-decoration: line-through;
 }
 
 .new-value {
-  color: #52c41a;
+  color: var(--color-success);
   font-weight: 500;
 }
 </style>

@@ -51,7 +51,7 @@
                 </a-menu-item>
                 <a-menu-divider />
                 <a-menu-item key="add">
-                  <span style="color: #409eff;">+ 新增</span>
+                  <span style="color: var(--color-primary);">+ 新增</span>
                 </a-menu-item>
               </a-menu>
             </template>
@@ -1491,13 +1491,13 @@ onMounted(() => {
     font-size: 14px;
 
     &:hover {
-      color: #e6a23c;
+      color: var(--color-warning);
     }
   }
 
   :deep(.ant-radio-button-wrapper-checked) {
-    background-color: #e6a23c !important;
-    border-color: #e6a23c !important;
+    background-color: var(--color-warning) !important;
+    border-color: var(--color-warning) !important;
     color: #fff !important;
 
     &:hover {
@@ -1506,7 +1506,7 @@ onMounted(() => {
     }
 
     &::before {
-      background-color: #e6a23c !important;
+      background-color: var(--color-warning) !important;
     }
   }
 }
@@ -1576,8 +1576,8 @@ onMounted(() => {
   text-underline-offset: 2px;
 
   &:hover {
-    color: #e6a23c;
-    text-decoration-color: #e6a23c;
+    color: var(--color-warning);
+    text-decoration-color: var(--color-warning);
   }
 }
 
@@ -1636,7 +1636,7 @@ onMounted(() => {
     cursor: pointer;
 
     &:hover {
-      color: #409eff;
+      color: var(--color-primary);
     }
   }
 }
@@ -1662,7 +1662,7 @@ onMounted(() => {
       width: 3px;
       min-height: 16px;
       margin-top: 2px;
-      background-color: #409eff;
+      background-color: var(--color-info);
       border-radius: 2px;
       align-self: stretch;
     }
@@ -1753,7 +1753,7 @@ onMounted(() => {
     margin-bottom: $spacing-md;
 
     &:hover {
-      color: #409eff;
+      color: var(--color-primary);
     }
   }
 
@@ -1813,8 +1813,8 @@ onMounted(() => {
     display: flex;
     align-items: flex-start;
     background-color: #eef4ff;
-    border-left: 3px solid #409eff;
-    color: #409eff;
+    border-left: 3px solid var(--color-info);
+    color: var(--color-info);
     font-size: 13px;
     line-height: 1.6;
     padding: 6px 12px;
@@ -1837,12 +1837,12 @@ onMounted(() => {
 
 // 橙色 switch
 :deep(.ant-switch-checked) {
-  background-color: #e6a23c !important;
+  background-color: var(--color-warning) !important;
 }
 
 // 选中行高亮
 :deep(.ant-table-row.current-row > td) {
-  background-color: #fdf6ec !important;
+  background-color: var(--color-warning-light) !important;
 }
 
 // 表格行高
@@ -1918,7 +1918,7 @@ onMounted(() => {
 // 提示信息（对话框内用）
 .info-tip {
   background-color: #f4f7fe;
-  border-left: 3px solid #409eff;
+  border-left: 3px solid var(--color-info);
   padding: $spacing-md;
   margin-bottom: $spacing-md;
   font-size: 13px;

@@ -622,14 +622,14 @@ async function loadChartData() {
 
     &.active {
       color: #fff;
-      background: #1890ff;
+      background: var(--color-primary);
     }
   }
 }
 
 .rule-link {
   margin-left: 16px;
-  color: #1890ff;
+  color: var(--color-primary);
   font-size: 14px;
   cursor: pointer;
   text-decoration: none;
@@ -664,7 +664,7 @@ async function loadChartData() {
   }
 
   .negative-value {
-    color: #f56c6c;
+    color: var(--color-danger);
   }
 
   :deep(.highlight-row) {
@@ -714,13 +714,13 @@ async function loadChartData() {
         gap: 12px;
         margin-bottom: 12px;
         padding-left: 8px;
-        border-left: 3px solid #1890ff;
+        border-left: 3px solid var(--color-info);
 
         .rule-number {
           flex-shrink: 0;
           width: 20px;
           height: 20px;
-          background: #1890ff;
+          background: var(--color-info);
           color: #fff;
           border-radius: 50%;
           display: flex;
@@ -775,7 +775,7 @@ async function loadChartData() {
 }
 
 .drill-link {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
 

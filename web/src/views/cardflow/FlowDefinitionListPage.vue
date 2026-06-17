@@ -54,8 +54,8 @@ interface StatusMeta {
 
 const STATUS_META: Record<FlowStatus, StatusMeta> = {
   draft: { text: '草稿', color: '#8c8c8c' },
-  published: { text: '已发布', color: '#52c41a' },
-  disabled: { text: '已停用', color: '#faad14' },
+  published: { text: '已发布', color: 'var(--color-success)' },
+  disabled: { text: '已停用', color: 'var(--color-warning)' },
   archived: { text: '已归档', color: '#bfbfbf' },
 }
 
@@ -772,7 +772,7 @@ onMounted(async () => {
 
     &:hover {
       background: #f0f0f0;
-      color: #1677ff;
+      color: var(--color-primary);
     }
 
     &:disabled {
@@ -791,7 +791,7 @@ onMounted(async () => {
 
 // 流程名称
 .flow-name {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;

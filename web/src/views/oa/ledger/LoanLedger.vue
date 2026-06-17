@@ -69,7 +69,7 @@ onMounted(() => loadData())
         <template v-if="column.key === 'totalDeducted'">{{ formatAmount(record.totalDeducted) }}</template>
         <template v-if="column.key === 'totalRepaid'">{{ formatAmount(record.totalRepaid) }}</template>
         <template v-if="column.key === 'balance'">
-          <span :style="{ color: record.balance > 0 ? '#f5222d' : '#52c41a', fontWeight: 600 }">{{ formatAmount(record.balance) }}</span>
+          <span :style="{ color: record.balance > 0 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 600 }">{{ formatAmount(record.balance) }}</span>
         </template>
       </template>
       <template #expandedRowRender="{ record }">

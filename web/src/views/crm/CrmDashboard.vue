@@ -100,7 +100,7 @@
                     <a-list-item>
                       <a-list-item-meta>
                         <template #avatar>
-                          <a-avatar :style="{ backgroundColor: '#ff4d4f' }" size="small">
+                          <a-avatar :style="{ backgroundColor: 'var(--color-danger)' }" size="small">
                             <template #icon><ToolOutlined /></template>
                           </a-avatar>
                         </template>
@@ -123,7 +123,7 @@
                     <a-list-item>
                       <a-list-item-meta>
                         <template #avatar>
-                          <a-avatar :style="{ backgroundColor: '#1890ff' }" size="small">
+                          <a-avatar :style="{ backgroundColor: 'var(--color-info)' }" size="small">
                             <template #icon><UserOutlined /></template>
                           </a-avatar>
                         </template>
@@ -204,12 +204,12 @@ const stats = reactive({
 })
 
 const kpiList = computed(() => [
-  { key: 'total', label: '客户总数', value: stats.customerTotal, color: '#1890ff' },
-  { key: 'new', label: '本月新增', value: stats.customerMonthNew, color: '#52c41a' },
-  { key: 'visit', label: '拜访量', value: stats.visitMonthCount, color: '#13c2c2' },
-  { key: 'order', label: '待处理工单', value: stats.pendingOrderCount, color: '#fa8c16' },
-  { key: 'contract', label: '活跃合同', value: stats.activeContractCount, color: '#722ed1' },
-  { key: 'feedback', label: '反馈量', value: stats.feedbackMonthCount, color: '#ff4d4f' },
+  { key: 'total', label: '客户总数', value: stats.customerTotal, color: 'var(--color-info)' },
+  { key: 'new', label: '本月新增', value: stats.customerMonthNew, color: 'var(--color-success)' },
+  { key: 'visit', label: '拜访量', value: stats.visitMonthCount, color: 'var(--color-info)' },
+  { key: 'order', label: '待处理工单', value: stats.pendingOrderCount, color: 'var(--color-warning)' },
+  { key: 'contract', label: '活跃合同', value: stats.activeContractCount, color: 'var(--biz-contract)' },
+  { key: 'feedback', label: '反馈量', value: stats.feedbackMonthCount, color: 'var(--color-danger)' },
 ])
 
 const chartLoading = ref(false)
@@ -230,8 +230,8 @@ const profitChartOption = computed(() => ({
     { type: 'value', name: '毛利率(%)', axisLabel: { formatter: '{value}%' } },
   ],
   series: [
-    { name: '毛利', type: 'line', data: profitData.value, smooth: true, itemStyle: { color: '#1890ff' } },
-    { name: '毛利率', type: 'line', yAxisIndex: 1, data: profitRateData.value, smooth: true, itemStyle: { color: '#52c41a' } },
+    { name: '毛利', type: 'line', data: profitData.value, smooth: true, itemStyle: { color: '#3A6FB0' } },
+    { name: '毛利率', type: 'line', yAxisIndex: 1, data: profitRateData.value, smooth: true, itemStyle: { color: '#2BA471' } },
   ],
 }))
 
@@ -497,7 +497,7 @@ onMounted(async () => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -580,7 +580,7 @@ onMounted(async () => {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
 }
 
 .chart-container {

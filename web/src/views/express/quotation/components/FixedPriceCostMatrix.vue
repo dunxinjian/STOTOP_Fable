@@ -276,8 +276,8 @@
         style="font-family: monospace; font-size: 12px"
       />
       <div v-if="pasteResult" style="margin-top: 8px; font-size: 12px">
-        <span style="color: #52c41a">✓ 匹配 {{ pasteResult.matched }} 个省份</span>
-        <span v-if="pasteResult.unmatched.length > 0" style="color: #faad14; margin-left: 12px">
+        <span style="color: var(--color-success)">✓ 匹配 {{ pasteResult.matched }} 个省份</span>
+        <span v-if="pasteResult.unmatched.length > 0" style="color: var(--color-warning); margin-left: 12px">
           ⚠ 未匹配: {{ pasteResult.unmatched.join('、') }}
         </span>
       </div>
@@ -1050,9 +1050,9 @@ defineExpose({ openOverride })
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #1677ff;
+  color: var(--color-primary);
   background: #fff;
-  border: 1px solid #1677ff;
+  border: 1px solid var(--color-primary);
   border-radius: 50%;
   cursor: pointer;
   user-select: none;
@@ -1067,9 +1067,9 @@ defineExpose({ openOverride })
 
   &:hover {
     color: #fff;
-    background: #1677ff;
-    border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-border);
     transform: scale(1.15);
   }
 }
@@ -1104,9 +1104,9 @@ defineExpose({ openOverride })
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  color: #1677ff;
+  color: var(--color-primary);
   background: #fff;
-  border: 1px solid #1677ff;
+  border: 1px solid var(--color-primary);
   border-radius: 50%;
   cursor: pointer;
   z-index: 5;
@@ -1118,9 +1118,9 @@ defineExpose({ openOverride })
 
   &:hover {
     color: #fff;
-    background: #1677ff;
-    border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-border);
     transform: scale(1.1);
   }
 }
@@ -1140,11 +1140,11 @@ defineExpose({ openOverride })
   position: relative;
 
   &:hover {
-    background-color: rgba(22, 119, 255, 0.08);
+    background-color: var(--color-primary-light);
 
     .seg-header-edit-icon {
       opacity: 1;
-      color: #1677ff;
+      color: var(--color-primary);
     }
   }
 }

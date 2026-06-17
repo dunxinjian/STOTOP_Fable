@@ -193,14 +193,14 @@ function handleReset() {
 }
 
 .nav-item:hover {
-  color: #1677ff;
-  background: rgba(22, 119, 255, 0.04);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .nav-item.active {
-  color: #1677ff;
-  background: #e6f4ff;
-  border-left-color: #1677ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-left-color: var(--color-primary);
   font-weight: 500;
 }
 

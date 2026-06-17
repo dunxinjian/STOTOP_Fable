@@ -522,7 +522,7 @@ function onEnter(_e: KeyboardEvent, provinceId: number | null, segIndex: number)
 
   td.cell-editing {
     background: #fff !important;
-    box-shadow: inset 0 0 0 1px #1677ff;
+    box-shadow: inset 0 0 0 1px var(--color-primary);
   }
 
   td.cell-td {

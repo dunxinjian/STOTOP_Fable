@@ -148,7 +148,7 @@ onMounted(() => loadExpenseTypes())
 <style scoped lang="scss">
 .page-container { padding: 16px; }
 .type-active {
-  background-color: #e6f7ff !important;
-  border-left: 3px solid #1890ff;
+  background-color: var(--color-primary-light) !important;
+  border-left: 3px solid var(--color-primary);
 }
 </style>

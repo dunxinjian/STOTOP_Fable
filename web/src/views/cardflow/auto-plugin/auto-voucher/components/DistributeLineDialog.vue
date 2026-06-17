@@ -10,7 +10,7 @@
   >
     <!-- 空状态 -->
     <div v-if="groupStats.length === 0" class="empty-state">
-      <a-empty description="暂无其他规则组可供分发" />
+      <EmptyState description="暂无其他规则组可供分发" />
     </div>
 
     <template v-else>

@@ -92,15 +92,15 @@ const actionLoading = ref<Record<string, boolean>>({})
 
 // ===== 来源配置 =====
 const sourceConfig: Record<string, { label: string; color: string; icon: any }> = {
-  oa: { label: 'OA审批', color: '#1677ff', icon: AuditOutlined },
+  oa: { label: 'OA审批', color: 'var(--biz-approval)', icon: AuditOutlined },
   quality: { label: '质量异常', color: '#fa541c', icon: WarningOutlined },
   task: { label: '任务', color: '#52c41a', icon: CheckSquareOutlined },
-  datacenter: { label: 'CardFlow', color: '#722ed1', icon: ImportOutlined },
+  datacenter: { label: 'CardFlow', color: 'var(--biz-waybill)', icon: ImportOutlined },
   contract: { label: '合同', color: '#7B5B3A', icon: FileTextOutlined },
-  points: { label: '积分', color: '#d4b106', icon: TrophyOutlined },
-  finance: { label: '财务', color: '#faad14', icon: DollarOutlined },
+  points: { label: '积分', color: 'var(--biz-points)', icon: TrophyOutlined },
+  finance: { label: '财务', color: 'var(--biz-finance)', icon: DollarOutlined },
   system: { label: '系统', color: '#595959', icon: SettingOutlined },
-  workflow: { label: '工作流', color: '#13c2c2', icon: CheckSquareOutlined },
+  workflow: { label: '工作流', color: 'var(--color-info)', icon: CheckSquareOutlined },
 }
 
 // ===== 优先级配置 =====
@@ -829,7 +829,7 @@ function goToDetailRoute() {
   font-size: 12px;
   color: #999;
   flex-shrink: 0;
-  background: #f0f2f5;
+  background: var(--bg-page);
   letter-spacing: 0.3px;
 }
 
@@ -840,7 +840,7 @@ function goToDetailRoute() {
   justify-content: center;
   align-items: stretch;
   overflow: hidden;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 // ===== 底部导航条 =====

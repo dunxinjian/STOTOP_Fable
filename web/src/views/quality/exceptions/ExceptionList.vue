@@ -204,7 +204,7 @@
             <div style="color: #999; font-size: 12px">{{ log.createTime }}</div>
           </a-timeline-item>
         </a-timeline>
-        <a-empty v-else description="暂无处理日志" />
+        <EmptyState v-else size="small" title="暂无处理日志" />
       </template>
     </a-drawer>
 

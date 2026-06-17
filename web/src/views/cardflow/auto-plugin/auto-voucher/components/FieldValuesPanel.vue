@@ -13,12 +13,12 @@
 
     <!-- 空状态：未选批次 -->
     <div v-if="!analysis" class="empty-state">
-      <a-empty description="请先选择批次以加载字段分析数据" />
+      <EmptyState description="请先选择批次以加载字段分析数据" />
     </div>
 
     <!-- 空状态：已有分析但无可见层 -->
     <div v-else-if="visibleLayers.length === 0" class="empty-state">
-      <a-empty description="未配置匹配字段，请进入「规则设置」配置 Layer1/Layer2/Layer3 字段" />
+      <EmptyState description="未配置匹配字段，请进入「规则设置」配置 Layer1/Layer2/Layer3 字段" />
     </div>
 
     <!-- 三层折叠面板 -->
@@ -29,7 +29,7 @@
           <div class="coverage-bar">
             <a-progress
               :percent="layerCoveragePercent(layer)"
-              :stroke-color="layerCoveragePercent(layer) >= 100 ? '#52c41a' : '#1890ff'"
+              :stroke-color="layerCoveragePercent(layer) >= 100 ? 'var(--color-success)' : 'var(--color-info)'"
               size="small"
               :format="() => `${layer.coveredRows}/${layer.totalRows}行`"
             />
@@ -290,8 +290,8 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
   margin-bottom: 4px;
   padding-left: 2px;
 
-  &.unmatched-label { color: #faad14; }
-  &.matched-label { color: #52c41a; }
+  &.unmatched-label { color: var(--color-warning-text); }
+  &.matched-label { color: var(--color-success-text); }
 }
 
 .value-list {
@@ -316,12 +316,12 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
   &.unmatched {
     cursor: default;
     .value-text.clickable {
-      color: #d4380d;
+      color: var(--color-danger-text);
       font-weight: 500;
       cursor: pointer;
       &:hover {
         text-decoration: underline;
-        color: #cf1322;
+        color: var(--color-danger-text);
       }
     }
   }

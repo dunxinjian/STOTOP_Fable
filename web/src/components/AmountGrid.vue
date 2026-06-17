@@ -177,11 +177,11 @@ const handleCancel = () => {
   }
   
   &.red-line {
-    border-right: 2px solid #ff4d4f !important;
+    border-right: 2px solid var(--color-danger) !important;
   }
   
   &.blue-line {
-    border-right: 2px solid #1890ff !important;
+    border-right: 2px solid var(--color-info) !important;
   }
   
   &.has-value {
@@ -196,7 +196,7 @@ const handleCancel = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  border: 2px solid #409eff;
+  border: 2px solid var(--color-primary);
   outline: none;
   padding: 0 8px;
   font-size: 14px;

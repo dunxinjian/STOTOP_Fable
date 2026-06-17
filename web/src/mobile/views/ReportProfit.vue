@@ -113,7 +113,7 @@ const barOption = computed<EChartsOption>(() => {
       type: 'bar',
       data: sorted.map(d => ({
         value: d.profit,
-        itemStyle: { color: d.profit >= 0 ? '#52c41a' : '#ff4d4f' },
+        itemStyle: { color: d.profit >= 0 ? '#2BA471' : '#E5484D' },
       })),
       barWidth: 16,
       label: {

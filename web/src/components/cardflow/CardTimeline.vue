@@ -34,9 +34,9 @@ const props = withDefaults(defineProps<Props>(), {
 // ==================== 状态色映射 ====================
 
 const statusColorMap: Record<string, string> = {
-  approved: '#52c41a',
+  approved: 'var(--color-success)',
   rejected: '#fa541c',
-  processing: '#1677ff',
+  processing: 'var(--color-info)',
   pending: '#8c8c8c',
   skipped: '#d9d9d9',
 }
@@ -192,7 +192,7 @@ function getAuditLabel(audit: CardFlowRuntimeAuditDto): string {
 }
 
 function getAuditColor(audit: CardFlowRuntimeAuditDto): string {
-  return audit.snapshotType === 'dynamicApprover' ? '#722ed1' : '#1677ff'
+  return audit.snapshotType === 'dynamicApprover' ? 'var(--biz-approval)' : 'var(--color-info)'
 }
 
 function auditMetaText(audit: CardFlowRuntimeAuditDto): string {
@@ -259,7 +259,7 @@ function toggleOpinion(id: number) {
               class="completed-collapse-hint"
               @click="toggleCompletedCollapse(group.round)"
             >
-              <CheckCircleFilled style="color: #52c41a" />
+              <CheckCircleFilled style="color: var(--color-success)" />
               <span>已完成 {{ getCompletedCount(group) }} 个节点</span>
               <a-button type="link" size="small">展开全部</a-button>
             </div>
@@ -504,7 +504,7 @@ function toggleOpinion(id: number) {
     padding: 4px 0;
 
     &:hover {
-      color: #1677ff;
+      color: var(--color-primary);
     }
   }
 }
@@ -517,7 +517,7 @@ function toggleOpinion(id: number) {
   gap: 6px;
   padding: 6px 12px;
   margin-bottom: 12px;
-  background: #f6ffed;
+  background: var(--color-success-light);
   border-radius: 6px;
   font-size: 13px;
   color: #595959;
@@ -587,7 +587,7 @@ function toggleOpinion(id: number) {
   &__audit {
     margin-top: 8px;
     padding: 8px 10px;
-    border-left: 3px solid #1677ff;
+    border-left: 3px solid var(--color-info);
     background: #f7f9fc;
     border-radius: 0 4px 4px 0;
   }

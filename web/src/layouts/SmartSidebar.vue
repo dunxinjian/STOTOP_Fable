@@ -374,7 +374,7 @@ function onResizeEnd() {
 
   .section-icon {
     font-size: 11px;
-    color: $color-primary;
+    color: var(--color-primary);
   }
 }
 
@@ -438,7 +438,7 @@ function onResizeEnd() {
     bottom: 10px;
     width: 3px;
     border-radius: 0 2px 2px 0;
-    background: $color-primary;
+    background: var(--sidebar-active-indicator);
   }
 
   &.nav-item--pinned {
@@ -451,19 +451,19 @@ function onResizeEnd() {
     top: 50%;
     transform: translateY(-50%);
     font-size: 10px;
-    color: $color-primary;
+    color: var(--color-primary);
     opacity: 0;
     transition: opacity 0.15s ease;
   }
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.88);
+    background: var(--sidebar-item-hover);
+    color: var(--text-1);
   }
 
   &.active {
-    background: rgba(255, 103, 0, 0.10);
-    color: #E85E00;
+    background: var(--sidebar-item-active-bg);
+    color: var(--sidebar-item-active-text);
     font-weight: 600;
   }
 
@@ -488,7 +488,7 @@ function onResizeEnd() {
 }
 
 .nav-item.active .nav-icon {
-  color: #E85E00;
+  color: var(--sidebar-item-active-text);
 }
 
 // 右侧操作按钮（pin / 移除）—— hover 显示
@@ -514,7 +514,7 @@ function onResizeEnd() {
 
   &:hover {
     background: rgba(0, 0, 0, 0.06);
-    color: $color-primary;
+    color: var(--color-primary);
   }
 
   &.disabled {
@@ -550,8 +550,8 @@ function onResizeEnd() {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #FF6700;
-  box-shadow: 0 0 0 2px rgba(255, 103, 0, 0.15);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-border);
   pointer-events: none;
 }
 
@@ -560,15 +560,15 @@ function onResizeEnd() {
   &:hover,
   &.resizing,
   &.dragging {
-    background: rgba(255, 103, 0, 0.3);
+    background: var(--color-primary-border);
   }
 }
 
 // 拖拽视觉反馈
 .nav-item-ghost {
   opacity: 0.35;
-  background: rgba(255, 103, 0, 0.08);
-  border-left: 2px solid $color-primary;
+  background: var(--color-primary-light);
+  border-left: 2px solid var(--color-primary);
 }
 
 .nav-item-chosen {

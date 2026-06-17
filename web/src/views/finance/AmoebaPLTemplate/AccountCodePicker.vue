@@ -151,7 +151,7 @@ watch(() => props.options, () => {
   }
 
   &__summary {
-    color: #1677ff;
+    color: var(--color-info);
     margin-left: 4px;
   }
 }

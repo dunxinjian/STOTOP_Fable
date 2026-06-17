@@ -524,8 +524,8 @@ onMounted(() => {
   transition: all 0.2s;
   background: transparent;
 
-  &:hover { color: #1890ff; }
-  &.active { color: #fff; background: #1890ff; font-weight: 500; }
+  &:hover { color: var(--color-primary); }
+  &.active { color: #fff; background: var(--color-primary); font-weight: 500; }
 }
 
 .detail-header {

@@ -49,7 +49,7 @@
               </a-select>
               <a-tag>{{ group.department }}</a-tag>
               <span class="account-name">→ {{ group.accountName }}</span>
-              <a-badge :count="group.rowCount" :number-style="{ backgroundColor: '#1890ff' }" style="margin-left: 8px" />
+              <a-badge :count="group.rowCount" :number-style="{ backgroundColor: 'var(--color-info)' }" style="margin-left: 8px" />
             </div>
             <div class="matched-actions">
               <a-button size="small" type="link" @click="toggleExpand(idx)">

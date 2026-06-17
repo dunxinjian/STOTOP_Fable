@@ -67,15 +67,15 @@ defineProps<{
   margin-top: 2px;
 
   &.done {
-    background: #f6ffed;
-    border: 1px solid #52c41a;
-    color: #52c41a;
+    background: var(--color-success-light);
+    border: 1px solid var(--color-success);
+    color: var(--color-success-text);
   }
 
   &.current {
-    background: #e6f4ff;
-    border: 1px solid #1677ff;
-    color: #1677ff;
+    background: var(--color-info-light);
+    border: 1px solid var(--color-info);
+    color: var(--color-info);
   }
 
   &.waiting {
@@ -111,7 +111,7 @@ defineProps<{
 }
 
 .timeline-operator {
-  color: #1677ff;
+  color: var(--color-info);
 }
 
 .timeline-time {

@@ -148,8 +148,8 @@ function renderTrendChart() {
       { type: 'value', name: '金额(¥)', axisLabel: { color: '#999' }, splitLine: { show: false } },
     ],
     series: [
-      { name: '运单数', type: 'line', data: trendData.value.map(d => d.waybillCount), smooth: true, itemStyle: { color: '#1890ff' }, lineStyle: { width: 2 } },
-      { name: '应收金额', type: 'line', yAxisIndex: 1, data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#52c41a' }, lineStyle: { width: 2 } },
+      { name: '运单数', type: 'line', data: trendData.value.map(d => d.waybillCount), smooth: true, itemStyle: { color: '#3A6FB0' }, lineStyle: { width: 2 } },
+      { name: '应收金额', type: 'line', yAxisIndex: 1, data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#2BA471' }, lineStyle: { width: 2 } },
     ],
   }, true)
 }

@@ -594,9 +594,9 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 // ===== Tonal palette per status =====
-$tone-info-fg: #1677ff;
-$tone-info-bg: rgba(22, 119, 255, 0.08);
-$tone-success-fg: #389e0d;
+$tone-info-fg: var(--color-info);
+$tone-info-bg: var(--color-info-light);
+$tone-success-fg: var(--color-success-text);
 $tone-success-bg: rgba(56, 158, 13, 0.08);
 $tone-warn-fg: #d4651a;
 $tone-warn-bg: rgba(212, 101, 26, 0.10);
@@ -624,7 +624,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 // ===== Toolbar title (center slot) =====
 .ribbon-back {
   font-size: 13px;
-  color: #1677ff;
+  color: var(--color-primary);
   padding: 0 8px;
 }
 
@@ -681,7 +681,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 .pill--info {
   color: $tone-info-fg;
   background: $tone-info-bg;
-  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(58, 111, 176, 0.18);
   .pill__dot { animation: pulse 1.6s ease-in-out infinite; }
 }
 .pill--success {
@@ -794,11 +794,11 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   padding: 12px 16px;
   background: linear-gradient(
     135deg,
-    rgba(22, 119, 255, 0.06) 0%,
-    rgba(22, 119, 255, 0.02) 100%
+    rgba(58, 111, 176, 0.06) 0%,
+    rgba(58, 111, 176, 0.02) 100%
   );
-  border: 1px solid rgba(22, 119, 255, 0.18);
-  border-left: 3px solid #1677ff;
+  border: 1px solid rgba(58, 111, 176, 0.18);
+  border-left: 3px solid var(--color-info);
   border-radius: 6px;
   position: relative;
   overflow: hidden;
@@ -812,14 +812,14 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
       -45deg,
       transparent 0,
       transparent 6px,
-      rgba(22, 119, 255, 0.04) 6px,
-      rgba(22, 119, 255, 0.04) 7px
+      rgba(58, 111, 176, 0.04) 6px,
+      rgba(58, 111, 176, 0.04) 7px
     );
     pointer-events: none;
   }
 
   &__icon {
-    color: #1677ff;
+    color: var(--color-info);
     font-size: 16px;
     flex-shrink: 0;
   }
@@ -837,7 +837,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   &__link {
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
-    color: #1677ff;
+    color: var(--color-primary);
     font-weight: 500;
     cursor: pointer;
     letter-spacing: 0.02em;
@@ -876,11 +876,11 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   &:hover {
     background: #fff;
-    border-color: rgba(22, 119, 255, 0.30);
+    border-color: var(--color-primary-border);
     transform: translateX(2px);
 
     .cd-relation__arrow {
-      color: #1677ff;
+      color: var(--color-primary);
       transform: translateX(2px);
     }
   }
@@ -977,8 +977,8 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &:hover::before {
-    border-color: #1677ff;
-    background: #1677ff;
+    border-color: var(--color-primary);
+    background: var(--color-primary);
   }
 
   &__time {
@@ -996,7 +996,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__action {
-    color: #1677ff;
+    color: var(--color-primary);
   }
 
   &__opinion {

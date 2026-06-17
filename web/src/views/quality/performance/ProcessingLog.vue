@@ -81,10 +81,10 @@ const columns = [
 ]
 
 function scoreColor(score: number): string {
-  if (score >= 90) return '#52c41a'
-  if (score >= 70) return '#1890ff'
-  if (score >= 60) return '#faad14'
-  return '#ff4d4f'
+  if (score >= 90) return 'var(--color-success)'
+  if (score >= 70) return 'var(--color-info)'
+  if (score >= 60) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 function handleTabChange() {

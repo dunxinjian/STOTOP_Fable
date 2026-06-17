@@ -623,7 +623,7 @@ onMounted(() => { fetchUserList(); fetchDeptTree(); fetchRoleOptions() })
   &:hover {
     background: $color-primary-hover !important;
     border-color: $color-primary-hover !important;
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+    box-shadow: 0 4px 12px var(--color-primary-border);
   }
 }
 
@@ -667,7 +667,7 @@ onMounted(() => { fetchUserList(); fetchDeptTree(); fetchRoleOptions() })
 
   // 行 hover
   :deep(.ant-table-tbody > tr:hover > td) {
-    background: rgba(22, 119, 255, 0.04) !important;
+    background: var(--color-primary-light) !important;
   }
 
   // 行分割线

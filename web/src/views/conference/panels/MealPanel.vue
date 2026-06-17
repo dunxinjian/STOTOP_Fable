@@ -366,6 +366,6 @@ onMounted(() => {
 }
 
 .danger-link {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 </style>

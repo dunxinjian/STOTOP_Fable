@@ -174,7 +174,7 @@ onMounted(() => {
           <template #value>
             <div class="balance-info">
               <span>原始: ¥{{ formatAmount(bal.originalAmount) }}</span>
-              <span>剩余: <b style="color: #07c160;">¥{{ formatAmount(bal.remainingAmount) }}</b></span>
+              <span>剩余: <b style="color: var(--color-success);">¥{{ formatAmount(bal.remainingAmount) }}</b></span>
             </div>
           </template>
         </VanCell>

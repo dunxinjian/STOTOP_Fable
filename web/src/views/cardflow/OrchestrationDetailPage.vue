@@ -53,8 +53,8 @@ const edgesJsonText = ref('')
 
 const STATUS_META: Record<OrchestrationTemplateStatus, { text: string; color: string }> = {
   draft: { text: '草稿', color: '#8c8c8c' },
-  published: { text: '已发布', color: '#52c41a' },
-  disabled: { text: '已停用', color: '#faad14' },
+  published: { text: '已发布', color: 'var(--color-success)' },
+  disabled: { text: '已停用', color: 'var(--color-warning)' },
 }
 
 const NODE_TYPE_OPTIONS: Array<{ label: string; value: DagNodeType }> = [
@@ -94,9 +94,9 @@ const DAG_COL_W = 230
 const DAG_ROW_H = 70
 const DAG_PAD = 24
 const DAG_NODE_COLOR: Record<DagNodeType, string> = {
-  start: '#1677ff',
-  cardflow: '#52c41a',
-  join: '#fa8c16',
+  start: 'var(--color-info)',
+  cardflow: 'var(--color-success)',
+  join: 'var(--color-warning)',
   end: '#8c8c8c',
 }
 
@@ -873,7 +873,7 @@ onMounted(loadDetail)
                 <a-tooltip
                   v-if="isMissingNode(record.from)"
                   title="该节点 ID 在节点列表中不存在（游离引用），请重新选择"
-                  color="#ff4d4f"
+                  color="var(--color-danger)"
                 >
                   <div class="edge-ref-broken">
                     <a-select
@@ -902,7 +902,7 @@ onMounted(loadDetail)
                 <a-tooltip
                   v-if="isMissingNode(record.to)"
                   title="该节点 ID 在节点列表中不存在（游离引用），请重新选择"
-                  color="#ff4d4f"
+                  color="var(--color-danger)"
                 >
                   <div class="edge-ref-broken">
                     <a-select
@@ -1174,7 +1174,7 @@ onMounted(loadDetail)
     border: 1px solid #e6e6e6;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 12px;
-    color: #d4380d;
+    color: var(--color-danger-text);
   }
 }
 
@@ -1266,7 +1266,7 @@ onMounted(loadDetail)
 /* === 边引用游离高亮 === */
 .edge-ref-broken {
   :deep(.ant-select-selector) {
-    border-color: #ff4d4f !important;
+    border-color: var(--color-danger) !important;
     box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.12) !important;
   }
 }

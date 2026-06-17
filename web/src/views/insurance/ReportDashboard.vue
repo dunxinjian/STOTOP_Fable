@@ -6,22 +6,22 @@
     <a-row :gutter="16" style="margin-bottom: 16px">
       <a-col :span="5">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="有效保单" :value="overview.ActivePolicies" :value-style="{ color: '#1890ff' }" />
+          <a-statistic title="有效保单" :value="overview.ActivePolicies" :value-style="{ color: 'var(--color-info)' }" />
         </a-card>
       </a-col>
       <a-col :span="5">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="即将到期" :value="overview.ExpiringPolicies" :value-style="{ color: '#faad14' }" />
+          <a-statistic title="即将到期" :value="overview.ExpiringPolicies" :value-style="{ color: 'var(--color-warning)' }" />
         </a-card>
       </a-col>
       <a-col :span="5">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="进行中理赔" :value="overview.PendingClaims" :value-style="{ color: '#ff4d4f' }" />
+          <a-statistic title="进行中理赔" :value="overview.PendingClaims" :value-style="{ color: 'var(--color-danger)' }" />
         </a-card>
       </a-col>
       <a-col :span="5">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic title="待审批理赔" :value="overview.PendingSettlements" :value-style="{ color: '#722ed1' }" />
+          <a-statistic title="待审批理赔" :value="overview.PendingSettlements" :value-style="{ color: 'var(--biz-approval)' }" />
         </a-card>
       </a-col>
       <a-col :span="4">
@@ -84,7 +84,7 @@
               <template v-if="column.dataIndex === 'Contributions'">¥{{ record.Contributions.toFixed(2) }}</template>
               <template v-if="column.dataIndex === 'Payouts'">¥{{ record.Payouts.toFixed(2) }}</template>
               <template v-if="column.dataIndex === 'ClosingBalance'">
-                <span :style="{ color: record.ClosingBalance >= 0 ? '#52c41a' : '#ff4d4f', fontWeight: 500 }">
+                <span :style="{ color: record.ClosingBalance >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 500 }">
                   ¥{{ record.ClosingBalance.toFixed(2) }}
                 </span>
               </template>

@@ -16,7 +16,7 @@
             <a-badge
               v-if="item.count"
               :count="item.count"
-              :number-style="{ backgroundColor: '#1677ff', fontSize: '11px' }"
+              :number-style="{ backgroundColor: 'var(--color-info)', fontSize: '11px' }"
               :overflow-count="999"
               class="timeline-view__badge"
             />
@@ -30,7 +30,7 @@
         </div>
       </a-timeline-item>
     </a-timeline>
-    <a-empty v-if="!items.length" description="暂无日程" />
+    <EmptyState v-if="!items.length" size="small" title="暂无日程" />
   </div>
 </template>
 
@@ -85,7 +85,7 @@ function isToday(timeStr: string): boolean {
     padding: 4px 0;
 
     &--today {
-      background: #e6f4ff;
+      background: var(--color-primary-light);
       border-radius: 6px;
       padding: 8px 12px;
       margin: -4px -12px;

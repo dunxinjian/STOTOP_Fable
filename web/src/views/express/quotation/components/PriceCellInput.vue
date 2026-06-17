@@ -168,7 +168,7 @@ function handleKeydown(e: KeyboardEvent) {
   transition: background-color 0.15s;
 
   &:hover:not(.is-editing):not(.is-disabled) {
-    background-color: #e6f4ff;
+    background-color: var(--color-primary-light);
   }
 
   &.is-disabled {
@@ -190,7 +190,7 @@ function handleKeydown(e: KeyboardEvent) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1677ff;
+  color: var(--color-primary);
   z-index: 1;
 }
 
@@ -215,12 +215,12 @@ function handleKeydown(e: KeyboardEvent) {
   transition: border-color 0.2s;
 
   &:focus {
-    border-color: #1677ff;
-    box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.15);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary-border);
   }
 
   &.has-error {
-    border-color: #ff4d4f;
+    border-color: var(--color-danger);
     &:focus {
       box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.15);
     }

@@ -8,7 +8,7 @@
             title="参会人数"
             :value="`${dash.confirmedAttendees}/${dash.totalAttendees}`"
             :sub-value="attendeeRate"
-            color="#1677ff"
+            color="var(--color-info)"
             @click="navigateTo('attendee')"
           />
         </a-col>
@@ -16,7 +16,7 @@
           <StatCard
             title="日程完成度"
             :value="`${completedSchedules}/${dash.totalSchedules}`"
-            color="#722ed1"
+            color="var(--color-info)"
             @click="navigateTo('schedule')"
           />
         </a-col>
@@ -57,7 +57,7 @@
             title="收入总额"
             :value="formatMoney(dash.totalIncome)"
             :sub-value="incomeRateText"
-            color="#52c41a"
+            color="var(--color-success)"
             @click="navigateTo('finance')"
           />
         </a-col>
@@ -66,7 +66,7 @@
             title="异常告警"
             :value="dash.alertCount"
             :sub-value="alertSummaryText"
-            :color="dash.alertCount > 0 ? '#ff4d4f' : '#52c41a'"
+            :color="dash.alertCount > 0 ? 'var(--color-danger)' : 'var(--color-success)'"
             @click="scrollToAlerts"
           />
         </a-col>
@@ -99,7 +99,7 @@
         <a-col :span="10">
           <a-card title="异常告警" class="dash-card" ref="alertCardRef" :body-style="{ padding: '12px 16px' }">
             <template v-if="allAlerts.length === 0">
-              <a-empty description="一切正常，无异常告警" />
+              <EmptyState size="small" title="一切正常，无异常告警" />
             </template>
             <a-collapse v-else v-model:activeKey="alertActiveKeys" ghost>
               <a-collapse-panel
@@ -184,7 +184,7 @@
           <div class="date-tags">
             <a-badge v-for="day in eventDays" :key="day.date" :count="day.scheduleCount" :offset="[-4, -4]">
               <a-tag
-                :color="day.isToday ? '#1677ff' : 'default'"
+                :color="day.isToday ? 'var(--color-primary)' : 'default'"
                 class="date-tag"
               >{{ day.label }}</a-tag>
             </a-badge>
@@ -374,9 +374,9 @@ function scrollToAlerts() {
 }
 
 function progressColor(percent: number): string {
-  if (percent >= 100) return '#52c41a'
-  if (percent >= 50) return '#1677ff'
-  return '#fa8c16'
+  if (percent >= 100) return 'var(--color-success)'
+  if (percent >= 50) return 'var(--color-info)'
+  return 'var(--color-warning)'
 }
 
 function formatMoney(amount: number): string {
@@ -492,15 +492,15 @@ onMounted(() => {
   background: #fafafa;
 
   &--critical {
-    border-left: 3px solid #ff4d4f;
+    border-left: 3px solid var(--color-danger);
   }
 
   &--warning {
-    border-left: 3px solid #faad14;
+    border-left: 3px solid var(--color-warning);
   }
 
   &--info {
-    border-left: 3px solid #1677ff;
+    border-left: 3px solid var(--color-info);
   }
 
   &__title {

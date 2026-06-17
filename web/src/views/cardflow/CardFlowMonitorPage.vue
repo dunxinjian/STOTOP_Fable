@@ -56,9 +56,9 @@ interface StatusMeta {
 
 const STATUS_META: Record<CardStatus, StatusMeta> = {
   draft: { text: '草稿', color: '#8c8c8c', tagColor: 'default' },
-  active: { text: '进行中', color: '#1677ff', tagColor: 'processing' },
-  completed: { text: '已完成', color: '#52c41a', tagColor: 'success' },
-  returned: { text: '已退回', color: '#ff4d4f', tagColor: 'error' },
+  active: { text: '进行中', color: 'var(--color-info)', tagColor: 'processing' },
+  completed: { text: '已完成', color: 'var(--color-success)', tagColor: 'success' },
+  returned: { text: '已退回', color: 'var(--color-danger)', tagColor: 'error' },
   voided: { text: '已作废', color: '#8c8c8c', tagColor: 'default' },
 }
 
@@ -125,7 +125,7 @@ const statCards = computed(() => [
   { key: 'active' as CardStatus, label: '进行中', value: stats.inProgress, color: STATUS_META.active.color },
   { key: 'completed' as CardStatus, label: '已完成', value: stats.completed, color: STATUS_META.completed.color },
   { key: 'voided' as CardStatus, label: '已作废', value: stats.voided, color: STATUS_META.voided.color },
-  { key: 'timeout' as 'timeout', label: '超时未处理', value: stats.timeout, color: '#faad14', danger: true },
+  { key: 'timeout' as 'timeout', label: '超时未处理', value: stats.timeout, color: 'var(--color-warning)', danger: true },
 ])
 
 const activeStatCardKey = computed<string | null>(() => {
@@ -894,7 +894,7 @@ onUnmounted(() => {
 
   &.is-active {
     border-color: var(--stat-color);
-    background: linear-gradient(180deg, rgba(22, 119, 255, 0.04) 0%, #ffffff 100%);
+    background: linear-gradient(180deg, rgba(232, 94, 0, 0.04) 0%, #ffffff 100%);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     .stat-accent {
       opacity: 1;
@@ -924,7 +924,7 @@ onUnmounted(() => {
 }
 
 .stat-warn-icon {
-  color: #faad14;
+  color: var(--color-warning-text);
   font-size: 12px;
 }
 
@@ -960,7 +960,7 @@ onUnmounted(() => {
 }
 
 .row-title {
-  color: #1677ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;
@@ -988,15 +988,15 @@ onUnmounted(() => {
 }
 
 .stage-avatars :deep(.ant-avatar) {
-  background: #e6f4ff;
-  color: #1677ff;
+  background: var(--color-info-light);
+  color: var(--color-info);
   font-size: 11px;
   border: 1px solid #ffffff;
 }
 
 .stage-avatar.done {
-  background: #f6ffed !important;
-  color: #52c41a !important;
+  background: var(--color-success-light) !important;
+  color: var(--color-success-text) !important;
 }
 
 .status-tag {
@@ -1014,7 +1014,7 @@ onUnmounted(() => {
     font-size: 12px;
   }
   &.is-timeout {
-    color: #faad14;
+    color: var(--color-warning-text);
     font-weight: 500;
   }
 }
@@ -1050,8 +1050,8 @@ onUnmounted(() => {
   padding: 10px 14px;
   border-radius: 4px;
   &.active {
-    background: #e6f4ff;
-    border-left-color: #1677ff;
+    background: var(--color-primary-light);
+    border-left-color: var(--color-primary);
   }
 }
 
@@ -1065,7 +1065,7 @@ onUnmounted(() => {
     color: #262626;
   }
   .es-timeout {
-    color: #faad14;
+    color: var(--color-warning-text);
     font-size: 12px;
     display: inline-flex;
     align-items: center;
@@ -1090,12 +1090,12 @@ onUnmounted(() => {
   font-size: 12px;
 
   .assignee-avatar {
-    background: #e6f4ff;
-    color: #1677ff;
+    background: var(--color-info-light);
+    color: var(--color-info);
     font-size: 11px;
     &.done {
-      background: #f6ffed;
-      color: #52c41a;
+      background: var(--color-success-light);
+      color: var(--color-success-text);
     }
   }
   .assignee-name {

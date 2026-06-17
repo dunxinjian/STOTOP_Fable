@@ -301,7 +301,7 @@ function handleReset() {
 .preview-login-title {
   font-size: 20px;
   font-weight: 800;
-  color: #1677ff;
+  color: var(--color-primary);
   margin: 0 0 4px;
   letter-spacing: 2px;
 }
@@ -326,14 +326,14 @@ function handleReset() {
 
 .preview-btn {
   height: 32px;
-  background: #1677ff;
+  background: var(--color-primary);
   border-radius: 4px;
 }
 
 /* 仪表盘预览样式 */
 .preview-dashboard {
   padding: 20px;
-  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-active) 100%);
   border-radius: 6px;
 }
 

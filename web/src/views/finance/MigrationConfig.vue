@@ -62,7 +62,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'arrow'">
-            <span style="color: #1677ff; font-weight: bold;">→</span>
+            <span style="color: var(--color-info); font-weight: bold;">→</span>
           </template>
           <template v-if="column.dataIndex === 'mappingType'">
             <a-tag :color="record.mappingType === 'exact' ? 'blue' : record.mappingType === 'prefix' ? 'green' : 'orange'">
@@ -96,7 +96,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'arrow'">
-            <span style="color: #1677ff; font-weight: bold;">→</span>
+            <span style="color: var(--color-info); font-weight: bold;">→</span>
           </template>
           <template v-if="column.dataIndex === 'strategy'">
             <a-tag color="blue">{{ strategyLabel(record.strategy) }}</a-tag>
@@ -128,7 +128,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'arrow'">
-            <span style="color: #1677ff; font-weight: bold;">→</span>
+            <span style="color: var(--color-info); font-weight: bold;">→</span>
           </template>
           <template v-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === 'active' ? 'success' : 'default'">

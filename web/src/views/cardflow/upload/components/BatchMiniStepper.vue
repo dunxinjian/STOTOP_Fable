@@ -110,10 +110,10 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
   margin-top: 3px; /* 让连线垂直对齐圆点中心 */
 }
 .step-line--completed {
-  background-color: #52c41a;
+  background-color: var(--color-success);
 }
 .step-line--running {
-  background-color: #1677ff;
+  background-color: var(--color-info);
 }
 
 /* 圆点基础 */
@@ -128,11 +128,11 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
 }
 
 .dot--completed {
-  background-color: #52c41a;
+  background-color: var(--color-success);
 }
 
 .dot--running {
-  background-color: #1677ff;
+  background-color: var(--color-info);
 }
 
 .dot--failed {
@@ -141,7 +141,7 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
   border-radius: 0;
   font-size: 10px;
   font-weight: bold;
-  color: #ff4d4f;
+  color: var(--color-danger-text);
   line-height: 8px;
   cursor: default;
 }
@@ -157,10 +157,10 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
 }
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.55);
+    box-shadow: 0 0 0 0 var(--color-primary-border);
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(22, 119, 255, 0);
+    box-shadow: 0 0 0 4px transparent;
   }
 }
 
@@ -171,13 +171,13 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
   line-height: 1;
 }
 .step-label--completed {
-  color: #52c41a;
+  color: var(--color-success-text);
 }
 .step-label--running {
-  color: #1677ff;
+  color: var(--color-info);
 }
 .step-label--failed {
-  color: #ff4d4f;
+  color: var(--color-danger-text);
   cursor: default;
 }
 .step-label--pending {

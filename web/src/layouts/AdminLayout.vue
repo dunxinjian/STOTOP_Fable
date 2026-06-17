@@ -12,7 +12,7 @@
       </div>
       <div class="topbar-right">
         <a-avatar v-if="userInfo?.avatar" :src="userInfo.avatar" :size="24" />
-        <a-avatar v-else :size="24" style="background: linear-gradient(135deg, #722ED1, #9254DE); font-size: 12px;">
+        <a-avatar v-else :size="24" :style="{ background: 'var(--color-primary)', fontSize: '12px' }">
           {{ userInfo?.realName?.charAt(0) || 'U' }}
         </a-avatar>
         <span class="user-name">{{ userInfo?.realName || userInfo?.username || '用户' }}</span>
@@ -102,26 +102,14 @@ function goBack() {
 .admin-topbar {
   height: 48px;
   min-height: 48px;
-  background: #434352;
-  border-bottom: none;
+  background: var(--topbar-ink-admin);
+  border-bottom: 1px solid var(--topbar-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   z-index: 100;
   position: relative;
-}
-
-/* 紫色渐变底线 */
-.admin-topbar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #722ED1 0%, #B37FEB 60%, transparent 100%);
-  pointer-events: none;
 }
 
 .topbar-left {
@@ -159,7 +147,7 @@ function goBack() {
 
 .admin-shield-icon {
   font-size: 15px;
-  color: #B37FEB;
+  color: var(--text-3);
 }
 
 .topbar-right {
@@ -185,7 +173,7 @@ function goBack() {
 .admin-sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: #2B2D3A;
+  background: var(--sidebar-bg);
   overflow-y: auto;
   padding-top: 4px;
 }
@@ -195,39 +183,58 @@ function goBack() {
 }
 
 .group-title {
-  color: rgba(255, 255, 255, 0.62); /* 提升对比度，达 WCAG AA（原 0.45 不达标） */
-  font-size: 13px;                  /* 统一使用 $font-size-sm2 对应山（12px 在深色背景可读性差 */
+  color: var(--text-3);
+  font-size: var(--font-sm);
   letter-spacing: 0.5px;
-  padding: 16px 20px 8px;
+  padding: var(--space-lg16) var(--space-xl24) var(--space-sm8);
   user-select: none;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  height: 36px;
+  padding: 0 var(--space-md12);
+  margin: 1px var(--space-sm8);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 13px;
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
+  color: var(--text-2);
+  font-size: var(--font-sm2);
+  transition: all 0.15s ease;
+  position: relative;
 }
 
 .menu-item:hover {
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-1);
+  background: var(--sidebar-item-hover);
 }
 
 .menu-item.active {
-  color: #fff;
-  background: rgba(114, 46, 209, 0.14);
-  border-left-color: #722ED1;
+  color: var(--sidebar-item-active-text);
+  background: var(--sidebar-item-active-bg);
+  font-weight: 600;
+}
+
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--sidebar-active-indicator);
 }
 
 .menu-icon {
   margin-right: 10px;
   font-size: 15px;
-  opacity: 0.85;
+  opacity: 1;
+  color: var(--text-3);
+}
+
+.menu-item.active .menu-icon {
+  color: var(--sidebar-item-active-text);
 }
 
 .menu-text {
@@ -239,8 +246,8 @@ function goBack() {
 /* ── 主内容区 ─────────────────────────────── */
 .admin-content {
   flex: 1;
-  background: #F4F5F7;
+  background: var(--bg-page);
   overflow-y: auto;
-  padding: 16px;
+  padding: var(--space-lg16);
 }
 </style>

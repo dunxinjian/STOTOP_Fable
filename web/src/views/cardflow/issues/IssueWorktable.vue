@@ -404,7 +404,7 @@ onMounted(loadIssues)
 }
 
 .summary-item.active {
-  border-color: #1677ff;
+  border-color: var(--color-primary);
   background: #eef5ff;
 }
 

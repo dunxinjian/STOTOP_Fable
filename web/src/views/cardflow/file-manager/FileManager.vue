@@ -26,7 +26,7 @@
             <div class="stat-label">存储使用率</div>
             <a-progress
               :percent="storagePercent"
-              :strokeColor="storagePercent > 80 ? '#f56c6c' : storagePercent > 60 ? '#e6a23c' : '#409eff'"
+              :strokeColor="storagePercent > 80 ? 'var(--color-danger)' : storagePercent > 60 ? 'var(--color-warning)' : 'var(--color-info)'"
               :strokeWidth="14"
               style="margin-top: 8px"
             />
@@ -129,7 +129,7 @@
     >
       <div class="policy-toolbar">
         <a-button type="primary" size="small" @click="openPolicyForm()"><PlusOutlined /> 新增策略</a-button>
-        <a-button size="small" style="color: #faad14" @click="handlePreviewCleanup">手动清理</a-button>
+        <a-button size="small" style="color: var(--color-warning-text)" @click="handlePreviewCleanup">手动清理</a-button>
       </div>
 
       <a-table
@@ -376,7 +376,7 @@ const monthlyChartOption = computed(() => {
       {
         type: 'bar',
         data: monthly.map((m: any) => m.size),
-        itemStyle: { color: '#409eff', borderRadius: [3, 3, 0, 0] },
+        itemStyle: { color: '#3A6FB0', borderRadius: [3, 3, 0, 0] },
         barMaxWidth: 28,
       },
     ],

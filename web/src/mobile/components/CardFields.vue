@@ -111,11 +111,11 @@ function previewImage(current: string, images: string[]) {
 
     .file-icon {
       margin-right: 4px;
-      color: #1989fa;
+      color: var(--color-primary);
     }
 
     .file-link {
-      color: #1989fa;
+      color: var(--color-primary);
       text-decoration: none;
       font-size: 14px;
     }

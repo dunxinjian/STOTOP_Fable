@@ -258,7 +258,7 @@ watch(() => accountSetStore.currentAccountSetId, async () => {
 }
 
 :deep(.opening-row) {
-  background-color: #f0f9eb !important;
+  background-color: var(--color-success-light) !important;
   font-weight: bold;
 }
 

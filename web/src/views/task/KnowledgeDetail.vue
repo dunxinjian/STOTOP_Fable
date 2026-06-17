@@ -448,7 +448,7 @@ onMounted(() => {
     transition: color 0.2s;
 
     &:hover, &.active {
-      color: #1890ff;
+      color: var(--color-primary);
     }
   }
 

@@ -5,22 +5,22 @@
     <!-- KPI 指标条 -->
     <div class="kpi-bar">
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #1890ff"></span>
+        <span class="kpi-dot" style="background: var(--color-info)"></span>
         <span class="kpi-label">今日批次</span>
         <span class="kpi-value">{{ todayBatchCount }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #fa8c16"></span>
+        <span class="kpi-dot" style="background: var(--color-warning)"></span>
         <span class="kpi-label">待处理数</span>
         <span class="kpi-value">{{ totalPending }}</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #52c41a"></span>
+        <span class="kpi-dot" style="background: var(--color-success)"></span>
         <span class="kpi-label">成功率</span>
         <span class="kpi-value">{{ successRate }}%</span>
       </div>
       <div class="kpi-item">
-        <span class="kpi-dot" style="background: #722ed1"></span>
+        <span class="kpi-dot" style="background: var(--biz-waybill)"></span>
         <span class="kpi-label">存储空间</span>
         <span class="kpi-value">{{ storageUsed }}</span>
       </div>
@@ -229,8 +229,8 @@ function updateTrendChart() {
       axisLabel: { color: '#909399', fontSize: 11 },
     },
     series: [
-      { name: '导入量', type: 'bar', barWidth: 20, color: '#1890ff', data: imports },
-      { name: '异常量', type: 'bar', barWidth: 20, color: '#ff4d4f', data: errors },
+      { name: '导入量', type: 'bar', barWidth: 20, color: '#3A6FB0', data: imports },
+      { name: '异常量', type: 'bar', barWidth: 20, color: '#E5484D', data: errors },
     ],
   })
 }
@@ -379,7 +379,7 @@ function formatBytes(bytes: number): string {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 /* KPI 指标条 */
@@ -466,7 +466,7 @@ function formatBytes(bytes: number): string {
   color: rgba(0, 0, 0, 0.85);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-info);
 }
 
 /* 图表容器 */
@@ -492,16 +492,16 @@ function formatBytes(bytes: number): string {
   border: 1px solid #f0f0f0;
 }
 .quick-action-item:hover {
-  background: #e6f4ff;
-  border-color: #91caff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  box-shadow: 0 2px 8px var(--color-primary-border);
   transform: translateY(-2px);
 }
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #1890ff;
-  background: #e6f7ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   width: 48px;
   height: 48px;
   border-radius: 50%;

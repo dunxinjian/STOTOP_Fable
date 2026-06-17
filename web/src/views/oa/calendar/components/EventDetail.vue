@@ -388,7 +388,7 @@ function handleClose() {
       color: #262626;
       margin-bottom: 12px;
       padding-left: 12px;
-      border-left: 3px solid #1890ff;
+      border-left: 3px solid var(--color-info);
     }
 
     .description-content {

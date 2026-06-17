@@ -770,10 +770,10 @@ $ink:       #1f2430;
 $ink-2:     #4a5568;
 $ink-3:     #8a93a6;
 $line:      #e9ecf2;
-$brand:     #2f54eb;
-$brand-ink: #1d39c4;
-$warn:      #d4380d;
-$ok:        #389e0d;
+$brand:     var(--color-primary);
+$brand-ink: var(--color-primary-active);
+$warn:      var(--color-danger);
+$ok:        var(--color-success);
 
 .m-card-approval {
   min-height: 100vh;
@@ -813,8 +813,8 @@ $ok:        #389e0d;
   &__pill {
     font-size: 11px; line-height: 1; padding: 3px 7px; border-radius: 999px;
     font-weight: 500;
-    &--active { background: rgba(47,84,235,.12); color: $brand-ink; }
-    &--done   { background: rgba(56,158,13,.14); color: #237804; }
+    &--active { background: var(--color-primary-light); color: $brand-ink; }
+    &--done   { background: rgba(56,158,13,.14); color: var(--color-success-text); }
     &--warn   { background: rgba(212,56,13,.12); color: $warn; }
     &--draft  { background: #eef0f4; color: $ink-2; }
     &--mute   { background: #eef0f4; color: $ink-3; }
@@ -834,7 +834,7 @@ $ok:        #389e0d;
   &__avatar {
     width: 40px; height: 40px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #2f54eb 0%, #597ef7 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
     color: #fff; font-weight: 600; font-size: 16px; flex: 0 0 40px;
     letter-spacing: 0;
   }
@@ -878,7 +878,7 @@ $ok:        #389e0d;
   padding: 16px;
   display: flex; gap: 12px; align-items: center;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f6ffed 0%, #fafafa 100%);
+  background: linear-gradient(135deg, var(--color-success-light) 0%, #fafafa 100%);
   border: 1px solid #d9f7be;
   &__icon { color: $ok; }
   &__text {
@@ -964,13 +964,13 @@ $ok:        #389e0d;
     border: 1px solid $line;
   }
   &--primary {
-    background: linear-gradient(180deg, #4870f0 0%, $brand 100%);
+    background: linear-gradient(180deg, var(--color-primary-hover) 0%, $brand 100%);
     color: #fff;
     border: none;
     box-shadow: 0 4px 12px rgba(47,84,235,0.22);
   }
   &--danger {
-    background: linear-gradient(180deg, #ff5a3c 0%, #d4380d 100%);
+    background: linear-gradient(180deg, #ff5a3c 0%, var(--color-danger) 100%);
     color: #fff;
     border: none;
     box-shadow: 0 4px 12px rgba(212,56,13,0.22);

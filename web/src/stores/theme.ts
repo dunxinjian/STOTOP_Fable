@@ -50,11 +50,11 @@ export interface ThemeConfig {
 }
 
 const defaultThemeConfig: ThemeConfig = {
-  colorPrimary: '#FF6700',
-  colorSuccess: '#52C41A',
+  colorPrimary: '#E85E00',
+  colorSuccess: '#2BA471',
   colorWarning: '#E6A700',
-  colorError: '#FF4D4F',
-  colorInfo: '#13C2C2',
+  colorError: '#E5484D',
+  colorInfo: '#3A6FB0',
   borderRadius: 6,
   fontSize: 14,
   sizeStep: 4,
@@ -62,18 +62,18 @@ const defaultThemeConfig: ThemeConfig = {
   wireframe: false,
   compactMode: false,
   darkMode: false,
-  marginXS: 8,
-  marginSM: 12,
-  margin: 16,
-  marginMD: 20,
-  marginLG: 24,
+  marginXS: 8,   // = $spacing-sm  = --space-sm8
+  marginSM: 12,  // = $spacing-md12 = --space-md12
+  margin: 16,    // = $spacing-md  = --space-lg16
+  marginMD: 20,  // antd 内部刻度，不在 spacing 双轨（文档已登记）
+  marginLG: 24,  // = $spacing-lg  = --space-xl24
   tableRowDensity: 'standard',
-  pagePaddingX: 0,
-  pagePaddingY: 0,
+  pagePaddingX: 16,  // = --page-pad-x（替代旧 0 的拥挤，给内容区合理留白）
+  pagePaddingY: 12,  // = --page-pad-y
   sidebarExpandedWidth: 180,
   sidebarCollapsedWidth: 48,
-  sidebarBgColor: '#e4e7ef',
-  sidebarActiveBgColor: 'rgba(255, 103, 0, 0.06)',
+  sidebarBgColor: '#EDEEF1',
+  sidebarActiveBgColor: '#FFF3EA',
   sidebarMaxTabs: 12,
 }
 
@@ -115,9 +115,9 @@ export const useThemeStore = defineStore('theme', () => {
       },
       components: {
         Table: {
-          headerBg: '#fafafa',
+          headerBg: '#fafafa',          // 对齐 --bg-muted 口径（antd token 不吃 var，保持字面量）
           headerColor: 'rgba(0, 0, 0, 0.85)',
-          rowHoverBg: '#f5f7fa',
+          rowHoverBg: '#f5f7fa',        // 对齐 --color-primary-light 口径（ant-override 行 hover 已用浅橙令牌覆盖）
           cellPaddingBlock: density.block,
           cellPaddingBlockSM: density.blockSM,
           cellPaddingBlockMD: density.block,
@@ -131,6 +131,8 @@ export const useThemeStore = defineStore('theme', () => {
         },
       },
       algorithm: algorithms,
+      cssVar: { prefix: 'sto' },
+      hashed: false,
     }
   })
 
@@ -187,16 +189,11 @@ export const useThemeStore = defineStore('theme', () => {
 `
   }
 
-  /** 动态注入页面间距 CSS */
+  /** 动态注入页面间距：写 CSS 变量而非注入 !important 规则（与 index.scss 的 .page-container 单一规则配合，收口双轨） */
   function applyPagePaddingCSS(paddingY: number, paddingX: number) {
-    const id = '__theme-page-padding__'
-    let style = document.getElementById(id) as HTMLStyleElement | null
-    if (!style) {
-      style = document.createElement('style')
-      style.id = id
-      document.head.appendChild(style)
-    }
-    style.textContent = `.page-container { padding: ${paddingY}px ${paddingX}px !important; }`
+    const s = document.documentElement.style
+    s.setProperty('--page-pad-x', paddingX + 'px')
+    s.setProperty('--page-pad-y', paddingY + 'px')
   }
 
   // 监听 tableRowDensity 变化，实时注入 CSS
@@ -219,8 +216,8 @@ export const useThemeStore = defineStore('theme', () => {
     style.setProperty('--sidebar-expanded-width', themeConfig.value.sidebarExpandedWidth + 'px')
     style.setProperty('--sidebar-collapsed-width', themeConfig.value.sidebarCollapsedWidth + 'px')
     style.setProperty('--sidebar-bg', themeConfig.value.sidebarBgColor)
-    style.setProperty('--sidebar-active-bg', themeConfig.value.sidebarActiveBgColor)
-    style.setProperty('--sidebar-active-indicator', themeConfig.value.colorPrimary || '#FF6700')
+    style.setProperty('--sidebar-item-active-bg', themeConfig.value.sidebarActiveBgColor)
+    style.setProperty('--sidebar-active-indicator', themeConfig.value.colorPrimary || '#E85E00')
   }
 
   // 监听侧栏配置变化，实时注入 CSS
@@ -238,6 +235,99 @@ export const useThemeStore = defineStore('theme', () => {
     { immediate: true }
   )
 
+  /** 动态注入完整设计令牌集到 :root（静态令牌为常量，动态主色/状态色由 themeConfig 派生） */
+  function applyDesignTokensCSS() {
+    const s = document.documentElement.style
+    const c = themeConfig.value
+    // —— 动态：主色（派生 hover/active/light/border 由 antd 算法吃 colorPrimary，这里仅暴露权威色阶常量）
+    s.setProperty('--color-primary', c.colorPrimary || '#E85E00')
+    s.setProperty('--color-primary-hover', '#FF6700')
+    s.setProperty('--color-primary-active', '#C94E00')
+    s.setProperty('--color-primary-light', '#FFF3EA')
+    s.setProperty('--color-primary-border', 'rgba(232,94,0,0.30)')
+    // —— 动态：状态主色由 themeConfig 派生；浅底/文字为常量
+    s.setProperty('--color-success', c.colorSuccess || '#2BA471')
+    s.setProperty('--color-success-light', '#E7F5EF')
+    s.setProperty('--color-success-text', '#0F6E56')
+    s.setProperty('--color-warning', c.colorWarning || '#E6A700')
+    s.setProperty('--color-warning-light', '#FBF1D8')
+    s.setProperty('--color-warning-text', '#8A6200')
+    s.setProperty('--color-danger', c.colorError || '#E5484D')
+    s.setProperty('--color-danger-light', '#FCEBEC')
+    s.setProperty('--color-danger-text', '#A3282C')
+    s.setProperty('--color-info', c.colorInfo || '#3A6FB0')
+    s.setProperty('--color-info-light', '#E9F0F8')
+    s.setProperty('--color-info-text', '#1C4366')
+    // —— 静态：文字
+    s.setProperty('--text-1', '#1F2329')
+    s.setProperty('--text-2', '#5A6068')
+    s.setProperty('--text-3', '#8A9099')
+    s.setProperty('--text-disabled', '#BFC3C9')
+    // —— 静态：表面/边框
+    s.setProperty('--bg-page', '#F5F6F8')
+    s.setProperty('--bg-card', '#FFFFFF')
+    s.setProperty('--bg-muted', '#EEF0F3')
+    s.setProperty('--border', '#E6E8EB')
+    s.setProperty('--border-strong', '#D6D9DD')
+    // —— 静态：外壳
+    s.setProperty('--topbar-ink', '#1F2430')
+    s.setProperty('--topbar-ink-admin', '#171A22')
+    s.setProperty('--topbar-border', 'rgba(255,255,255,0.10)')
+    // 注：--sidebar-bg / --sidebar-item-active-bg 由 applySidebarCSS 按 themeConfig 注入，此处补静态项
+    s.setProperty('--sidebar-item-hover', 'rgba(0,0,0,0.05)')
+    s.setProperty('--sidebar-item-active-text', 'var(--color-primary)')
+    // —— 静态：业务色
+    s.setProperty('--biz-waybill', '#6B4FB0')
+    s.setProperty('--biz-contract', '#8A6D3B')
+    s.setProperty('--biz-quality', '#D9603A')
+    s.setProperty('--biz-approval', '#3A6FB0')
+    s.setProperty('--biz-points', '#C99A2E')
+    s.setProperty('--biz-finance', '#B8860B')
+    // —— 静态：圆角
+    s.setProperty('--radius-sm', '4px')
+    s.setProperty('--radius-md', '6px')
+    s.setProperty('--radius-lg', '8px')
+    s.setProperty('--radius-modal', '12px')
+    s.setProperty('--radius-pill', '999px')
+    // —— 静态：阴影
+    s.setProperty('--shadow-sm', '0 1px 2px rgba(18,31,53,0.05)')
+    s.setProperty('--shadow-md', '0 4px 12px rgba(18,31,53,0.08)')
+    s.setProperty('--shadow-lg', '0 8px 24px rgba(18,31,53,0.10)')
+    // —— 静态：字号刻度
+    s.setProperty('--font-xs', '11px')
+    s.setProperty('--font-sm', '12px')
+    s.setProperty('--font-sm2', '13px')
+    s.setProperty('--font-base', '14px')
+    s.setProperty('--font-lg', '16px')
+    s.setProperty('--font-xl', '18px')
+    s.setProperty('--font-2xl', '24px')
+    // —— 静态：间距 4 基数
+    s.setProperty('--space-2xs2', '2px')
+    s.setProperty('--space-xs4', '4px')
+    s.setProperty('--space-sm8', '8px')
+    s.setProperty('--space-md12', '12px')
+    s.setProperty('--space-lg16', '16px')
+    s.setProperty('--space-xl24', '24px')
+    s.setProperty('--space-2xl32', '32px')
+    // —— 静态：布局范式（工具栏高度；页面内边距初值由 applyPagePaddingCSS 按 themeConfig 覆盖）
+    s.setProperty('--toolbar-height', '40px')
+  }
+
+  // 监听动态主色/状态色变化，实时重注入令牌集（静态项每次一并写入，幂等）
+  watch(
+    () => [
+      themeConfig.value.colorPrimary,
+      themeConfig.value.colorSuccess,
+      themeConfig.value.colorWarning,
+      themeConfig.value.colorError,
+      themeConfig.value.colorInfo,
+    ],
+    () => {
+      applyDesignTokensCSS()
+    },
+    { immediate: true }
+  )
+
   return {
     themeConfig,
     loading,
@@ -248,5 +338,6 @@ export const useThemeStore = defineStore('theme', () => {
     applyTableDensityCSS,
     applyPagePaddingCSS,
     applySidebarCSS,
+    applyDesignTokensCSS,
   }
 })

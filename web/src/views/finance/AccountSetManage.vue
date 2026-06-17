@@ -495,7 +495,7 @@ function handleMigration(row: any) {
 @use '@/styles/variables' as *;
 
 .link-text {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
 }

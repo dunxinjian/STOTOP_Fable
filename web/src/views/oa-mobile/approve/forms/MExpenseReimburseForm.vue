@@ -178,7 +178,7 @@ defineExpose({
       <div class="detail-tab">
         <span class="detail-tab-text">报销明细 {{ index + 1 }}</span>
         <span v-if="!props.readonly" class="detail-remove-btn" @click="removeDetail(index)">
-          <VanIcon name="cross" size="16" color="#f56c6c" />
+          <VanIcon name="cross" size="16" color="var(--color-danger)" />
         </span>
       </div>
 
@@ -360,7 +360,7 @@ defineExpose({
               <div class="node-sub">抄送1人</div>
             </div>
             <div class="node-badge-area">
-              <VanTag color="#07c160" round size="medium" class="cc-tag">{{ (data?.applicantName || '-').charAt(0) }}</VanTag>
+              <VanTag color="var(--color-success)" round size="medium" class="cc-tag">{{ (data?.applicantName || '-').charAt(0) }}</VanTag>
               <VanIcon name="plus" size="14" color="#999" class="cc-plus" />
               <VanIcon name="plus" size="14" color="#999" class="cc-plus" />
             </div>
@@ -427,8 +427,8 @@ defineExpose({
 
 /* 报销总额卡片 */
 .total-amount-card {
-  background: linear-gradient(135deg, #4d8cf7 0%, #6fa3fb 100%);
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
   margin-bottom: 16px;
 }
@@ -475,7 +475,7 @@ defineExpose({
   font-size: 13px;
   color: #999;
   padding: 4px 0;
-  border-bottom: 2px solid #4d8cf7;
+  border-bottom: 2px solid var(--color-primary);
 }
 .detail-remove-btn {
   display: flex;
@@ -506,7 +506,7 @@ defineExpose({
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f56c6c;
+  background: var(--color-danger);
   display: inline-block;
   flex-shrink: 0;
 }
@@ -642,7 +642,7 @@ defineExpose({
 }
 .process-link {
   font-size: 13px;
-  color: #4d8cf7;
+  color: var(--color-primary);
 }
 .process-node {
   position: relative;
@@ -656,7 +656,7 @@ defineExpose({
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #4d8cf7;
+  background: var(--color-primary);
 }
 .node-line {
   position: absolute;

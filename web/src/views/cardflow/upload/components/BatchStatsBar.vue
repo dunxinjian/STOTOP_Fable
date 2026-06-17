@@ -52,12 +52,12 @@ defineProps<{
   border-radius: 50%;
   flex-shrink: 0;
 
-  &.blue { background: #1677ff; }
-  &.blue-pulse { background: #1677ff; animation: pulse 1.5s infinite; }
-  &.red { background: #ff4d4f; }
-  &.orange { background: #faad14; }
-  &.green { background: #52c41a; }
-  &.purple { background: #722ed1; }
+  &.blue { background: var(--color-info); }
+  &.blue-pulse { background: var(--color-info); animation: pulse 1.5s infinite; }
+  &.red { background: var(--color-danger); }
+  &.orange { background: var(--color-warning); }
+  &.green { background: var(--color-success); }
+  &.purple { background: var(--biz-waybill); }
 }
 
 .kpi-value {

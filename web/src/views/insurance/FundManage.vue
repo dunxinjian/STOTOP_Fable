@@ -21,7 +21,7 @@
     <a-row :gutter="16" style="margin-bottom: 16px">
       <a-col v-for="fund in fundCards" :key="fund.Id" :span="6">
         <a-card :bordered="false" class="stat-card">
-          <a-statistic :title="fund.FundName" :value="fund.FundBalance" :precision="2" prefix="¥" :value-style="{ color: fund.FundBalance > 0 ? '#52c41a' : '#ff4d4f' }" />
+          <a-statistic :title="fund.FundName" :value="fund.FundBalance" :precision="2" prefix="¥" :value-style="{ color: fund.FundBalance > 0 ? 'var(--color-success)' : 'var(--color-danger)' }" />
           <div style="margin-top: 4px; font-size: 12px; color: #999">
             缴入: ¥{{ fund.TotalContributions.toFixed(2) }} | 赔出: ¥{{ fund.TotalPayouts.toFixed(2) }}
           </div>
@@ -50,7 +50,7 @@
                 <a-tag>{{ businessTypeMap[record.BusinessType] || '未知' }}</a-tag>
               </template>
               <template v-if="column.dataIndex === 'FundBalance'">
-                <span :style="{ color: record.FundBalance >= 0 ? '#52c41a' : '#ff4d4f', fontWeight: 500 }">
+                <span :style="{ color: record.FundBalance >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 500 }">
                   ¥{{ record.FundBalance.toFixed(2) }}
                 </span>
               </template>

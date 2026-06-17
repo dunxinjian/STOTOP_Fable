@@ -3,6 +3,7 @@
 @use './button-styles.scss';
 @use './spacing.scss';
 @use './layout.scss';
+@use './vant-bridge.scss';
 
 // Reset
 *,
@@ -55,8 +56,11 @@ body {
 }
 
 // === 页面容器 ===
+// 单一规则消费 --page-pad-x/y 令牌（动态轨由 theme.ts applyPagePaddingCSS 写变量），
+// 已收口旧 !important 双轨；背景统一 --bg-page。
 .page-container {
-  padding: $page-padding;
+  padding: $page-pad-y $page-pad-x;
+  background: $bg-page;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -129,13 +133,39 @@ body {
   }
 }
 
-// 通用卡片
+// 通用卡片范式：圆角 + 边框 + 阴影 + 内边距四要素一齐（令牌化）
 .page-card {
-  background: #fff;
-  border-radius: 0;
-  padding: 20px;
+  background: $bg-card;
+  border-radius: $border-radius-lg;
+  border: 1px solid $border-color;
+  padding: $spacing-md; // 16
   box-shadow: $shadow-sm;
   margin-bottom: $section-gap;
+}
+
+// === 全局工具栏范式 .page-toolbar ===
+// 列表/详情页顶部按钮行的统一骨架，对齐各页手写的 .toolbar-row/.filter-group
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm; // 8
+  min-height: $toolbar-height;
+  padding: $spacing-sm $spacing-md; // 8 16
+
+  // 按钮组（左侧主操作）
+  &__group {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  // 筛选区（推到右侧）
+  &__filters {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-left: auto;
+  }
 }
 
 // 通用搜索栏
@@ -143,9 +173,9 @@ body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 20px;
-  background: #fff;
+  gap: $spacing-md12;
+  padding: $spacing-md $spacing-lg;
+  background: $bg-card;
   border-radius: 0;
   box-shadow: $shadow-sm;
   margin-top: 10px;
@@ -221,7 +251,7 @@ body {
 
 // === 统一卡片区域 ===
 .page-section {
-  background: #fff;
+  background: $bg-card;
   border-radius: 0;
   padding: $spacing-lg;
   margin-bottom: $section-gap;
@@ -229,7 +259,7 @@ body {
   &__title {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: $text-primary;
     margin-bottom: $spacing-md;
   }
 }

@@ -893,11 +893,11 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   position: relative;
 
   &:hover {
-    color: #1677FF;
+    color: var(--color-primary);
   }
 
   &.active {
-    color: #1677FF;
+    color: var(--color-primary);
     font-weight: 600;
 
     &::after {
@@ -908,7 +908,7 @@ watch(() => accountSetStore.currentAccountSetId, () => {
       transform: translateX(-50%);
       width: 70%;
       height: 2px;
-      background: #1677FF;
+      background: var(--color-primary);
       border-radius: 1px;
     }
   }

@@ -218,10 +218,10 @@
           </tbody>
         </table>
         <div v-if="report.adjustedBankBalance === report.adjustedBookBalance" class="balance-match">
-          <CheckCircleOutlined style="color: #52c41a;" /> 调节后余额一致
+          <CheckCircleOutlined style="color: var(--color-success);" /> 调节后余额一致
         </div>
         <div v-else class="balance-mismatch">
-          <CloseCircleOutlined style="color: #f5222d;" />
+          <CloseCircleOutlined style="color: var(--color-danger);" />
           调节后余额不一致，差额：{{ formatAmount(report.adjustedBankBalance - report.adjustedBookBalance) }}
         </div>
       </div>
@@ -625,10 +625,10 @@ onMounted(() => {
     transition: all 0.2s;
     background: transparent;
 
-    &:hover { color: #1890ff; }
+    &:hover { color: var(--color-primary); }
     &.active {
       color: #fff;
-      background: #1890ff;
+      background: var(--color-primary);
       font-weight: 500;
     }
   }
@@ -699,7 +699,7 @@ onMounted(() => {
     font-size: 14px;
 
     strong {
-      color: #1890ff;
+      color: var(--color-info);
     }
   }
 }
@@ -710,10 +710,10 @@ onMounted(() => {
 }
 
 :deep(.selected-row) {
-  background-color: #e6f7ff !important;
+  background-color: var(--color-primary-light) !important;
 
   td {
-    background-color: #e6f7ff !important;
+    background-color: var(--color-primary-light) !important;
   }
 }
 
@@ -745,11 +745,11 @@ onMounted(() => {
     .section-header td {
       background: #f0f5ff;
       font-weight: 500;
-      color: #1890ff;
+      color: var(--color-info);
     }
 
     .total-row td {
-      background: #fffbe6;
+      background: var(--color-warning-light);
       font-weight: 600;
     }
 
@@ -764,7 +764,7 @@ onMounted(() => {
     text-align: center;
     padding: 12px;
     font-size: 15px;
-    color: #52c41a;
+    color: var(--color-success);
     font-weight: 500;
   }
 
@@ -772,7 +772,7 @@ onMounted(() => {
     text-align: center;
     padding: 12px;
     font-size: 15px;
-    color: #f5222d;
+    color: var(--color-danger);
     font-weight: 500;
   }
 }

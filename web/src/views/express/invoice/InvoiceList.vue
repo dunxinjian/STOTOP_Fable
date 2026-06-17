@@ -27,19 +27,19 @@
             <a-tab-pane key="1">
               <template #tab>
                 已确认
-                <a-badge :count="tabCounts.confirmed" :number-style="{ backgroundColor: '#1890ff' }" style="margin-left: 4px" />
+                <a-badge :count="tabCounts.confirmed" :number-style="{ backgroundColor: 'var(--color-info)' }" style="margin-left: 4px" />
               </template>
             </a-tab-pane>
             <a-tab-pane key="2">
               <template #tab>
                 已发送
-                <a-badge :count="tabCounts.sent" :number-style="{ backgroundColor: '#fa8c16' }" style="margin-left: 4px" />
+                <a-badge :count="tabCounts.sent" :number-style="{ backgroundColor: 'var(--color-warning)' }" style="margin-left: 4px" />
               </template>
             </a-tab-pane>
             <a-tab-pane key="3">
               <template #tab>
                 已收款
-                <a-badge :count="tabCounts.paid" :number-style="{ backgroundColor: '#52c41a' }" style="margin-left: 4px" />
+                <a-badge :count="tabCounts.paid" :number-style="{ backgroundColor: 'var(--color-success)' }" style="margin-left: 4px" />
               </template>
             </a-tab-pane>
           </a-tabs>
@@ -110,7 +110,7 @@
             ¥{{ (record.totalCost ?? 0).toFixed(2) }}
           </template>
           <template v-if="column.dataIndex === 'totalProfit'">
-            <span :style="{ color: (record.totalProfit ?? 0) >= 0 ? '#52c41a' : '#ff4d4f' }">
+            <span :style="{ color: (record.totalProfit ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">
               ¥{{ (record.totalProfit ?? 0).toFixed(2) }}
             </span>
           </template>
@@ -595,7 +595,7 @@ onMounted(() => {
 @use '@/styles/variables.scss' as *;
 
 .cross-module-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;
@@ -607,14 +607,14 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
   border-radius: 4px;
   margin-bottom: 12px;
 }
 
 .batch-count {
-  color: #1890ff;
+  color: var(--color-info);
   font-size: 14px;
 }
 </style>

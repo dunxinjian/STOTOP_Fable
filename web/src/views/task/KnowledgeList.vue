@@ -138,7 +138,7 @@
         </div>
       </template>
 
-      <a-empty v-if="!loading && list.length === 0" description="暂无知识文章" />
+      <EmptyState v-if="!loading && list.length === 0" title="暂无知识文章" />
     </a-spin>
   </div>
 </template>

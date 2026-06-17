@@ -291,11 +291,11 @@ onMounted(() => { fetchList() })
 }
 
 .low-stock {
-  color: #f5222d;
+  color: var(--color-danger);
   font-weight: 600;
 }
 
 :deep(.low-stock-row) {
-  background-color: #fff2f0 !important;
+  background-color: var(--color-danger-light) !important;
 }
 </style>

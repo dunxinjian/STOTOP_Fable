@@ -43,20 +43,20 @@
                     type="circle"
                     :percent="completionPercent"
                     :size="140"
-                    :stroke-color="'#1890ff'"
+                    :stroke-color="'var(--color-info)'"
                   />
                 </div>
                 <a-row :gutter="8" class="progress-detail">
                   <a-col :span="8" class="progress-detail__item">
-                    <div class="progress-detail__value" style="color: #1890ff">{{ project?.inProgressTaskCount ?? 0 }}</div>
+                    <div class="progress-detail__value" style="color: var(--color-info)">{{ project?.inProgressTaskCount ?? 0 }}</div>
                     <div class="progress-detail__label">进行中</div>
                   </a-col>
                   <a-col :span="8" class="progress-detail__item">
-                    <div class="progress-detail__value" style="color: #52c41a">{{ project?.completedTaskCount ?? 0 }}</div>
+                    <div class="progress-detail__value" style="color: var(--color-success)">{{ project?.completedTaskCount ?? 0 }}</div>
                     <div class="progress-detail__label">已完成</div>
                   </a-col>
                   <a-col :span="8" class="progress-detail__item">
-                    <div class="progress-detail__value" style="color: #ff4d4f">{{ project?.overdueTaskCount ?? 0 }}</div>
+                    <div class="progress-detail__value" style="color: var(--color-danger)">{{ project?.overdueTaskCount ?? 0 }}</div>
                     <div class="progress-detail__label">已逾期</div>
                   </a-col>
                 </a-row>
@@ -157,7 +157,7 @@
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'userName'">
                   <a-space>
-                    <a-avatar :size="28" style="background-color: #1890ff">
+                    <a-avatar :size="28" style="background-color: var(--color-info)">
                       {{ (record.userName || '?').charAt(0) }}
                     </a-avatar>
                     {{ record.userName || '未知' }}
@@ -179,7 +179,7 @@
                 </template>
                 <template v-if="column.dataIndex === 'action'">
                   <a-popconfirm title="确定移除该成员？" @confirm="handleRemoveMember(record)">
-                    <a style="color: #ff4d4f">移除</a>
+                    <a style="color: var(--color-danger)">移除</a>
                   </a-popconfirm>
                 </template>
               </template>
@@ -351,10 +351,10 @@ const completionPercent = computed(() => {
 const statCards = computed(() => {
   const p = project.value
   return [
-    { label: '总任务数', value: p?.taskCount ?? 0, color: '#1890ff' },
-    { label: '已完成', value: p?.completedTaskCount ?? 0, color: '#52c41a' },
-    { label: '进行中', value: p?.inProgressTaskCount ?? 0, color: '#faad14' },
-    { label: '已逾期', value: p?.overdueTaskCount ?? 0, color: '#ff4d4f' },
+    { label: '总任务数', value: p?.taskCount ?? 0, color: 'var(--color-info)' },
+    { label: '已完成', value: p?.completedTaskCount ?? 0, color: 'var(--color-success)' },
+    { label: '进行中', value: p?.inProgressTaskCount ?? 0, color: 'var(--color-warning)' },
+    { label: '已逾期', value: p?.overdueTaskCount ?? 0, color: 'var(--color-danger)' },
   ]
 })
 

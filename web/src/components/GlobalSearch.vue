@@ -72,7 +72,14 @@
             </div>
           </template>
         </div>
-        <div class="search-empty" v-else>
+        <div
+          v-if="hiddenResultCount > 0"
+          class="search-more"
+          @click="showAllResults = true"
+        >
+          显示更多 {{ hiddenResultCount }} 条结果
+        </div>
+        <div class="search-empty" v-else-if="!filteredResults.length">
           <SearchOutlined class="empty-icon" />
           <div class="empty-text">未找到"<span class="empty-keyword">{{ keyword.trim() }}</span>"相关功能</div>
           <div class="empty-hint">试试换个关键词或拼音首字母</div>
@@ -202,6 +209,9 @@ const activeIndex = ref(0)
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const scrollContainerRef = ref<HTMLElement | null>(null)
 const expandedModules = ref<string[]>([])
+/** 搜索结果默认显示上限；超出后折叠并提供"显示更多" */
+const SEARCH_LIMIT = 20
+const showAllResults = ref(false)
 
 // ---- 模块名称映射 ----
 
@@ -293,6 +303,8 @@ function getModuleSubItems(moduleCode: string): MenuItem[] {
 // ---- 搜索过滤（拼音模糊匹配） ----
 
 /** 所有菜单项展平（带模块信息），递归到所有层级 */
+// 依赖链：visibleModules(→getModuleVisibility→menus.ref) + getCurrentModuleMenus(→menus.ref)
+// 两路径均同步读取 permission store 的 menus ref，后端刷新/登出/换组织时自动重算，无需手动失效。
 const allFlatMenus = computed<FlatMenuItem[]>(() => {
   const result: FlatMenuItem[] = []
   const seen = new Set<string>()
@@ -324,8 +336,8 @@ const allFlatMenus = computed<FlatMenuItem[]>(() => {
   return result
 })
 
-/** 模糊过滤结果 */
-const filteredResults = computed<FlatMenuItem[]>(() => {
+/** 全部模糊匹配结果（未截断），供计数与"显示更多"使用 */
+const allMatchedResults = computed<FlatMenuItem[]>(() => {
   const kw = keyword.value.trim()
   if (!kw) return []
   const lowerKw = kw.toLowerCase()
@@ -342,8 +354,19 @@ const filteredResults = computed<FlatMenuItem[]>(() => {
       const scoreB = getMatchScore(b, lowerKw)
       return scoreB - scoreA
     })
-    .slice(0, 20)
 })
+
+/** 实际渲染的结果：默认截断到 SEARCH_LIMIT，点击"显示更多"后展开全部 */
+const filteredResults = computed<FlatMenuItem[]>(() => {
+  return showAllResults.value
+    ? allMatchedResults.value
+    : allMatchedResults.value.slice(0, SEARCH_LIMIT)
+})
+
+/** 被折叠隐藏的结果条数（>0 时显示"显示更多"） */
+const hiddenResultCount = computed(() =>
+  Math.max(0, allMatchedResults.value.length - filteredResults.value.length)
+)
 
 function getMatchScore(item: FlatMenuItem, lowerKw: string): number {
   const lowerName = item.name.toLowerCase()
@@ -431,6 +454,13 @@ const totalNavigableItems = computed(() => {
 })
 
 // ---- 键盘导航 ----
+
+// 列表长度变化（清空搜索 / 展开折叠模块）后，夹紧 activeIndex 避免越界丢失高亮
+watch(totalNavigableItems, (total) => {
+  if (activeIndex.value > total - 1) {
+    activeIndex.value = Math.max(0, total - 1)
+  }
+})
 
 function moveUp() {
   if (activeIndex.value > 0) activeIndex.value--
@@ -606,9 +636,14 @@ watch(() => orgContextStore.orgSwitchVersion, () => {
   activeIndex.value = 0
 })
 
-// keyword 变化时重置 activeIndex
+// keyword 变化时重置 activeIndex 与展开开关，并把焦点保持在输入框，
+// 保证搜索/浏览两套索引切换后键盘导航连续
 watch(keyword, () => {
   activeIndex.value = 0
+  showAllResults.value = false
+  nextTick(() => {
+    searchInputRef.value?.focus({ preventScroll: true })
+  })
 })
 
 // 监听 visible 变化，弹窗打开时尝试提前聚焦（afterOpenChange 会做最终保障）
@@ -649,10 +684,10 @@ defineExpose({ open })
   }
 
   .ant-modal-content {
-    border-radius: 12px;
+    border-radius: var(--radius-modal);
     overflow: hidden;
     padding: 0;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
   }
 
   .ant-modal-body {
@@ -706,21 +741,22 @@ defineExpose({ open })
 </style>
 
 <style scoped lang="scss">
-$brand: #FF6700;
-$brand-bg: #FFF1E8;
-
 .search-header {
   display: flex;
   align-items: center;
   padding: 14px 18px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
+
+  &:focus-within {
+    border-bottom-color: var(--color-primary);
+  }
 
   &:focus-within .search-icon {
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--color-primary);
   }
 
   .search-icon {
-    font-size: 18px;
+    font-size: var(--font-lg);
     color: rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
     transition: color 0.2s;
@@ -731,17 +767,17 @@ $brand-bg: #FFF1E8;
     margin: 0 12px;
     border: none;
     outline: none;
-    font-size: 15px;
-    color: rgba(0, 0, 0, 0.85);
+    font-size: var(--font-base);
+    color: var(--text-1);
     background: transparent;
 
     &::placeholder {
-      color: #bfbfbf;
+      color: var(--text-disabled);
     }
   }
 
   .search-clear {
-    font-size: 14px;
+    font-size: var(--font-base);
     color: rgba(0, 0, 0, 0.25);
     cursor: pointer;
     margin-right: 8px;
@@ -754,12 +790,12 @@ $brand-bg: #FFF1E8;
   }
 
   .search-hint {
-    font-size: 10px;
-    color: rgba(0, 0, 0, 0.3);
+    font-size: var(--font-xs);
+    color: var(--text-3);
     flex-shrink: 0;
     padding: 2px 6px;
-    border: 1px solid #e8e8e8;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     letter-spacing: 0.5px;
   }
@@ -774,7 +810,7 @@ $brand-bg: #FFF1E8;
     width: 4px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #ddd;
+    background: var(--border-strong);
     border-radius: 2px;
   }
 }
@@ -782,16 +818,16 @@ $brand-bg: #FFF1E8;
 .section {
   &:not(:first-child) {
     margin-top: 4px;
-    border-top: 1px solid #f5f5f5;
+    border-top: 1px solid var(--border);
     padding-top: 4px;
   }
 }
 
 .section-title {
   padding: 8px 18px 4px;
-  font-size: 11px;
+  font-size: var(--font-xs);
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: flex;
@@ -804,12 +840,13 @@ $brand-bg: #FFF1E8;
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: $brand;
+    background: var(--color-primary);
     opacity: 0.6;
   }
 }
 
 .search-item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -818,27 +855,35 @@ $brand-bg: #FFF1E8;
   transition: background 0.12s;
 
   &:hover {
-    background: $brand-bg;
+    background: var(--bg-muted);
   }
 
   &.active {
-    background: $brand-bg;
-    border-left: 3px solid $brand;
-    padding-left: 15px; // 原18px减3px
+    background: var(--color-primary-light);
+  }
+
+  &.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-primary);
   }
 
   .item-name {
-    font-size: 13.5px;
-    color: rgba(0, 0, 0, 0.85);
+    font-size: var(--font-sm2);
+    color: var(--text-1);
     font-weight: 450;
   }
 
   .item-module-tag {
-    font-size: 11px;
-    color: $brand;
-    background: rgba(255, 103, 0, 0.06);
+    font-size: var(--font-xs);
+    color: var(--color-primary);
+    background: var(--color-primary-light);
     padding: 1px 7px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     margin-left: 12px;
   }
@@ -848,16 +893,13 @@ $brand-bg: #FFF1E8;
 
     .item-name {
       font-weight: 400;
-      font-size: 13px;
-    }
-
-    &.active {
-      padding-left: 37px;
+      font-size: var(--font-sm2);
     }
   }
 }
 
 .module-header {
+  position: relative;
   display: flex;
   align-items: center;
   padding: 7px 18px;
@@ -865,18 +907,26 @@ $brand-bg: #FFF1E8;
   transition: background 0.12s;
 
   &:hover {
-    background: $brand-bg;
+    background: var(--bg-muted);
   }
 
   &.active {
-    background: $brand-bg;
-    border-left: 3px solid $brand;
-    padding-left: 15px; // 原18px减3px
+    background: var(--color-primary-light);
+  }
+
+  &.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-primary);
   }
 
   .module-expand-icon {
-    font-size: 10px;
-    color: rgba(0, 0, 0, 0.4);
+    font-size: var(--font-xs);
+    color: var(--text-3);
     width: 14px;
     flex-shrink: 0;
     transition: transform 0.2s ease;
@@ -887,19 +937,19 @@ $brand-bg: #FFF1E8;
   }
 
   .module-name {
-    font-size: 13.5px;
-    color: rgba(0, 0, 0, 0.85);
+    font-size: var(--font-sm2);
+    color: var(--text-1);
     font-weight: 500;
     margin-left: 4px;
   }
 
   .module-count {
-    font-size: 10px;
-    color: rgba(0, 0, 0, 0.4);
+    font-size: var(--font-xs);
+    color: var(--text-3);
     margin-left: 6px;
-    background: #f5f5f5;
+    background: var(--bg-muted);
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     line-height: 16px;
   }
 }
@@ -907,29 +957,29 @@ $brand-bg: #FFF1E8;
 .search-empty {
   padding: 36px 18px;
   text-align: center;
-  color: rgba(0, 0, 0, 0.35);
-  font-size: 13.5px;
+  color: var(--text-3);
+  font-size: var(--font-sm2);
 
   .empty-icon {
     font-size: 32px;
-    color: rgba(0, 0, 0, 0.12);
+    color: var(--text-disabled);
     margin-bottom: 12px;
   }
 
   .empty-text {
-    font-size: 13.5px;
-    color: rgba(0, 0, 0, 0.45);
+    font-size: var(--font-sm2);
+    color: var(--text-2);
     margin-bottom: 4px;
   }
 
   .empty-keyword {
-    color: $brand;
+    color: var(--color-primary);
     font-weight: 500;
   }
 
   .empty-hint {
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.25);
+    font-size: var(--font-sm);
+    color: var(--text-3);
   }
 }
 
@@ -939,47 +989,64 @@ $brand-bg: #FFF1E8;
 
 .result-group-title {
   padding: 6px 18px 2px;
-  font-size: 11px;
+  font-size: var(--font-xs);
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-3);
 
   &:not(:first-child) {
     margin-top: 4px;
-    border-top: 1px solid #f5f5f5;
+    border-top: 1px solid var(--border);
     padding-top: 8px;
   }
 }
 
 .recommended-item {
   position: relative;
-  background: linear-gradient(90deg, rgba(255, 103, 0, 0.03) 0%, transparent 100%);
+  background: var(--color-primary-light);
+  box-shadow: inset 2px 0 0 var(--color-primary);
+}
+.recommended-item:hover {
+  background: var(--bg-muted);
 }
 
 :deep(.match-hl) {
-  background: rgba(255, 103, 0, 0.15);
-  color: $brand;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   padding: 0 1px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
 .item-icon {
-  font-size: 13px;
+  font-size: var(--font-sm2);
   margin-right: 8px;
   flex-shrink: 0;
 }
 
 .recommended-icon {
-  color: $brand;
+  color: var(--color-primary);
 }
 
 .recommend-reason {
-  background: $brand-bg;
-  color: $brand;
-  font-size: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: var(--font-xs);
   padding: 1px 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.search-more {
+  padding: var(--space-sm8) var(--space-lg16);
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+
+  &:hover {
+    background: var(--bg-muted);
+  }
 }
 </style>

@@ -9,7 +9,7 @@
           <a-statistic
             title="Schema 同步状态"
             :value="syncStatus.hasPendingChanges ? `有${syncStatus.pendingCount}项待执行变更` : '已同步'"
-            :value-style="{ color: syncStatus.hasPendingChanges ? '#faad14' : '#52c41a', fontSize: '16px' }"
+            :value-style="{ color: syncStatus.hasPendingChanges ? 'var(--color-warning)' : 'var(--color-success)', fontSize: '16px' }"
           />
         </a-card>
       </a-col>
@@ -18,7 +18,7 @@
           <a-statistic
             title="Seeder 版本状态"
             :value="syncStatus.seederStatus || '加载中...'"
-            :value-style="{ color: syncStatus.seederStatus === '全部已执行' ? '#52c41a' : '#faad14', fontSize: '16px' }"
+            :value-style="{ color: syncStatus.seederStatus === '全部已执行' ? 'var(--color-success)' : 'var(--color-warning)', fontSize: '16px' }"
           />
         </a-card>
       </a-col>

@@ -1,6 +1,6 @@
 <template>
   <div class="page-placeholder">
-    <a-empty description="系统设置模块开发中" />
+    <EmptyState description="系统设置模块开发中" />
   </div>
 </template>
 

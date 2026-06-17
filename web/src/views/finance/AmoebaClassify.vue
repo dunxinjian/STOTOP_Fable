@@ -28,7 +28,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'amount'">
-            <span :style="{ color: record.amount >= 0 ? '#333' : '#f5222d' }">
+            <span :style="{ color: record.amount >= 0 ? '#333' : 'var(--color-danger)' }">
               {{ formatAmount(record.amount) }}
             </span>
           </template>
@@ -47,7 +47,7 @@
           </template>
         </template>
         <template #emptyText>
-          <a-empty description="暂无未分类数据" />
+          <EmptyState description="暂无未分类数据" />
         </template>
       </a-table>
     </a-card>

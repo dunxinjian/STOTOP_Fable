@@ -50,11 +50,11 @@
           <a-descriptions-item label="总重量(kg)">{{ (detail?.totalWeight ?? 0).toFixed(2) }}</a-descriptions-item>
           <a-descriptions-item label="均重(kg)">{{ (detail?.avgWeight ?? 0).toFixed(2) }}</a-descriptions-item>
           <a-descriptions-item label="应收金额">
-            <span style="color: #1890ff; font-weight: 600">¥{{ (detail?.totalCharge ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-info); font-weight: 600">¥{{ (detail?.totalCharge ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="成本">¥{{ (detail?.totalCost ?? 0).toFixed(2) }}</a-descriptions-item>
           <a-descriptions-item label="毛利">
-            <span :style="{ color: (detail?.totalProfit ?? 0) >= 0 ? '#52c41a' : '#ff4d4f', fontWeight: '600' }">
+            <span :style="{ color: (detail?.totalProfit ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: '600' }">
               ¥{{ (detail?.totalProfit ?? 0).toFixed(2) }}
             </span>
           </a-descriptions-item>
@@ -67,10 +67,10 @@
           <a-descriptions-item label="均重上限(kg)">{{ detail?.weightCap ?? '-' }}</a-descriptions-item>
           <a-descriptions-item label="超标重量(kg)">{{ (detail?.excessWeight ?? 0).toFixed(2) }}</a-descriptions-item>
           <a-descriptions-item label="均重超标附加费">
-            <span style="color: #ff4d4f">¥{{ (detail?.weightCapSurcharge ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-danger)">¥{{ (detail?.weightCapSurcharge ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="省份配额附加费">
-            <span style="color: #ff4d4f">¥{{ (detail?.quotaSurcharge ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-danger)">¥{{ (detail?.quotaSurcharge ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="含附加费应收">
             <span style="font-weight: 600">¥{{ (detail?.totalChargeWithSurcharge ?? 0).toFixed(2) }}</span>
@@ -83,7 +83,7 @@
         <a-descriptions :column="3" bordered size="small">
           <a-descriptions-item label="预付款抵扣">¥{{ (detail?.prepayDeduction ?? 0).toFixed(2) }}</a-descriptions-item>
           <a-descriptions-item label="应付金额">
-            <span style="color: #fa8c16; font-weight: 600">¥{{ (detail?.payableAmount ?? 0).toFixed(2) }}</span>
+            <span style="color: var(--color-warning); font-weight: 600">¥{{ (detail?.payableAmount ?? 0).toFixed(2) }}</span>
           </a-descriptions-item>
         </a-descriptions>
       </a-card>
@@ -174,7 +174,7 @@
                 <a-table-summary-cell :index="5" align="right" />
                 <a-table-summary-cell :index="6" align="right" />
                 <a-table-summary-cell :index="7" align="right">
-                  <strong style="color: #1890ff">¥{{ (reconciliation?.totalCharge ?? 0).toFixed(2) }}</strong>
+                  <strong style="color: var(--color-info)">¥{{ (reconciliation?.totalCharge ?? 0).toFixed(2) }}</strong>
                 </a-table-summary-cell>
               </a-table-summary-row>
             </a-table-summary>
@@ -471,7 +471,7 @@ onMounted(() => {
 @use '@/styles/variables.scss' as *;
 
 .cross-module-link {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;

@@ -431,7 +431,7 @@ onMounted(() => { fetchList() })
 @use '@/styles/variables.scss' as *;
 
 .expiry-warning {
-  color: #ff4d4f;
+  color: var(--color-danger);
   font-weight: 500;
 }
 </style>

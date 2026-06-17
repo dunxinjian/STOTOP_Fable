@@ -66,10 +66,10 @@
           <template v-if="column.dataIndex === 'revenue'">¥{{ record.revenue?.toFixed(2) }}</template>
           <template v-if="column.dataIndex === 'cost'">¥{{ record.cost?.toFixed(2) }}</template>
           <template v-if="column.dataIndex === 'profit'">
-            <span :style="{ color: record.profit >= 0 ? '#52c41a' : '#f5222d' }">¥{{ record.profit?.toFixed(2) }}</span>
+            <span :style="{ color: record.profit >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">¥{{ record.profit?.toFixed(2) }}</span>
           </template>
           <template v-if="column.dataIndex === 'profitRate'">
-            <span :style="{ color: record.profitRate >= 0 ? '#52c41a' : '#f5222d' }">{{ record.profitRate?.toFixed(1) }}%</span>
+            <span :style="{ color: record.profitRate >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }">{{ record.profitRate?.toFixed(1) }}%</span>
           </template>
           <template v-if="column.dataIndex === 'dataSource'">
             <a-tag :color="record.dataSource === 1 ? 'blue' : 'green'">
@@ -150,8 +150,8 @@ const trendChartOption = computed(() => ({
     { type: 'value', name: '毛利率', axisLabel: { formatter: '{value}%' } },
   ],
   series: [
-    { name: '毛利金额', type: 'line', data: [12000, 15000, 13000, 18000, 20000, 17000, 22000, 19000, 25000, 23000, 28000, 26000], smooth: true, itemStyle: { color: '#409eff' } },
-    { name: '毛利率', type: 'line', yAxisIndex: 1, data: [15, 18, 16, 20, 22, 19, 24, 21, 26, 25, 28, 27], smooth: true, itemStyle: { color: '#67c23a' } },
+    { name: '毛利金额', type: 'line', data: [12000, 15000, 13000, 18000, 20000, 17000, 22000, 19000, 25000, 23000, 28000, 26000], smooth: true, itemStyle: { color: '#3A6FB0' } },
+    { name: '毛利率', type: 'line', yAxisIndex: 1, data: [15, 18, 16, 20, 22, 19, 24, 21, 26, 25, 28, 27], smooth: true, itemStyle: { color: '#2BA471' } },
   ],
 }))
 
@@ -164,7 +164,7 @@ const rankingChartOption = computed(() => {
     grid: { left: 100, right: 20, top: 20, bottom: 30 },
     xAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
     yAxis: { type: 'category', data: names, axisLabel: { width: 80, overflow: 'truncate' } },
-    series: [{ type: 'bar', data: profits, itemStyle: { color: '#67c23a' }, barMaxWidth: 30 }],
+    series: [{ type: 'bar', data: profits, itemStyle: { color: '#2BA471' }, barMaxWidth: 30 }],
   }
 })
 

@@ -1399,16 +1399,16 @@ function escapeHtml(s: string): string {
   // Hover 态：淡蓝底 + 主题文字
   :deep(.ant-tabs-tab:hover) {
     background: #f0f7ff;
-    color: #1677ff;
+    color: var(--color-primary);
   }
   // 激活态：四重视觉强化（浅蓝底 + 蓝边 + 主题文字加粗 + 顶部 3px 蓝色内阴影）
   :deep(.ant-tabs-tab.ant-tabs-tab-active) {
-    background: #e6f4ff;
-    border-color: #91caff;
-    box-shadow: inset 0 3px 0 0 #1677ff;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-border);
+    box-shadow: inset 0 3px 0 0 var(--color-primary);
   }
   :deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: #1677ff;
+    color: var(--color-primary);
     font-weight: 600;
     font-size: 14px;
     text-shadow: none;
@@ -1470,15 +1470,15 @@ function escapeHtml(s: string): string {
         margin-left: 4px;
         padding: 1px 5px;
         border-radius: 3px;
-        background: #e6f4ff;
-        color: #1890ff;
+        background: var(--color-info-light);
+        color: var(--color-info);
         font-size: 11px;
         font-weight: normal;
       }
 
       &-current .th-period-tag {
-        background: #fff7e6;
-        color: #fa8c16;
+        background: var(--color-warning-light);
+        color: var(--color-warning);
       }
     }
 
@@ -1572,13 +1572,13 @@ function escapeHtml(s: string): string {
 
     // 趋势 badge 样式
     &.change-up {
-      color: #389e0d;
-      background: #f6ffed;
+      color: var(--color-success-text);
+      background: var(--color-success-light);
       border-radius: 3px;
     }
     &.change-down {
-      color: #cf1322;
-      background: #fff2f0;
+      color: var(--color-danger-text);
+      background: var(--color-danger-light);
       border-radius: 3px;
     }
     &.change-zero {
@@ -1603,11 +1603,11 @@ function escapeHtml(s: string): string {
     width: 24px;
     height: 24px;
     padding: 0;
-    color: #1677ff;
+    color: var(--color-primary);
 
     &:hover {
-      color: #0958d9;
-      background: #e6f4ff;
+      color: var(--color-primary-hover);
+      background: var(--color-primary-light);
     }
   }
 
@@ -1659,7 +1659,7 @@ function escapeHtml(s: string): string {
   .row-margin-total {
     background: #f6fbff;
     font-weight: 700;
-    border-top: 2px solid #1890ff;
+    border-top: 2px solid var(--color-info);
 
     .margin-name {
       color: #1f3a5f;
@@ -1673,7 +1673,7 @@ function escapeHtml(s: string): string {
   .row-tab-formula {
     background: #f0f7ff;
     font-weight: 700;
-    border-top: 2px solid #096dd9;
+    border-top: 2px solid var(--color-info);
 
     .formula-name {
       color: #003a8c;
@@ -1734,7 +1734,7 @@ function escapeHtml(s: string): string {
     user-select: none;
 
     &:hover td {
-      background: #fff7e6 !important;
+      background: var(--color-warning-light) !important;
     }
   }
 
@@ -1756,7 +1756,7 @@ function escapeHtml(s: string): string {
       background: #f5faff;
 
       td:first-child {
-        border-left-color: #1890ff;
+        border-left-color: var(--color-primary);
       }
     }
   }
@@ -1766,8 +1766,8 @@ function escapeHtml(s: string): string {
       content: '手工';
       margin-left: 6px;
       padding: 1px 5px;
-      background: #fff7e6;
-      color: #fa8c16;
+      background: var(--color-warning-light);
+      color: var(--color-warning);
       border: 1px solid #ffe58f;
       border-radius: 3px;
       font-size: 11px;
@@ -1810,11 +1810,11 @@ function escapeHtml(s: string): string {
 
 // ==================== 颜色 ====================
 .positive {
-  color: #389e0d;
+  color: var(--color-success-text);
 }
 
 .negative {
-  color: #cf1322;
+  color: var(--color-danger-text);
 }
 
 // ==================== 双栏布局 ====================
@@ -1846,7 +1846,7 @@ function escapeHtml(s: string): string {
   font-weight: 600;
   padding: 8px 0;
   margin-bottom: 8px;
-  border-bottom: 2px solid #409eff;
+  border-bottom: 2px solid var(--color-info);
 }
 
 .indicator-table {

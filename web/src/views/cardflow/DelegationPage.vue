@@ -498,7 +498,7 @@ void h
 }
 
 .trustee-avatar {
-  background: linear-gradient(135deg, #1677ff 0%, #69b1ff 100%);
+  background: linear-gradient(135deg, var(--color-info) 0%, rgba(58, 111, 176, 0.65) 100%);
   color: #fff;
   font-weight: 600;
   flex: 0 0 auto;

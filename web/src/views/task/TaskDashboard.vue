@@ -9,7 +9,7 @@
           <a-statistic
             title="本月目标数"
             :value="kpi.monthGoals"
-            :value-style="{ color: '#1890ff', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-info)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><AimOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -25,7 +25,7 @@
           <a-statistic
             title="进行中任务"
             :value="kpi.inProgressTasks"
-            :value-style="{ color: '#fa8c16', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-warning)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><ClockCircleOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -41,7 +41,7 @@
           <a-statistic
             title="本月完成数"
             :value="kpi.monthCompleted"
-            :value-style="{ color: '#52c41a', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--color-success)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><CheckCircleOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -57,7 +57,7 @@
           <a-statistic
             title="本月项目数"
             :value="kpi.monthProjects"
-            :value-style="{ color: '#722ed1', fontSize: '28px', fontWeight: 600 }"
+            :value-style="{ color: 'var(--biz-points)', fontSize: '28px', fontWeight: 600 }"
           >
             <template #prefix><ProjectOutlined style="font-size: 16px; margin-right: 4px" /></template>
           </a-statistic>
@@ -114,7 +114,7 @@
                   <template #title>
                     <span style="color: rgba(0,0,0,0.85)">{{ item.user }}</span>
                     <span style="color: rgba(0,0,0,0.45); margin: 0 4px">{{ item.action }}</span>
-                    <span style="color: #1890ff">{{ item.target }}</span>
+                    <span style="color: var(--color-info)">{{ item.target }}</span>
                   </template>
                 </a-list-item-meta>
               </a-list-item>
@@ -184,18 +184,18 @@ const kpi = ref({
 
 // ===== 快捷操作 =====
 const quickActions = [
-  { key: 'goal', label: '新建目标', icon: AimOutlined, color: '#1890ff', route: '/task/goals' },
-  { key: 'task', label: '新建任务', icon: UnorderedListOutlined, color: '#52c41a', route: '/task/tasks' },
-  { key: 'project', label: '项目管理', icon: FundProjectionScreenOutlined, color: '#fa8c16', route: '/task/projects' },
-  { key: 'performance', label: '绩效评估', icon: TrophyOutlined, color: '#722ed1', route: '/task/performance/my' },
+  { key: 'goal', label: '新建目标', icon: AimOutlined, color: 'var(--color-info)', route: '/task/goals' },
+  { key: 'task', label: '新建任务', icon: UnorderedListOutlined, color: 'var(--color-success)', route: '/task/tasks' },
+  { key: 'project', label: '项目管理', icon: FundProjectionScreenOutlined, color: 'var(--color-warning)', route: '/task/projects' },
+  { key: 'performance', label: '绩效评估', icon: TrophyOutlined, color: 'var(--biz-points)', route: '/task/performance/my' },
 ]
 
 // ===== 任务状态分布 =====
 // TODO: 对接真实API
 const statusDistribution = ref([
-  { label: '待处理', count: 15, percent: 20, color: '#1890ff' },
-  { label: '进行中', count: 23, percent: 31, color: '#fa8c16' },
-  { label: '已完成', count: 32, percent: 43, color: '#52c41a' },
+  { label: '待处理', count: 15, percent: 20, color: 'var(--color-info)' },
+  { label: '进行中', count: 23, percent: 31, color: 'var(--color-warning)' },
+  { label: '已完成', count: 32, percent: 43, color: 'var(--color-success)' },
   { label: '已取消', count: 5, percent: 6, color: '#d9d9d9' },
 ])
 
@@ -272,11 +272,11 @@ onMounted(async () => {
   font-weight: 500;
 
   &.up {
-    color: #52c41a;
+    color: var(--color-success);
   }
 
   &.down {
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 

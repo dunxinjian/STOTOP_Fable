@@ -155,7 +155,7 @@
           <p v-if="item.ApprovalComment" style="color: #666">{{ item.ApprovalComment }}</p>
         </a-timeline-item>
       </a-timeline>
-      <a-empty v-else description="暂无审批记录" />
+      <EmptyState v-else description="暂无审批记录" />
     </a-modal>
 
     <!-- 审批操作弹窗 -->

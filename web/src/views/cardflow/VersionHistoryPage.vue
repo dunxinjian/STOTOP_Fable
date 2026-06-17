@@ -715,15 +715,15 @@ onMounted(async () => {
 
 .version-tag {
   font-weight: 600;
-  color: #1677ff;
+  color: var(--color-info);
   letter-spacing: 0.5px;
 }
 
 :deep(.row-current) > td {
-  background: #e6f4ff !important;
+  background: var(--color-primary-light) !important;
 }
 :deep(.row-current:hover) > td {
-  background: #d4eaff !important;
+  background: var(--color-primary-border) !important;
 }
 
 .stage-row {
@@ -781,7 +781,7 @@ onMounted(async () => {
   gap: 8px;
 }
 .diff-header-left { color: #595959; }
-.diff-header-right { color: #1677ff; }
+.diff-header-right { color: var(--color-info); }
 
 .diff-section {
   background: #fff;
@@ -834,7 +834,7 @@ onMounted(async () => {
 }
 .diff-item-key {
   font-family: monospace;
-  color: #1677ff;
+  color: var(--color-info);
   font-weight: 500;
 }
 .diff-item-label { color: #1f2329; }
@@ -855,16 +855,16 @@ onMounted(async () => {
 }
 
 .diff-added {
-  background: #f6ffed;
-  border-left: 3px solid #52c41a;
+  background: var(--color-success-light);
+  border-left: 3px solid var(--color-success);
 }
 .diff-removed {
-  background: #fff2f0;
-  border-left: 3px solid #ff4d4f;
+  background: var(--color-danger-light);
+  border-left: 3px solid var(--color-danger);
 }
 .diff-modified {
-  background: #fffbe6;
-  border-left: 3px solid #faad14;
+  background: var(--color-warning-light);
+  border-left: 3px solid var(--color-warning);
 }
 .diff-unchanged {
   opacity: 0.7;
@@ -878,9 +878,9 @@ onMounted(async () => {
   border-radius: 2px;
   font-weight: 500;
 }
-.badge-added { background: #52c41a; color: #fff; }
-.badge-removed { background: #ff4d4f; color: #fff; }
-.badge-modified { background: #faad14; color: #fff; }
+.badge-added { background: var(--color-success); color: #fff; }
+.badge-removed { background: var(--color-danger); color: #fff; }
+.badge-modified { background: var(--color-warning); color: #fff; }
 
 /* settings table */
 .settings-table {
@@ -908,7 +908,7 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   font-family: monospace;
-  color: #1677ff;
+  color: var(--color-info);
 }
 .settings-val {
   padding: 8px 12px;
@@ -920,7 +920,7 @@ onMounted(async () => {
 .settings-row.diff-modified {
   border-left: 3px solid transparent;
 }
-.settings-row.diff-added { background: #f6ffed; border-left-color: #52c41a; }
-.settings-row.diff-removed { background: #fff2f0; border-left-color: #ff4d4f; }
-.settings-row.diff-modified { background: #fffbe6; border-left-color: #faad14; }
+.settings-row.diff-added { background: var(--color-success-light); border-left-color: var(--color-success); }
+.settings-row.diff-removed { background: var(--color-danger-light); border-left-color: var(--color-danger); }
+.settings-row.diff-modified { background: var(--color-warning-light); border-left-color: var(--color-warning); }
 </style>

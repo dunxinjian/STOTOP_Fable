@@ -393,13 +393,13 @@ onMounted(() => {
   line-height: 22px;
 
   &.ok {
-    color: #389e0d;
-    background: #f6ffed;
+    color: var(--color-success-text);
+    background: var(--color-success-light);
     border: 1px solid #b7eb8f;
   }
   &.fail {
-    color: #cf1322;
-    background: #fff1f0;
+    color: var(--color-danger-text);
+    background: var(--color-danger-light);
     border: 1px solid #ffa39e;
   }
 

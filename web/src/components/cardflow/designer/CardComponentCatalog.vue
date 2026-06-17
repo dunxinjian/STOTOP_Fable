@@ -782,7 +782,7 @@ function addCatalogItem(item: CatalogItem) {
     padding: 1px 5px;
     border: 1px solid #ffd8a8;
     border-radius: 999px;
-    background: #fff7e6;
+    background: var(--color-warning-light);
     color: #d46b08;
     font-size: 10px;
     line-height: 14px;
@@ -919,8 +919,8 @@ function addCatalogItem(item: CatalogItem) {
     transition: background .15s ease, color .15s ease;
 
     &.is-active {
-      background: #e5f0ff;
-      color: #1677ff;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
     }
   }
 }

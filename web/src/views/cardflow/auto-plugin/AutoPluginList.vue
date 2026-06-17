@@ -29,7 +29,7 @@
             <a-badge
               :count="getRuleCount(record.implementationType)"
               :showZero="true"
-              :numberStyle="{ backgroundColor: getRuleCount(record.implementationType) > 0 ? '#1890ff' : '#d9d9d9' }"
+              :numberStyle="{ backgroundColor: getRuleCount(record.implementationType) > 0 ? 'var(--color-info)' : '#d9d9d9' }"
             />
           </template>
           <template v-else-if="column.dataIndex === 'description'">

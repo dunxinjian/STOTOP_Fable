@@ -92,7 +92,7 @@
                     </template>
                   </a-list-item>
                 </template>
-                <template #empty><a-empty description="暂无待办" :image-style="{ height: '40px' }" /></template>
+                <template #empty><EmptyState size="small" title="暂无待办" /></template>
               </a-list>
             </div>
           </a-col>
@@ -105,7 +105,7 @@
                     <a-alert :message="`${item.message}（${item.count}条）`" type="warning" show-icon banner style="width: 100%" />
                   </a-list-item>
                 </template>
-                <template #empty><a-empty description="暂无预警" :image-style="{ height: '40px' }" /></template>
+                <template #empty><EmptyState size="small" title="暂无预警" /></template>
               </a-list>
             </div>
           </a-col>
@@ -120,6 +120,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import PageHeader from '@/components/PageHeader.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { getDashboard, type DashboardDto } from '@/api/express'
 import {
   PlusOutlined,
@@ -157,11 +158,11 @@ const kpiList = computed(() => {
     ? (d.monthProfit / d.monthRevenue * 100)
     : 0
   return [
-    { key: 'today', title: '今日运单', value: d?.todayWaybills ?? 0, prefix: '', suffix: '单', change: undefined, color: '#1890ff' },
-    { key: 'month', title: '本月运单', value: d?.monthWaybills ?? 0, prefix: '', suffix: '单', change: d?.monthWaybillsChange, color: '#722ed1' },
-    { key: 'revenue', title: '本月收入', value: d?.monthRevenue ?? 0, prefix: '¥', suffix: '', change: d?.monthRevenueChange, color: '#1890ff' },
-    { key: 'cost', title: '本月成本', value: d?.monthCost ?? 0, prefix: '¥', suffix: '', change: d?.monthCostChange, color: '#fa8c16' },
-    { key: 'profit', title: '毛利率', value: profitRate, prefix: '', suffix: '%', change: d?.monthProfitChange, color: '#52c41a' },
+    { key: 'today', title: '今日运单', value: d?.todayWaybills ?? 0, prefix: '', suffix: '单', change: undefined, color: 'var(--color-info)' },
+    { key: 'month', title: '本月运单', value: d?.monthWaybills ?? 0, prefix: '', suffix: '单', change: d?.monthWaybillsChange, color: 'var(--biz-waybill)' },
+    { key: 'revenue', title: '本月收入', value: d?.monthRevenue ?? 0, prefix: '¥', suffix: '', change: d?.monthRevenueChange, color: 'var(--color-info)' },
+    { key: 'cost', title: '本月成本', value: d?.monthCost ?? 0, prefix: '¥', suffix: '', change: d?.monthCostChange, color: 'var(--color-warning)' },
+    { key: 'profit', title: '毛利率', value: profitRate, prefix: '', suffix: '%', change: d?.monthProfitChange, color: 'var(--color-success)' },
   ]
 })
 
@@ -225,9 +226,9 @@ function renderTrendChart() {
       { type: 'value', name: '金额', position: 'right' },
     ],
     series: [
-      { name: '运单数', type: 'bar', data: data.map(d => d.waybillCount), itemStyle: { color: '#1890ff' } },
-      { name: '收入', type: 'line', yAxisIndex: 1, data: data.map(d => d.revenue), itemStyle: { color: '#52c41a' }, smooth: true },
-      { name: '成本', type: 'line', yAxisIndex: 1, data: data.map(d => d.cost), itemStyle: { color: '#ff4d4f' }, smooth: true },
+      { name: '运单数', type: 'bar', data: data.map(d => d.waybillCount), itemStyle: { color: '#3A6FB0' } },
+      { name: '收入', type: 'line', yAxisIndex: 1, data: data.map(d => d.revenue), itemStyle: { color: '#2BA471' }, smooth: true },
+      { name: '成本', type: 'line', yAxisIndex: 1, data: data.map(d => d.cost), itemStyle: { color: '#E5484D' }, smooth: true },
     ],
   })
 }
@@ -304,7 +305,7 @@ onBeforeUnmount(() => {
   height: 100%;
   overflow: hidden;
   padding: 0 16px 16px;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 .kpi-bar {
@@ -312,11 +313,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 32px;
   padding: 14px 20px;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   margin-bottom: 16px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .kpi-item {
@@ -327,18 +328,18 @@ onBeforeUnmount(() => {
 
 .kpi-item + .kpi-item {
   padding-left: 32px;
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid var(--border);
 }
 
 .kpi-label {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--font-sm2);
+  color: var(--text-3);
 }
 
 .kpi-value {
   font-size: 20px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
 }
 
 .kpi-change {
@@ -346,11 +347,11 @@ onBeforeUnmount(() => {
 }
 
 .kpi-change.up {
-  color: #52c41a;
+  color: var(--color-success);
 }
 
 .kpi-change.down {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 
 .dashboard-tabs {
@@ -405,24 +406,24 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   padding: 20px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.3s;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 
 .quick-action-item:hover {
-  background: #e6f4ff;
-  border-color: #91caff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  box-shadow: 0 2px 8px var(--color-primary-border);
   transform: translateY(-2px);
 }
 
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #1890ff;
-  background: #e6f7ff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -432,21 +433,21 @@ onBeforeUnmount(() => {
 }
 
 .content-panel {
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 16px;
   height: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .panel-title {
   font-size: 15px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--color-primary);
 }
 
 .kpi-dot {

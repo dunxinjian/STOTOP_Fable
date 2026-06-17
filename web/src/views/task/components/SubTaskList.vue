@@ -4,7 +4,7 @@
     <div v-if="tasks.length > 0" class="subtask-list__progress">
       <a-progress
         :percent="completionPercent"
-        :stroke-color="completionPercent >= 100 ? '#52c41a' : '#1890ff'"
+        :stroke-color="completionPercent >= 100 ? 'var(--color-success)' : 'var(--color-info)'"
         size="small"
       />
       <span class="subtask-list__stats">{{ completedCount }} / {{ tasks.length }}</span>
@@ -181,7 +181,7 @@ defineExpose({ refresh: loadTasks })
     white-space: nowrap;
 
     &:hover {
-      color: #1890ff;
+      color: var(--color-primary);
     }
 
     &--done {

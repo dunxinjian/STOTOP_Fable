@@ -323,11 +323,11 @@ async function handleChangePassword() {
 
 .password-card {
   :deep(.ant-card-head) {
-    border-bottom-color: #ff4d4f;
+    border-bottom-color: var(--color-danger);
   }
 
   :deep(.ant-card-head-title) {
-    color: #ff4d4f;
+    color: var(--color-danger);
   }
 }
 </style>

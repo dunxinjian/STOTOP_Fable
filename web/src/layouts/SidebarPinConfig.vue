@@ -31,7 +31,7 @@
               >
                 <component :is="getIconComponent(item.icon)" v-if="getIconComponent(item.icon)" />
                 <span style="flex: 1;">{{ item.name }}</span>
-                <CheckOutlined v-if="isPinned(item.route)" style="color: #FF6700; font-size: 12px;" />
+                <CheckOutlined v-if="isPinned(item.route)" style="color: var(--color-primary); font-size: 12px;" />
               </div>
             </template>
           </div>
@@ -160,7 +160,7 @@ function togglePin(item: MenuItem) {
 
     &--pinned {
       color: $color-primary;
-      background: rgba(255, 103, 0, 0.06);
+      background: var(--color-primary-light);
     }
 
     .anticon {

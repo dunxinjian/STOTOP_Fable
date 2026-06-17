@@ -29,7 +29,7 @@
     </div>
 
     <!-- 批量操作栏 -->
-    <div v-if="selectedRowKeys.length > 0" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; background: #e6f7ff; padding: 8px 16px; border-radius: 4px;">
+    <div v-if="selectedRowKeys.length > 0" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; background: var(--color-primary-light); padding: 8px 16px; border-radius: 4px;">
       <span>已选中 <b>{{ selectedRowKeys.length }}</b> 人</span>
       <a-divider type="vertical" />
       <a-dropdown>
@@ -88,7 +88,7 @@
               <template v-else-if="column.key === 'action'">
                 <a-space>
                   <a @click="handleEditCompanionFromList(record, comp)">编辑</a>
-                  <a style="color: #ff4d4f" @click="handleDeleteCompanionFromList(record, comp)">删除</a>
+                  <a style="color: var(--color-danger)" @click="handleDeleteCompanionFromList(record, comp)">删除</a>
                 </a-space>
               </template>
             </template>
@@ -115,13 +115,13 @@
           {{ record.guestType || '-' }}
         </template>
         <template v-else-if="column.dataIndex === 'companionCount'">
-          <a-badge :count="record.companionCount || 0" :number-style="{ backgroundColor: record.companionCount > 0 ? '#1890ff' : '#d9d9d9' }" />
+          <a-badge :count="record.companionCount || 0" :number-style="{ backgroundColor: record.companionCount > 0 ? 'var(--color-info)' : '#d9d9d9' }" />
         </template>
         <template v-else-if="column.dataIndex === 'needPickup'">
-          <span :style="{ color: record.needPickup ? '#52c41a' : '#d9d9d9', fontSize: '16px' }">●</span>
+          <span :style="{ color: record.needPickup ? 'var(--color-success)' : '#d9d9d9', fontSize: '16px' }">●</span>
         </template>
         <template v-else-if="column.dataIndex === 'needAccommodation'">
-          <span :style="{ color: record.needAccommodation ? '#52c41a' : '#d9d9d9', fontSize: '16px' }">●</span>
+          <span :style="{ color: record.needAccommodation ? 'var(--color-success)' : '#d9d9d9', fontSize: '16px' }">●</span>
         </template>
         <template v-else-if="column.dataIndex === 'arrivalTime'">
           {{ record.arrivalTime ? formatDateTime(record.arrivalTime) : '-' }}
@@ -156,7 +156,7 @@
               </template>
             </a-dropdown>
             <a-popconfirm title="确定删除该人员？" @confirm="handleDelete(record.id)">
-              <a style="color: #ff4d4f">删除</a>
+              <a style="color: var(--color-danger)">删除</a>
             </a-popconfirm>
           </a-space>
         </template>
@@ -247,7 +247,7 @@
                   <template v-else-if="column.key === 'action'">
                     <a-space>
                       <a @click="showEditCompanionModal(comp)">编辑</a>
-                      <a style="color: #ff4d4f" @click="handleDeleteCompanion(comp)">删除</a>
+                      <a style="color: var(--color-danger)" @click="handleDeleteCompanion(comp)">删除</a>
                     </a-space>
                   </template>
                 </template>
@@ -398,7 +398,7 @@
             </template>
           </template>
         </a-table>
-        <a-empty v-else description="暂无随行人员" />
+        <EmptyState v-else size="small" title="暂无随行人员" />
       </template>
     </a-drawer>
 
@@ -662,10 +662,10 @@ const computedSeatInfo = computed(() => {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case '已确认': return '#52c41a'
+    case '已确认': return 'var(--color-success)'
     case '已取消': return '#999999'
     case '待确认':
-    default: return '#fa8c16'
+    default: return 'var(--color-warning)'
   }
 }
 

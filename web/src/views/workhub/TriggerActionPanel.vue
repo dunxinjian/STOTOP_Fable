@@ -284,7 +284,7 @@ onMounted(() => loadAll())
 
 .panel-header__icon {
   font-size: 15px;
-  color: #1677ff;
+  color: var(--color-info);
 }
 
 .panel-header__title {
@@ -365,9 +365,10 @@ onMounted(() => loadAll())
 }
 
 .action-item:hover {
-  background-color: #fff7f0;
-  border-color: rgba(255, 103, 0, 0.24);
-  box-shadow: 0 6px 14px rgba(255, 103, 0, 0.08);
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  /* 阴影需透明度，用主色低透明 color-mix 取代固定橙 */
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 8%, transparent);
   transform: translateY(-1px);
 }
 
@@ -381,7 +382,7 @@ onMounted(() => loadAll())
 }
 
 .action-item--cardflow .action-icon {
-  color: #722ed1;
+  color: var(--biz-waybill);
 }
 
 .action-item--loading {
@@ -398,7 +399,7 @@ onMounted(() => loadAll())
   padding: 0 4px;
   border-radius: 6px;
   background: #f9f0ff;
-  color: #722ed1;
+  color: var(--biz-waybill);
   border: 1px solid #efdbff;
 }
 
@@ -410,12 +411,12 @@ onMounted(() => loadAll())
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  background: rgba(22, 119, 255, 0.08);
+  background: var(--color-primary-light);
 }
 
 .action-icon {
   font-size: 19px;
-  color: #1677ff;
+  color: var(--color-primary);
 }
 
 .action-copy {

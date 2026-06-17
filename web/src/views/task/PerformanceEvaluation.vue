@@ -84,7 +84,7 @@
           <a-descriptions-item label="按时完成率">{{ detail?.onTimeRate?.toFixed(1) }}%</a-descriptions-item>
           <a-descriptions-item label="目标达成率">{{ detail?.goalAchievementRate?.toFixed(1) }}%</a-descriptions-item>
           <a-descriptions-item label="综合得分">
-            <span style="font-size: 18px; font-weight: 700; color: #1890ff">{{ detail?.overallScore ?? '-' }}</span>
+            <span style="font-size: 18px; font-weight: 700; color: var(--color-info)">{{ detail?.overallScore ?? '-' }}</span>
           </a-descriptions-item>
           <a-descriptions-item label="等级">
             <a-tag v-if="detail?.grade" :color="gradeColorMap[detail.grade]" style="font-size: 16px">{{ detail.grade }}</a-tag>
@@ -195,7 +195,7 @@ import {
 const route = useRoute()
 const periodId = computed(() => Number(route.params.periodId))
 
-const gradeColorMap: Record<string, string> = { S: '#722ed1', A: '#1890ff', B: '#52c41a', C: '#faad14', D: '#ff4d4f' }
+const gradeColorMap: Record<string, string> = { S: 'var(--biz-points)', A: 'var(--color-info)', B: 'var(--color-success)', C: 'var(--color-warning)', D: 'var(--color-danger)' }
 const recordStatusText: Record<number, string> = { 0: '待自评', 1: '待上级评', 2: '已完成' }
 const recordStatusBadge: Record<number, string> = { 0: 'warning', 1: 'processing', 2: 'success' }
 
@@ -320,11 +320,11 @@ async function submitEvaluation() {
 
 function getScoreColor(score: number | null): string {
   if (score == null) return '#999'
-  if (score >= 90) return '#722ed1'
-  if (score >= 80) return '#1890ff'
-  if (score >= 70) return '#52c41a'
-  if (score >= 60) return '#faad14'
-  return '#ff4d4f'
+  if (score >= 90) return 'var(--biz-points)'
+  if (score >= 80) return 'var(--color-info)'
+  if (score >= 70) return 'var(--color-success)'
+  if (score >= 60) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 onMounted(() => {

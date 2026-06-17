@@ -282,10 +282,10 @@ const formRules: Record<string, Rule[]> = {
 
 // 获取分数颜色
 function getScoreColor(score: number): string {
-  if (score >= 90) return '#52c41a'
-  if (score >= 80) return '#1890ff'
-  if (score >= 60) return '#faad14'
-  return '#ff4d4f'
+  if (score >= 90) return 'var(--color-success)'
+  if (score >= 80) return 'var(--color-info)'
+  if (score >= 60) return 'var(--color-warning)'
+  return 'var(--color-danger)'
 }
 
 // 获取检查结果颜色

@@ -49,13 +49,13 @@ defineEmits<{
 <style scoped>
 .stat-card {
   height: 120px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .stat-card-title {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
-  margin-bottom: 8px;
+  font-size: var(--font-base);
+  color: var(--text-3);
+  margin-bottom: var(--space-sm8);
 }
 
 .stat-card-change {
@@ -64,10 +64,10 @@ defineEmits<{
 }
 
 .change-up {
-  color: #52c41a;
+  color: var(--color-success);
 }
 
 .change-down {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
 </style>

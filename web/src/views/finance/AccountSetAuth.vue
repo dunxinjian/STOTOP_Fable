@@ -38,7 +38,7 @@
             <a-space>
               <a @click="showEditRoleModal(record)">修改角色</a>
               <a-popconfirm title="确定撤销该用户的账套授权？" @confirm="handleRevoke(record.id)">
-                <a style="color: #ff4d4f">撤销</a>
+                <a style="color: var(--color-danger)">撤销</a>
               </a-popconfirm>
             </a-space>
           </template>

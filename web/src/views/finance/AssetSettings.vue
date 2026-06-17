@@ -719,7 +719,7 @@ async function handleXiaofanCategoryImport(file: File): Promise<boolean> {
             'div',
             { style: 'max-height: 360px; overflow: auto;' },
             errors.slice(0, 200).map((e) =>
-              h('div', { style: 'padding: 2px 0; color: #cf1322; font-size: 12px;' },
+              h('div', { style: 'padding: 2px 0; color: var(--color-danger-text); font-size: 12px;' },
                 `第 ${e.rowNumber} 行：${e.message}`),
             ),
           ),
@@ -759,7 +759,7 @@ async function handleXiaofanImport(file: File): Promise<boolean> {
             'div',
             { style: 'max-height: 360px; overflow: auto;' },
             errors.slice(0, 200).map((e) =>
-              h('div', { style: 'padding: 2px 0; color: #cf1322; font-size: 12px;' },
+              h('div', { style: 'padding: 2px 0; color: var(--color-danger-text); font-size: 12px;' },
                 `第 ${e.rowNumber} 行：${e.message}`),
             ),
           ),
@@ -849,13 +849,13 @@ onMounted(async () => {
   transition: all 0.2s;
 
   &:hover {
-    border-color: #1890ff;
-    color: #1890ff;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   &.active {
-    background: #1890ff;
-    border-color: #1890ff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: #fff;
   }
 }
@@ -921,14 +921,14 @@ onMounted(async () => {
   }
 
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
     font-weight: 500;
   }
 }
 
 .link-text {
-  color: #1890ff;
+  color: var(--color-primary);
   cursor: pointer;
   &:hover {
     text-decoration: underline;
@@ -938,7 +938,7 @@ onMounted(async () => {
 .amount-value {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #409eff;
+  color: var(--color-info);
   font-weight: 600;
 }
 
