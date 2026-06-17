@@ -431,8 +431,9 @@ public class AmoebaPLService
                             amount = amt;
                     }
         
-                    // 单票&均自动计算 [批次5-S5]：方向化分母(随 Tab) + 按当期(含环比/同比)
-                    if (perUnit == null && child.FPerUnitMode == "auto")
+                    // 单票&均自动计算 [批次5-S5]：方向化分母(随 Tab) + 按当期(含环比/同比)。
+                    // formula 项金额此刻尚为 0(待 EvaluateFormulaItems 回填)，跳过避免算出误导性的 0 单票均。
+                    if (perUnit == null && child.FPerUnitMode == "auto" && child.FNodeRole != "formula")
                         perUnit = ComputePerUnit(root.FID, amount, p);
 
                     item.PeriodValues.Add(new PeriodValue
@@ -506,7 +507,7 @@ public class AmoebaPLService
                         if (perPeriodAmounts[p].TryGetValue(child.FID, out var amt))
                             amount = amt;
                     }
-                    if (perUnit == null && child.FPerUnitMode == "auto")
+                    if (perUnit == null && child.FPerUnitMode == "auto" && child.FNodeRole != "formula")
                         perUnit = ComputePerUnit(sectionRoot.FID, amount, p);   // [批次5-S5] 指标分区按其方向(名称)取分母
                     indItem.PeriodValues.Add(new PeriodValue { PeriodLabel = period, Amount = amount, PerUnitValue = perUnit });
                 }
