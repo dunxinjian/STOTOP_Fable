@@ -40,7 +40,7 @@
               </div>
             </div>
           </div>
-          <CheckCircleFilled v-if="selectedOrgId === org.orgId" class="selected-icon" :style="{ color: 'var(--color-primary)' }" />
+          <CheckCircleFilled v-if="selectedOrgId === org.orgId" class="selected-icon" :style="{ color: 'var(--text-1)' }" />
         </div>
       </div>
     </template>
@@ -134,8 +134,8 @@ async function handleConfirm() {
   }
 
   &.selected {
-    border-color: $color-primary;
-    background-color: rgba($color-primary, 0.06);
+    border-color: var(--border-strong);
+    background-color: var(--bg-muted);
   }
 
   .org-select-item-info {

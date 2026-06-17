@@ -574,7 +574,7 @@ onMounted(() => {
   }
 
   &.active {
-    background: var(--color-primary-light);
+    background: var(--bg-muted);
     border-left: 3px solid var(--color-primary);
   }
 }

@@ -309,8 +309,8 @@ function applyTemplate(type: string) {
   }
 
   &.is-selected {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 1px var(--color-primary);
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 1px var(--border-strong);
   }
 
   &.is-disabled {

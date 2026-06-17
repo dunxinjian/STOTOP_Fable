@@ -317,7 +317,7 @@ watch(orgTreeData, (newVal) => {
       }
 
       &.is-selected {
-        background-color: var(--color-primary-light);
+        background-color: var(--bg-muted);
       }
     }
 

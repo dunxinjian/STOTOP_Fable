@@ -509,8 +509,9 @@ onMounted(() => {
     }
 
     &.active {
-      color: #fff;
-      background: var(--color-primary);
+      color: var(--text-1);
+      background: var(--bg-card);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       font-weight: 500;
     }
   }

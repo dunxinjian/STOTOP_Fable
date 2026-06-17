@@ -361,7 +361,7 @@ watch(() => props.modelValue, (val) => {
 
   :deep(.selected-row) {
     td {
-      background-color: var(--color-primary-light) !important;
+      background-color: var(--bg-muted) !important;
     }
   }
 

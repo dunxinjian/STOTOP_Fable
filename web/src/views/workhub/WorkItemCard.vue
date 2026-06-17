@@ -618,8 +618,8 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
   }
 
   &.work-item-card--multi-selected {
-    background-color: var(--color-primary-light);
-    border-color: var(--color-primary-border);
+    background-color: var(--bg-muted);
+    border-color: var(--border-strong);
   }
 }
 

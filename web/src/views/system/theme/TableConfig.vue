@@ -132,12 +132,12 @@ const previewTableStyle = computed(() => {
 }
 
 .density-card.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary-light);
+  border-color: var(--border-strong);
+  background: var(--bg-muted);
 }
 
 .density-card.active .density-card-label {
-  color: var(--color-primary);
+  color: var(--text-1);
   font-weight: 500;
 }
 
@@ -170,7 +170,7 @@ const previewTableStyle = computed(() => {
 .density-lines span:last-child { margin-bottom: 0; }
 
 .density-card.active .density-lines span {
-  background: var(--color-primary);
+  background: var(--text-1);
 }
 
 .density-card-label {

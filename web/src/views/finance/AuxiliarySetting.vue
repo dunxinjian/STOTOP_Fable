@@ -1485,28 +1485,30 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-// 分类按钮组 - 使用 Ant Design radio-group solid 模式，覆盖为橙色主题
+// 分类按钮组 - Ant Design radio-group，选中态中性化（中性底 + 深字）
 .category-radio-group {
   :deep(.ant-radio-button-wrapper) {
     font-size: 14px;
 
     &:hover {
-      color: var(--color-warning);
+      color: var(--color-primary);
     }
   }
 
   :deep(.ant-radio-button-wrapper-checked) {
-    background-color: var(--color-warning) !important;
-    border-color: var(--color-warning) !important;
-    color: #fff !important;
+    background-color: var(--bg-muted) !important;
+    border-color: var(--border-strong) !important;
+    color: var(--text-1) !important;
+    font-weight: 600;
 
     &:hover {
-      background-color: #d4912e !important;
-      border-color: #d4912e !important;
+      background-color: var(--bg-muted) !important;
+      border-color: var(--border-strong) !important;
+      color: var(--text-1) !important;
     }
 
     &::before {
-      background-color: var(--color-warning) !important;
+      background-color: var(--border-strong) !important;
     }
   }
 }
@@ -1842,7 +1844,7 @@ onMounted(() => {
 
 // 选中行高亮
 :deep(.ant-table-row.current-row > td) {
-  background-color: var(--color-warning-light) !important;
+  background-color: var(--bg-muted) !important;
 }
 
 // 表格行高

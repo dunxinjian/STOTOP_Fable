@@ -864,10 +864,10 @@ onMounted(async () => {
 
 .aux-type-switch {
   :deep(.ant-radio-button-wrapper-checked) {
-    background-color: var(--color-primary-light) !important;
-    border-color: var(--color-primary) !important;
+    background-color: var(--bg-muted) !important;
+    border-color: var(--border-strong) !important;
     font-weight: 500;
-    color: var(--color-primary) !important;
+    color: var(--text-1) !important;
   }
 }
 </style>

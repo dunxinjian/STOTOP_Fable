@@ -308,8 +308,8 @@ async function handleSwitch(org: UserOrganizationDto) {
     }
 
     &.active {
-      background-color: rgba($color-primary, 0.06);
-      color: $color-primary;
+      background-color: var(--bg-muted);
+      color: var(--text-1);
     }
 
     .org-item-main {
@@ -333,7 +333,7 @@ async function handleSwitch(org: UserOrganizationDto) {
     }
 
     .check-icon {
-      color: $color-primary;
+      color: var(--text-1);
       margin-left: auto;
     }
   }

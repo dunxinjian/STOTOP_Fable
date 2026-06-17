@@ -574,7 +574,7 @@ function formatJournalFileSize(bytes: number): string {
 }
 .query-mode-btn { padding: 8px; min-width: 32px; }
 .range-sep { color: #909399; margin: 0 2px; }
-.is-active-mode { background-color: var(--color-warning-light) !important; color: var(--color-warning) !important; font-weight: 500; }
+.is-active-mode { background-color: var(--bg-muted) !important; color: var(--text-1) !important; font-weight: 500; }
 .amount { font-family: 'Courier New', monospace; font-weight: 500; }
 .negative-value { color: var(--color-danger); }
 .initial-label { font-size: 12px; color: #909399; background: #f4f4f5; padding: 2px 6px; border-radius: 3px; }

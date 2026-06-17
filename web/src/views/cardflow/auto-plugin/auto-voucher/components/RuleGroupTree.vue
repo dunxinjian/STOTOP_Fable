@@ -284,8 +284,8 @@ function getGroupScore(group: RuleGroup): number | null {
   }
 
   &.active {
-    background: var(--color-primary-light);
-    border-color: var(--color-primary-border);
+    background: var(--bg-muted);
+    border-color: var(--border-strong);
     .group-actions { opacity: 1; }
   }
 }

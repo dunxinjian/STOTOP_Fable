@@ -989,7 +989,7 @@ onMounted(() => {
   }
 
   &.active {
-    color: $color-primary;
+    color: var(--text-1);
     font-weight: 600;
 
     .tab-count {
@@ -1108,8 +1108,8 @@ onMounted(() => {
 }
 
 :deep(.query-mode-active) {
-  background-color: rgba($color-warning, 0.08) !important;
-  color: $color-warning !important;
+  background-color: var(--bg-muted) !important;
+  color: var(--text-1) !important;
   font-weight: 500;
 }
 

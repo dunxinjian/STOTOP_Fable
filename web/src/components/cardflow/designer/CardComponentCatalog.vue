@@ -919,8 +919,9 @@ function addCatalogItem(item: CatalogItem) {
     transition: background .15s ease, color .15s ease;
 
     &.is-active {
-      background: var(--color-primary-light);
-      color: var(--color-primary);
+      background: var(--bg-card);
+      color: var(--text-1);
+      box-shadow: 0 1px 3px rgba(18, 31, 53, 0.12);
     }
   }
 }

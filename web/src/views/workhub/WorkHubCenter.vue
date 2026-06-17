@@ -1090,9 +1090,9 @@ onUnmounted(() => {
 
 // 选中高亮（中栏与右栏联动）
 :deep(.work-item-card.work-item-card--selected) {
-  background: var(--color-primary-light);
+  background: var(--bg-muted);
   box-shadow: inset 3px 0 0 0 var(--color-primary), var(--shadow-md);
-  border-color: var(--color-primary-border);
+  border-color: var(--border-strong);
 }
 
 // ===== 加载更多 =====

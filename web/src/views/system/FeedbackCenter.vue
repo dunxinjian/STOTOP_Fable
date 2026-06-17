@@ -567,9 +567,9 @@ onMounted(() => {
   cursor: pointer;
 
   &.active {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: var(--color-primary-light);
+    border-color: var(--border-strong);
+    color: var(--text-1);
+    background: var(--bg-muted);
   }
 
   .dot {

@@ -607,22 +607,25 @@ async function loadChartData() {
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #dcdfe6;
+  background: var(--bg-muted);
 
   .format-tab {
     padding: 6px 16px;
     font-size: 14px;
     color: #606266;
     cursor: pointer;
-    background: #fff;
+    background: transparent;
     transition: all 0.3s;
 
     &:hover {
-      background: #f5f7fa;
+      color: var(--color-primary);
     }
 
     &.active {
-      color: #fff;
-      background: var(--color-primary);
+      color: var(--text-1);
+      background: var(--bg-card);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
   }
 }

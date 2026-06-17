@@ -107,9 +107,10 @@ const statusTags = [
   }
 
   &.active {
-    background: var(--color-primary);
-    color: #fff;
-    border-color: var(--color-primary);
+    background: var(--bg-card);
+    color: var(--text-1);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 2px rgba(18, 31, 53, 0.08);
   }
 }
 
@@ -157,7 +158,7 @@ const statusTags = [
 
   &.active {
     background: #fff;
-    color: var(--color-primary);
+    color: var(--text-1);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 }

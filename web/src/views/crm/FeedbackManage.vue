@@ -440,7 +440,7 @@ onMounted(() => {
   background: transparent;
 
   &:hover { color: var(--color-primary); }
-  &.active { color: #fff; background: var(--color-primary); font-weight: 500; }
+  &.active { color: var(--text-1); background: var(--bg-card); font-weight: 500; box-shadow: 0 1px 2px rgba(18, 31, 53, 0.08); }
 }
 
 .section-title {

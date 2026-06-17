@@ -142,6 +142,17 @@ export const useThemeStore = defineStore('theme', () => {
           itemSelectedColor: '#1F2329',    // 激活菜单文字中性
           itemSelectedBg: '#F1F3F6',       // 激活菜单底中性
         },
+        Segmented: {
+          itemSelectedBg: '#FFFFFF',       // 分段控件选中段：白底浮起（灰轨上），中性
+          itemSelectedColor: '#1F2329',
+          itemColor: '#5A6068',
+          itemHoverColor: '#1F2329',
+        },
+        Radio: {
+          buttonSolidCheckedBg: '#5A6068',        // 实心 radio 选中底改中性深灰（原橙）
+          buttonSolidCheckedHoverBg: '#41464D',
+          buttonSolidCheckedActiveBg: '#41464D',
+        },
       },
       algorithm: algorithms,
       cssVar: { prefix: 'sto' },

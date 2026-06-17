@@ -1300,10 +1300,15 @@ onMounted(async () => {
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 
-  &:hover,
-  &.active {
+  &:hover {
     border-color: var(--color-primary);
     box-shadow: 0 10px 24px var(--color-primary-border);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    border-color: var(--border-strong);
+    box-shadow: 0 10px 24px rgba(18, 31, 53, 0.1);
     transform: translateY(-1px);
   }
 

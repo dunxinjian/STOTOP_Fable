@@ -854,9 +854,11 @@ onMounted(async () => {
   }
 
   &.active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
+    background: var(--bg-card);
+    border-color: var(--border-strong);
+    color: var(--text-1);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 }
 
@@ -915,14 +917,16 @@ onMounted(async () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-left: 3px solid transparent;
 
   &:hover {
     background: #f5f5f5;
   }
 
   &.active {
-    background: var(--color-primary-light);
-    color: var(--color-primary);
+    background: var(--bg-muted);
+    color: var(--text-1);
+    border-left-color: var(--color-primary);
     font-weight: 500;
   }
 }

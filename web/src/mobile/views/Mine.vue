@@ -90,7 +90,7 @@ const orgActions = computed(() =>
   authStore.organizations.map(org => ({
     name: org.name,
     value: org.id,
-    color: org.id === authStore.currentOrgId ? 'var(--color-primary)' : undefined,
+    color: org.id === authStore.currentOrgId ? 'var(--text-1)' : undefined,
   }))
 )
 

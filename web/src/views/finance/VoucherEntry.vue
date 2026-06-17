@@ -2104,9 +2104,9 @@ function formatDate(dateStr: string): string {
   }
   
   .active-row {
-    background: var(--color-primary-light);
+    background: var(--bg-muted);
   }
-  
+
   .total-row {
     background: #fafafa;
     font-weight: bold;

@@ -894,7 +894,7 @@ onUnmounted(() => {
 
   &.is-active {
     border-color: var(--stat-color);
-    background: linear-gradient(180deg, rgba(232, 94, 0, 0.04) 0%, #ffffff 100%);
+    background: var(--bg-muted);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     .stat-accent {
       opacity: 1;
@@ -1051,7 +1051,7 @@ onUnmounted(() => {
   padding: 10px 14px;
   border-radius: 4px;
   &.active {
-    background: var(--color-primary-light);
+    background: var(--bg-muted);
     border-left-color: var(--color-primary);
   }
 }

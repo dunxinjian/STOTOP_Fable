@@ -29,7 +29,7 @@
     </div>
 
     <!-- 批量操作栏 -->
-    <div v-if="selectedRowKeys.length > 0" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; background: var(--color-primary-light); padding: 8px 16px; border-radius: 4px;">
+    <div v-if="selectedRowKeys.length > 0" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; background: var(--bg-muted); padding: 8px 16px; border-radius: 4px;">
       <span>已选中 <b>{{ selectedRowKeys.length }}</b> 人</span>
       <a-divider type="vertical" />
       <a-dropdown>

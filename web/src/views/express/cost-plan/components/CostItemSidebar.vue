@@ -180,13 +180,13 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   &.is-active {
-    background-color: var(--color-primary-light);
+    background-color: var(--bg-muted);
     border-left-color: var(--color-primary);
-    color: var(--color-primary);
+    color: var(--text-1);
     font-weight: 500;
 
     &:hover {
-      background-color: var(--color-primary-light);
+      background-color: var(--bg-muted);
     }
   }
 

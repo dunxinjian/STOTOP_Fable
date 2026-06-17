@@ -859,7 +859,7 @@ defineExpose({ open })
   }
 
   &.active {
-    background: var(--color-primary-light);
+    background: var(--bg-muted);
   }
 
   &.active::before {
@@ -911,7 +911,7 @@ defineExpose({ open })
   }
 
   &.active {
-    background: var(--color-primary-light);
+    background: var(--bg-muted);
   }
 
   &.active::before {
@@ -1002,7 +1002,7 @@ defineExpose({ open })
 
 .recommended-item {
   position: relative;
-  background: var(--color-primary-light);
+  background: var(--bg-muted);
   box-shadow: inset 2px 0 0 var(--color-primary);
 }
 .recommended-item:hover {

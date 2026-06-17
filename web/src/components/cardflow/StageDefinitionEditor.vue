@@ -1298,7 +1298,7 @@ const stageCount = computed(() => stages.value.length)
   transition: background .15s;
 
   &:hover { background: var(--color-primary-light); }
-  &--active { background: var(--color-primary-light); }
+  &--active { background: var(--bg-muted); }
   &--ghost { opacity: 0.4; }
 }
 
@@ -1364,9 +1364,9 @@ const stageCount = computed(() => stages.value.length)
   &--batch  { border-left: 3px solid #059669; }
 
   &--selected {
-    background: var(--color-primary-light);
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-border);
+    background: var(--bg-muted);
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 2px var(--border-strong);
   }
 
   &:hover {
