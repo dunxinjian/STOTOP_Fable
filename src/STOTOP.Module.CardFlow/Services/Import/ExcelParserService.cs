@@ -21,6 +21,22 @@ public class ExcelParserService
     }
 
     /// <summary>
+    /// 异步读取表头行（首行列名）。复用 ParseAsync（batchSize=1 取首批 keys），
+    /// 因此与 ParseAsync 共享魔数判别 + 多 sheet 选择能力，适合多文件内容路由场景。
+    /// </summary>
+    /// <param name="headerRow">表头行号（1-based）</param>
+    /// <param name="sheetName">可选 sheet 名（仅 Excel 生效），见 ParseAsync 说明</param>
+    public async Task<IReadOnlyList<string>> ReadHeadersAsync(
+        Stream fileStream, string fileName, int headerRow, string? sheetName = null, CancellationToken ct = default)
+    {
+        var cols = new List<string>();
+        await ParseAsync(fileStream, fileName, headerRow, headerRow + 1, batchSize: 1,
+            (rows, _) => { if (cols.Count == 0 && rows.Count > 0) cols.AddRange(rows[0].Keys); return Task.CompletedTask; },
+            ct, sheetName);
+        return cols;
+    }
+
+    /// <summary>
     /// 分批流式读取数据行，每批 batchSize 行，通过回调处理
     /// </summary>
     /// <param name="headerRow">表头行号（1-based）</param>

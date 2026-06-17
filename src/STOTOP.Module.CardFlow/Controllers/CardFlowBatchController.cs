@@ -9,6 +9,7 @@ using STOTOP.Core.Models;
 using STOTOP.Infrastructure.Data;
 using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Services;
+using STOTOP.Module.CardFlow.Services.Import;
 
 namespace STOTOP.Module.CardFlow.Controllers;
 
@@ -24,17 +25,20 @@ public class CardFlowBatchController : ControllerBase
     private readonly IBatchTriggerService _triggerService;
     private readonly IBatchLifecycleService _lifecycleService;
     private readonly IWebHostEnvironment _env;
+    private readonly ExcelParserService _excelParser;
 
     public CardFlowBatchController(
         STOTOPDbContext db,
         IBatchTriggerService triggerService,
         IBatchLifecycleService lifecycleService,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        ExcelParserService excelParser)
     {
         _db = db;
         _triggerService = triggerService;
         _lifecycleService = lifecycleService;
         _env = env;
+        _excelParser = excelParser;
     }
 
     private long GetUserId() => long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -91,6 +95,90 @@ public class CardFlowBatchController : ControllerBase
         {
             return ApiResult<object>.Fail(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// 多文件内容路由批量上传：一次传多个文件，逐个落盘→读表头→按内容路由分类。
+    /// routed（唯一命中）触发导入；unmatched（0 命中）进待认领；ambiguous（多命中）进多义。
+    /// </summary>
+    [HttpPost("upload-auto")]
+    [Consumes("multipart/form-data")]
+    public async Task<ApiResult<object>> UploadAuto(IFormFileCollection files)
+    {
+        if (files == null || files.Count == 0)
+            return ApiResult<object>.Fail("请上传至少一个文件");
+
+        var orgId = GetOrgId();
+        if (orgId == 0)
+            return ApiResult<object>.Fail("当前无组织上下文", 401);
+
+        var uploadDir = Path.Combine(_env.ContentRootPath, "uploads", "cardflow");
+        Directory.CreateDirectory(uploadDir);
+
+        // 逐个落盘 + 读表头，建立 文件名→(列头, 落盘路径) 映射
+        var savedPaths = new Dictionary<string, string>();        // fileName → savedPath
+        var headers = new List<FileColumnHeader>();
+        var readErrors = new List<object>();
+
+        foreach (var file in files)
+        {
+            if (file == null || file.Length == 0) continue;
+
+            var safeName = $"{DateTime.Now:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}{Path.GetExtension(file.FileName)}";
+            var savedPath = Path.Combine(uploadDir, safeName);
+            await using (var fs = global::System.IO.File.Create(savedPath))
+            {
+                await file.CopyToAsync(fs);
+            }
+
+            try
+            {
+                await using var read = global::System.IO.File.OpenRead(savedPath);
+                var cols = await _excelParser.ReadHeadersAsync(read, file.FileName, headerRow: 1);
+                headers.Add(new FileColumnHeader(file.FileName, cols));
+                savedPaths[file.FileName] = savedPath;
+            }
+            catch (Exception ex)
+            {
+                // 读表头失败（损坏/非表格）单独归类，不阻断其余文件
+                readErrors.Add(new { fileName = file.FileName, error = ex.Message });
+            }
+        }
+
+        // 内容路由分类（仅匹配，不导入）
+        var classification = await _triggerService.ClassifyFilesAsync(headers, orgId);
+
+        // routed 项触发导入（命中唯一流程）
+        var routed = new List<object>();
+        foreach (var r in classification.Routed)
+        {
+            if (!savedPaths.TryGetValue(r.FileName, out var savedPath)) continue;
+            try
+            {
+                var batchId = await _triggerService.TriggerByFileUploadAsync(
+                    r.FlowDefinitionId, orgId, GetUserId(), savedPath, new Dictionary<string, string>());
+                routed.Add(new { fileName = r.FileName, batchId, flowDefinitionId = r.FlowDefinitionId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                readErrors.Add(new { fileName = r.FileName, error = ex.Message });
+            }
+        }
+
+        var unmatched = classification.Unmatched
+            .Select(u => new { fileName = u.FileName, columns = u.Columns })
+            .ToList();
+        var ambiguous = classification.Ambiguous
+            .Select(a => new
+            {
+                fileName = a.FileName,
+                candidates = a.Candidates.Select(c => new { c.FlowDefinitionId, c.PluginRuleId }).ToList()
+            })
+            .ToList();
+
+        return ApiResult<object>.Success(
+            new { routed, unmatched, ambiguous, readErrors },
+            $"路由完成：触发 {routed.Count}，待认领 {unmatched.Count}，多义 {ambiguous.Count}");
     }
 
     /// <summary>批次列表（分页 + 简易过滤）</summary>

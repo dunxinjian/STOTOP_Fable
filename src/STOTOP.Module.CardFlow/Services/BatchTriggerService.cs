@@ -32,6 +32,35 @@ public enum BatchJobKind
 /// </summary>
 public record MatchResult(long FlowDefinitionId, long PluginRuleId);
 
+/// <summary>
+/// 多文件路由分类的输入项：一个文件的文件名 + 其列头集合。
+/// </summary>
+public record FileColumnHeader(string FileName, IReadOnlyList<string> Columns);
+
+/// <summary>
+/// 已唯一命中的文件（routed）：精确路由到一个流程。
+/// </summary>
+public record RoutedFile(string FileName, long FlowDefinitionId, long PluginRuleId);
+
+/// <summary>
+/// 未命中任何流程的文件（待认领）。
+/// </summary>
+public record UnmatchedFile(string FileName, IReadOnlyList<string> Columns);
+
+/// <summary>
+/// 命中多个流程的文件（多义）：需人工裁决选哪个流程。
+/// </summary>
+public record AmbiguousFile(string FileName, IReadOnlyList<MatchResult> Candidates);
+
+/// <summary>
+/// 多文件内容路由分类结果：按命中数分 routed(=1)/unmatched(0)/ambiguous(&gt;1)。
+/// 仅做分类（只调 MatchFlowDefinitionsAsync），不触发导入。
+/// </summary>
+public record FileClassificationResult(
+    IReadOnlyList<RoutedFile> Routed,
+    IReadOnlyList<UnmatchedFile> Unmatched,
+    IReadOnlyList<AmbiguousFile> Ambiguous);
+
 public interface IBatchTriggerService
 {
     Task<long> TriggerByFileUploadAsync(
@@ -53,6 +82,12 @@ public interface IBatchTriggerService
     /// <param name="orgId">组织ID</param>
     /// <returns>匹配到的 FlowDefinitionId + PluginRuleId 列表，空列表表示未匹配</returns>
     Task<List<MatchResult>> MatchFlowDefinitionsAsync(IReadOnlyList<string> fileColumns, string? fileName, long orgId);
+
+    /// <summary>
+    /// 多文件内容路由分类：对每个 (文件名, 列头) 调 MatchFlowDefinitionsAsync，
+    /// 按命中数分 routed(=1)/unmatched(0)/ambiguous(&gt;1)。仅分类，不触发导入。
+    /// </summary>
+    Task<FileClassificationResult> ClassifyFilesAsync(IReadOnlyList<FileColumnHeader> files, long orgId);
 
     /// <summary>
     /// 获取可选流程定义列表（匹配失败时供前端选择）
@@ -593,6 +628,40 @@ public class BatchTriggerService : IBatchTriggerService
 
         _logger.LogDebug("未找到匹配的流程定义，组织={OrgId}", orgId);
         return [];
+    }
+
+    /// <summary>
+    /// 多文件内容路由分类：对每个 (文件名, 列头) 调 MatchFlowDefinitionsAsync，
+    /// 按命中数分 routed(=1)/unmatched(0)/ambiguous(&gt;1)。仅分类，不触发导入。
+    /// </summary>
+    public async Task<FileClassificationResult> ClassifyFilesAsync(IReadOnlyList<FileColumnHeader> files, long orgId)
+    {
+        var routed = new List<RoutedFile>();
+        var unmatched = new List<UnmatchedFile>();
+        var ambiguous = new List<AmbiguousFile>();
+
+        foreach (var f in files ?? [])
+        {
+            var matches = await MatchFlowDefinitionsAsync(f.Columns, f.FileName, orgId);
+            switch (matches.Count)
+            {
+                case 0:
+                    unmatched.Add(new UnmatchedFile(f.FileName, f.Columns));
+                    break;
+                case 1:
+                    routed.Add(new RoutedFile(f.FileName, matches[0].FlowDefinitionId, matches[0].PluginRuleId));
+                    break;
+                default:
+                    ambiguous.Add(new AmbiguousFile(f.FileName, matches));
+                    break;
+            }
+        }
+
+        _logger.LogInformation(
+            "多文件路由分类完成：组织={OrgId}，输入={Total}，routed={Routed}，unmatched={Unmatched}，ambiguous={Ambiguous}",
+            orgId, files?.Count ?? 0, routed.Count, unmatched.Count, ambiguous.Count);
+
+        return new FileClassificationResult(routed, unmatched, ambiguous);
     }
 
     /// <summary>
