@@ -66,10 +66,10 @@
           </StatusTag>
         </template>
         <template v-if="column.dataIndex === 'action'">
-          <a-button type="link" size="small" @click="handleEdit(record)">
+          <a-button type="link" @click="handleEdit(record)">
             <EditOutlined />编辑
           </a-button>
-          <a-button type="link" size="small" @click="handleManageRooms(record)">
+          <a-button type="link" @click="handleManageRooms(record)">
             <HomeOutlined />管理房间
           </a-button>
           <a-button
@@ -86,7 +86,7 @@
             cancel-text="取消"
             @confirm="handleDelete(record)"
           >
-            <a-button type="link" size="small" danger>
+            <a-button type="link" danger>
               <DeleteOutlined />删除
             </a-button>
           </a-popconfirm>
