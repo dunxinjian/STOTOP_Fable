@@ -7,8 +7,8 @@
         </a-button>
       </template>
       <template #toolbar>
-        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-          <div style="display:flex; align-items:center; gap:8px;">
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
             <a-form-item label="关键词" style="margin-bottom:0">
               <a-input
                 v-model:value="searchForm.keyword"
@@ -31,7 +31,7 @@
               />
             </a-form-item>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div class="page-toolbar__filters">
             <a-button type="primary" @click="handleSearch">
               <template #icon><SearchOutlined /></template>查询
             </a-button>
@@ -43,64 +43,56 @@
       </template>
     </PageHeader>
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 1100 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'name'">
-            <a-tooltip :title="record.name">{{ record.name }}</a-tooltip>
-          </template>
-          <template v-if="column.dataIndex === 'address'">
-            <a-tooltip :title="record.address">{{ record.address }}</a-tooltip>
-          </template>
-          <template v-if="column.dataIndex === 'status'">
-            <a-tag :color="record.status === 1 ? 'success' : 'error'">
-              {{ record.status === 1 ? '启用' : '停用' }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleEdit(record)">
-              <EditOutlined />编辑
-            </a-button>
-            <a-button type="link" size="small" @click="handleManageRooms(record)">
-              <HomeOutlined />管理房间
-            </a-button>
-            <a-button
-              type="link"
-              size="small"
-              :class="record.status === 1 ? 'btn-disable' : 'btn-enable'"
-              @click="handleToggleStatus(record)"
-            >
-              {{ record.status === 1 ? '停用' : '启用' }}
-            </a-button>
-            <a-popconfirm
-              title="确定删除该楼栋吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleDelete(record)"
-            >
-              <a-button type="link" size="small" danger>
-                <DeleteOutlined />删除
-              </a-button>
-            </a-popconfirm>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1100 }"
+      row-key="id"
+      empty-text="暂无楼栋数据"
+      @change="fetchBuildingList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'name'">
+          <a-tooltip :title="record.name">{{ record.name }}</a-tooltip>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无楼栋数据" />
+        <template v-if="column.dataIndex === 'address'">
+          <a-tooltip :title="record.address">{{ record.address }}</a-tooltip>
         </template>
-      </a-table>
-    </a-card>
+        <template v-if="column.dataIndex === 'status'">
+          <StatusTag :type="record.status === 1 ? 'success' : 'danger'" dot>
+            {{ record.status === 1 ? '启用' : '停用' }}
+          </StatusTag>
+        </template>
+        <template v-if="column.dataIndex === 'action'">
+          <a-button type="link" size="small" @click="handleEdit(record)">
+            <EditOutlined />编辑
+          </a-button>
+          <a-button type="link" size="small" @click="handleManageRooms(record)">
+            <HomeOutlined />管理房间
+          </a-button>
+          <a-button
+            type="link"
+            size="small"
+            :class="record.status === 1 ? 'btn-disable' : 'btn-enable'"
+            @click="handleToggleStatus(record)"
+          >
+            {{ record.status === 1 ? '停用' : '启用' }}
+          </a-button>
+          <a-popconfirm
+            title="确定删除该楼栋吗？"
+            ok-text="确定"
+            cancel-text="取消"
+            @confirm="handleDelete(record)"
+          >
+            <a-button type="link" size="small" danger>
+              <DeleteOutlined />删除
+            </a-button>
+          </a-popconfirm>
+        </template>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -218,14 +210,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getBuildingList,
   getBuildingDetail,
@@ -241,7 +234,6 @@ const router = useRouter()
 
 // 表格列配置
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '编码', dataIndex: 'code', key: 'code', width: 100 },
   { title: '名称', dataIndex: 'name', key: 'name', width: 150, ellipsis: true },
   { title: '地址', dataIndex: 'address', key: 'address', width: 200, ellipsis: true },
@@ -262,26 +254,11 @@ const searchForm = reactive({
 // 表格数据
 const loading = ref(false)
 const tableData = ref<BuildingListItemDto[]>([])
-const pagination = reactive({
+const pagination = ref({
   pageIndex: 1,
   pageSize: 20,
   total: 0,
 })
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchBuildingList()
-}
 
 // 弹窗相关
 const dialogVisible = ref(false)
@@ -335,15 +312,15 @@ async function fetchBuildingList() {
   loading.value = true
   try {
     const params: any = {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }
     if (searchForm.keyword) params.keyword = searchForm.keyword
     if (searchForm.status !== '' && searchForm.status !== undefined) params.status = searchForm.status
     const res = await getBuildingList(params)
     if (res) {
       tableData.value = res.items || []
-      pagination.total = res.totalCount || 0
+      pagination.value.total = res.totalCount || 0
     }
   } finally {
     loading.value = false
@@ -352,7 +329,7 @@ async function fetchBuildingList() {
 
 // 搜索
 function handleSearch() {
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchBuildingList()
 }
 
@@ -360,7 +337,7 @@ function handleSearch() {
 function handleReset() {
   searchForm.keyword = ''
   searchForm.status = ''
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchBuildingList()
 }
 
