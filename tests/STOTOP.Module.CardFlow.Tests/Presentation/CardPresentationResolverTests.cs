@@ -203,6 +203,49 @@ public class CardPresentationResolverTests
     }
 
     [Fact]
+    public void MaskedDetailColumn_ExcludedFromDefaultSummary()
+    {
+        // 构造一行明细，default.amount 列被标记 masked；断言结果 DetailSummary 不含 detailSum.amount
+        var resolver = new CardPresentationResolver();
+        var result = resolver.Resolve(new CardPresentationResolveRequest
+        {
+            CardSchemaJson = """
+            {
+              "version": 2,
+              "components": [
+                {
+                  "id": "lines",
+                  "type": "detailTable",
+                  "title": "明细",
+                  "binding": { "source": "detailTable", "detailTableKey": "default" }
+                }
+              ]
+            }
+            """,
+            DetailSchemaJson = """[{"key":"amount","label":"金额","type":"money"}]""",
+            StageProfile = new StageViewProfile(),
+            FieldAccess = new Dictionary<string, StageFieldAccessRule>(),
+            DetailAccess = new Dictionary<string, StageDetailAccessRule>
+            {
+                ["default.amount"] = new() { Access = "masked" }
+            },
+            Card = new CfCard { FID = 50, FDataJson = "{}" },
+            Details = new List<CfCardDetail>
+            {
+                new CfCardDetail
+                {
+                    FID = 60,
+                    FDetailTableKey = "default",
+                    FSortOrder = 1,
+                    FDataJson = """{"amount":999}"""
+                }
+            }
+        });
+
+        Assert.False(result.DetailSummary.ContainsKey("detailSum.amount"));
+    }
+
+    [Fact]
     public void Resolve_BindsRelationComponentsByRelationType()
     {
         var resolver = new CardPresentationResolver();

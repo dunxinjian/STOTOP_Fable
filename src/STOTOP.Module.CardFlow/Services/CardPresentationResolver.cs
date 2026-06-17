@@ -28,10 +28,10 @@ public sealed class CardPresentationResolver : ICardPresentationResolver
         var definitions = ResolveComponentDefinitions(request, fields, detailTables);
         var result = new CardPresentationRuntimeView();
 
-        ComputeDefaultDetailSummary(request.Details, result.DetailSummary);
+        ComputeDefaultDetailSummary(request.Details, result.DetailSummary, request.DetailAccess);
         foreach (var definition in definitions)
         {
-            ApplyAggregations(definition, request.Details, result.DetailSummary);
+            ApplyAggregations(definition, request.Details, result.DetailSummary, request.DetailAccess);
         }
 
         foreach (var definition in definitions)
@@ -261,8 +261,8 @@ public sealed class CardPresentationResolver : ICardPresentationResolver
         }
 
         var summary = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        ComputeDefaultDetailSummary(request.Details, summary);
-        ApplyAggregations(definition, request.Details, summary);
+        ComputeDefaultDetailSummary(request.Details, summary, request.DetailAccess);
+        ApplyAggregations(definition, request.Details, summary, request.DetailAccess);
         return summary.TryGetValue(summaryKey, out var value) ? value : null;
     }
 
@@ -348,10 +348,25 @@ public sealed class CardPresentationResolver : ICardPresentationResolver
         }
     }
 
+    private static bool IsColumnRestricted(
+        IReadOnlyDictionary<string, StageDetailAccessRule> detailAccess,
+        string tableKey,
+        string fieldKey)
+    {
+        if (detailAccess.TryGetValue($"{tableKey}.{fieldKey}", out var rule))
+        {
+            var a = rule.Access?.Trim().ToLowerInvariant();
+            return a == "hidden" || a == "masked";
+        }
+
+        return false;
+    }
+
     private static void ApplyAggregations(
         CardComponentDefinition definition,
         IReadOnlyCollection<CfCardDetail> details,
-        IDictionary<string, object?> detailSummary)
+        IDictionary<string, object?> detailSummary,
+        IReadOnlyDictionary<string, StageDetailAccessRule> detailAccess)
     {
         if (definition.Aggregation?.Sum == null || definition.Aggregation.Sum.Count == 0)
         {
@@ -368,14 +383,25 @@ public sealed class CardPresentationResolver : ICardPresentationResolver
                 continue;
             }
 
+            if (IsColumnRestricted(detailAccess, tableKey, sum.FieldKey))
+            {
+                continue;
+            }
+
             detailSummary[sum.TargetKey] = SumDetailField(details, tableKey, sum.FieldKey);
         }
     }
 
     private static void ComputeDefaultDetailSummary(
         IReadOnlyCollection<CfCardDetail> details,
-        IDictionary<string, object?> detailSummary)
+        IDictionary<string, object?> detailSummary,
+        IReadOnlyDictionary<string, StageDetailAccessRule> detailAccess)
     {
+        if (IsColumnRestricted(detailAccess, "default", "amount"))
+        {
+            return;
+        }
+
         if (!detailSummary.ContainsKey("detailSum.amount"))
         {
             detailSummary["detailSum.amount"] = SumDetailField(details, null, "amount");
