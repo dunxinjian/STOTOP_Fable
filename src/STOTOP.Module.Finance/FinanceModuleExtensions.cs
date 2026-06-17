@@ -32,6 +32,7 @@ public static class FinanceModuleExtensions
         services.AddScoped<IAmoebaService, AmoebaService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<AmoebaPLService>();
+        services.AddScoped<ICommonCostAllocationEngine, CommonCostAllocationEngine>();
         services.AddScoped<AccountSetService>();
         services.AddScoped<JournalService>();
         services.AddScoped<OperationLogService>();
