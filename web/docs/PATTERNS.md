@@ -142,6 +142,18 @@
 - 用法：`<StatFilterTabs v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />`，把状态过滤与计数合一，替代顶部 a-statistic 卡片与独立状态下拉。
 - 全令牌：选中态走 `--color-primary`/`--color-primary-light`，计数 `tabular-nums`；禁裸 hex。
 
+### PageLayout
+
+页面容器基元（样板：列表页 `dormitory/BuildingManage` 用 table；流式详情页 `cardflow/OrchestrationDetailPage` 用 flow）。
+
+| prop | 默认 | 说明 |
+| --- | --- | --- |
+| `variant` | `'table'` | `table`=渲染全局 `.page-container`，保留表格 flex 滚动链（单表列表页，表体独立滚动）；`flow`=渲染独立 `.page-flow`（token 内边距+卡片间距+整页滚动），不施加表格链（多卡片纵向流式详情页） |
+
+- flow variant 用独立类避开全局表格滚动链，**收编各页手写的「解除全局 .page-container 锁定」覆写**（禁止页面再 scoped 覆写 `.page-container` 或 `:deep(.ant-spin-*)` 解锁）。
+- 注意：flow（`.page-flow`）下裸 `<a-card>` 不受全局 `.page-container .ant-card{border-radius:0}` 压制，会保留自身圆角——这是预期差异。
+- 与 PageHeader 正交：标题→面包屑、操作→PageHeader、内容→PageLayout。
+
 ---
 
 ## 三、令牌速查（唯一权威，禁止再引入字面量）
@@ -163,6 +175,8 @@
 
 页面内边距单一真源：`.page-container { padding: var(--page-pad-y) var(--page-pad-x) }`，
 动态轨由 `theme.ts applyPagePaddingCSS` 写变量，**双轨 !important 已收口**。
+
+> 多卡片纵向流式页（详情/概览）用 `<PageLayout variant="flow">`（见 §二），不要 scoped 覆写 `.page-container`。
 
 ---
 
