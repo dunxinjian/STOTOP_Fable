@@ -57,6 +57,7 @@ public static class CardFlowSeeder
             new(35, "网点质控：接入 STG申通_虚假签收明细（建表 + 规则3113 + 流程2313 + 首节点5113）(2026-06-18)", MigrateV35),
             new(36, "网点质控：接入 STG申通_照片质检明细（建表 + 规则3114 + 流程2314 + 首节点5114）(2026-06-18)", MigrateV36),
             new(37, "网点质控：接入 STG申通_履约率明细（建表 + 规则3115 + 流程2315 + 首节点5115）(2026-06-18)", MigrateV37),
+            new(38, "网点质控：接入 STG申通_送货上门明细（建表 + 规则3116 + 流程2316 + 首节点5116）(2026-06-18)", MigrateV38),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -3248,6 +3249,113 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5115, 2315, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3115);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+    private static void MigrateV38(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_送货上门明细 暂存表（系统列 + 17 业务列 + 标准字段） ═══
+        // 注意：「违规行为-二级内容」含非法字符 -，dbColumn 去掉为 F违规行为二级内容（实体/EF/DDL/映射四处一致，excelColumn 保留原文）。
+        // 「电联录音」为 URL（可能逗号分隔多条），用 NVARCHAR(MAX)。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_送货上门明细')
+        CREATE TABLE [STG申通_送货上门明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3116 columnMapping，17 列）
+            [F订单来源] NVARCHAR(200) NULL,
+            [F统计日期] NVARCHAR(200) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F运单状态] NVARCHAR(200) NULL,
+            [F承包区编号] NVARCHAR(200) NULL,
+            [F承包区名称] NVARCHAR(200) NULL,
+            [F业务员工号] NVARCHAR(200) NULL,
+            [F派送小件员名称] NVARCHAR(200) NULL,
+            [F回执情况] NVARCHAR(200) NULL,
+            [F签收人信息] NVARCHAR(200) NULL,
+            [F履约情况] NVARCHAR(200) NULL,
+            [F签收日期] NVARCHAR(200) NULL,
+            [F违规行为二级内容] NVARCHAR(200) NULL,
+            [F工单判罚类型] NVARCHAR(200) NULL,
+            [F是否电联] NVARCHAR(200) NULL,
+            [F是否接通] NVARCHAR(200) NULL,
+            [F电联录音] NVARCHAR(MAX) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_送货上门明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_送货上门明细'))
+        CREATE INDEX [IX_STG申通_送货上门明细_F批次ID] ON [STG申通_送货上门明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_送货上门明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_送货上门明细'))
+        CREATE INDEX [IX_STG申通_送货上门明细_数据作用域] ON [STG申通_送货上门明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 统计日期 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_送货上门明细_运单统计日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_送货上门明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_送货上门明细_运单统计日期_未撤销]
+            ON [STG申通_送货上门明细]([F运单号],[F统计日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3116（送货上门明细导入） ═══
+        // excelColumn「违规行为-二级内容」保留原文，dbColumn「F违规行为二级内容」去掉非法字符 -。
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3116)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3116, 192, N'excelInput', N'申通送货上门明细导入规则',
+        N'{""targetTable"":""STG申通_送货上门明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,履约情况,工单判罚类型,派送小件员名称"",""fullColumnIdentifier"":""订单来源,统计日期,运单号,运单状态,承包区编号,承包区名称,业务员工号,派送小件员名称,回执情况,签收人信息,履约情况,签收日期,违规行为-二级内容,工单判罚类型,是否电联,是否接通,电联录音"",""columnMapping"":[{""excelColumn"":""订单来源"",""dbColumn"":""F订单来源""},{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""运单状态"",""dbColumn"":""F运单状态""},{""excelColumn"":""承包区编号"",""dbColumn"":""F承包区编号""},{""excelColumn"":""承包区名称"",""dbColumn"":""F承包区名称""},{""excelColumn"":""业务员工号"",""dbColumn"":""F业务员工号""},{""excelColumn"":""派送小件员名称"",""dbColumn"":""F派送小件员名称""},{""excelColumn"":""回执情况"",""dbColumn"":""F回执情况""},{""excelColumn"":""签收人信息"",""dbColumn"":""F签收人信息""},{""excelColumn"":""履约情况"",""dbColumn"":""F履约情况""},{""excelColumn"":""签收日期"",""dbColumn"":""F签收日期""},{""excelColumn"":""违规行为-二级内容"",""dbColumn"":""F违规行为二级内容""},{""excelColumn"":""工单判罚类型"",""dbColumn"":""F工单判罚类型""},{""excelColumn"":""是否电联"",""dbColumn"":""F是否电联""},{""excelColumn"":""是否接通"",""dbColumn"":""F是否接通""},{""excelColumn"":""电联录音"",""dbColumn"":""F电联录音""}],""keyFields"":[""运单号"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通送货上门达成分析明细 Excel导入配置（违规行为-二级内容含非法字符 -，电联录音为 URL）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2316（QC_ST_HOME_DELIVERY） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2316)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2316, NULL, 1, GETDATE(), NULL, N'网点质控：申通送货上门达成分析明细 导入暂存', GETDATE(), NULL, N'申通送货上门明细导入', NULL, N'QC_ST_HOME_DELIVERY', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""送货上门达成分析*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2316（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2316)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2316, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2316, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5116（ExcelInput 批次级自动节点，插件注册=1，规则=3116） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5116)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5116, 2316, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3116);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
