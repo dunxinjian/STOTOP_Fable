@@ -148,6 +148,18 @@ public class AmoebaPeriodGranularityTests
     }
 
     [Theory]
+    [InlineData("20260315", "day", "202603")]
+    [InlineData("20260101", "day", "202601")]
+    [InlineData("2026-W11", "week", "202603")]    // 周一 2026-03-09 → 202603
+    [InlineData("2026-W01", "week", "202512")]    // 跨年周归周一所在月：周一 2025-12-29 → 202512
+    [InlineData("202603", "month", "202603")]
+    [InlineData("2026Q2", "quarter", "202604")]   // 季初 4 月
+    public void PeriodContainingMonth_returns_start_month(string period, string granularity, string expected)
+    {
+        Assert.Equal(expected, AmoebaPLService.PeriodContainingMonth(period, granularity));
+    }
+
+    [Theory]
     [InlineData("202602", "month", "2026-03-15", true)]    // 上月已结
     [InlineData("202603", "month", "2026-03-15", false)]   // 当月未结
     [InlineData("202604", "month", "2026-03-15", false)]   // 未来未结

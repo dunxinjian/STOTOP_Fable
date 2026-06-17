@@ -281,6 +281,17 @@ public class AmoebaPLService
         // 7. 对每个期间执行独占匹配，得到 PLItemId -> Amount 字典
         var unmatchedWarnings = new List<string>();
         var perPeriodAmounts = new List<Dictionary<long, decimal>>();
+        // [批次5-S4] 日/周公共费分摊基线缓存：所属当月数据点(实际凭证/估值，含当月例外)，同月一次请求内只聚合一次
+        var monthPointsCache = new Dictionary<string, List<DataPoint>>();
+        async Task<List<DataPoint>> GetMonthPoints(string month)
+        {
+            if (!monthPointsCache.TryGetValue(month, out var pts))
+            {
+                pts = await BuildPeriodDataPoints(month, "month", orgId, accountSetId, request.TemplateId, plItems, mappingRules);
+                monthPointsCache[month] = pts;
+            }
+            return pts;
+        }
         for (int i = 0; i < periods.Count; i++)
         {
             var (matched, unmatched) = MatchDataPointsToPLItems(periodResults[i], plItems);
@@ -306,9 +317,17 @@ public class AmoebaPLService
                     matched[kv.Key] = kv.Value;
             }
 
-            // [批次5-S2] 子报表公共费按件量分摊注入：覆盖公共费叶为「全额×scope件量/全口径件量」。
-            // 置于指标并入之后——ComputeVolumeBasis 需读 matched 内发件/派件票量 indicator 匹配值。
-            if (isSubReport && periodFullScopePoints[i] is { } fullPts)
+            // 公共费按件量分摊注入(覆盖公共费叶=总额×分子件量/分母件量)，置于指标并入之后(ComputeVolumeBasis 需读票量 indicator)。
+            // [批次5-S4] 日/周：基线=所属当月实际(月公共费×日周件量/当月件量 线性时间摊；子报表则分子为日周scope件量、
+            //   分母为当月全口径件量，时间+scope 一次比例)。[批次5-S2] 月/季/年子报表：基线=同期全口径。
+            if (!IsLedgerGranularity(granularity))
+            {
+                var allocWarnings = new List<string>();
+                var monthPts = await GetMonthPoints(PeriodContainingMonth(periods[i], granularity));
+                ApplyCommonCostAllocation(matched, periodResults[i], monthPts, plItems, indicatorItems, allItems, allocWarnings);
+                if (i == 0) unmatchedWarnings.AddRange(allocWarnings);
+            }
+            else if (isSubReport && periodFullScopePoints[i] is { } fullPts)
             {
                 var allocWarnings = new List<string>();
                 ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings);
@@ -632,6 +651,10 @@ public class AmoebaPLService
         bool ledger = IsLedgerGranularity(granularity);
         return (Billing: true, Voucher: ledger, Depreciation: ledger, Estimate: ledger ? !periodClosed : true);
     }
+
+    /// <summary>期间所属月（起始日所在月，YYYYMM）。日/周公共费按"当月实际"摊取此月为基线。设计 §5.5/决策3。</summary>
+    internal static string PeriodContainingMonth(string period, string granularity = "month")
+        => PeriodToDateRange(period, granularity).Start.ToString("yyyyMM");
 
     /// <summary>期间键 = 粒度前缀 + 期间（设计 §5.3）：D:/W:/M:/Q:/Y:。存量(全月)迁移回填 'M:'+期间。</summary>
     internal static string BuildPeriodKey(string period, string granularity = "month")
