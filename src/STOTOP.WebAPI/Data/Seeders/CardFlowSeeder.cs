@@ -59,6 +59,7 @@ public static class CardFlowSeeder
             new(37, "网点质控：接入 STG申通_履约率明细（建表 + 规则3115 + 流程2315 + 首节点5115）(2026-06-18)", MigrateV37),
             new(38, "网点质控：接入 STG申通_送货上门明细（建表 + 规则3116 + 流程2316 + 首节点5116）(2026-06-18)", MigrateV38),
             new(39, "网点质控：接入 STG申通_应拦截明细（建表 + 规则3117 + 流程2317 + 首节点5117）(2026-06-18)", MigrateV39),
+            new(40, "网点质控：接入 STG申通_渗透建站考核（建表 + 规则3118 + 流程2318 + 首节点5118）(2026-06-18)", MigrateV40),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -3471,6 +3472,118 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5117, 2317, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3117);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+    private static void MigrateV40(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_渗透建站考核 暂存表（系统列 + 24 业务列 + 标准字段） ═══
+        // sheet「渗透率建站考核」，单行表头，24 列；1 行/网点/周期的汇总表。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_渗透建站考核')
+        CREATE TABLE [STG申通_渗透建站考核] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3118 columnMapping，24 列）
+            [F统计周期] NVARCHAR(200) NULL,
+            [F网点名称] NVARCHAR(200) NULL,
+            [F网点编号] NVARCHAR(200) NULL,
+            [F自建渗透率当月目标] NVARCHAR(200) NULL,
+            [F已认证自建渗透率] NVARCHAR(200) NULL,
+            [F已认证自建渗透率差值] NVARCHAR(200) NULL,
+            [F已认证自建渗透率环比] NVARCHAR(200) NULL,
+            [F总入库量] NVARCHAR(200) NULL,
+            [F已认证自建入库量] NVARCHAR(200) NULL,
+            [F建站当季目标] NVARCHAR(200) NULL,
+            [F建站当月目标] NVARCHAR(200) NULL,
+            [F菜鸟活跃] NVARCHAR(200) NULL,
+            [F喵站活跃] NVARCHAR(200) NULL,
+            [F多多活跃] NVARCHAR(200) NULL,
+            [F喵柜抵扣建站数] NVARCHAR(200) NULL,
+            [F建站待完成] NVARCHAR(200) NULL,
+            [F菜鸟当月新增] NVARCHAR(200) NULL,
+            [F建柜目标] NVARCHAR(200) NULL,
+            [F喵柜激活格口数] NVARCHAR(200) NULL,
+            [F喵柜激活格口数环比] NVARCHAR(200) NULL,
+            [F喵柜待完成格口数] NVARCHAR(200) NULL,
+            [F全cp日均入库量] NVARCHAR(200) NULL,
+            [F申通日均入库量] NVARCHAR(200) NULL,
+            [F喵柜组数] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_渗透建站考核_F批次ID' AND object_id = OBJECT_ID(N'STG申通_渗透建站考核'))
+        CREATE INDEX [IX_STG申通_渗透建站考核_F批次ID] ON [STG申通_渗透建站考核]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_渗透建站考核_数据作用域' AND object_id = OBJECT_ID(N'STG申通_渗透建站考核'))
+        CREATE INDEX [IX_STG申通_渗透建站考核_数据作用域] ON [STG申通_渗透建站考核]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（网点编号 + 统计周期 + 组织，仅未撤销 + 网点编号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_渗透建站考核_网点周期_未撤销' AND object_id = OBJECT_ID(N'STG申通_渗透建站考核'))
+        CREATE UNIQUE INDEX [UX_STG申通_渗透建站考核_网点周期_未撤销]
+            ON [STG申通_渗透建站考核]([F网点编号],[F统计周期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F网点编号] IS NOT NULL AND [F网点编号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3118（渗透建站考核导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3118)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3118, 192, N'excelInput', N'申通渗透建站考核导入规则',
+        N'{""targetTable"":""STG申通_渗透建站考核"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""统计周期,网点编号,已认证自建渗透率,建站当月目标"",""fullColumnIdentifier"":""统计周期,网点名称,网点编号,自建渗透率当月目标,已认证自建渗透率,已认证自建渗透率差值,已认证自建渗透率环比,总入库量,已认证自建入库量,建站当季目标,建站当月目标,菜鸟活跃,喵站活跃,多多活跃,喵柜抵扣建站数,建站待完成,菜鸟当月新增,建柜目标,喵柜激活格口数,喵柜激活格口数环比,喵柜待完成格口数,全cp日均入库量,申通日均入库量,喵柜组数"",""columnMapping"":[{""excelColumn"":""统计周期"",""dbColumn"":""F统计周期""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""网点编号"",""dbColumn"":""F网点编号""},{""excelColumn"":""自建渗透率当月目标"",""dbColumn"":""F自建渗透率当月目标""},{""excelColumn"":""已认证自建渗透率"",""dbColumn"":""F已认证自建渗透率""},{""excelColumn"":""已认证自建渗透率差值"",""dbColumn"":""F已认证自建渗透率差值""},{""excelColumn"":""已认证自建渗透率环比"",""dbColumn"":""F已认证自建渗透率环比""},{""excelColumn"":""总入库量"",""dbColumn"":""F总入库量""},{""excelColumn"":""已认证自建入库量"",""dbColumn"":""F已认证自建入库量""},{""excelColumn"":""建站当季目标"",""dbColumn"":""F建站当季目标""},{""excelColumn"":""建站当月目标"",""dbColumn"":""F建站当月目标""},{""excelColumn"":""菜鸟活跃"",""dbColumn"":""F菜鸟活跃""},{""excelColumn"":""喵站活跃"",""dbColumn"":""F喵站活跃""},{""excelColumn"":""多多活跃"",""dbColumn"":""F多多活跃""},{""excelColumn"":""喵柜抵扣建站数"",""dbColumn"":""F喵柜抵扣建站数""},{""excelColumn"":""建站待完成"",""dbColumn"":""F建站待完成""},{""excelColumn"":""菜鸟当月新增"",""dbColumn"":""F菜鸟当月新增""},{""excelColumn"":""建柜目标"",""dbColumn"":""F建柜目标""},{""excelColumn"":""喵柜激活格口数"",""dbColumn"":""F喵柜激活格口数""},{""excelColumn"":""喵柜激活格口数环比"",""dbColumn"":""F喵柜激活格口数环比""},{""excelColumn"":""喵柜待完成格口数"",""dbColumn"":""F喵柜待完成格口数""},{""excelColumn"":""全cp日均入库量"",""dbColumn"":""F全cp日均入库量""},{""excelColumn"":""申通日均入库量"",""dbColumn"":""F申通日均入库量""},{""excelColumn"":""喵柜组数"",""dbColumn"":""F喵柜组数""}],""keyFields"":[""网点编号"",""统计周期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F网点编号"",""F统计周期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通渗透率建站考核 Excel导入配置（1 行/网点/周期汇总）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2318（QC_ST_PENETRATION） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2318)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2318, NULL, 1, GETDATE(), NULL, N'网点质控：申通渗透率建站考核 导入暂存', GETDATE(), NULL, N'申通渗透建站考核导入', NULL, N'QC_ST_PENETRATION', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""渗透率建站考核*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2318（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2318)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2318, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2318, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5118（ExcelInput 批次级自动节点，插件注册=1，规则=3118） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5118)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5118, 2318, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3118);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
