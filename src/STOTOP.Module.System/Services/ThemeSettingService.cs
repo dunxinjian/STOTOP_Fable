@@ -12,11 +12,11 @@ public class ThemeSettingService : IThemeSettingService
 
     private const string DefaultConfigJson = """
     {
-        "colorPrimary": "#1677ff",
-        "colorSuccess": "#52c41a",
-        "colorWarning": "#faad14",
-        "colorError": "#ff4d4f",
-        "colorInfo": "#1677ff",
+        "colorPrimary": "#E85E00",
+        "colorSuccess": "#2BA471",
+        "colorWarning": "#E6A700",
+        "colorError": "#E5484D",
+        "colorInfo": "#3A6FB0",
         "borderRadius": 6,
         "fontSize": 14,
         "sizeStep": 4,
