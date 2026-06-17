@@ -28,6 +28,7 @@ using Task = global::System.Threading.Tasks.Task;
 /// 并校验完整汇总表含列 F揽收缺失量、准确汇总表含 F到件不准确率 有值（证明对的 sheet 落对的表）。
 /// 用完按 F批次ID 清理本测试三批数据，避免污染累积。
 /// </summary>
+[Collection("StotopRealDb")] // 串行化：与其它真库集成测试共享 stotop，避免并行跨批去重竞态
 public class InfoIndexMultiSheetImportIntegrationTests
 {
     private const long OrgId = 192;

@@ -38,6 +38,7 @@ using Task = global::System.Threading.Tasks.Task;
 ///
 /// Part 3 — 幂等：对未到件源连续导入两次，断言第二次 0 行新写入、合计不增（跨批去重生效、不丢整批）。
 /// </summary>
+[Collection("StotopRealDb")] // 串行化：与其它真库集成测试共享 stotop，避免并行跨批去重竞态
 public class ShentongQualityBatchE2ETests
 {
     private const long OrgId = 192;

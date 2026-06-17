@@ -29,6 +29,7 @@ using Task = global::System.Threading.Tasks.Task;
 ///    这是评审 Critical 的回归证明：dedup 字段数（2）与底层 ExcelInputPlugin 兼容。
 /// 用完按 F批次ID 清理本测试两批数据，避免污染累积。
 /// </summary>
+[Collection("StotopRealDb")] // 串行化：与其它真库集成测试共享 stotop，避免并行跨批去重竞态
 public class LogisticsCompletenessImportIntegrationTests
 {
     private const long OrgId = 192;

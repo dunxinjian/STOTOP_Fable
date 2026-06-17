@@ -7,6 +7,7 @@ using Xunit;
 
 namespace STOTOP.Module.CardFlow.Tests.Smoke;
 
+[Collection("StotopRealDb")] // 串行化：与其它真库集成测试共享 stotop，避免并行竞态（默认 Skip，但加入以防开启）
 public class SqlServerSchemaSmokeTests
 {
     private static string? Conn => Environment.GetEnvironmentVariable("STOTOP_TEST_CONNECTION");
