@@ -3275,20 +3275,20 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 3px 10px;
-  background: #fff;
-  border: 1px solid #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
+  background: var(--bg-card);
+  border: 1px solid var(--color-primary);
   border-radius: 16px;
   font-size: 13px;
-  color: #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
+  color: var(--color-primary);
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover { background: #f9f0ff; }
+  &:hover { background: var(--color-primary-light); }
 
   &__name { font-weight: 500; white-space: nowrap; }
   &__fx {
     font-size: 10px;
-    background: #722ed1; // 全局公式标记强调色，无业务语义，保留待阶段5
+    background: var(--color-primary);
     color: #fff;
     padding: 0 4px;
     border-radius: 3px;
@@ -3539,9 +3539,9 @@ onMounted(() => {
     .editor-card__title { color: var(--color-success-text); }
   }
   &--calc {
-    &::before { background: #722ed1; } // 计算卡分组强调色，无业务语义，保留待阶段5
-    .editor-card__head { background: linear-gradient(to right, rgba(114,46,209,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
-    .editor-card__title { color: #531dab; }
+    &::before { background: var(--color-primary); }
+    .editor-card__head { background: linear-gradient(to right, rgba(232,94,0,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    .editor-card__title { color: var(--color-primary-active); }
   }
   &--remark {
     &::before { background: var(--color-warning); }
