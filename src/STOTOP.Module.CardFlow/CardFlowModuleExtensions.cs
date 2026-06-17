@@ -51,6 +51,7 @@ public static class CardFlowModuleExtensions
         services.AddScoped<ReturnToStageRuntime>();
         services.AddScoped<INumberSequenceService, NumberSequenceService>();
         services.AddScoped<ICardSchemaService, CardSchemaService>();
+        services.AddScoped<Services.Redaction.ICardRedactionService, Services.Redaction.CardRedactionService>();
         services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
 
         // 通知渠道

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Models;
 using STOTOP.Module.CardFlow.Dtos;
 using STOTOP.Module.CardFlow.Services.Interfaces;
+using STOTOP.Module.System.Services;
 
 namespace STOTOP.Module.CardFlow.Controllers;
 
@@ -15,11 +16,13 @@ public class CardController : ControllerBase
 {
     private readonly ICardService _cardService;
     private readonly IFlowEngineService _engine;
+    private readonly IAdminAuthorizationService _adminService;
 
-    public CardController(ICardService cardService, IFlowEngineService engine)
+    public CardController(ICardService cardService, IFlowEngineService engine, IAdminAuthorizationService adminService)
     {
         _cardService = cardService;
         _engine = engine;
+        _adminService = adminService;
     }
 
     private long GetUserId() => long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -62,7 +65,7 @@ public class CardController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ApiResult<CardDetailDto>> GetById(long id)
     {
-        var result = await _cardService.GetByIdAsync(id, GetUserId());
+        var result = await _cardService.GetByIdAsync(id, GetUserId(), _adminService.IsAdmin(User));
         if (result == null)
             return ApiResult<CardDetailDto>.Fail("卡片不存在");
         return ApiResult<CardDetailDto>.Success(result);

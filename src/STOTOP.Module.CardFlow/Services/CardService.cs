@@ -6,8 +6,10 @@ using STOTOP.Core.Models;
 using STOTOP.Infrastructure.Data;
 using STOTOP.Module.CardFlow.Dtos;
 using STOTOP.Module.CardFlow.Entities;
+using STOTOP.Module.CardFlow.Models.Approval;
 using STOTOP.Module.CardFlow.Models.Schema;
 using STOTOP.Module.CardFlow.Services.Interfaces;
+using STOTOP.Module.CardFlow.Services.Redaction;
 
 namespace STOTOP.Module.CardFlow.Services;
 
@@ -18,19 +20,22 @@ public class CardService : ICardService
     private readonly IStageConfigParser _stageConfigParser;
     private readonly IStageViewProfileResolver _stageViewResolver;
     private readonly ICardFlowSourceContextVerifier _sourceContextVerifier;
+    private readonly ICardRedactionService _redactionService;
 
     public CardService(
         STOTOPDbContext dbContext,
         ILogger<CardService> logger,
         IStageConfigParser stageConfigParser,
         IStageViewProfileResolver stageViewResolver,
-        ICardFlowSourceContextVerifier sourceContextVerifier)
+        ICardFlowSourceContextVerifier sourceContextVerifier,
+        ICardRedactionService redactionService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _stageConfigParser = stageConfigParser;
         _stageViewResolver = stageViewResolver;
         _sourceContextVerifier = sourceContextVerifier;
+        _redactionService = redactionService;
     }
 
     public async Task<List<AvailableFlowDto>> GetAvailableFlowsAsync(long userId, long orgId)
@@ -112,7 +117,7 @@ public class CardService : ICardService
         return await GetCardsAsync(request);
     }
 
-    public async Task<CardDetailDto?> GetByIdAsync(long id, long userId)
+    public async Task<CardDetailDto?> GetByIdAsync(long id, long userId, bool canViewAll = false)
     {
         var card = await _dbContext.Set<CfCard>().FirstOrDefaultAsync(x => x.FID == id);
         if (card == null) return null;
@@ -156,6 +161,14 @@ public class CardService : ICardService
             .Where(a => stageInstanceIds.Contains(a.FStageInstanceId))
             .ToListAsync();
 
+        // 最小卡片访问门：发起人 / 任意轮次处理人 / 管理员，否则拒绝（不暴露存在性）
+        var isInitiator = card.FInitiatorId == userId;
+        var isAssignee = assignees.Any(a => a.FUserId == userId);
+        if (!canViewAll && !isInitiator && !isAssignee)
+        {
+            return null;
+        }
+
         detail.StageInstances = stageInstances.Select(s => new StageInstanceDto
         {
             Id = s.FID,
@@ -191,15 +204,70 @@ public class CardService : ICardService
         detail.Details = cardDetails.Select(ToCardDetailRowDto).ToList();
         detail.AuditTrail = await LoadRuntimeAuditTrailAsync(card, stageInstances, assignees);
 
+        // 解析查看者处理过的节点配置（粘附授权）+ 当前 active 节点配置（节点视图权威）
+        var viewerStageInstanceIds = assignees
+            .Where(a => a.FUserId == userId)
+            .Select(a => a.FStageInstanceId)
+            .ToHashSet();
+        var handledStageDefIds = stageInstances
+            .Where(s => viewerStageInstanceIds.Contains(s.FID) && s.FStageDefinitionId != null)
+            .Select(s => s.FStageDefinitionId!.Value)
+            .Distinct()
+            .ToList();
+
         var currentStage = stageInstances.FirstOrDefault(s => s.FID == card.FCurrentStageInstanceId && s.FStatus == "active");
-        if (currentStage?.FStageDefinitionId != null)
+        var viewerIsActiveAssignee = currentStage != null
+            && assignees.Any(a => a.FStageInstanceId == currentStage.FID && a.FUserId == userId);
+
+        var stageDefs = await _dbContext.Set<CfStageDefinition>()
+            .AsNoTracking()
+            .Where(s => handledStageDefIds.Contains(s.FID))
+            .ToListAsync();
+        var stageConfigs = stageDefs.ToDictionary(s => s.FID, s => _stageConfigParser.Parse(s.FInputFieldsJson));
+
+        var flowVersion = await _dbContext.Set<CfFlowVersion>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.FID == card.FFlowVersionId);
+
+        StageConfigEnvelope? activeConfig = null;
+        var handledConfigs = new List<StageConfigEnvelope>();
+        foreach (var (defId, cfg) in stageConfigs)
+        {
+            if (viewerIsActiveAssignee && currentStage?.FStageDefinitionId == defId)
+            {
+                activeConfig = cfg;
+            }
+            else
+            {
+                handledConfigs.Add(cfg);
+            }
+        }
+
+        var redaction = _redactionService.Redact(new CardRedactionRequest
+        {
+            Card = card,
+            CardSchemaJson = flowVersion?.FCardSchemaJson,
+            DetailSchemaJson = flowVersion?.FDetailSchemaJson,
+            Details = cardDetails,
+            ActiveStageConfig = activeConfig,
+            HandledStageConfigs = handledConfigs
+        });
+
+        detail.DataJson = redaction.RedactedDataJson;
+        detail.Details = redaction.RedactedDetails.Select(row => new CardDetailRowDto
+        {
+            Id = row.Id,
+            DetailTableKey = string.IsNullOrWhiteSpace(row.DetailTableKey) ? "default" : row.DetailTableKey,
+            SortOrder = row.SortOrder,
+            DataJson = row.DataJson
+        }).ToList();
+
+        // 仅当前 active 处理人查看 v2 节点时，补节点工作视图（sections/components/actions）
+        if (viewerIsActiveAssignee && currentStage?.FStageDefinitionId != null)
         {
             var stageDefinition = await _dbContext.Set<CfStageDefinition>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.FID == currentStage.FStageDefinitionId.Value);
-            var flowVersion = await _dbContext.Set<CfFlowVersion>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.FID == card.FFlowVersionId);
             var normalizedConfig = _stageConfigParser.Parse(stageDefinition?.FInputFieldsJson);
             if (stageDefinition != null && normalizedConfig.Version == 2)
             {
@@ -215,15 +283,6 @@ public class CardService : ICardService
                     normalizedConfig,
                     presentationRelations,
                     presentationSnapshots);
-
-                detail.DataJson = resolved.RedactedDataJson;
-                detail.Details = resolved.RedactedDetails.Select(row => new CardDetailRowDto
-                {
-                    Id = row.Id,
-                    DetailTableKey = string.IsNullOrWhiteSpace(row.DetailTableKey) ? "default" : row.DetailTableKey,
-                    SortOrder = row.SortOrder,
-                    DataJson = row.DataJson
-                }).ToList();
                 detail.CurrentStageWorkView = ToStageWorkViewDto(resolved);
             }
         }
