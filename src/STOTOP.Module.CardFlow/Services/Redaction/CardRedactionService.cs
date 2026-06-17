@@ -35,6 +35,8 @@ public sealed class CardRedactionService : ICardRedactionService
                 continue;
             }
 
+            // 设计：查看者正作为当前 active 节点处理人时，该节点视图对其权威（可提权，也可限制到 hidden/masked）。
+            // 粘附授权（D4）在其"非 active"时生效——卡片流转走后再查看，下方 baseline+sticky 分支会恢复其历史获授的明文。
             if (request.ActiveStageConfig != null)
             {
                 result[key] = ResolveActive(request.ActiveStageConfig, field);
@@ -111,7 +113,7 @@ public sealed class CardRedactionService : ICardRedactionService
         "readonly" => 2,
         "editable" => 3,
         "required" => 3,
-        _ => 2
+        _ => 1
     };
 
     private static string NormalizeAccess(string? access) => access?.Trim().ToLowerInvariant() switch
@@ -120,7 +122,9 @@ public sealed class CardRedactionService : ICardRedactionService
         "masked" => "masked",
         "editable" => "editable",
         "required" => "editable",
-        _ => "readonly"
+        "readonly" => "readonly",
+        // 未知/拼错/null/空 一律按最严处理（fail-closed），不得默认成明文可见
+        _ => "masked"
     };
 
     private static List<CardFieldDefinitionV2> ReadFields(string? schemaJson)
