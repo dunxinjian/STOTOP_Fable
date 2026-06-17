@@ -17,6 +17,11 @@ interface DomainSummary {
   overdue: number
 }
 
+interface ExceptionStats {
+  pendingCount?: number
+  overdueCount?: number
+}
+
 const exception = ref<DomainSummary>({ pending: 0, overdue: 0 })
 const dataQuality = ref<DomainSummary>({ pending: 0, overdue: 0 })
 const loading = ref(false)
@@ -36,12 +41,16 @@ async function refresh() {
       getWorkHubQualitySummary(),
     ])
     if (exRes.status === 'fulfilled' && exRes.value) {
-      const v = exRes.value as any
+      const v = exRes.value as ExceptionStats
       exception.value = { pending: v.pendingCount ?? 0, overdue: v.overdueCount ?? 0 }
+    } else if (exRes.status === 'rejected') {
+      console.warn('[useQualitySummary] 异常域拉取失败', exRes.reason)
     }
     if (dqRes.status === 'fulfilled' && dqRes.value) {
-      const v = dqRes.value as any
+      const v = dqRes.value
       dataQuality.value = { pending: v.pendingTotal ?? 0, overdue: v.overdueWarning ?? 0 }
+    } else if (dqRes.status === 'rejected') {
+      console.warn('[useQualitySummary] 数据质量域拉取失败', dqRes.reason)
     }
   } finally {
     loading.value = false
