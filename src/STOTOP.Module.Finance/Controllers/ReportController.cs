@@ -411,6 +411,7 @@ public class ReportController : ControllerBase
                     FPLItemId = item.PLItemId,
                     FOrgId = effectiveOrgId,
                     FPeriod = request.Period,
+                    FPeriodKey = AmoebaPLService.BuildPeriodKey(request.Period),   // [批次5-S3] 手工填报当前为月度
                     FAmount = item.Amount,
                     FPerUnitValue = item.PerUnitValue,
                     FDataType = "manual",

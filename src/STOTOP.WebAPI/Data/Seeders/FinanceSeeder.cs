@@ -28,6 +28,7 @@ public static class FinanceSeeder
             new(4, "指标分区标记收敛为根级 (2026-06-12)", MigrateV4),
             new(5, "删除 FIN科目/科目余额/辅助余额 的 F组织ID 列 (2026-06-16)", MigrateV5),
             new(6, "批次6: 删损益项2废弃列+重灌72项种子 (2026-06-17)", MigrateV6),
+            new(7, "批次5-S3: 手工数据加 F期间键 + 回填 'M:'+期间 (2026-06-17)", MigrateV7),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2025,6 +2026,27 @@ public static class FinanceSeeder
         SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F指标方向范围");
         // 存量库重灌损益项种子: V1 内种子对已迁移库不会重跑, 故在此守卫重灌
         ReseedAmoebaTemplate3(ctx);
+    }
+
+    /// <summary>
+    /// 批次5-S3: FIN阿米巴手工数据 加 F期间键(粒度前缀+期间)，回填存量(全月度)为 'M:'+F期间。
+    /// 列幂等补加(IF NOT EXISTS)——dev 下 SchemaAutoSync 可能已在本步前加好，prod(AutoSync 暂存)则由本步加。
+    /// 唯一索引保持 F期间 不变(各粒度期间串本就唯一)，不在此动索引(避免管线在回填前用全 NULL 期间键建索引撞 NULL 重复)。
+    /// 加列与回填分两个 batch：UPDATE 引用的列须由前一 batch 先建好(SQL Server 延迟名称解析)。
+    /// </summary>
+    private static void MigrateV7(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = N'FIN阿米巴手工数据' AND COLUMN_NAME = N'F期间键')
+        ALTER TABLE [FIN阿米巴手工数据] ADD [F期间键] nvarchar(20) NULL;
+        ");
+
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴手工数据] SET [F期间键] = N'M:' + [F期间] WHERE [F期间键] IS NULL;
+        ");
     }
 
     /// <summary>

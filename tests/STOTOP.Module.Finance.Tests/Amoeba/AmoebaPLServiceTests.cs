@@ -400,6 +400,27 @@ public class AmoebaPLServiceTests
         Assert.False(scopedMatched.ContainsKey(610));
     }
 
+    [Fact]
+    public async Task SaveEstimateData_writes_period_key_with_month_prefix()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(SaveEstimateData_writes_period_key_with_month_prefix), orgId: 192);
+        var service = CreateService(db, currentOrgId: 192);
+
+        await service.SaveEstimateDataAsync(new ManualDataDto
+        {
+            TemplateId = 1,
+            OrgId = 192,
+            Period = "202603",
+            PLItemId = 100,
+            Amount = 500m,
+            AccountCode = "560104",
+            AuxiliaryJson = "[]",
+        });
+
+        var saved = await db.Set<FinAmoebaManualData>().SingleAsync();
+        Assert.Equal("M:202603", saved.FPeriodKey);   // 估值录入 UI 当前为月度，期间键 = 'M:'+期间
+    }
+
     private static FinAmoebaPLItem CreatePLItem(long id, string name, int sort, string? relatedAccountsJson)
     {
         return new FinAmoebaPLItem

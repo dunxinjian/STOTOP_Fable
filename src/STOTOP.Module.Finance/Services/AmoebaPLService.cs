@@ -2430,6 +2430,7 @@ public class AmoebaPLService
                 FPLItemId = dto.PLItemId,
                 FOrgId = dto.OrgId,
                 FPeriod = dto.Period,
+                FPeriodKey = BuildPeriodKey(dto.Period),   // [批次5-S3] 录入 UI 当前为月度
                 FAmount = dto.Amount,
                 FPerUnitValue = dto.PerUnitValue,
                 FDataType = "estimate",
