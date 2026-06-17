@@ -24,5 +24,7 @@
     <ProjectReference Include="../../src/STOTOP.Infrastructure/STOTOP.Infrastructure.csproj" />
     <ProjectReference Include="../../src/STOTOP.Module.System/STOTOP.Module.System.csproj" />
     <ProjectReference Include="../../src/STOTOP.Module.Finance/STOTOP.Module.Finance.csproj" />
+    <!-- 集成测试需调用 CardFlowSeeder（位于 WebAPI/Data/Seeders）建表 -->
+    <ProjectReference Include="../../src/STOTOP.WebAPI/STOTOP.WebAPI.csproj" />
   </ItemGroup>
 </Project>
