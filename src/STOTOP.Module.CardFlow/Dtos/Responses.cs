@@ -403,6 +403,8 @@ public class SchemaFieldDefinition
     public string Type { get; set; } = string.Empty;
     public bool Required { get; set; }
     public bool Readonly { get; set; }
+    public bool Sensitive { get; set; }
+    public string? MaskPattern { get; set; }
 }
 
 public class NotificationSettingsDto
