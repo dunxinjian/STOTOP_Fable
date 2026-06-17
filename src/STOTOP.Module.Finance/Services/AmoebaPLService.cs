@@ -323,15 +323,20 @@ public class AmoebaPLService
             if (!IsLedgerGranularity(granularity))
             {
                 var allocWarnings = new List<string>();
+                // [批次5-S4] 跨月周告警：周可横跨两月，分子件量含两月而分母只取周首月——比例为近似(审查 medium)
+                var (wkStart, wkEnd) = PeriodToDateRange(periods[i], granularity);
+                if (wkStart.Month != wkEnd.Month)
+                    allocWarnings.Add($"跨月期间公共费按周首月 {PeriodContainingMonth(periods[i], granularity)} 线性摊(分子含另一月天数，比例为近似)");
                 var monthPts = await GetMonthPoints(PeriodContainingMonth(periods[i], granularity));
                 ApplyCommonCostAllocation(matched, periodResults[i], monthPts, plItems, indicatorItems, allItems, allocWarnings);
-                if (i == 0) unmatchedWarnings.AddRange(allocWarnings);
+                // [批次5-S4 审查] 各期均收集告警(原仅 i==0)，使日/周 deliver件量=0/件量=0 在环比同比列也可见
+                unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
             }
             else if (isSubReport && periodFullScopePoints[i] is { } fullPts)
             {
                 var allocWarnings = new List<string>();
                 ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings);
-                if (i == 0) unmatchedWarnings.AddRange(allocWarnings);
+                unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
             }
         }
 
