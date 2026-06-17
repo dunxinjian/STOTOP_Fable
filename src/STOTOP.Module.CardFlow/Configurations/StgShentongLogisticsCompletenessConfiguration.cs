@@ -51,7 +51,8 @@ public class StgShentongLogisticsCompletenessConfiguration : IEntityTypeConfigur
         builder.HasIndex(e => e.FDataScopeId).HasDatabaseName("IX_STG申通_物流完整性明细_数据作用域").HasFilter("[FDataScopeId] IS NOT NULL");
 
         // 跨批次去重唯一索引（实际由 Seeder DDL 创建，此处声明保持模型一致性）
-        builder.HasIndex(e => new { e.F运单号, e.F问题类型, e.F统计日期, e.FOrgId })
+        // 按「事件身份」(运单号+问题类型) 去重、忽略导出统计日期；2 字段以兼容 ExcelInputPlugin。
+        builder.HasIndex(e => new { e.F运单号, e.F问题类型, e.FOrgId })
             .IsUnique()
             .HasFilter("[FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != ''")
             .HasDatabaseName("UX_STG申通_物流完整性明细_运单问题日期_未撤销");

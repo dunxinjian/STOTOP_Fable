@@ -1522,10 +1522,12 @@ END
         IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_物流完整性明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_物流完整性明细'))
         CREATE INDEX [IX_STG申通_物流完整性明细_数据作用域] ON [STG申通_物流完整性明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
 
-        -- 跨批次去重唯一索引（运单号 + 问题类型 + 统计日期 + 组织，仅未撤销 + 运单号非空）
+        -- 跨批次去重唯一索引（运单号 + 问题类型 + 组织，仅未撤销 + 运单号非空）
+        -- 物流完整性是问题件清单，按「事件身份」(运单号+问题类型) 去重、忽略导出统计日期；
+        -- 去重字段降为 2 个以兼容 ExcelInputPlugin（其跨批去重仅正确支持 ≤2 字段）。
         IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_物流完整性明细_运单问题日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_物流完整性明细'))
         CREATE UNIQUE INDEX [UX_STG申通_物流完整性明细_运单问题日期_未撤销]
-            ON [STG申通_物流完整性明细]([F运单号],[F问题类型],[F统计日期],[FOrgId])
+            ON [STG申通_物流完整性明细]([F运单号],[F问题类型],[FOrgId])
             WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
         ");
 
@@ -1536,7 +1538,7 @@ END
         IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3101)
         INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
         VALUES (3101, 192, N'excelInput', N'申通物流完整性明细导入规则',
-        N'{""targetTable"":""STG申通_物流完整性明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""统计日期,运单号,问题类型,订单网点,签收时间"",""fullColumnIdentifier"":""统计日期,运单号,网点名称,所属网点名称,问题类型,订单网点,订单平台,订单时间,揽收时间,揽收网点,派件时间,派件网点,签收时间,签收网点,是否黑土共配,签收员编号,签收员名称"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""所属网点名称"",""dbColumn"":""F所属网点名称""},{""excelColumn"":""问题类型"",""dbColumn"":""F问题类型""},{""excelColumn"":""订单网点"",""dbColumn"":""F订单网点""},{""excelColumn"":""订单平台"",""dbColumn"":""F订单平台""},{""excelColumn"":""订单时间"",""dbColumn"":""F订单时间""},{""excelColumn"":""揽收时间"",""dbColumn"":""F揽收时间""},{""excelColumn"":""揽收网点"",""dbColumn"":""F揽收网点""},{""excelColumn"":""派件时间"",""dbColumn"":""F派件时间""},{""excelColumn"":""派件网点"",""dbColumn"":""F派件网点""},{""excelColumn"":""签收时间"",""dbColumn"":""F签收时间""},{""excelColumn"":""签收网点"",""dbColumn"":""F签收网点""},{""excelColumn"":""是否黑土共配"",""dbColumn"":""F是否黑土共配""},{""excelColumn"":""签收员编号"",""dbColumn"":""F签收员编号""},{""excelColumn"":""签收员名称"",""dbColumn"":""F签收员名称""}],""keyFields"":[""运单号"",""问题类型"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F问题类型"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        N'{""targetTable"":""STG申通_物流完整性明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""统计日期,运单号,问题类型,订单网点,签收时间"",""fullColumnIdentifier"":""统计日期,运单号,网点名称,所属网点名称,问题类型,订单网点,订单平台,订单时间,揽收时间,揽收网点,派件时间,派件网点,签收时间,签收网点,是否黑土共配,签收员编号,签收员名称"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""所属网点名称"",""dbColumn"":""F所属网点名称""},{""excelColumn"":""问题类型"",""dbColumn"":""F问题类型""},{""excelColumn"":""订单网点"",""dbColumn"":""F订单网点""},{""excelColumn"":""订单平台"",""dbColumn"":""F订单平台""},{""excelColumn"":""订单时间"",""dbColumn"":""F订单时间""},{""excelColumn"":""揽收时间"",""dbColumn"":""F揽收时间""},{""excelColumn"":""揽收网点"",""dbColumn"":""F揽收网点""},{""excelColumn"":""派件时间"",""dbColumn"":""F派件时间""},{""excelColumn"":""派件网点"",""dbColumn"":""F派件网点""},{""excelColumn"":""签收时间"",""dbColumn"":""F签收时间""},{""excelColumn"":""签收网点"",""dbColumn"":""F签收网点""},{""excelColumn"":""是否黑土共配"",""dbColumn"":""F是否黑土共配""},{""excelColumn"":""签收员编号"",""dbColumn"":""F签收员编号""},{""excelColumn"":""签收员名称"",""dbColumn"":""F签收员名称""}],""keyFields"":[""运单号"",""问题类型""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F问题类型""],""batchSplit"":{""enabled"":false}}',
         1, N'申通物流完整性明细（未揽收/未到件/未派件）Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
 
         SET IDENTITY_INSERT [CF自动插件_规则] OFF;
