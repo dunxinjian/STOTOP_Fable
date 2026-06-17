@@ -62,6 +62,7 @@ public static class CardFlowSeeder
             new(40, "网点质控：接入 STG申通_渗透建站考核（建表 + 规则3118 + 流程2318 + 首节点5118）(2026-06-18)", MigrateV40),
             new(41, "网点质控：接入 STG申通_物流信息(及时/完整/准确)三汇总表（多sheet，建 3 表 + 规则3119-3121 + 流程2319-2321 + 首节点5119-5121）(2026-06-18)", MigrateV41),
             new(42, "网点质控：接入 STG申通_签收率考核汇总（退化表头，建表 + 规则3122 + 流程2322 + 首节点5122）(2026-06-18)", MigrateV42),
+            new(43, "网点质控：接入 STG申通_出仓考核汇总（含全角括号列，建表 + 规则3123 + 流程2323 + 首节点5123）(2026-06-18)", MigrateV43),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -3959,6 +3960,128 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5122, 2322, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3122);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV43(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_出仓考核汇总 暂存表（系统列 + 31 业务列 + 标准字段） ═══
+        // 单行表头，31 列，网点×日期粒度（1 行/网点/日期）。
+        // 含大量全角括号列（一频次（考核）应出仓量、一频次（考核）预估考核金额（元）等），
+        // dbColumn 去掉全角括号 → F一频次考核应出仓量 / F一频次考核预估考核金额元；excelColumn 保留原文。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_出仓考核汇总')
+        CREATE TABLE [STG申通_出仓考核汇总] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3123 columnMapping，31 列；全角括号列已去括号）
+            [F所属网点编码] NVARCHAR(200) NULL,
+            [F统计日期] NVARCHAR(200) NULL,
+            [F省公司] NVARCHAR(200) NULL,
+            [F片区] NVARCHAR(200) NULL,
+            [F所属网点] NVARCHAR(200) NULL,
+            [F转运中心] NVARCHAR(200) NULL,
+            [F派次类型] NVARCHAR(200) NULL,
+            [F一频次考核应出仓日期] NVARCHAR(200) NULL,
+            [F一频次考核应出仓时间] NVARCHAR(200) NULL,
+            [F一频次考核应出仓量] NVARCHAR(200) NULL,
+            [F一频次考核出仓及时量] NVARCHAR(200) NULL,
+            [F一频次考核出仓及时率] NVARCHAR(200) NULL,
+            [F一频次考核未及时出仓量] NVARCHAR(200) NULL,
+            [F一频次考核考核目标] NVARCHAR(200) NULL,
+            [F一频次考核预估考核金额元] NVARCHAR(200) NULL,
+            [F二频次监控应出仓日期] NVARCHAR(200) NULL,
+            [F二频次监控应出仓时间] NVARCHAR(200) NULL,
+            [F二频次监控应出仓量] NVARCHAR(200) NULL,
+            [F二频次监控出仓及时量] NVARCHAR(200) NULL,
+            [F二频次监控出仓及时率] NVARCHAR(200) NULL,
+            [F二频次监控未及时出仓量] NVARCHAR(200) NULL,
+            [F二频次监控考核目标] NVARCHAR(200) NULL,
+            [F二频次监控预估考核金额元] NVARCHAR(200) NULL,
+            [F三频次监控应出仓日期] NVARCHAR(200) NULL,
+            [F三频次监控应出仓时间] NVARCHAR(200) NULL,
+            [F三频次监控应出仓量] NVARCHAR(200) NULL,
+            [F三频次监控出仓及时量] NVARCHAR(200) NULL,
+            [F三频次监控出仓及时率] NVARCHAR(200) NULL,
+            [F三频次监控未及时出仓量] NVARCHAR(200) NULL,
+            [F三频次监控考核目标] NVARCHAR(200) NULL,
+            [F三频次监控预估考核金额元] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_出仓考核汇总_F批次ID' AND object_id = OBJECT_ID(N'STG申通_出仓考核汇总'))
+        CREATE INDEX [IX_STG申通_出仓考核汇总_F批次ID] ON [STG申通_出仓考核汇总]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_出仓考核汇总_数据作用域' AND object_id = OBJECT_ID(N'STG申通_出仓考核汇总'))
+        CREATE INDEX [IX_STG申通_出仓考核汇总_数据作用域] ON [STG申通_出仓考核汇总]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（所属网点编码 + 统计日期 + 组织，仅未撤销 + 网点编码非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_出仓考核汇总_网点日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_出仓考核汇总'))
+        CREATE UNIQUE INDEX [UX_STG申通_出仓考核汇总_网点日期_未撤销]
+            ON [STG申通_出仓考核汇总]([F所属网点编码],[F统计日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F所属网点编码] IS NOT NULL AND [F所属网点编码] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3123（出仓考核汇总导入，全列映射） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3123)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3123, 192, N'excelInput', N'申通出仓考核汇总导入规则',
+        N'{""targetTable"":""STG申通_出仓考核汇总"",""outputMode"":""stg"",""headerRow"":1,""columnIdentifier"":""所属网点编码,转运中心,一频次（考核）应出仓量,一频次（考核）预估考核金额（元）"",""fullColumnIdentifier"":""所属网点编码,统计日期,省公司,片区,所属网点,转运中心,派次类型,一频次（考核）应出仓日期,一频次（考核）应出仓时间,一频次（考核）应出仓量,一频次（考核）出仓及时量,一频次（考核）出仓及时率,一频次（考核）未及时出仓量,一频次（考核）考核目标,一频次（考核）预估考核金额（元）,二频次（监控）应出仓日期,二频次（监控）应出仓时间,二频次（监控）应出仓量,二频次（监控）出仓及时量,二频次（监控）出仓及时率,二频次（监控）未及时出仓量,二频次（监控）考核目标,二频次（监控）预估考核金额（元）,三频次（监控）应出仓日期,三频次（监控）应出仓时间,三频次（监控）应出仓量,三频次（监控）出仓及时量,三频次（监控）出仓及时率,三频次（监控）未及时出仓量,三频次（监控）考核目标,三频次（监控）预估考核金额（元）"",""columnMapping"":[{""excelColumn"":""所属网点编码"",""dbColumn"":""F所属网点编码""},{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""省公司"",""dbColumn"":""F省公司""},{""excelColumn"":""片区"",""dbColumn"":""F片区""},{""excelColumn"":""所属网点"",""dbColumn"":""F所属网点""},{""excelColumn"":""转运中心"",""dbColumn"":""F转运中心""},{""excelColumn"":""派次类型"",""dbColumn"":""F派次类型""},{""excelColumn"":""一频次（考核）应出仓日期"",""dbColumn"":""F一频次考核应出仓日期""},{""excelColumn"":""一频次（考核）应出仓时间"",""dbColumn"":""F一频次考核应出仓时间""},{""excelColumn"":""一频次（考核）应出仓量"",""dbColumn"":""F一频次考核应出仓量""},{""excelColumn"":""一频次（考核）出仓及时量"",""dbColumn"":""F一频次考核出仓及时量""},{""excelColumn"":""一频次（考核）出仓及时率"",""dbColumn"":""F一频次考核出仓及时率""},{""excelColumn"":""一频次（考核）未及时出仓量"",""dbColumn"":""F一频次考核未及时出仓量""},{""excelColumn"":""一频次（考核）考核目标"",""dbColumn"":""F一频次考核考核目标""},{""excelColumn"":""一频次（考核）预估考核金额（元）"",""dbColumn"":""F一频次考核预估考核金额元""},{""excelColumn"":""二频次（监控）应出仓日期"",""dbColumn"":""F二频次监控应出仓日期""},{""excelColumn"":""二频次（监控）应出仓时间"",""dbColumn"":""F二频次监控应出仓时间""},{""excelColumn"":""二频次（监控）应出仓量"",""dbColumn"":""F二频次监控应出仓量""},{""excelColumn"":""二频次（监控）出仓及时量"",""dbColumn"":""F二频次监控出仓及时量""},{""excelColumn"":""二频次（监控）出仓及时率"",""dbColumn"":""F二频次监控出仓及时率""},{""excelColumn"":""二频次（监控）未及时出仓量"",""dbColumn"":""F二频次监控未及时出仓量""},{""excelColumn"":""二频次（监控）考核目标"",""dbColumn"":""F二频次监控考核目标""},{""excelColumn"":""二频次（监控）预估考核金额（元）"",""dbColumn"":""F二频次监控预估考核金额元""},{""excelColumn"":""三频次（监控）应出仓日期"",""dbColumn"":""F三频次监控应出仓日期""},{""excelColumn"":""三频次（监控）应出仓时间"",""dbColumn"":""F三频次监控应出仓时间""},{""excelColumn"":""三频次（监控）应出仓量"",""dbColumn"":""F三频次监控应出仓量""},{""excelColumn"":""三频次（监控）出仓及时量"",""dbColumn"":""F三频次监控出仓及时量""},{""excelColumn"":""三频次（监控）出仓及时率"",""dbColumn"":""F三频次监控出仓及时率""},{""excelColumn"":""三频次（监控）未及时出仓量"",""dbColumn"":""F三频次监控未及时出仓量""},{""excelColumn"":""三频次（监控）考核目标"",""dbColumn"":""F三频次监控考核目标""},{""excelColumn"":""三频次（监控）预估考核金额（元）"",""dbColumn"":""F三频次监控预估考核金额元""}],""keyFields"":[""所属网点编码"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F所属网点编码"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通出仓考核汇总 Excel导入配置（单行表头31列，全角括号列 dbColumn 去括号）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2323（QC_ST_OUTBOUND_ASSESS） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2323)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2323, NULL, 1, GETDATE(), NULL, N'网点质控：申通出仓考核汇总 导入暂存', GETDATE(), NULL, N'申通出仓考核汇总导入', NULL, N'QC_ST_OUTBOUND_ASSESS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""出仓考核汇总*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2323（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2323)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2323, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2323, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5123（ExcelInput 批次级自动节点，插件注册=1，规则=3123） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5123)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5123, 2323, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3123);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
