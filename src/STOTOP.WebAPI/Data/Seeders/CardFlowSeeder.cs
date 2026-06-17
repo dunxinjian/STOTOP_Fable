@@ -43,6 +43,7 @@ public static class CardFlowSeeder
             new(21, "CF卡片流程新增 F是否模板 列 (2026-06-16)", MigrateV21),
             new(22, "费用报销 FOrgId=0 全局模板种子 (2026-06-16)", MigrateV22),
             new(23, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17)", MigrateV23),
+            new(24, "网点质控：接入 STG申通_物流及时准确明细（建表 + 规则3102 + 流程2302 + 首节点5102）(2026-06-17)", MigrateV24),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1577,4 +1578,111 @@ END
         END
         ");
     }
+    private static void MigrateV24(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_物流及时准确明细 暂存表（系统列 + 17 业务列 + 标准字段） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_物流及时准确明细')
+        CREATE TABLE [STG申通_物流及时准确明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3102 columnMapping，17 列）
+            [F统计日期] NVARCHAR(100) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F网点名称] NVARCHAR(200) NULL,
+            [F所属网点名称] NVARCHAR(200) NULL,
+            [F问题类型] NVARCHAR(50) NULL,
+            [F扫描时间] NVARCHAR(100) NULL,
+            [F上传时间] NVARCHAR(100) NULL,
+            [F入库时间] NVARCHAR(100) NULL,
+            [F扫描类型] NVARCHAR(100) NULL,
+            [F扫描员] NVARCHAR(200) NULL,
+            [F扫描员编号] NVARCHAR(100) NULL,
+            [F设备类型] NVARCHAR(100) NULL,
+            [F设备ID] NVARCHAR(100) NULL,
+            [F是否黑土共配] NVARCHAR(20) NULL,
+            [F订单平台] NVARCHAR(100) NULL,
+            [F派件员编号] NVARCHAR(100) NULL,
+            [F派件员名称] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_物流及时准确明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_物流及时准确明细'))
+        CREATE INDEX [IX_STG申通_物流及时准确明细_F批次ID] ON [STG申通_物流及时准确明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_物流及时准确明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_物流及时准确明细'))
+        CREATE INDEX [IX_STG申通_物流及时准确明细_数据作用域] ON [STG申通_物流及时准确明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 问题类型 + 组织，仅未撤销 + 运单号非空）
+        -- 及时准确明细同样是问题件清单，按「事件身份」(运单号+问题类型) 去重；
+        -- 三个源文件（到件晚于签收/派件晚于签收/揽收上传不及时）靠「问题类型」区分。
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_物流及时准确明细_运单问题_未撤销' AND object_id = OBJECT_ID(N'STG申通_物流及时准确明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_物流及时准确明细_运单问题_未撤销]
+            ON [STG申通_物流及时准确明细]([F运单号],[F问题类型],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3102（物流及时准确明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3102)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3102, 192, N'excelInput', N'申通物流及时准确明细导入规则',
+        N'{""targetTable"":""STG申通_物流及时准确明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""统计日期,运单号,问题类型,扫描时间,扫描员"",""fullColumnIdentifier"":""统计日期,运单号,网点名称,所属网点名称,问题类型,扫描时间,上传时间,入库时间,扫描类型,扫描员,扫描员编号,设备类型,设备ID,是否黑土共配,订单平台,派件员编号,派件员名称"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""所属网点名称"",""dbColumn"":""F所属网点名称""},{""excelColumn"":""问题类型"",""dbColumn"":""F问题类型""},{""excelColumn"":""扫描时间"",""dbColumn"":""F扫描时间""},{""excelColumn"":""上传时间"",""dbColumn"":""F上传时间""},{""excelColumn"":""入库时间"",""dbColumn"":""F入库时间""},{""excelColumn"":""扫描类型"",""dbColumn"":""F扫描类型""},{""excelColumn"":""扫描员"",""dbColumn"":""F扫描员""},{""excelColumn"":""扫描员编号"",""dbColumn"":""F扫描员编号""},{""excelColumn"":""设备类型"",""dbColumn"":""F设备类型""},{""excelColumn"":""设备ID"",""dbColumn"":""F设备ID""},{""excelColumn"":""是否黑土共配"",""dbColumn"":""F是否黑土共配""},{""excelColumn"":""订单平台"",""dbColumn"":""F订单平台""},{""excelColumn"":""派件员编号"",""dbColumn"":""F派件员编号""},{""excelColumn"":""派件员名称"",""dbColumn"":""F派件员名称""}],""keyFields"":[""运单号"",""问题类型""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F问题类型""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通物流及时准确明细（到件晚于签收/派件晚于签收/揽收上传不及时）Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2302（QC_ST_LOGISTICS_TIMELINESS） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2302)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2302, NULL, 1, GETDATE(), NULL, N'网点质控：申通物流及时准确明细（到件晚于签收/派件晚于签收/揽收上传不及时）导入暂存', GETDATE(), NULL, N'申通物流及时准确明细导入', NULL, N'QC_ST_LOGISTICS_TIMELINESS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""*晚于*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2302（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2302)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2302, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2302, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5102（ExcelInput 批次级自动节点，插件注册=1，规则=3102） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5102)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5102, 2302, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3102);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
 }
