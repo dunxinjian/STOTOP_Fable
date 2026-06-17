@@ -245,7 +245,9 @@ public class CardDetailWorkViewContractTests
         Assert.Contains("amount", result.CurrentStageWorkView!.FieldAccess.Keys);
         Assert.Equal(new[] { "approve" }, result.CurrentStageWorkView.ActionPolicy.AllowedActions);
         Assert.DoesNotContain("secretNote", result.DataJson);
-        Assert.Contains("12****56", result.DataJson);
+        // FieldMasker 收紧阈值后 ≤7 字符整体打码，原始值"123456"被替换为"****"，不再出现部分可见片段
+        Assert.DoesNotContain("123456", result.DataJson);
+        Assert.Contains("****", result.DataJson);
         Assert.Equal("expense", result.Details.Single().DetailTableKey);
         Assert.DoesNotContain("internalAuditNote", result.Details.Single().DataJson);
         Assert.Contains(result.CurrentStageWorkView.Components, component => component.Id == "amount-card");

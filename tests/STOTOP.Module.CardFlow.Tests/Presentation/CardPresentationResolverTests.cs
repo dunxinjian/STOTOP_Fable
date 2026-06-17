@@ -117,7 +117,7 @@ public class CardPresentationResolverTests
         var amount = Assert.Single(result.Components, component => component.Id == "amount-card");
         Assert.Equal("masked", amount.Access);
         Assert.False(amount.Editable);
-        Assert.Equal("12****56", amount.Value?.ToString());
+        Assert.Equal("****", amount.Value?.ToString()); // 6位值在 FieldMasker 收紧阈值后整体打码
 
         var detailTable = Assert.Single(result.Components, component => component.Id == "expense-lines");
         Assert.True(detailTable.Editable);

@@ -560,15 +560,13 @@ public class ExcelInputPlugin : InputPluginBase
         }
 
         // 跨批次去重阶段二
-        var crossBatchExistingSet = new HashSet<(string, string)>();
+        var crossBatchExistingSet = new HashSet<string>();
         if (crossBatchDedupActive && pendingRows.Count > 0)
         {
             var candidateValues = new List<string[]>();
             foreach (var (dr, _) in pendingRows)
             {
-                var values = _crossBatchDedupFields
-                    .Select(f => dr[f]?.ToString()?.Trim() ?? "")
-                    .ToArray();
+                var values = CrossBatchDedupKeyBuilder.ExtractValues(dr, _crossBatchDedupFields);
                 if (values.All(v => !string.IsNullOrWhiteSpace(v)))
                     candidateValues.Add(values);
             }
@@ -585,17 +583,14 @@ public class ExcelInputPlugin : InputPluginBase
         {
             if (crossBatchDedupActive && crossBatchExistingSet.Count > 0)
             {
-                var dedupV1 = dr[_crossBatchDedupFields[0]]?.ToString()?.Trim() ?? "";
-                var dedupV2 = _crossBatchDedupFields.Count > 1
-                    ? dr[_crossBatchDedupFields[1]]?.ToString()?.Trim() ?? "" : "";
+                var dedupValues = CrossBatchDedupKeyBuilder.ExtractValues(dr, _crossBatchDedupFields);
 
-                if (!string.IsNullOrWhiteSpace(dedupV1) && !string.IsNullOrWhiteSpace(dedupV2))
+                // 全部去重字段非空才参与比对（与候选键构造口径一致），按完整复合键判重
+                if (dedupValues.All(v => !string.IsNullOrWhiteSpace(v))
+                    && crossBatchExistingSet.Contains(CrossBatchDedupKeyBuilder.BuildKey(dedupValues)))
                 {
-                    if (crossBatchExistingSet.Contains((dedupV1, dedupV2)))
-                    {
-                        crossBatchDupCount++;
-                        continue;
-                    }
+                    crossBatchDupCount++;
+                    continue;
                 }
             }
 
@@ -635,7 +630,7 @@ public class ExcelInputPlugin : InputPluginBase
                 var currentKeys = new List<string[]>();
                 foreach (DataRow row in dt.Rows)
                 {
-                    var vals = dedupFields.Select(f => row[f]?.ToString() ?? "").ToArray();
+                    var vals = CrossBatchDedupKeyBuilder.ExtractValues(row, dedupFields);
                     if (vals.All(v => !string.IsNullOrWhiteSpace(v)))
                         currentKeys.Add(vals);
                 }
@@ -646,10 +641,9 @@ public class ExcelInputPlugin : InputPluginBase
                 var rowsToRemove = new List<DataRow>();
                 foreach (DataRow row in dt.Rows)
                 {
-                    var v1 = row[dedupFields[0]]?.ToString()?.Trim() ?? "";
-                    var v2 = dedupFields.Count > 1
-                        ? row[dedupFields[1]]?.ToString()?.Trim() ?? "" : "";
-                    if (newlyExisting.Contains((v1, v2)))
+                    var vals = CrossBatchDedupKeyBuilder.ExtractValues(row, dedupFields);
+                    if (vals.All(v => !string.IsNullOrWhiteSpace(v))
+                        && newlyExisting.Contains(CrossBatchDedupKeyBuilder.BuildKey(vals)))
                         rowsToRemove.Add(row);
                 }
 
@@ -1028,12 +1022,12 @@ public class ExcelInputPlugin : InputPluginBase
     // ═══════════════════════════════════════════════════════════════
     //  Private — 跨批次去重查询
     // ═══════════════════════════════════════════════════════════════
-    private async Task<HashSet<(string, string)>> QueryExistingByFieldsAsync(
+    private async Task<HashSet<string>> QueryExistingByFieldsAsync(
         string connStr, string tableName, List<string> fields,
         List<string[]> valueSets, long currentBatchId, long orgId)
     {
-        var result = new HashSet<(string, string)>();
-        if (valueSets.Count == 0) return result;
+        var result = new HashSet<string>();
+        if (fields.Count == 0 || valueSets.Count == 0) return result;
 
         using var conn = new SqlConnection(connStr);
         await conn.OpenAsync();
@@ -1044,21 +1038,9 @@ public class ExcelInputPlugin : InputPluginBase
         using (var cmd = new SqlCommand($"CREATE TABLE {tempTable} ({fieldDefs})", conn))
             await cmd.ExecuteNonQueryAsync();
 
-        var distinctValues = valueSets
-            .Select(v => (v[0], v.Length > 1 ? v[1] : ""))
-            .Distinct()
-            .ToList();
-
-        var insertDt = new DataTable();
-        foreach (var f in fields)
-            insertDt.Columns.Add(f, typeof(string));
-        foreach (var (v1, v2) in distinctValues)
-        {
-            var row = insertDt.NewRow();
-            row[fields[0]] = v1;
-            if (fields.Count > 1) row[fields[1]] = v2;
-            insertDt.Rows.Add(row);
-        }
+        // 按 fields.Count 动态装配候选值（逐列填充、完整复合键去重）——
+        // 修复旧版只填前两列、第三列恒 NULL 导致 JOIN 永不命中的根因。
+        var insertDt = CrossBatchDedupKeyBuilder.BuildCandidateTable(fields, valueSets);
 
         using (var bulkCopy = new SqlBulkCopy(conn))
         {
@@ -1067,7 +1049,10 @@ public class ExcelInputPlugin : InputPluginBase
         }
 
         var joinConditions = string.Join(" AND ", fields.Select(f => $"t.[{f}] = s.[{f}]"));
-        var selectFields = string.Join(", ", fields.Select(f => $"s.[{f}]"));
+        // 取临时表侧（已 Trim 的候选值）而非 s.[f]：JOIN 命中与否由库列排序规则决定，
+        // 但旧版回 s.[f]（库侧原值）后，内存用序数 Contains 比对会因大小写/尾空格差异
+        // 漏判已存在行——取 t.[f] 让 SELECT 回的键与内存比对键逐字一致，消除该不对称。
+        var selectFields = string.Join(", ", fields.Select(f => $"t.[{f}]"));
 
         var querySql = $@"
             SELECT DISTINCT {selectFields}
@@ -1083,9 +1068,10 @@ public class ExcelInputPlugin : InputPluginBase
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                var v1 = reader.IsDBNull(0) ? "" : reader.GetString(0);
-                var v2 = fields.Count > 1 && !reader.IsDBNull(1) ? reader.GetString(1) : "";
-                result.Add((v1, v2));
+                var values = new string[fields.Count];
+                for (int i = 0; i < fields.Count; i++)
+                    values[i] = reader.IsDBNull(i) ? "" : reader.GetString(i);
+                result.Add(CrossBatchDedupKeyBuilder.BuildKey(values));
             }
         }
 

@@ -35,6 +35,8 @@ public sealed class CardFieldDefinitionV2
     public FieldDisplayBehavior Display { get; set; } = new();
     public FieldDataSourceConfig? DataSource { get; set; }
     public List<FieldOption> Options { get; set; } = new();
+    public bool Sensitive { get; set; }
+    public string? MaskPattern { get; set; }
 }
 
 public sealed class FieldDisplayBehavior

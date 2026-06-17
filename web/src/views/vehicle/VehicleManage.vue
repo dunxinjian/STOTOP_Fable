@@ -1,94 +1,73 @@
 <template>
   <div class="page-container">
     <PageHeader title="车辆台账" description="管理三轮车基础信息">
-      <template #actions>
-        <a-input-search v-model:value="searchForm.keyword" placeholder="编码/车牌号" style="width: 200px" @search="handleSearch" allowClear />
-        <a-select v-model:value="searchForm.ownershipType" placeholder="权属类型" allow-clear style="width: 120px" :options="ownershipOptions" @change="handleSearch" />
-        <a-select v-model:value="searchForm.vehicleStatus" placeholder="车辆状态" allow-clear style="width: 120px" :options="vehicleStatusOptions" @change="handleSearch" />
-        <a-button @click="handleReset">重置</a-button>
-        <a-divider type="vertical" style="height: 24px; margin: 0 8px;" />
+      <template #right>
         <a-button type="primary" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新增车辆
         </a-button>
       </template>
+      <template #toolbar>
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
+            <a-input-search v-model:value="searchForm.keyword" placeholder="编码/车牌号" style="width: 200px" allow-clear @search="handleSearch" />
+            <a-select v-model:value="searchForm.ownershipType" placeholder="权属类型" allow-clear style="width: 120px" :options="ownershipOptions" @change="handleSearch" />
+          </div>
+          <div class="page-toolbar__filters">
+            <a-button @click="handleReset">
+              <template #icon><ReloadOutlined /></template>重置
+            </a-button>
+          </div>
+        </div>
+      </template>
     </PageHeader>
 
-    <!-- 统计卡片 -->
-    <a-row :gutter="16" style="margin-bottom: 16px">
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <a-statistic title="总车辆数" :value="statistics.totalCount" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <a-statistic title="闲置数" :value="getStatusCount(1)" :value-style="{ color: '#666' }" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <a-statistic title="使用中" :value="getStatusCount(2)" :value-style="{ color: 'var(--color-success)' }" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card :bordered="false" class="stat-card">
-          <a-statistic title="维修中" :value="getStatusCount(3)" :value-style="{ color: 'var(--color-warning)' }" />
-        </a-card>
-      </a-col>
-    </a-row>
+    <!-- 状态快筛（KPI 计数 + 点击过滤合一，替代顶部统计卡 + 车辆状态下拉） -->
+    <StatFilterTabs v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 1200 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'code'">
-            <a-tooltip :title="record.code">{{ record.code }}</a-tooltip>
-          </template>
-          <template v-if="column.dataIndex === 'ownershipType'">
-            <a-tag :color="record.ownershipType === 1 ? 'blue' : 'green'">
-              {{ record.ownershipType === 1 ? '公司' : '个人' }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'vehicleStatus'">
-            <a-tag :color="getVehicleStatusColor(record.vehicleStatus)">
-              {{ getVehicleStatusText(record.vehicleStatus) }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'createdTime'">
-            {{ formatDate(record.createdTime) }}
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleEdit(record)">
-              <EditOutlined />编辑
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1200 }"
+      row-key="id"
+      empty-text="暂无车辆数据"
+      @change="fetchVehicleList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'code'">
+          <a-tooltip :title="record.code">{{ record.code }}</a-tooltip>
+        </template>
+        <template v-if="column.dataIndex === 'ownershipType'">
+          <StatusTag :type="record.ownershipType === 1 ? 'info' : 'default'">
+            {{ record.ownershipType === 1 ? '公司' : '个人' }}
+          </StatusTag>
+        </template>
+        <template v-if="column.dataIndex === 'vehicleStatus'">
+          <StatusTag :type="getVehicleStatusType(record.vehicleStatus)" dot>
+            {{ getVehicleStatusText(record.vehicleStatus) }}
+          </StatusTag>
+        </template>
+        <template v-if="column.dataIndex === 'createdTime'">
+          {{ formatDate(record.createdTime) }}
+        </template>
+        <template v-if="column.dataIndex === 'action'">
+          <a-button type="link" @click="handleEdit(record)">
+            <EditOutlined />编辑
+          </a-button>
+          <a-popconfirm
+            title="确定删除该车辆吗？"
+            ok-text="确定"
+            cancel-text="取消"
+            @confirm="handleDelete(record)"
+          >
+            <a-button type="link" danger>
+              <DeleteOutlined />删除
             </a-button>
-            <a-popconfirm
-              title="确定删除该车辆吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleDelete(record)"
-            >
-              <a-button type="link" size="small" danger>
-                <DeleteOutlined />删除
-              </a-button>
-            </a-popconfirm>
-          </template>
+          </a-popconfirm>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无车辆数据" />
-        </template>
-      </a-table>
-    </a-card>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -243,9 +222,11 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import StatFilterTabs from '@/components/StatFilterTabs.vue'
 import {
   getVehicleList,
   getVehicleDetail,
@@ -264,17 +245,8 @@ const ownershipOptions = [
   { label: '员工个人', value: 2 },
 ]
 
-const vehicleStatusOptions = [
-  { label: '全部', value: '' },
-  { label: '闲置', value: 1 },
-  { label: '使用中', value: 2 },
-  { label: '维修中', value: 3 },
-  { label: '报废', value: 4 },
-]
-
 // 表格列配置
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '编码', dataIndex: 'code', key: 'code', width: 100 },
   { title: '车牌号', dataIndex: 'plateNumber', key: 'plateNumber', width: 100 },
   { title: '品牌', dataIndex: 'brand', key: 'brand', width: 100 },
@@ -296,20 +268,11 @@ const searchForm = reactive({
 // 表格数据
 const loading = ref(false)
 const tableData = ref<VehicleListItemDto[]>([])
-const pagination = reactive({
+const pagination = ref({
   pageIndex: 1,
   pageSize: 20,
   total: 0,
 })
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
 
 // 统计数据
 const statistics = ref<VehicleStatisticsDto>({
@@ -323,14 +286,22 @@ function getStatusCount(status: number): number {
   return group?.count || 0
 }
 
-function getVehicleStatusColor(status: number): string {
-  const colors: Record<number, string> = {
+const statusTabs = computed(() => [
+  { key: '', label: '全部', count: statistics.value.totalCount },
+  { key: 1, label: '闲置', count: getStatusCount(1), color: 'var(--text-3)' },
+  { key: 2, label: '使用中', count: getStatusCount(2), color: 'var(--color-success)' },
+  { key: 3, label: '维修中', count: getStatusCount(3), color: 'var(--color-warning)' },
+  { key: 4, label: '报废', count: getStatusCount(4), color: 'var(--color-danger)' },
+])
+
+function getVehicleStatusType(status: number): 'success' | 'warning' | 'danger' | 'default' {
+  const map: Record<number, 'success' | 'warning' | 'danger' | 'default'> = {
     1: 'default',
     2: 'success',
     3: 'warning',
-    4: 'error',
+    4: 'danger',
   }
-  return colors[status] || 'default'
+  return map[status] || 'default'
 }
 
 function getVehicleStatusText(status: number): string {
@@ -347,12 +318,6 @@ function formatDate(dateStr: string): string {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN')
-}
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchVehicleList()
 }
 
 // 弹窗相关
@@ -387,8 +352,8 @@ async function fetchVehicleList() {
   loading.value = true
   try {
     const params: any = {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }
     if (searchForm.keyword) params.keyword = searchForm.keyword
     if (searchForm.ownershipType !== '' && searchForm.ownershipType !== undefined) {
@@ -400,7 +365,7 @@ async function fetchVehicleList() {
     const res = await getVehicleList(params)
     if (res) {
       tableData.value = res.items || []
-      pagination.total = res.totalCount || 0
+      pagination.value.total = res.totalCount || 0
     }
   } finally {
     loading.value = false
@@ -421,7 +386,7 @@ async function fetchStatistics() {
 
 // 搜索
 function handleSearch() {
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchVehicleList()
 }
 
@@ -430,7 +395,7 @@ function handleReset() {
   searchForm.keyword = ''
   searchForm.ownershipType = ''
   searchForm.vehicleStatus = ''
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchVehicleList()
 }
 
@@ -556,8 +521,4 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/variables.scss' as *;
-
-.stat-card {
-  text-align: center;
-}
 </style>
