@@ -147,14 +147,14 @@ onMounted(async () => {
 }
 
 .account-period-selector :deep(.ant-select-selector) {
-  background-color: var(--color-primary-light) !important;
-  border: 1px solid var(--color-primary-border) !important;
-  color: var(--color-primary) !important;
+  background-color: var(--bg-muted) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-1) !important;
   border-radius: 6px;
 }
 
 .account-period-selector :deep(.ant-select-selector:hover) {
-  border-color: var(--color-primary) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .account-period-selector :deep(.ant-select-focused .ant-select-selector) {
@@ -163,10 +163,10 @@ onMounted(async () => {
 }
 
 .account-period-selector :deep(.ant-select-selection-item) {
-  color: var(--color-primary) !important;
+  color: var(--text-1) !important;
 }
 
 .account-period-selector :deep(.ant-select-arrow) {
-  color: var(--color-primary) !important;
+  color: var(--text-3) !important;
 }
 </style>
