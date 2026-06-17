@@ -1,11 +1,11 @@
 <!--
   DataTable —— 列表页表格封装
   统一替代各页手写的 paginationConfig=computed + handleTableChange 回填 + 序号列计算 + #emptyText。
-  - pagination：传 { pageIndex, pageSize, total } 响应式对象；翻页/改页长时就地回填该对象的
-    pageIndex/pageSize 并 emit('change') 供页面重新取数；传 false 关闭分页。
+  - pagination：v-model:pagination 绑定 { pageIndex, pageSize, total }；翻页/改页长时 emit
+    update:pagination（新对象，不变异 prop）+ emit('change') 供页面重新取数；传 false 关闭分页。
   - indexColumn：默认在最左插入「序号」列并按当前分页计算行号。
   - 其余列的单元格渲染由父组件 #bodyCell 作用域插槽透传（序号列由本组件内部渲染）。
-  - 空态默认 <EmptyState size="small">，可用 #emptyText 覆盖。
+  - 空态默认 <EmptyState size="small">，emptyText 作为主标题；可用 #emptyText 覆盖。
   - bordered 默认 false（克制收敛去边框）；size 不显式传，继承 ConfigProvider 全局 small。
 -->
 <template>
@@ -29,7 +29,7 @@
     </template>
     <template #emptyText>
       <slot name="emptyText">
-        <EmptyState size="small" :description="emptyText" />
+        <EmptyState size="small" :title="emptyText" />
       </slot>
     </template>
   </a-table>
@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<{
   dataSource: any[]
   /** 加载态 */
   loading?: boolean
-  /** 分页模型；传 false 关闭分页 */
+  /** 分页模型（v-model:pagination）；传 false 关闭分页 */
   pagination?: PaginationModel | false
   /** 行 key */
   rowKey?: string
@@ -62,7 +62,7 @@ const props = withDefaults(defineProps<{
   indexColumn?: boolean
   /** 是否带边框（默认 false，克制收敛去边框） */
   bordered?: boolean
-  /** 空态描述文案 */
+  /** 空态主标题文案 */
   emptyText?: string
 }>(), {
   loading: false,
@@ -75,6 +75,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
+  /** v-model:pagination 更新（翻页/改页长） */
+  (e: 'update:pagination', value: PaginationModel): void
   /** 翻页/改页长后触发，供父组件重新取数 */
   (e: 'change'): void
 }>()
@@ -108,11 +110,14 @@ function indexText(index: number) {
   return (props.pagination.pageIndex - 1) * props.pagination.pageSize + index + 1
 }
 
-// 就地回填传入的响应式分页对象（同一引用），再通知父组件取数
+// 翻页/改页长：emit 新分页对象（不变异 prop）+ 通知父组件取数
 function onChange(pag: any) {
   if (props.pagination === false) return
-  props.pagination.pageIndex = pag.current
-  props.pagination.pageSize = pag.pageSize
+  emit('update:pagination', {
+    pageIndex: pag.current,
+    pageSize: pag.pageSize,
+    total: props.pagination.total,
+  })
   emit('change')
 }
 </script>
