@@ -51,6 +51,7 @@ public static class CardFlowSeeder
             new(29, "网点质控：接入 STG申通_签收未达标明细（建表 + 规则3107 + 流程2307 + 首节点5107）(2026-06-18)", MigrateV29),
             new(30, "网点质控：接入 STG申通_积压明细（建表 + 规则3108 + 流程2308 + 首节点5108）(2026-06-18)", MigrateV30),
             new(31, "网点质控：接入 STG申通_疑似遗失明细（建表 + 规则3109 + 流程2309 + 首节点5109）(2026-06-18)", MigrateV31),
+            new(32, "网点质控：接入 STG申通_进港投诉明细（建表 + 规则3110 + 流程2310 + 首节点5110）(2026-06-18)", MigrateV32),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2550,6 +2551,123 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5109, 2309, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3109);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+    private static void MigrateV32(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_进港投诉明细 暂存表（系统列 + 29 业务列 + 标准字段） ═══
+        // 注意：「进港/出港」含非法字符 /，dbColumn 去掉斜杠为 F进港出港（实体/EF/DDL/映射四处一致；columnMapping 的 excelColumn 保留原文 进港/出港）。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_进港投诉明细')
+        CREATE TABLE [STG申通_进港投诉明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3110 columnMapping，29 列）
+            [F统计日期] NVARCHAR(200) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F投诉类型] NVARCHAR(200) NULL,
+            [F工单内容] NVARCHAR(200) NULL,
+            [F大区名称] NVARCHAR(200) NULL,
+            [F省区名称] NVARCHAR(200) NULL,
+            [F行政省名称] NVARCHAR(200) NULL,
+            [F片区名称] NVARCHAR(200) NULL,
+            [F所属网点编码] NVARCHAR(200) NULL,
+            [F所属网点名称] NVARCHAR(200) NULL,
+            [F承包区编码] NVARCHAR(200) NULL,
+            [F承包区名称] NVARCHAR(200) NULL,
+            [F小件员编码] NVARCHAR(200) NULL,
+            [F小件员名称] NVARCHAR(200) NULL,
+            [F工单类型编码] NVARCHAR(200) NULL,
+            [F工单类型名称] NVARCHAR(200) NULL,
+            [F工单源编码] NVARCHAR(200) NULL,
+            [F工单源名称] NVARCHAR(200) NULL,
+            [F工单创建时间] NVARCHAR(200) NULL,
+            [F最后到件扫描时间] NVARCHAR(200) NULL,
+            [F到件扫描组织编码] NVARCHAR(200) NULL,
+            [F到件扫描组织名称] NVARCHAR(200) NULL,
+            [F签收时间] NVARCHAR(200) NULL,
+            [F签收类型] NVARCHAR(200) NULL,
+            [F代收点名称] NVARCHAR(200) NULL,
+            [F末端滞留天数] NVARCHAR(200) NULL,
+            [F是否按需派送标] NVARCHAR(200) NULL,
+            [F进港出港] NVARCHAR(200) NULL,
+            [F差行为原因] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_进港投诉明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_进港投诉明细'))
+        CREATE INDEX [IX_STG申通_进港投诉明细_F批次ID] ON [STG申通_进港投诉明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_进港投诉明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_进港投诉明细'))
+        CREATE INDEX [IX_STG申通_进港投诉明细_数据作用域] ON [STG申通_进港投诉明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 工单创建时间 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_进港投诉明细_运单工单时间_未撤销' AND object_id = OBJECT_ID(N'STG申通_进港投诉明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_进港投诉明细_运单工单时间_未撤销]
+            ON [STG申通_进港投诉明细]([F运单号],[F工单创建时间],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3110（进港投诉明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3110)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3110, 192, N'excelInput', N'申通进港投诉明细导入规则',
+        N'{""targetTable"":""STG申通_进港投诉明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,投诉类型,工单类型名称,进港/出港"",""fullColumnIdentifier"":""统计日期,运单号,投诉类型,工单内容,大区名称,省区名称,行政省名称,片区名称,所属网点编码,所属网点名称,承包区编码,承包区名称,小件员编码,小件员名称,工单类型编码,工单类型名称,工单源编码,工单源名称,工单创建时间,最后到件扫描时间,到件扫描组织编码,到件扫描组织名称,签收时间,签收类型,代收点名称,末端滞留天数,是否按需派送标,进港/出港,差行为原因"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""投诉类型"",""dbColumn"":""F投诉类型""},{""excelColumn"":""工单内容"",""dbColumn"":""F工单内容""},{""excelColumn"":""大区名称"",""dbColumn"":""F大区名称""},{""excelColumn"":""省区名称"",""dbColumn"":""F省区名称""},{""excelColumn"":""行政省名称"",""dbColumn"":""F行政省名称""},{""excelColumn"":""片区名称"",""dbColumn"":""F片区名称""},{""excelColumn"":""所属网点编码"",""dbColumn"":""F所属网点编码""},{""excelColumn"":""所属网点名称"",""dbColumn"":""F所属网点名称""},{""excelColumn"":""承包区编码"",""dbColumn"":""F承包区编码""},{""excelColumn"":""承包区名称"",""dbColumn"":""F承包区名称""},{""excelColumn"":""小件员编码"",""dbColumn"":""F小件员编码""},{""excelColumn"":""小件员名称"",""dbColumn"":""F小件员名称""},{""excelColumn"":""工单类型编码"",""dbColumn"":""F工单类型编码""},{""excelColumn"":""工单类型名称"",""dbColumn"":""F工单类型名称""},{""excelColumn"":""工单源编码"",""dbColumn"":""F工单源编码""},{""excelColumn"":""工单源名称"",""dbColumn"":""F工单源名称""},{""excelColumn"":""工单创建时间"",""dbColumn"":""F工单创建时间""},{""excelColumn"":""最后到件扫描时间"",""dbColumn"":""F最后到件扫描时间""},{""excelColumn"":""到件扫描组织编码"",""dbColumn"":""F到件扫描组织编码""},{""excelColumn"":""到件扫描组织名称"",""dbColumn"":""F到件扫描组织名称""},{""excelColumn"":""签收时间"",""dbColumn"":""F签收时间""},{""excelColumn"":""签收类型"",""dbColumn"":""F签收类型""},{""excelColumn"":""代收点名称"",""dbColumn"":""F代收点名称""},{""excelColumn"":""末端滞留天数"",""dbColumn"":""F末端滞留天数""},{""excelColumn"":""是否按需派送标"",""dbColumn"":""F是否按需派送标""},{""excelColumn"":""进港/出港"",""dbColumn"":""F进港出港""},{""excelColumn"":""差行为原因"",""dbColumn"":""F差行为原因""}],""keyFields"":[""运单号"",""工单创建时间""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F工单创建时间""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通进港投诉明细 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2310（QC_ST_INBOUND_COMPLAINT） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2310)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2310, NULL, 1, GETDATE(), NULL, N'网点质控：申通进港投诉明细 导入暂存', GETDATE(), NULL, N'申通进港投诉明细导入', NULL, N'QC_ST_INBOUND_COMPLAINT', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""进港投诉明细*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2310（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2310)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2310, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2310, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5110（ExcelInput 批次级自动节点，插件注册=1，规则=3110） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5110)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5110, 2310, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3110);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
