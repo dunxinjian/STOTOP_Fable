@@ -6604,21 +6604,6 @@
           "F更新时间": "2026-05-08T01:57:50.4033333"
         },
         {
-          "FID": 1874,
-          "F名称": "分摊配置",
-          "F编码": "finance:amoeba:allocation",
-          "F类型": "菜单",
-          "F父ID": 1870,
-          "F路由": "/finance/amoeba/allocation",
-          "F组件路径": "finance/AmoebaAllocation",
-          "F图标": "PieChartOutlined",
-          "F排序": 5,
-          "F状态": 1,
-          "F是否可见": 0,
-          "F创建时间": "2026-05-08T01:57:50.4033333",
-          "F更新时间": "2026-05-08T01:57:50.4033333"
-        },
-        {
           "FID": 1875,
           "F名称": "快递报价查询",
           "F编码": "express:quotation-workbench",

@@ -2052,7 +2052,8 @@ public static class FinanceSeeder
 
     /// <summary>
     /// 批次5-S6: 删废弃的 FIN阿米巴分摊比例 表(旧固定比例分摊，已被件量分摊 F分摊方式/F分摊基数 取代)。
-    /// 实体/Config/CRUD/前端已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
+    /// 实体/Config/CRUD/前端/baseline 菜单已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
+    /// 顺带删存量库残留的"分摊配置"孤儿菜单行(指向已删路由/组件；baseline upsert 不删缺失行，故此处清)。
     /// </summary>
     private static void MigrateV8(STOTOPDbContext ctx)
     {
@@ -2061,6 +2062,10 @@ public static class FinanceSeeder
         ExecSql(ctx, @"
         IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'FIN阿米巴分摊比例')
         DROP TABLE [FIN阿米巴分摊比例];
+        ");
+
+        ExecSql(ctx, @"
+        DELETE FROM [SYS功能权限] WHERE [F编码] = N'finance:amoeba:allocation';
         ");
     }
 
