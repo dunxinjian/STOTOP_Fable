@@ -10,19 +10,23 @@
 
 ## 一、四类页面标准骨架
 
-### 1. 列表页（样板：VoucherList / ContractList）
+### 1. 列表页（样板：dormitory/BuildingManage —— DataTable 范式）
 
 ```
 .page-container
-├─ <PageHeader>（#actions 主操作；#toolbar 第二行筛选）
-└─ .table-card / <a-card>
-   ├─ <a-table>（#emptyText = <EmptyState size="small">）
-   └─ <a-pagination>
+├─ <PageHeader>（#right/#actions 放主操作如「新增」；#toolbar 放筛选）
+│   └─ #toolbar：<div class="page-toolbar"> 内
+│        ├─ .page-toolbar__group    左侧簇：筛选输入（关键词/状态…）
+│        └─ .page-toolbar__filters  右推簇：查询/重置 按钮
+└─ <DataTable>（内建：序号列 + 分页「共 N 条」+ 空态；状态列用 <StatusTag>）
 ```
 
-- 顶部按钮行用全局 `.page-toolbar`（`__group` 主操作 / `__filters` 推右筛选）或 PageHeader 的 `#toolbar` 槽。
-- 表格卡片放 `.page-container` 直接子级，自动获得 flex 滚动链（`.ant-card` → `.ant-table-body`）。
-- 空数据走 `<EmptyState size="small">`，不再手写 `<a-empty>`。
+- **筛选条**用全局 `.page-toolbar`。列表页约定（按样板实际用法）：左侧簇 `__group` 放筛选输入，右推簇 `__filters`（`margin-left:auto`）放查询/重置按钮；主操作（新增等）放 PageHeader 的 `#right`/`#actions`，不进 #toolbar。
+- **表格**用 `<DataTable>`（见 §二），内建分页/序号列/空态；放 `.page-container` 直接子级自动获得 flex 滚动链。
+- **密度**：操作列等按钮**无需写 `size="small"`**，继承全局 `ConfigProvider component-size=small`；仅需大控件时显式标 `middle`/`large`。
+- 空数据由 DataTable 内建 `<EmptyState size="small">`，不再手写 `<a-empty>` 或 `#emptyText`。
+
+**列表页迁移配方**（照样板 BuildingManage）：① `#toolbar` 内联 flex → `.page-toolbar`（`__group` 放筛选输入、`__filters` 放查询/重置）；② `a-card`+`a-table` → `<DataTable v-model:pagination="pagination" @change="fetch">`，删本页 `paginationConfig`/`handleTableChange`/序号列定义/序号 bodyCell 分支；③ `a-tag :color` 字面色 → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页用 `ref({pageIndex,pageSize,total})`，读 `.value.*`。
 
 ### 2. 详情页（样板：TaskDetail）
 
@@ -107,6 +111,22 @@
 | `dot` | 布尔 | 前置状态圆点 |
 
 统一替代手写 `a-tag :color="'success'|'processing'|'error'"`。
+
+### DataTable
+
+列表页表格封装（样板 `dormitory/BuildingManage`），消除各页重复的 paginationConfig + 序号列 + 空态。
+
+| prop | 默认 | 说明 |
+| --- | --- | --- |
+| `columns` / `data-source` / `loading` | — | 透传 a-table；`columns` 不含序号列 |
+| `pagination`（v-model） | `{pageIndex,pageSize,total}` | `v-model:pagination` 绑响应式对象（父用 `ref`）；翻页 emit `update:pagination` 新对象 + emit `change`；传 `false` 关闭分页 |
+| `index-column` | `true` | 最左自动加「序号」列并按分页算行号 |
+| `bordered` | `false` | 克制收敛去边框 |
+| `row-key` / `scroll` / `empty-text` | `'id'` / — / `'暂无数据'` | 透传 / 内建空态主标题（绑 EmptyState `:title`） |
+
+- 翻页：`@change` 触发后父组件重新取数；不再每页手写 `paginationConfig`/`handleTableChange`。
+- 其余列单元格用父组件 `#bodyCell` 作用域插槽（序号列由组件内部渲染）。
+- 密度：不显式传 `size`，继承 `ConfigProvider` 全局 `small`。
 
 ---
 
