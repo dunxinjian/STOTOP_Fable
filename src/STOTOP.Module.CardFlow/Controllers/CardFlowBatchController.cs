@@ -150,6 +150,7 @@ public class CardFlowBatchController : ControllerBase
 
         // routed 项触发导入（命中唯一流程）
         var routed = new List<object>();
+        var triggerErrors = new List<object>();
         foreach (var r in classification.Routed)
         {
             if (!savedPaths.TryGetValue(r.FileName, out var savedPath)) continue;
@@ -159,9 +160,10 @@ public class CardFlowBatchController : ControllerBase
                     r.FlowDefinitionId, orgId, GetUserId(), savedPath, new Dictionary<string, string>());
                 routed.Add(new { fileName = r.FileName, batchId, flowDefinitionId = r.FlowDefinitionId });
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                readErrors.Add(new { fileName = r.FileName, error = ex.Message });
+                // 触发导入失败（如持久化异常）单独归类，不阻断其余已命中文件，也不让整批 500
+                triggerErrors.Add(new { fileName = r.FileName, flowDefinitionId = r.FlowDefinitionId, error = ex.Message });
             }
         }
 
@@ -177,8 +179,8 @@ public class CardFlowBatchController : ControllerBase
             .ToList();
 
         return ApiResult<object>.Success(
-            new { routed, unmatched, ambiguous, readErrors },
-            $"路由完成：触发 {routed.Count}，待认领 {unmatched.Count}，多义 {ambiguous.Count}");
+            new { routed, unmatched, ambiguous, readErrors, triggerErrors },
+            $"路由完成：触发 {routed.Count}，待认领 {unmatched.Count}，多义 {ambiguous.Count}，触发失败 {triggerErrors.Count}");
     }
 
     /// <summary>批次列表（分页 + 简易过滤）</summary>
