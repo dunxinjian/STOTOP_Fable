@@ -18,6 +18,7 @@ import {
   PauseCircleOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageLayout from '@/components/PageLayout.vue'
 import {
   getOrchestrationTemplate,
   updateOrchestrationTemplate,
@@ -601,7 +602,7 @@ onMounted(loadDetail)
 </script>
 
 <template>
-  <div class="page-container">
+  <PageLayout variant="flow">
     <PageHeader>
       <template #left>
         <a-button type="text" size="small" @click="goBack">
@@ -1077,43 +1078,16 @@ onMounted(loadDetail)
       <a-button type="text" size="small" @click="scrollToSection('dag-nodes')">节点</a-button>
       <a-button type="text" size="small" @click="scrollToSection('dag-edges')">边</a-button>
     </div>
-  </div>
+  </PageLayout>
 </template>
 
 <style scoped lang="scss">
-.page-container {
-  padding: 0 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  /* 确保页面本身拥有垂直滚动能力（覆盖全局多余使用） */
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  flex: 1;
-}
-
-/* 该页为多卡片纵向流式布局，需解除全局 .page-container 对 a-spin 包裹层加的 flex/overflow:hidden 锁定，
-   避免多张卡片被裁切、父容器无法滚动 */
-:deep(.ant-spin-nested-loading),
-:deep(.ant-spin-container) {
-  flex: none;
-  display: block;
-  overflow: visible;
-  min-height: 0;
-}
-
 .info-card,
 .section-card {
-  margin: 0 12px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   flex: none;
-}
-
-.info-card {
-  margin-top: 12px;
 }
 
 .status-tag {
