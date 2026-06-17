@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Models.Approval;
 using STOTOP.Module.CardFlow.Models.Schema;
 
@@ -13,12 +15,24 @@ public sealed class CardRedactionService : ICardRedactionService
         var fields = ReadFields(request.CardSchemaJson);
         var fieldAccess = ComputeFieldAccess(fields, request);
 
+        var detailFields = ReadFields(request.DetailSchemaJson);
+        var detailAccess = ComputeDetailAccess(detailFields, request);
+
         return new CardRedactionResult
         {
             FieldAccess = fieldAccess,
-            DetailAccess = new Dictionary<string, ResolvedAccess>(),
-            RedactedDataJson = request.Card.FDataJson ?? "{}", // Task 5 接 allowlist
-            RedactedDetails = new List<RedactedDetailRowResult>() // Task 5 接明细
+            DetailAccess = detailAccess,
+            RedactedDataJson = ApplyAllowlist(request.Card.FDataJson, fieldAccess),
+            RedactedDetails = request.Details
+                .OrderBy(d => d.FSortOrder)
+                .Select(d => new RedactedDetailRowResult
+                {
+                    Id = d.FID,
+                    SortOrder = d.FSortOrder,
+                    DetailTableKey = NormalizeTable(d.FDetailTableKey),
+                    DataJson = ApplyDetailAllowlist(d.FDataJson, NormalizeTable(d.FDetailTableKey), detailAccess)
+                })
+                .ToList()
         };
     }
 
@@ -155,5 +169,115 @@ public sealed class CardRedactionService : ICardRedactionService
         }
 
         return new List<CardFieldDefinitionV2>();
+    }
+
+    private static Dictionary<string, ResolvedAccess> ComputeDetailAccess(
+        IReadOnlyCollection<CardFieldDefinitionV2> detailFields,
+        CardRedactionRequest request)
+    {
+        // 明细列基线（按列敏感位）；明细 MVP 与字段同基线规则，仅叠加 active 节点 DetailAccess 覆盖。
+        var result = new Dictionary<string, ResolvedAccess>(StringComparer.Ordinal);
+        foreach (var col in detailFields)
+        {
+            if (string.IsNullOrWhiteSpace(col.Key))
+            {
+                continue;
+            }
+
+            var access = new ResolvedAccess
+            {
+                Access = col.Sensitive ? "masked" : "readonly",
+                MaskPattern = col.MaskPattern
+            };
+
+            if (request.ActiveStageConfig?.ViewProfile?.DetailAccess != null
+                && request.ActiveStageConfig.ViewProfile.DetailAccess.TryGetValue($"default.{col.Key}", out var r))
+            {
+                access.Access = NormalizeAccess(r.Access);
+                access.MaskPattern = r.MaskPattern ?? col.MaskPattern;
+            }
+
+            result[$"default.{col.Key}"] = access;
+        }
+
+        return result;
+    }
+
+    private static string ApplyAllowlist(string? dataJson, Dictionary<string, ResolvedAccess> access)
+    {
+        var obj = ParseObject(dataJson);
+        var output = new JsonObject();
+        foreach (var (key, rule) in access)
+        {
+            if (rule.Access == "hidden" || !obj.TryGetPropertyValue(key, out var val))
+            {
+                continue;
+            }
+
+            output[key] = rule.Access == "masked"
+                ? FieldMasker.Mask(NodeToText(val), rule.MaskPattern)
+                : val?.DeepClone();
+        }
+
+        return output.ToJsonString();
+    }
+
+    private static string ApplyDetailAllowlist(
+        string? dataJson, string tableKey, Dictionary<string, ResolvedAccess> detailAccess)
+    {
+        var obj = ParseObject(dataJson);
+        var output = new JsonObject();
+        var prefix = $"{tableKey}.";
+        foreach (var (accessKey, rule) in detailAccess)
+        {
+            if (!accessKey.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var col = accessKey[prefix.Length..];
+            if (rule.Access == "hidden" || !obj.TryGetPropertyValue(col, out var val))
+            {
+                continue;
+            }
+
+            output[col] = rule.Access == "masked"
+                ? FieldMasker.Mask(NodeToText(val), rule.MaskPattern)
+                : val?.DeepClone();
+        }
+
+        return output.ToJsonString();
+    }
+
+    private static string NormalizeTable(string? key)
+        => string.IsNullOrWhiteSpace(key) ? "default" : key!;
+
+    private static string NodeToText(JsonNode? value)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        return value.GetValueKind() == JsonValueKind.String
+            ? value.GetValue<string>()
+            : value.ToJsonString();
+    }
+
+    private static JsonObject ParseObject(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new JsonObject();
+        }
+
+        try
+        {
+            return JsonNode.Parse(json) as JsonObject ?? new JsonObject();
+        }
+        catch (JsonException)
+        {
+            return new JsonObject();
+        }
     }
 }

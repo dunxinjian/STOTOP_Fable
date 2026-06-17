@@ -144,4 +144,40 @@ public class CardRedactionServiceTests
         var result = svc.Redact(new CardRedactionRequest { Card = Card(), CardSchemaJson = null });
         Assert.Empty(result.FieldAccess);
     }
+
+    [Fact]
+    public void Allowlist_DropsSchemaExternalKeys_AndMasksSensitive()
+    {
+        var svc = new CardRedactionService();
+        var result = svc.Redact(new CardRedactionRequest { Card = Card(), CardSchemaJson = Schema });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDataJson);
+        var root = doc.RootElement;
+        Assert.True(root.TryGetProperty("amount", out _));        // schema 内非敏感 → 保留
+        Assert.False(root.TryGetProperty("legacyNote", out _));   // schema 外 → 移除
+        Assert.Equal("**** **** **** 0123",
+            root.GetProperty("payeeAccountNo").GetString());      // 敏感 → bankCard 打码
+    }
+
+    [Fact]
+    public void Allowlist_RedactsDetailRows()
+    {
+        var svc = new CardRedactionService();
+        const string detailSchema = """[{"key":"invoiceNo","type":"text"},{"key":"idNo","type":"text","sensitive":true,"maskPattern":"idCard"}]""";
+        var details = new List<CfCardDetail>
+        {
+            new() { FID = 1, FSortOrder = 0, FDetailTableKey = "default",
+                    FDataJson = """{"invoiceNo":"INV-1","idNo":"110101199003075678","junk":"z"}""" }
+        };
+        var result = svc.Redact(new CardRedactionRequest
+        {
+            Card = Card(), CardSchemaJson = Schema, DetailSchemaJson = detailSchema, Details = details
+        });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDetails.Single().DataJson);
+        var root = doc.RootElement;
+        Assert.Equal("INV-1", root.GetProperty("invoiceNo").GetString());
+        Assert.Equal("1101**********5678", root.GetProperty("idNo").GetString());
+        Assert.False(root.TryGetProperty("junk", out _));         // schema 外明细列移除
+    }
 }
