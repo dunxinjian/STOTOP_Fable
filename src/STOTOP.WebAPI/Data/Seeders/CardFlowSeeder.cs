@@ -50,6 +50,7 @@ public static class CardFlowSeeder
             new(28, "网点质控：接入 STG申通_末端派送考核明细（建表 + 规则3106 + 流程2306 + 首节点5106）(2026-06-18)", MigrateV28),
             new(29, "网点质控：接入 STG申通_签收未达标明细（建表 + 规则3107 + 流程2307 + 首节点5107）(2026-06-18)", MigrateV29),
             new(30, "网点质控：接入 STG申通_积压明细（建表 + 规则3108 + 流程2308 + 首节点5108）(2026-06-18)", MigrateV30),
+            new(31, "网点质控：接入 STG申通_疑似遗失明细（建表 + 规则3109 + 流程2309 + 首节点5109）(2026-06-18)", MigrateV31),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2409,6 +2410,146 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5108, 2308, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3108);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV31(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_疑似遗失明细 暂存表（系统列 + 51 业务列 + 标准字段） ═══
+        // 注意：「结算重量(kg)」「找回时长(h)」含非法字符 ()，dbColumn 去掉斜杠为 F结算重量kg / F找回时长h（实体/EF/DDL/映射四处一致）。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_疑似遗失明细')
+        CREATE TABLE [STG申通_疑似遗失明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3109 columnMapping，51 列）
+            [F运单号] NVARCHAR(200) NULL,
+            [F先行理赔状态] NVARCHAR(200) NULL,
+            [F是否找回] NVARCHAR(200) NULL,
+            [F签收标识] NVARCHAR(200) NULL,
+            [F实际金额] NVARCHAR(200) NULL,
+            [F是否疫情件] NVARCHAR(200) NULL,
+            [F内件品名] NVARCHAR(200) NULL,
+            [F结算重量kg] NVARCHAR(200) NULL,
+            [F订单来源] NVARCHAR(200) NULL,
+            [F3日轨迹中断触发类型] NVARCHAR(200) NULL,
+            [F包号] NVARCHAR(200) NULL,
+            [F集包站点] NVARCHAR(200) NULL,
+            [F扫描站点] NVARCHAR(200) NULL,
+            [F扫描站点所属省份] NVARCHAR(200) NULL,
+            [F扫描站点所属南北区] NVARCHAR(200) NULL,
+            [F最后扫描时间] NVARCHAR(200) NULL,
+            [F扫描操作人] NVARCHAR(200) NULL,
+            [F业务员] NVARCHAR(200) NULL,
+            [F下一节点操作截止时间] NVARCHAR(200) NULL,
+            [F3日轨迹中断触发时间] NVARCHAR(200) NULL,
+            [F找货责任方1] NVARCHAR(200) NULL,
+            [F找件责任1所属网点名称] NVARCHAR(200) NULL,
+            [F找货责任方2] NVARCHAR(200) NULL,
+            [F找件责任2所属网点名称] NVARCHAR(200) NULL,
+            [F运输任务号] NVARCHAR(200) NULL,
+            [F承运商] NVARCHAR(200) NULL,
+            [F车牌号] NVARCHAR(200) NULL,
+            [F揽收省份] NVARCHAR(200) NULL,
+            [F揽收网点] NVARCHAR(200) NULL,
+            [F问题件类型] NVARCHAR(200) NULL,
+            [F退回件标识] NVARCHAR(200) NULL,
+            [F拦截件标识] NVARCHAR(200) NULL,
+            [F停滞用时] NVARCHAR(200) NULL,
+            [F是否理赔] NVARCHAR(200) NULL,
+            [F目的地省份] NVARCHAR(200) NULL,
+            [F目的地网点] NVARCHAR(200) NULL,
+            [F找回时的扫描类型] NVARCHAR(200) NULL,
+            [F找回时的扫描站点] NVARCHAR(200) NULL,
+            [F找回时间] NVARCHAR(200) NULL,
+            [F找回时长h] NVARCHAR(200) NULL,
+            [F下一站] NVARCHAR(200) NULL,
+            [F下一站省份] NVARCHAR(200) NULL,
+            [F下一站所属南北区] NVARCHAR(200) NULL,
+            [F责任方1所属省区] NVARCHAR(200) NULL,
+            [F责任方2所属省区] NVARCHAR(200) NULL,
+            [F订单网点] NVARCHAR(200) NULL,
+            [F订单省份] NVARCHAR(200) NULL,
+            [F考核剔除项] NVARCHAR(200) NULL,
+            [F商家编码] NVARCHAR(200) NULL,
+            [F商家名称] NVARCHAR(200) NULL,
+            [F任务不发起原因] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_疑似遗失明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_疑似遗失明细'))
+        CREATE INDEX [IX_STG申通_疑似遗失明细_F批次ID] ON [STG申通_疑似遗失明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_疑似遗失明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_疑似遗失明细'))
+        CREATE INDEX [IX_STG申通_疑似遗失明细_数据作用域] ON [STG申通_疑似遗失明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_疑似遗失明细_运单号_未撤销' AND object_id = OBJECT_ID(N'STG申通_疑似遗失明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_疑似遗失明细_运单号_未撤销]
+            ON [STG申通_疑似遗失明细]([F运单号],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3109（疑似遗失明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3109)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3109, 192, N'excelInput', N'申通疑似遗失明细导入规则',
+        N'{""targetTable"":""STG申通_疑似遗失明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,3日轨迹中断触发类型,是否找回,找货责任方1"",""fullColumnIdentifier"":""运单号,先行理赔状态,是否找回,签收标识,实际金额,是否疫情件,内件品名,结算重量(kg),订单来源,3日轨迹中断触发类型,包号,集包站点,扫描站点,扫描站点所属省份,扫描站点所属南北区,最后扫描时间,扫描操作人,业务员,下一节点操作截止时间,3日轨迹中断触发时间,找货责任方1,找件责任1所属网点名称,找货责任方2,找件责任2所属网点名称,运输任务号,承运商,车牌号,揽收省份,揽收网点,问题件类型,退回件标识,拦截件标识,停滞用时,是否理赔,目的地省份,目的地网点,找回时的扫描类型,找回时的扫描站点,找回时间,找回时长(h),下一站,下一站省份,下一站所属南北区,责任方1所属省区,责任方2所属省区,订单网点,订单省份,考核剔除项,商家编码,商家名称,任务不发起原因"",""columnMapping"":[{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""先行理赔状态"",""dbColumn"":""F先行理赔状态""},{""excelColumn"":""是否找回"",""dbColumn"":""F是否找回""},{""excelColumn"":""签收标识"",""dbColumn"":""F签收标识""},{""excelColumn"":""实际金额"",""dbColumn"":""F实际金额""},{""excelColumn"":""是否疫情件"",""dbColumn"":""F是否疫情件""},{""excelColumn"":""内件品名"",""dbColumn"":""F内件品名""},{""excelColumn"":""结算重量(kg)"",""dbColumn"":""F结算重量kg""},{""excelColumn"":""订单来源"",""dbColumn"":""F订单来源""},{""excelColumn"":""3日轨迹中断触发类型"",""dbColumn"":""F3日轨迹中断触发类型""},{""excelColumn"":""包号"",""dbColumn"":""F包号""},{""excelColumn"":""集包站点"",""dbColumn"":""F集包站点""},{""excelColumn"":""扫描站点"",""dbColumn"":""F扫描站点""},{""excelColumn"":""扫描站点所属省份"",""dbColumn"":""F扫描站点所属省份""},{""excelColumn"":""扫描站点所属南北区"",""dbColumn"":""F扫描站点所属南北区""},{""excelColumn"":""最后扫描时间"",""dbColumn"":""F最后扫描时间""},{""excelColumn"":""扫描操作人"",""dbColumn"":""F扫描操作人""},{""excelColumn"":""业务员"",""dbColumn"":""F业务员""},{""excelColumn"":""下一节点操作截止时间"",""dbColumn"":""F下一节点操作截止时间""},{""excelColumn"":""3日轨迹中断触发时间"",""dbColumn"":""F3日轨迹中断触发时间""},{""excelColumn"":""找货责任方1"",""dbColumn"":""F找货责任方1""},{""excelColumn"":""找件责任1所属网点名称"",""dbColumn"":""F找件责任1所属网点名称""},{""excelColumn"":""找货责任方2"",""dbColumn"":""F找货责任方2""},{""excelColumn"":""找件责任2所属网点名称"",""dbColumn"":""F找件责任2所属网点名称""},{""excelColumn"":""运输任务号"",""dbColumn"":""F运输任务号""},{""excelColumn"":""承运商"",""dbColumn"":""F承运商""},{""excelColumn"":""车牌号"",""dbColumn"":""F车牌号""},{""excelColumn"":""揽收省份"",""dbColumn"":""F揽收省份""},{""excelColumn"":""揽收网点"",""dbColumn"":""F揽收网点""},{""excelColumn"":""问题件类型"",""dbColumn"":""F问题件类型""},{""excelColumn"":""退回件标识"",""dbColumn"":""F退回件标识""},{""excelColumn"":""拦截件标识"",""dbColumn"":""F拦截件标识""},{""excelColumn"":""停滞用时"",""dbColumn"":""F停滞用时""},{""excelColumn"":""是否理赔"",""dbColumn"":""F是否理赔""},{""excelColumn"":""目的地省份"",""dbColumn"":""F目的地省份""},{""excelColumn"":""目的地网点"",""dbColumn"":""F目的地网点""},{""excelColumn"":""找回时的扫描类型"",""dbColumn"":""F找回时的扫描类型""},{""excelColumn"":""找回时的扫描站点"",""dbColumn"":""F找回时的扫描站点""},{""excelColumn"":""找回时间"",""dbColumn"":""F找回时间""},{""excelColumn"":""找回时长(h)"",""dbColumn"":""F找回时长h""},{""excelColumn"":""下一站"",""dbColumn"":""F下一站""},{""excelColumn"":""下一站省份"",""dbColumn"":""F下一站省份""},{""excelColumn"":""下一站所属南北区"",""dbColumn"":""F下一站所属南北区""},{""excelColumn"":""责任方1所属省区"",""dbColumn"":""F责任方1所属省区""},{""excelColumn"":""责任方2所属省区"",""dbColumn"":""F责任方2所属省区""},{""excelColumn"":""订单网点"",""dbColumn"":""F订单网点""},{""excelColumn"":""订单省份"",""dbColumn"":""F订单省份""},{""excelColumn"":""考核剔除项"",""dbColumn"":""F考核剔除项""},{""excelColumn"":""商家编码"",""dbColumn"":""F商家编码""},{""excelColumn"":""商家名称"",""dbColumn"":""F商家名称""},{""excelColumn"":""任务不发起原因"",""dbColumn"":""F任务不发起原因""}],""keyFields"":[""运单号""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通网点疑似遗失明细导出v5 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2309（QC_ST_SUSPECTED_LOSS） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2309)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2309, NULL, 1, GETDATE(), NULL, N'网点质控：申通网点疑似遗失明细导出v5 导入暂存', GETDATE(), NULL, N'申通疑似遗失明细导入', NULL, N'QC_ST_SUSPECTED_LOSS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""*疑似遗失明细*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2309（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2309)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2309, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2309, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5109（ExcelInput 批次级自动节点，插件注册=1，规则=3109） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5109)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5109, 2309, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3109);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
