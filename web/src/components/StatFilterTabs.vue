@@ -5,7 +5,7 @@
   全令牌、无裸 hex；可选 color（传 var(--token) 语义色）渲染状态圆点。
 -->
 <template>
-  <div class="stat-filter-tabs">
+  <div class="stat-filter-tabs" :class="{ 'stat-filter-tabs--inline': inline }">
     <button
       v-for="tab in tabs"
       :key="tab.key"
@@ -33,10 +33,14 @@ interface TabItem {
   color?: string
 }
 
-defineProps<{
+const props = withDefaults(defineProps<{
   tabs: TabItem[]
   active: string | number
-}>()
+  /** 置于工具栏内时去掉底部外边距 */
+  inline?: boolean
+}>(), {
+  inline: false,
+})
 
 const emit = defineEmits<{
   (e: 'update:active', key: string | number): void
@@ -55,6 +59,10 @@ function select(key: string | number) {
   flex-wrap: wrap;
   gap: var(--space-sm8);
   margin-bottom: var(--space-md12);
+}
+
+.stat-filter-tabs--inline {
+  margin-bottom: 0;
 }
 
 .stat-filter-tab {

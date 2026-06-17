@@ -8,11 +8,10 @@
       </template>
       <template #toolbar>
         <div class="page-toolbar">
-          <div class="page-toolbar__group">
+          <StatFilterTabs inline v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
+          <div class="page-toolbar__filters">
             <a-input-search v-model:value="searchForm.keyword" placeholder="编码/车牌号" style="width: 200px" allow-clear @search="handleSearch" />
             <a-select v-model:value="searchForm.ownershipType" placeholder="权属类型" allow-clear style="width: 120px" :options="ownershipOptions" @change="handleSearch" />
-          </div>
-          <div class="page-toolbar__filters">
             <a-button @click="handleReset">
               <template #icon><ReloadOutlined /></template>重置
             </a-button>
@@ -20,9 +19,6 @@
         </div>
       </template>
     </PageHeader>
-
-    <!-- 状态快筛（KPI 计数 + 点击过滤合一，替代顶部统计卡 + 车辆状态下拉） -->
-    <StatFilterTabs v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
 
     <DataTable
       v-model:pagination="pagination"

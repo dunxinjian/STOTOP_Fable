@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Models.Schema;
 using STOTOP.Module.CardFlow.Services;
+using STOTOP.Module.CardFlow.Services.Redaction;
 using Xunit;
 
 namespace STOTOP.Module.CardFlow.Tests.Approval;
@@ -231,12 +232,24 @@ public class CardDetailWorkViewContractTests
         });
         await db.SaveChangesAsync();
 
+        db.Set<CfStageAssignee>().Add(new CfStageAssignee
+        {
+            FID = 100,
+            FStageInstanceId = 50,
+            FUserId = 2,
+            FUserName = "财务审核员",
+            FStatus = "pending",
+            FAssignedTime = DateTime.Now
+        });
+        await db.SaveChangesAsync();
+
         var service = new CardService(
             db,
             NullLogger<CardService>.Instance,
             new StageConfigParser(),
             new StageViewProfileResolver(new CardPresentationResolver()),
-            new CardFlowSourceContextVerifier(db));
+            new CardFlowSourceContextVerifier(db),
+            new CardRedactionService());
 
         var result = await service.GetByIdAsync(40, userId: 2);
 

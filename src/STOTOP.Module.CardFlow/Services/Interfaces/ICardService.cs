@@ -8,7 +8,7 @@ public interface ICardService
     Task<List<AvailableFlowDto>> GetAvailableFlowsAsync(long userId, long orgId);
     Task<PagedResult<CardListDto>> GetCardsAsync(CardQueryRequest request);
     Task<PagedResult<CardListDto>> GetInitiatedCardsAsync(long userId, CardQueryRequest request);
-    Task<CardDetailDto?> GetByIdAsync(long id, long userId);
+    Task<CardDetailDto?> GetByIdAsync(long id, long userId, bool canViewAll = false);
     Task<CardDetailDto> CreateAsync(CreateCardRequest request, long userId);
     Task<CardDetailDto> UpdateAsync(long id, UpdateCardRequest request, long userId);
     Task DeleteAsync(long id, long userId);
