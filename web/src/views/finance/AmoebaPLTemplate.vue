@@ -3169,7 +3169,7 @@ onMounted(() => {
 
 .tree-node-group {
   font-weight: 600;
-  color: var(--color-info);
+  color: var(--text-1);
 }
 
 // Tab 横跨容器
