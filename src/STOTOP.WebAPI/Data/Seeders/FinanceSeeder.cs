@@ -28,6 +28,8 @@ public static class FinanceSeeder
             new(4, "指标分区标记收敛为根级 (2026-06-12)", MigrateV4),
             new(5, "删除 FIN科目/科目余额/辅助余额 的 F组织ID 列 (2026-06-16)", MigrateV5),
             new(6, "批次6: 删损益项2废弃列+重灌72项种子 (2026-06-17)", MigrateV6),
+            new(7, "批次5-S3: 手工数据加 F期间键 + 回填 'M:'+期间 (2026-06-17)", MigrateV7),
+            new(8, "批次5-S6: 删废弃 FIN阿米巴分摊比例 表 (2026-06-17)", MigrateV8),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2025,6 +2027,46 @@ public static class FinanceSeeder
         SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F指标方向范围");
         // 存量库重灌损益项种子: V1 内种子对已迁移库不会重跑, 故在此守卫重灌
         ReseedAmoebaTemplate3(ctx);
+    }
+
+    /// <summary>
+    /// 批次5-S3: FIN阿米巴手工数据 加 F期间键(粒度前缀+期间)，回填存量(全月度)为 'M:'+F期间。
+    /// 列幂等补加(IF NOT EXISTS)——dev 下 SchemaAutoSync 可能已在本步前加好，prod(AutoSync 暂存)则由本步加。
+    /// 唯一索引保持 F期间 不变(各粒度期间串本就唯一)，不在此动索引(避免管线在回填前用全 NULL 期间键建索引撞 NULL 重复)。
+    /// 加列与回填分两个 batch：UPDATE 引用的列须由前一 batch 先建好(SQL Server 延迟名称解析)。
+    /// </summary>
+    private static void MigrateV7(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = N'FIN阿米巴手工数据' AND COLUMN_NAME = N'F期间键')
+        ALTER TABLE [FIN阿米巴手工数据] ADD [F期间键] nvarchar(20) NULL;
+        ");
+
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴手工数据] SET [F期间键] = N'M:' + [F期间] WHERE [F期间键] IS NULL;
+        ");
+    }
+
+    /// <summary>
+    /// 批次5-S6: 删废弃的 FIN阿米巴分摊比例 表(旧固定比例分摊，已被件量分摊 F分摊方式/F分摊基数 取代)。
+    /// 实体/Config/CRUD/前端/baseline 菜单已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
+    /// 顺带删存量库残留的"分摊配置"孤儿菜单行(指向已删路由/组件；baseline upsert 不删缺失行，故此处清)。
+    /// </summary>
+    private static void MigrateV8(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'FIN阿米巴分摊比例')
+        DROP TABLE [FIN阿米巴分摊比例];
+        ");
+
+        ExecSql(ctx, @"
+        DELETE FROM [SYS功能权限] WHERE [F编码] = N'finance:amoeba:allocation';
+        ");
     }
 
     /// <summary>

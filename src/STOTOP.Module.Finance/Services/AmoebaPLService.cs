@@ -10,6 +10,7 @@ using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.System.Entities;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -25,6 +26,7 @@ public class AmoebaPLService
     private readonly IRepository<FinAccount> _accountRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IFormulaEngine _formulaEngine;
+    private readonly ICommonCostAllocationEngine _allocEngine;
 
     // 品牌来源关键词（用于排除收入类凭证去重）
     private static readonly string[] ExcludedRevenueVoucherSources = { "极兔导入", "韵达导入", "申通导入", "计费生成" };
@@ -35,7 +37,8 @@ public class AmoebaPLService
         IRepository<FinVoucher> voucherRepository,
         IRepository<FinAccount> accountRepository,
         IHttpContextAccessor httpContextAccessor,
-        IFormulaEngine formulaEngine)
+        IFormulaEngine formulaEngine,
+        ICommonCostAllocationEngine allocEngine)
     {
         _dbContext = dbContext;
         _voucherEntryRepository = voucherEntryRepository;
@@ -43,6 +46,7 @@ public class AmoebaPLService
         _accountRepository = accountRepository;
         _httpContextAccessor = httpContextAccessor;
         _formulaEngine = formulaEngine;
+        _allocEngine = allocEngine;
     }
 
     private long GetCurrentOrgId()
@@ -86,11 +90,6 @@ public class AmoebaPLService
             .Where(m => m.FOrgId == orgId)
             .ToListAsync();
 
-        // 4. 加载分摊配置
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
         // 5. 加载经营单元（从辅助核算项目 business_unit 类型获取）
         var units = await _dbContext.Set<FinAuxiliaryItem>()
             .Where(u => u.FOrgId == orgId && u.FAuxType == "business_unit" && u.FEnableStatus == 1)
@@ -121,8 +120,8 @@ public class AmoebaPLService
             point.MappedUnitId = MapToUnit(point, mappingRules);
         }
 
-        // 9. 应用分摊
-        var allocatedPoints = ApplyAllocation(allDataPoints, allocations);
+        // [批次5-S6] 旧固定比例分摊(FinAmoebaAllocation)已废弃删除；数据点直接进入视图(件量分摊在多期路径)
+        var allocatedPoints = allDataPoints;
 
         // 10. 按方向筛选（按归并桶比较，兼容模板 Tab 自定义命名）
         if (!string.IsNullOrEmpty(request.Direction))
@@ -175,9 +174,10 @@ public class AmoebaPLService
         var orgId = GetCurrentOrgId();
         var accountSetId = request.AccountSetId;
 
-        // 0. 入参校验：期间格式（畸形输入会让后续 int.Parse 直接 500）与模板存在性/账套归属
-        if (!IsValidPeriod(request.MainPeriod))
-            throw new ArgumentException($"期间格式应为 YYYYMM，当前值：{request.MainPeriod}");
+        // 0. 入参校验：粒度 + 期间格式（畸形输入会让后续 Parse 直接 500）与模板存在性/账套归属
+        var granularity = NormalizeGranularity(request.Granularity);   // 非法粒度即抛；null/空→month
+        if (!IsValidPeriod(request.MainPeriod, granularity))
+            throw new ArgumentException($"期间格式与粒度({granularity})不符，当前值：{request.MainPeriod}");
 
         // 1. 加载模板实体
         var template = await _dbContext.Set<FinAmoebaPLTemplate>()
@@ -230,15 +230,15 @@ public class AmoebaPLService
                 .ToList();
         }
 
-        // 4. 推算期间列表：[当期, 环比期, 同比期(可选)]
+        // 4. 推算期间列表：[当期, 环比期, 同比期(可选)]（按粒度）
         var periods = new List<string> { request.MainPeriod };
-        var momPeriod = CalcPreviousMonth(request.MainPeriod);
+        var momPeriod = CalcPreviousPeriod(request.MainPeriod, granularity);
         periods.Add(momPeriod);
         string? yoyPeriod = null;
         if (request.IncludeYoy)
         {
-            yoyPeriod = CalcYoyPeriod(request.MainPeriod);
-            periods.Add(yoyPeriod);
+            yoyPeriod = CalcYoyPeriod(request.MainPeriod, granularity);
+            if (yoyPeriod != null) periods.Add(yoyPeriod);   // 日/周粒度无同比，CalcYoyPeriod 返回 null
         }
 
         // 5. 加载映射规则（仅供下游调度，不再作为报表主流程的全局筛选依据）
@@ -251,38 +251,47 @@ public class AmoebaPLService
         // 6. 顺序聚合各期间数据（避免 DbContext 并发冲突）
         // 全局品牌/网点/经营单元筛选已移除—— 所有数据点交由 公式驱动的 PLItem 独占匹配职责。
         var periodResults = new List<List<DataPoint>>();
-        var periodRanges = periods.Select(PeriodToDateRange).ToList();
+        // [批次5-S2] 子报表的同期全口径基线(scope 过滤前全集)，供公共费分摊取全额/全口径件量；全口径请求为 null
+        var periodFullScopePoints = new List<List<DataPoint>?>();
+        bool isSubReport = request.Scope?.IsSubReport == true;
+        // [批次5-S3] 各期的期间键(粒度前缀+期间)：manual 加载/去重与估算取数按此键
+        var periodKeys = periods.Select(p => BuildPeriodKey(p, granularity)).ToList();
         for (int i = 0; i < periods.Count; i++)
         {
-            var (startDate, endDate) = periodRanges[i];
-            var billing = await AggregateBillingRevenue(startDate, endDate, orgId, plItems, mappingRules, null, null);
-            var voucher = await AggregateVoucherData(startDate, endDate, orgId, accountSetId);
-            var depreciation = await AggregateDepreciation(startDate, endDate, orgId, accountSetId);
-            // 暂估数据聚合：与凭证数据一同走 MatchDataPointsToPLItems 独占匹配
-            var estimate = await AggregateEstimateData(request.TemplateId, orgId, periods[i]);
-            var all = new List<DataPoint>();
-            all.AddRange(billing);
-            all.AddRange(voucher);
-            all.AddRange(depreciation);
-            all.AddRange(estimate);
+            // [批次5-S3] 按粒度选源(C1 互斥)：台账月/季/年=billing+voucher+depreciation；估算日/周=billing+estimate
+            var all = await BuildPeriodDataPoints(periods[i], granularity, orgId, accountSetId, request.TemplateId, plItems, mappingRules);
+            // [批次5-S2] scope 过滤前留存全口径基线：聚合无 SQL 级 scope，ApplyScopeFilter 返回新列表不动 all，
+            // 故 all 即免费的全口径基线(纠正设计 §4.5 关于额外 DB 聚合的悲观假设)
+            periodFullScopePoints.Add(isSubReport ? all : null);
             // [方案B 批次4] L1 请求级 scope 预过滤(独占匹配之前)：网点/项目/方向等;Scope=null 则全口径不变
             all = ApplyScopeFilter(all, request.Scope);
             periodResults.Add(all);
         }
 
-        // 6. 加载手工填报数据（覆盖所有相关期间）
-        // 仅取 manual 类型：estimate 数据 FPLItemId 可为 null，且会在 (FPeriod,FPLItemId) ToDictionary 时
+        // 6. 加载手工填报数据（覆盖所有相关期间，按期间键 [批次5-S3]）
+        // 仅取 manual 类型：estimate 数据 FPLItemId 可为 null，且会在 (FPeriodKey,FPLItemId) ToDictionary 时
         // 因重复键抛 ArgumentException 导致 500；estimate 数据已由 AggregateEstimateData 单独走独占匹配。
         var manualData = await _dbContext.Set<FinAmoebaManualData>()
             .Where(m => m.FTemplateId == request.TemplateId
                         && m.FOrgId == orgId
                         && m.FDataType == "manual"
-                        && periods.Contains(m.FPeriod))
+                        && periodKeys.Contains(m.FPeriodKey))
             .ToListAsync();
 
         // 7. 对每个期间执行独占匹配，得到 PLItemId -> Amount 字典
         var unmatchedWarnings = new List<string>();
         var perPeriodAmounts = new List<Dictionary<long, decimal>>();
+        // [批次5-S4] 日/周公共费分摊基线缓存：所属当月数据点(实际凭证/估值，含当月例外)，同月一次请求内只聚合一次
+        var monthPointsCache = new Dictionary<string, List<DataPoint>>();
+        async Task<List<DataPoint>> GetMonthPoints(string month)
+        {
+            if (!monthPointsCache.TryGetValue(month, out var pts))
+            {
+                pts = await BuildPeriodDataPoints(month, "month", orgId, accountSetId, request.TemplateId, plItems, mappingRules);
+                monthPointsCache[month] = pts;
+            }
+            return pts;
+        }
         for (int i = 0; i < periods.Count; i++)
         {
             var (matched, unmatched) = MatchDataPointsToPLItems(periodResults[i], plItems);
@@ -307,32 +316,52 @@ public class AmoebaPLService
                 foreach (var kv in indMatched)
                     matched[kv.Key] = kv.Value;
             }
+
+            // 公共费按件量分摊注入(覆盖公共费叶=总额×分子件量/分母件量)，置于指标并入之后(ComputeVolumeBasis 需读票量 indicator)。
+            // [批次5-S4] 日/周：基线=所属当月实际(月公共费×日周件量/当月件量 线性时间摊；子报表则分子为日周scope件量、
+            //   分母为当月全口径件量，时间+scope 一次比例)。[批次5-S2] 月/季/年子报表：基线=同期全口径。
+            if (!IsLedgerGranularity(granularity))
+            {
+                var allocWarnings = new List<string>();
+                // [批次5-S4] 跨月周告警：周可横跨两月，分子件量含两月而分母只取周首月——比例为近似(审查 medium)
+                var (wkStart, wkEnd) = PeriodToDateRange(periods[i], granularity);
+                if (wkStart.Month != wkEnd.Month)
+                    allocWarnings.Add($"跨月期间公共费按周首月 {PeriodContainingMonth(periods[i], granularity)} 线性摊(分子含另一月天数，比例为近似)");
+                var monthPts = await GetMonthPoints(PeriodContainingMonth(periods[i], granularity));
+                ApplyCommonCostAllocation(matched, periodResults[i], monthPts, plItems, indicatorItems, allItems, allocWarnings);
+                // [批次5-S4 审查] 各期均收集告警(原仅 i==0)，使日/周 deliver件量=0/件量=0 在环比同比列也可见
+                unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
+            }
+            else if (isSubReport && periodFullScopePoints[i] is { } fullPts)
+            {
+                var allocWarnings = new List<string>();
+                ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings);
+                unmatchedWarnings.AddRange(allocWarnings.Select(w => periods.Count > 1 ? $"[{periods[i]}] {w}" : w));
+            }
         }
 
-        // 手工填报快查：(period, plItemId) -> ManualData
+        // 手工填报快查：(periodKey, plItemId) -> ManualData [批次5-S3]
         // 防御：理论上 (FTemplateId,FPLItemId,FOrgId,FPeriod) 已建索引应唯一，但若历史数据有重复则保留首条，避免 500
         var manualLookup = manualData
-            .GroupBy(m => (m.FPeriod, m.FPLItemId))
+            .GroupBy(m => (m.FPeriodKey ?? "", m.FPLItemId))   // 期间键归一非空，键型保持 (string, long?)
             .ToDictionary(g => g.Key, g => g.First());
 
-        // 8. 当期总票数：供"单票&均"自动计算使用。
-        // 候选取全模板（含指标分区内）名称含"票量"的 indicator 项，按 总票 > 发件/出港 > 排序首个 的
-        // 优先级选定；取值优先手工填报，票量为系统数据源时回退到独占匹配结果
-        int currentTickets = 0;
-        var ticketCandidates = allItems
-            .Where(i => i.FNodeRole == "indicator" && (i.FItemName ?? "").Contains("票量"))
-            .OrderBy(i => i.FSort)
-            .ToList();
-        var ticketItem = ticketCandidates.FirstOrDefault(i => i.FItemName!.Contains("总票"))
-            ?? ticketCandidates.FirstOrDefault(i => i.FItemName!.Contains("发件") || i.FItemName!.Contains("出港"))
-            ?? ticketCandidates.FirstOrDefault();
-        if (ticketItem != null)
+        // 8. 单票&均：方向化分母 [批次5-S5]（替代原全局单一 currentTickets）。
+        //    出港 tab→发件票量、进港→派件票量、公共/指标→合计件量；按当期取(手工填报优先→独占匹配)，
+        //    环比/同比各列独立计算。
+        var (sendIndId, deliverIndId) = ResolveVolumeIndicatorIds(allItems);
+        decimal TicketValue(long? indicatorId, int p)
         {
-            if (manualLookup.TryGetValue((request.MainPeriod, (long?)ticketItem.FID), out var ticketManual))
-                currentTickets = (int)ticketManual.FAmount;
-            else if (perPeriodAmounts.Count > 0 && perPeriodAmounts[0].TryGetValue(ticketItem.FID, out var ticketMatched))
-                currentTickets = (int)ticketMatched;
+            if (indicatorId is not long id) return 0m;
+            if (manualLookup.TryGetValue((periodKeys[p], (long?)id), out var md)) return md.FAmount;
+            return perPeriodAmounts[p].TryGetValue(id, out var matched) ? matched : 0m;
         }
+        decimal? ComputePerUnit(long tabAncestorId, decimal amount, int periodIdx)
+            => PerUnitValue(
+                TabToDirection(allItems.FirstOrDefault(i => i.FID == tabAncestorId)?.FItemName),
+                amount, TicketValue(sendIndId, periodIdx), TicketValue(deliverIndId, periodIdx));
+        // 当期(period 0)合计票数：供响应 Summary 展示
+        int currentPeriodTickets = (int)(TicketValue(sendIndId, 0) + TicketValue(deliverIndId, 0));
 
         // 9. 构建 TabAncestorId 映射（每个节点寻找其 depth=0 的 group 祖先）
         var tabAncestorMap = BuildTabAncestorMap(plItems, tabRoots);
@@ -378,13 +407,14 @@ public class AmoebaPLService
                 for (int p = 0; p < periods.Count; p++)
                 {
                     var period = periods[p];
+                    var periodKey = periodKeys[p];   // [批次5-S3] manual 查询按期间键
                     decimal amount = 0m;
                     decimal? perUnit = null;
-        
+
                     if (child.FNodeRole == "group")
                     {
                         // group: SUM_CHILDREN（只累加 data 和 group 子项，排除 formula/indicator）
-                        amount = SumChildrenForGroup(child, plItems, perPeriodAmounts[p], manualLookup, period);
+                        amount = SumChildrenForGroup(child, plItems, perPeriodAmounts[p], manualLookup, periodKey);
                     }
                     else if (child.FNodeRole == "formula")
                     {
@@ -394,7 +424,7 @@ public class AmoebaPLService
                     else if (child.FNodeRole == "indicator")
                     {
                         // indicator: 手工填报优先；非手工（系统数据源）读取独占匹配结果；带公式的由公式求值阶段回填
-                        if (child.FIsManualEntry && manualLookup.TryGetValue((period, (long?)child.FID), out var mdInd))
+                        if (child.FIsManualEntry && manualLookup.TryGetValue((periodKey, (long?)child.FID), out var mdInd))
                         {
                             amount = mdInd.FAmount;
                             if (child.FPerUnitMode == "manual") perUnit = mdInd.FPerUnitValue;
@@ -406,7 +436,7 @@ public class AmoebaPLService
                     }
                     else if (child.FIsManualEntry)
                     {
-                        if (manualLookup.TryGetValue((period, (long?)child.FID), out var md))
+                        if (manualLookup.TryGetValue((periodKey, (long?)child.FID), out var md))
                         {
                             amount = md.FAmount;
                             if (child.FPerUnitMode == "manual")
@@ -420,12 +450,11 @@ public class AmoebaPLService
                             amount = amt;
                     }
         
-                    // 单票&均自动计算
-                    if (perUnit == null && child.FPerUnitMode == "auto" && currentTickets > 0 && p == 0)
-                    {
-                        perUnit = amount / currentTickets;
-                    }
-        
+                    // 单票&均自动计算 [批次5-S5]：方向化分母(随 Tab) + 按当期(含环比/同比)。
+                    // formula 项金额此刻尚为 0(待 EvaluateFormulaItems 回填)，跳过避免算出误导性的 0 单票均。
+                    if (perUnit == null && child.FPerUnitMode == "auto" && child.FNodeRole != "formula")
+                        perUnit = ComputePerUnit(root.FID, amount, p);
+
                     item.PeriodValues.Add(new PeriodValue
                     {
                         PeriodLabel = period,
@@ -484,9 +513,10 @@ public class AmoebaPLService
                 for (int p = 0; p < periods.Count; p++)
                 {
                     var period = periods[p];
+                    var periodKey = periodKeys[p];   // [批次5-S3] manual 查询按期间键
                     decimal amount = 0m;
                     decimal? perUnit = null;
-                    if (child.FIsManualEntry && manualLookup.TryGetValue((period, (long?)child.FID), out var mdInd))
+                    if (child.FIsManualEntry && manualLookup.TryGetValue((periodKey, (long?)child.FID), out var mdInd))
                     {
                         amount = mdInd.FAmount;
                         if (child.FPerUnitMode == "manual") perUnit = mdInd.FPerUnitValue;
@@ -496,8 +526,8 @@ public class AmoebaPLService
                         if (perPeriodAmounts[p].TryGetValue(child.FID, out var amt))
                             amount = amt;
                     }
-                    if (perUnit == null && child.FPerUnitMode == "auto" && currentTickets > 0 && p == 0)
-                        perUnit = amount / currentTickets;
+                    if (perUnit == null && child.FPerUnitMode == "auto" && child.FNodeRole != "formula")
+                        perUnit = ComputePerUnit(sectionRoot.FID, amount, p);   // [批次5-S5] 指标分区按其方向(名称)取分母
                     indItem.PeriodValues.Add(new PeriodValue { PeriodLabel = period, Amount = amount, PerUnitValue = perUnit });
                 }
                 indSection.Items.Add(indItem);
@@ -573,7 +603,7 @@ public class AmoebaPLService
             Summary = new MultiPeriodSummary
             {
                 MarginTotals = marginTotals,
-                CurrentPeriodTickets = currentTickets,
+                CurrentPeriodTickets = currentPeriodTickets,
             },
         };
     }
@@ -594,42 +624,194 @@ public class AmoebaPLService
         return false;
     }
 
-    /// <summary>校验 YYYYMM 期间格式</summary>
-    private static bool IsValidPeriod(string? period)
+    // ===== [批次5-S3] 周期粒度泛化（day/week/month/quarter/year）。设计 spec §5.3。 =====
+
+    /// <summary>归一化粒度：null/空→month；统一小写；非法值抛 ArgumentException。</summary>
+    internal static string NormalizeGranularity(string? granularity)
     {
-        return !string.IsNullOrEmpty(period)
-            && period.Length == 6
-            && int.TryParse(period.Substring(0, 4), out var year) && year is >= 1900 and <= 9999
-            && int.TryParse(period.Substring(4, 2), out var month) && month is >= 1 and <= 12;
+        var g = string.IsNullOrWhiteSpace(granularity) ? "month" : granularity.Trim().ToLowerInvariant();
+        return g switch
+        {
+            "day" or "week" or "month" or "quarter" or "year" => g,
+            _ => throw new ArgumentException($"不支持的周期粒度：{granularity}"),
+        };
     }
 
-    /// <summary>YYYYMM 字符串 -> (月初, 月末)</summary>
-    private static (DateTime Start, DateTime End) PeriodToDateRange(string period)
+    /// <summary>台账粒度(月/季/年走凭证+折旧实时聚合) vs 估算粒度(日/周走估算)。设计 §5.1 裁决C1。</summary>
+    internal static bool IsLedgerGranularity(string? granularity) =>
+        NormalizeGranularity(granularity) is "month" or "quarter" or "year";
+
+    /// <summary>期间是否已结(完全过去)：末日 &lt; asOf 当日。已结台账期用凭证、未结(当月/未来)叠加估值。</summary>
+    internal static bool IsPeriodClosed(string period, string granularity, DateTime asOf)
+        => PeriodToDateRange(period, granularity).End < asOf.Date;
+
+    /// <summary>
+    /// 按粒度选数据源（设计 §5.1 裁决C1 + 当月例外）：
+    /// billing 两类粒度共享(按日期可裁)；台账粒度(月/季/年)恒用 voucher+depreciation(本期发生额/折旧)，
+    /// 仅当期间**未结**(periodClosed=false，当月/未来：账期未结、凭证不全)才叠加 estimate 作临时填充，
+    /// 已结过往期间不取 estimate(改用凭证实时聚合)；估算粒度(日/周)恒用 estimate、无 voucher/depreciation。
+    /// </summary>
+    internal static (bool Billing, bool Voucher, bool Depreciation, bool Estimate) SelectSources(string? granularity, bool periodClosed)
     {
-        if (!IsValidPeriod(period))
-            throw new ArgumentException($"期间格式应为 YYYYMM，当前值：{period}");
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        var start = new DateTime(year, month, 1);
-        var end = start.AddMonths(1).AddDays(-1);
-        return (start, end);
+        bool ledger = IsLedgerGranularity(granularity);
+        return (Billing: true, Voucher: ledger, Depreciation: ledger, Estimate: ledger ? !periodClosed : true);
     }
 
-    /// <summary>上月：202603 -> 202602；202601 -> 202512</summary>
-    private static string CalcPreviousMonth(string period)
+    /// <summary>期间所属月（起始日所在月，YYYYMM）。日/周公共费按"当月实际"摊取此月为基线。设计 §5.5/决策3。</summary>
+    internal static string PeriodContainingMonth(string period, string granularity = "month")
+        => PeriodToDateRange(period, granularity).Start.ToString("yyyyMM");
+
+    /// <summary>期间键 = 粒度前缀 + 期间（设计 §5.3）：D:/W:/M:/Q:/Y:。存量(全月)迁移回填 'M:'+期间。</summary>
+    internal static string BuildPeriodKey(string period, string granularity = "month")
     {
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        var dt = new DateTime(year, month, 1).AddMonths(-1);
-        return dt.ToString("yyyyMM");
+        var prefix = NormalizeGranularity(granularity) switch
+        {
+            "day" => "D",
+            "week" => "W",
+            "quarter" => "Q",
+            "year" => "Y",
+            _ => "M",
+        };
+        return $"{prefix}:{period}";
     }
 
-    /// <summary>去年同月：202603 -> 202503</summary>
-    private static string CalcYoyPeriod(string period)
+    /// <summary>解析 ISO 周字符串 "YYYY-Www"（如 2026-W11）→ 该周周一；非法返回 false。</summary>
+    private static bool TryParseIsoWeek(string? period, out DateTime monday)
     {
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        return $"{year - 1:D4}{month:D2}";
+        monday = default;
+        if (string.IsNullOrEmpty(period) || period.Length != 8 || period[4] != '-' || period[5] != 'W')
+            return false;
+        if (!int.TryParse(period.AsSpan(0, 4), out var year) || year is < 1900 or > 9999) return false;
+        if (!int.TryParse(period.AsSpan(6, 2), out var week) || week < 1) return false;
+        if (week > ISOWeek.GetWeeksInYear(year)) return false;
+        monday = ISOWeek.ToDateTime(year, week, DayOfWeek.Monday);
+        return true;
+    }
+
+    /// <summary>DateTime → ISO 周字符串 "YYYY-Www"（ISO 年可能与日历年在年初/末跨界）。</summary>
+    private static string FormatIsoWeek(DateTime date) =>
+        $"{ISOWeek.GetYear(date):D4}-W{ISOWeek.GetWeekOfYear(date):D2}";
+
+    /// <summary>校验期间字符串与粒度匹配（设计 §5.3 格式表）。granularity 默认 month 保持旧调用兼容。</summary>
+    internal static bool IsValidPeriod(string? period, string granularity = "month")
+    {
+        if (string.IsNullOrWhiteSpace(period)) return false;
+        switch (NormalizeGranularity(granularity))
+        {
+            case "day":
+                return period.Length == 8
+                    && DateTime.TryParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+            case "week":
+                return TryParseIsoWeek(period, out _);
+            case "quarter":
+                return period.Length == 6 && period[4] == 'Q'
+                    && int.TryParse(period.AsSpan(0, 4), out var qy) && qy is >= 1900 and <= 9999
+                    && int.TryParse(period.AsSpan(5, 1), out var qn) && qn is >= 1 and <= 4;
+            case "year":
+                return period.Length == 4
+                    && int.TryParse(period, out var yy) && yy is >= 1900 and <= 9999;
+            default: // month
+                return period.Length == 6
+                    && int.TryParse(period.AsSpan(0, 4), out var my) && my is >= 1900 and <= 9999
+                    && int.TryParse(period.AsSpan(4, 2), out var mm) && mm is >= 1 and <= 12;
+        }
+    }
+
+    /// <summary>
+    /// 期间字符串 → (起始, 闭区间末日)。末日取「本期最后一天」，聚合内部 &lt; end.AddDays(1)
+    /// 自动转半开 [start, nextStart)（与 AggregateVoucherData 的半开过滤一致）。设计 §5.3。
+    /// </summary>
+    internal static (DateTime Start, DateTime End) PeriodToDateRange(string period, string granularity = "month")
+    {
+        var g = NormalizeGranularity(granularity);
+        if (!IsValidPeriod(period, g))
+            throw new ArgumentException($"期间格式与粒度({g})不符，当前值：{period}");
+        switch (g)
+        {
+            case "day":
+            {
+                var d = DateTime.ParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture);
+                return (d, d);
+            }
+            case "week":
+            {
+                TryParseIsoWeek(period, out var monday);
+                return (monday, monday.AddDays(6));
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                var start = new DateTime(qy, (qn - 1) * 3 + 1, 1);
+                return (start, start.AddMonths(3).AddDays(-1));
+            }
+            case "year":
+            {
+                var y = int.Parse(period);
+                return (new DateTime(y, 1, 1), new DateTime(y, 12, 31));
+            }
+            default: // month
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                var start = new DateTime(year, month, 1);
+                return (start, start.AddMonths(1).AddDays(-1));
+            }
+        }
+    }
+
+    /// <summary>上一期（按粒度）：月→上月, 日→昨日, 周→上周, 季→上季, 年→去年。</summary>
+    internal static string CalcPreviousPeriod(string period, string granularity = "month")
+    {
+        switch (NormalizeGranularity(granularity))
+        {
+            case "day":
+                return DateTime.ParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture).AddDays(-1).ToString("yyyyMMdd");
+            case "week":
+            {
+                TryParseIsoWeek(period, out var monday);
+                return FormatIsoWeek(monday.AddDays(-7));
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                qn--; if (qn == 0) { qn = 4; qy--; }
+                return $"{qy:D4}Q{qn}";
+            }
+            case "year":
+                return $"{int.Parse(period) - 1:D4}";
+            default: // month
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                return new DateTime(year, month, 1).AddMonths(-1).ToString("yyyyMM");
+            }
+        }
+    }
+
+    /// <summary>去年同期：月/季/年→年-1；日/周→null（无同比意义，设计 §5.3）。</summary>
+    internal static string? CalcYoyPeriod(string period, string granularity = "month")
+    {
+        switch (NormalizeGranularity(granularity))
+        {
+            case "month":
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                return $"{year - 1:D4}{month:D2}";
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                return $"{qy - 1:D4}Q{qn}";
+            }
+            case "year":
+                return $"{int.Parse(period) - 1:D4}";
+            default: // day, week
+                return null;
+        }
     }
 
     /// <summary>
@@ -784,7 +966,7 @@ public class AmoebaPLService
     private decimal SumChildrenForGroup(FinAmoebaPLItem groupItem, List<FinAmoebaPLItem> all,
         Dictionary<long, decimal> matchedAmounts,
         Dictionary<(string, long?), FinAmoebaManualData> manualLookup,
-        string period)
+        string periodKey)   // [批次5-S3] manualLookup 按期间键
     {
         var directChildren = all.Where(i => i.FParentId == groupItem.FID).ToList();
         if (directChildren.Count == 0) return 0m;
@@ -799,11 +981,11 @@ public class AmoebaPLService
             if (child.FNodeRole == "group")
             {
                 // 递归求子 group 的 SUM_CHILDREN
-                sum += SumChildrenForGroup(child, all, matchedAmounts, manualLookup, period);
+                sum += SumChildrenForGroup(child, all, matchedAmounts, manualLookup, periodKey);
             }
             else if (child.FIsManualEntry)
             {
-                if (manualLookup.TryGetValue((period, (long?)child.FID), out var md))
+                if (manualLookup.TryGetValue((periodKey, (long?)child.FID), out var md))
                     sum += md.FAmount;
             }
             else
@@ -1209,6 +1391,117 @@ public class AmoebaPLService
         return points.Where(p => AuxiliaryMatches(p, filters)).ToList();
     }
 
+    // ===== [批次5-S2] 公共费按件量分摊「接入」辅助（纯函数，引擎在 CommonCostAllocationEngine）=====
+
+    /// <summary>公共费叶判定：F分摊方式=="volume"（大小写不敏感）。设计 spec §4.1。</summary>
+    internal static bool IsCommonCostLeaf(FinAmoebaPLItem leaf)
+        => string.Equals(leaf.F分摊方式, "volume", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 解析发件/派件票量 indicator 的 FID（FNodeRole=="indicator" 且名称含"发件票量"/"派件票量"）。
+    /// 供公共费分摊 ComputeVolumeBasis(§4.2) 与单票方向化 ComputePerUnit(§5.4, 批次5-S5) 共用。
+    /// </summary>
+    internal static (long? SendId, long? DeliverId) ResolveVolumeIndicatorIds(List<FinAmoebaPLItem> items)
+    {
+        long? sendId = null, deliverId = null;
+        foreach (var i in items)
+        {
+            if (i.FNodeRole != "indicator") continue;
+            var name = i.FItemName ?? "";
+            if (sendId == null && name.Contains("发件票量")) sendId = i.FID;
+            if (deliverId == null && name.Contains("派件票量")) deliverId = i.FID;
+        }
+        return (sendId, deliverId);
+    }
+
+    /// <summary>
+    /// 计算件量基数（设计 spec §4.2 取值优先级）：
+    /// send = 出港计费 SUM(WaybillCount)（billing 源天然出港）→ 回退发件票量 indicator 匹配值；
+    /// deliver = 派件票量 indicator 匹配值（进港无 billing 源，由 estimate/手工 经独占匹配落入 matched）。
+    /// </summary>
+    internal static VolumeBasis ComputeVolumeBasis(
+        List<DataPoint> points, IReadOnlyDictionary<long, decimal> matched, long? sendId, long? deliverId)
+    {
+        long billingSend = points.Where(p => p.Source == "billing").Sum(p => (long)p.WaybillCount);
+        long send = billingSend > 0
+            ? billingSend
+            : (sendId is long sid && matched.TryGetValue(sid, out var sv) ? (long)sv : 0L);
+        long deliver = deliverId is long did && matched.TryGetValue(did, out var dv) ? (long)dv : 0L;
+        return new VolumeBasis { SendCount = send, DeliverCount = deliver };
+    }
+
+    // ===== [批次5-S5] 单票&均方向化（设计 spec §5.4）=====
+
+    /// <summary>Tab 名→方向：含"出港"→OUT、含"进港"→IN、其余(公共/综合/指标)→CMB。</summary>
+    internal static string TabToDirection(string? tabName)
+    {
+        var n = tabName ?? "";
+        if (n.Contains("出港")) return "OUT";
+        if (n.Contains("进港")) return "IN";
+        return "CMB";
+    }
+
+    /// <summary>
+    /// 单票均值：按方向选件量分母——出港÷发件票量、进港÷派件票量、公共÷合计(发件+派件)；
+    /// 分母≤0 返 null(不显示单票)。设计 §5.4。
+    /// </summary>
+    internal static decimal? PerUnitValue(string? direction, decimal amount, decimal sendCount, decimal deliverCount)
+    {
+        decimal denom = direction switch
+        {
+            "OUT" => sendCount,
+            "IN" => deliverCount,
+            _ => sendCount + deliverCount,
+        };
+        return denom > 0 ? amount / denom : (decimal?)null;
+    }
+
+    /// <summary>
+    /// 子报表公共费按件量分摊注入（设计 spec §4.4/§4.5）：以 scope 过滤前的全口径基线(fullPoints)
+    /// 算各公共费叶全额 + 全口径件量，按 scope件量/全口径件量 比例分摊，覆盖 scopedMatched[叶FID]。
+    /// 仅在子报表(IsSubReport)时调用；全口径(scope=null)公共费叶走正常科目匹配，不进此方法。
+    /// fullPoints 为同期 scope 过滤前的全集——多期路径聚合本身无 SQL 级 scope(过滤在内存)，故零额外 DB 聚合即得基线。
+    /// 子报表口径下公共费叶值=分摊额或缺失，绝不保留直接归段残值(send 类公共费会随 scope 存活，须显式移除)。
+    /// </summary>
+    internal void ApplyCommonCostAllocation(
+        Dictionary<long, decimal> scopedMatched,
+        List<DataPoint> scopedPoints,
+        List<DataPoint> fullPoints,
+        List<FinAmoebaPLItem> plItems,
+        List<FinAmoebaPLItem> indicatorItems,
+        List<FinAmoebaPLItem> allItems,
+        List<string> warnings)
+    {
+        var commonLeaves = plItems.Where(IsCommonCostLeaf).ToList();
+        if (commonLeaves.Count == 0) return;
+
+        // 全口径基线匹配：取各公共费叶全额 + 票量 indicator 匹配值(含指标分区，镜像 scoped 路径的并入)
+        var (fullMatched, _) = MatchDataPointsToPLItems(fullPoints, plItems);
+        if (indicatorItems.Count > 0)
+        {
+            var (fullInd, _) = MatchDataPointsToPLItems(fullPoints, indicatorItems);
+            foreach (var kv in fullInd) fullMatched[kv.Key] = kv.Value;
+        }
+
+        var fullTotals = new Dictionary<long, decimal>();
+        foreach (var leaf in commonLeaves)
+            if (fullMatched.TryGetValue(leaf.FID, out var t)) fullTotals[leaf.FID] = t;
+
+        var (sendId, deliverId) = ResolveVolumeIndicatorIds(allItems);
+        var scopeVol = ComputeVolumeBasis(scopedPoints, scopedMatched, sendId, deliverId);
+        var fullVol = ComputeVolumeBasis(fullPoints, fullMatched, sendId, deliverId);
+
+        var alloc = _allocEngine.Allocate(commonLeaves, fullTotals, scopeVol, fullVol, out var w);
+        warnings.AddRange(w);
+
+        // 注入：命中分摊→写分摊额；未命中(全额为0/缺失)→移除直接归段残值，保证公共费叶不出非分摊值
+        foreach (var leaf in commonLeaves)
+        {
+            if (alloc.TryGetValue(leaf.FID, out var a)) scopedMatched[leaf.FID] = a;
+            else scopedMatched.Remove(leaf.FID);
+        }
+    }
+
     /// <summary>损益项级辅助核算过滤条件</summary>
     private class AuxFilter
     {
@@ -1244,11 +1537,12 @@ public class AmoebaPLService
         }
     }
 
-    /// <summary>递归求 root 下所有叶子项的 Amount 之和（叶子=无子节点），排除 formula 和 indicator</summary>
+    /// <summary>递归求 root 下所有叶子项的 Amount 之和（叶子=无子节点），排除 formula 和 indicator。
+    /// manualLookup 按期间键 [批次5-S3]（与 SumChildrenForGroup 同口径）。</summary>
     private decimal SumLeafDescendants(FinAmoebaPLItem root, List<FinAmoebaPLItem> all,
         Dictionary<long, decimal> matchedAmounts,
         Dictionary<(string, long?), FinAmoebaManualData> manualLookup,
-        string period)
+        string periodKey)
     {
         var directChildren = all.Where(i => i.FParentId == root.FID).ToList();
         if (directChildren.Count == 0)
@@ -1257,7 +1551,7 @@ public class AmoebaPLService
             if (root.FNodeRole == "formula" || root.FNodeRole == "indicator") return 0m;
             if (root.FIsManualEntry)
             {
-                return manualLookup.TryGetValue((period, (long?)root.FID), out var md) ? md.FAmount : 0m;
+                return manualLookup.TryGetValue((periodKey, (long?)root.FID), out var md) ? md.FAmount : 0m;
             }
             return matchedAmounts.TryGetValue(root.FID, out var amt) ? amt : 0m;
         }
@@ -1266,7 +1560,7 @@ public class AmoebaPLService
         {
             // 排除 formula 和 indicator 子项
             if (c.FNodeRole == "formula" || c.FNodeRole == "indicator") continue;
-            sum += SumLeafDescendants(c, all, matchedAmounts, manualLookup, period);
+            sum += SumLeafDescendants(c, all, matchedAmounts, manualLookup, periodKey);
         }
         return sum;
     }
@@ -1312,11 +1606,6 @@ public class AmoebaPLService
             .Where(m => m.FOrgId == orgId)
             .ToListAsync();
 
-        // 4. 加载分摊配置
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
         // 5. 加载经营单元
         var units = await _dbContext.Set<FinAuxiliaryItem>()
             .Where(u => u.FOrgId == orgId && u.FAuxType == "business_unit" && u.FEnableStatus == 1)
@@ -1345,8 +1634,8 @@ public class AmoebaPLService
             point.MappedUnitId = MapToUnit(point, mappingRules);
         }
 
-        // 9. 应用分摊
-        var allocatedPoints = ApplyAllocation(allDataPoints, allocations);
+        // [批次5-S6] 旧固定比例分摊(FinAmoebaAllocation)已废弃删除；数据点直接进入视图(件量分摊在多期路径)
+        var allocatedPoints = allDataPoints;
 
         // 10. 按方向筛选（按归并桶比较，兼容模板 Tab 自定义命名）
         if (!string.IsNullOrEmpty(request.Direction))
@@ -1833,10 +2122,12 @@ public class AmoebaPLService
                     COUNT(*) AS WaybillCount,
                     ISNULL(SUM([F计费重量]), 0) AS TotalWeight
                 FROM [EXP出港运单_计费结果]
-                WHERE [F运单日期] >= {0} AND [F运单日期] <= {1}
+                WHERE [F运单日期] >= {0} AND [F运单日期] < {1}
                     AND [F组织ID] = {2}";
 
-        var parameters = new List<object> { startDate, endDate, orgId };
+        // 半开区间 [起, 末日+1)：F运单日期可能带时分(import 保留)，闭区间 <=末日(0点) 会把末日带时分的运单漏掉；
+        // 与 AggregateVoucherData 的 < end.AddDays(1) 口径一致。[批次5-S3] day 粒度下尤为关键(否则整日全丢)。
+        var parameters = new List<object> { startDate, endDate.AddDays(1), orgId };
 
         if (targetSiteCodes != null)
         {
@@ -2073,20 +2364,46 @@ public class AmoebaPLService
     }
 
     /// <summary>
+    /// [批次5-S3] 按粒度构建一期的数据点集合（设计 §5.1 裁决C1 + 当月例外）。
+    /// billing 两类粒度共享(按日期可裁)；台账(月/季/年)叠加 voucher+depreciation，仅当期间未结(当月/未来)
+    /// 再叠加 estimate 临时填充、已结过往期改用凭证；估算(日/周)叠加 estimate(opreport，按期间键取)、
+    /// 不取 voucher(按月过账)/depreciation(按月计提)。两源产出同形 DataPoint，下游 Match/scope/分摊复用。
+    /// </summary>
+    private async Task<List<DataPoint>> BuildPeriodDataPoints(
+        string period, string granularity, long orgId, long accountSetId, long templateId,
+        List<FinAmoebaPLItem> plItems, List<FinAmoebaMappingRule> mappingRules)
+    {
+        var (startDate, endDate) = PeriodToDateRange(period, granularity);
+        // 当月例外：已结台账期(末日<今天)用凭证实时聚合，未结(当月/未来)叠加估值临时填充
+        var src = SelectSources(granularity, periodClosed: endDate < DateTime.Today);
+        var all = new List<DataPoint>();
+        if (src.Billing)
+            all.AddRange(await AggregateBillingRevenue(startDate, endDate, orgId, plItems, mappingRules, null, null));
+        if (src.Voucher)
+            all.AddRange(await AggregateVoucherData(startDate, endDate, orgId, accountSetId));
+        if (src.Depreciation)
+            all.AddRange(await AggregateDepreciation(startDate, endDate, orgId, accountSetId));
+        if (src.Estimate)
+            all.AddRange(await AggregateEstimateData(templateId, orgId, BuildPeriodKey(period, granularity)));
+        return all;
+    }
+
+    /// <summary>
     /// 暂估数据聚合：将 FinAmoebaManualData 中 FDataType=estimate 的记录转为 DataPoint。
     /// 暂估数据不绑定 PLItem，通过科目编码 + 辅助核算与凭证数据共享独占匹配管道。
+    /// [批次5-S3] 按期间键(FPeriodKey)过滤——支持多粒度估值；当月月报取 'M:'+期间 的估值，已结月报不取(C1)。
     /// </summary>
     private async Task<List<DataPoint>> AggregateEstimateData(
-        long templateId, long orgId, string period)
+        long templateId, long orgId, string periodKey)
     {
-        if (templateId <= 0 || orgId <= 0 || string.IsNullOrEmpty(period))
+        if (templateId <= 0 || orgId <= 0 || string.IsNullOrEmpty(periodKey))
             return new List<DataPoint>();
 
         var estimates = await _dbContext.Set<FinAmoebaManualData>()
             .Where(m => m.FTemplateId == templateId
                      && m.FOrgId == orgId
                      && m.FDataType == "estimate"
-                     && m.FPeriod == period)
+                     && m.FPeriodKey == periodKey)
             .ToListAsync();
 
         var dataPoints = new List<DataPoint>();
@@ -2184,6 +2501,7 @@ public class AmoebaPLService
         {
             existing.FAmount = dto.Amount;
             existing.FPerUnitValue = dto.PerUnitValue;
+            existing.FPeriodKey = BuildPeriodKey(dto.Period);   // [批次5-S3] 自愈：补/纠正期间键(幂等)
             existing.FUpdatedTime = DateTime.Now;
         }
         else
@@ -2194,6 +2512,7 @@ public class AmoebaPLService
                 FPLItemId = dto.PLItemId,
                 FOrgId = dto.OrgId,
                 FPeriod = dto.Period,
+                FPeriodKey = BuildPeriodKey(dto.Period),   // [批次5-S3] 录入 UI 当前为月度
                 FAmount = dto.Amount,
                 FPerUnitValue = dto.PerUnitValue,
                 FDataType = "estimate",
@@ -2386,55 +2705,6 @@ public class AmoebaPLService
             .ToList();
 
         return matchedRules.FirstOrDefault()?.FUnitId;
-    }
-
-    #endregion
-
-    #region 分摊计算
-
-    private List<DataPoint> ApplyAllocation(List<DataPoint> dataPoints, List<FinAmoebaAllocation> allocations)
-    {
-        if (!allocations.Any())
-            return dataPoints;
-
-        var result = new List<DataPoint>();
-
-        foreach (var point in dataPoints)
-        {
-            if (point.MappedUnitId == null || string.IsNullOrEmpty(point.BrandCode))
-            {
-                result.Add(point);
-                continue;
-            }
-
-            var allocation = allocations.FirstOrDefault(a =>
-                a.FUnitId == point.MappedUnitId.Value &&
-                a.FBrandCode == point.BrandCode);
-
-            if (allocation == null)
-            {
-                result.Add(point);
-                continue;
-            }
-
-            // 固定比例分摊（按归并桶判断方向，兼容模板 Tab 自定义命名）
-            if (allocation.FAllocationType == 1)
-            {
-                var bucket = MapDirectionToBucket(point.Direction);
-                if (bucket == "出港" && allocation.FOutboundRatio.HasValue)
-                {
-                    point.Amount *= allocation.FOutboundRatio.Value;
-                }
-                else if (bucket == "进港" && allocation.FInboundRatio.HasValue)
-                {
-                    point.Amount *= allocation.FInboundRatio.Value;
-                }
-            }
-
-            result.Add(point);
-        }
-
-        return result;
     }
 
     #endregion
@@ -3480,76 +3750,6 @@ public class AmoebaPLService
 
     #endregion
 
-    #region 分摊比例 CRUD
-
-    public async Task<List<AmoebaAllocationDto>> GetAllocationsAsync(long orgId)
-    {
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
-        return allocations.Select(a => new AmoebaAllocationDto
-        {
-            Id = a.FID,
-            UnitId = a.FUnitId,
-            BrandCode = a.FBrandCode,
-            AllocationType = a.FAllocationType,
-            OutboundRatio = a.FOutboundRatio,
-            InboundRatio = a.FInboundRatio
-        }).ToList();
-    }
-
-    public async Task<AmoebaAllocationDto> SaveAllocationAsync(SaveAllocationRequest request, long orgId)
-    {
-        var existing = await _dbContext.Set<FinAmoebaAllocation>()
-            .FirstOrDefaultAsync(a => a.FUnitId == request.UnitId && a.FBrandCode == request.BrandCode && a.FOrgId == orgId);
-
-        if (existing != null)
-        {
-            existing.FAllocationType = request.AllocationType;
-            existing.FOutboundRatio = request.OutboundRatio;
-            existing.FInboundRatio = request.InboundRatio;
-        }
-        else
-        {
-            existing = new FinAmoebaAllocation
-            {
-                FUnitId = request.UnitId,
-                FBrandCode = request.BrandCode,
-                FAllocationType = request.AllocationType,
-                FOutboundRatio = request.OutboundRatio,
-                FInboundRatio = request.InboundRatio,
-                FOrgId = orgId
-            };
-            _dbContext.Set<FinAmoebaAllocation>().Add(existing);
-        }
-
-        await _dbContext.SaveChangesAsync();
-
-        return new AmoebaAllocationDto
-        {
-            Id = existing.FID,
-            UnitId = existing.FUnitId,
-            BrandCode = existing.FBrandCode,
-            AllocationType = existing.FAllocationType,
-            OutboundRatio = existing.FOutboundRatio,
-            InboundRatio = existing.FInboundRatio
-        };
-    }
-
-    public async Task<bool> DeleteAllocationAsync(long id, long orgId)
-    {
-        var entity = await _dbContext.Set<FinAmoebaAllocation>()
-            .FirstOrDefaultAsync(a => a.FID == id && a.FOrgId == orgId);
-
-        if (entity == null) return false;
-
-        _dbContext.Set<FinAmoebaAllocation>().Remove(entity);
-        await _dbContext.SaveChangesAsync();
-        return true;
-    }
-
-    #endregion
 
     #region 辅助方法
 

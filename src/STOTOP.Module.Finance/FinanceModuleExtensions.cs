@@ -81,7 +81,6 @@ public static class FinanceModuleExtensions
         modelBuilder.ApplyConfiguration(new FinAmoebaPLTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new FinAmoebaPLItemConfiguration());
         modelBuilder.ApplyConfiguration(new FinAmoebaMappingRuleConfiguration());
-        modelBuilder.ApplyConfiguration(new FinAmoebaAllocationConfiguration());
         modelBuilder.ApplyConfiguration(new FinAmoebaManualClassifyConfiguration());
         modelBuilder.ApplyConfiguration(new FinAmoebaManualDataConfiguration());
         modelBuilder.ApplyConfiguration(new FinAccountBalanceConfiguration());

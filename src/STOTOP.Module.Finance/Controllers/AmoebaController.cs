@@ -247,38 +247,6 @@ public class AmoebaController : ControllerBase
 
     #endregion
 
-    #region Allocations
-
-    [HttpGet("allocations")]
-    public async Task<ApiResult<List<AmoebaAllocationDto>>> GetAllocations()
-    {
-        var orgId = GetCurrentOrgId();
-        var result = await _amoebaPLService.GetAllocationsAsync(orgId);
-        return ApiResult<List<AmoebaAllocationDto>>.Success(result);
-    }
-
-    [HttpPost("allocations")]
-    public async Task<ApiResult<AmoebaAllocationDto>> SaveAllocation([FromBody] SaveAllocationRequest request)
-    {
-        var orgId = GetCurrentOrgId();
-        var result = await _amoebaPLService.SaveAllocationAsync(request, orgId);
-        return ApiResult<AmoebaAllocationDto>.Success(result, "保存分摊比例成功");
-    }
-
-    [HttpDelete("allocations/{id}")]
-    public async Task<ApiResult> DeleteAllocation(long id)
-    {
-        var orgId = GetCurrentOrgId();
-        var result = await _amoebaPLService.DeleteAllocationAsync(id, orgId);
-        if (!result)
-        {
-            return ApiResult.Fail("分摊配置不存在");
-        }
-        return ApiResult.Ok("删除分摊配置成功");
-    }
-
-    #endregion
-
     #region Manual Classification
 
     [HttpGet("unclassified")]

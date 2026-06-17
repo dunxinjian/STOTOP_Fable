@@ -21,7 +21,7 @@ public class FinAmoebaPLItem : BaseEntity
     public int? F小数位数 { get; set; }            // 数值显示小数位数：null=按单位自动判断(默认2位), 1~4
     public bool FIsManualEntry { get; set; }            // 是否手工填报项
 
-    // 分摊配置（阿米巴方案B 终态，替代废弃的 FinAmoebaAllocation 固定比例表）
+    // 分摊配置（阿米巴方案B 终态，替代已删的固定比例分摊表）
     public string? F分摊方式 { get; set; }              // null/"direct"=直接归段; "volume"=按件量分摊
     public string? F分摊基数 { get; set; }              // "send"|"deliver"|"total"（仅 F分摊方式="volume" 时有效）
     public DateTime FCreatedTime { get; set; }

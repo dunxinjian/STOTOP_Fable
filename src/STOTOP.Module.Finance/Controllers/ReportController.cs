@@ -401,6 +401,7 @@ public class ReportController : ControllerBase
             {
                 existing.FAmount = item.Amount;
                 existing.FPerUnitValue = item.PerUnitValue;
+                existing.FPeriodKey = AmoebaPLService.BuildPeriodKey(request.Period);   // [批次5-S3] 自愈期间键(幂等)
                 existing.FUpdatedTime = now;
             }
             else
@@ -411,6 +412,7 @@ public class ReportController : ControllerBase
                     FPLItemId = item.PLItemId,
                     FOrgId = effectiveOrgId,
                     FPeriod = request.Period,
+                    FPeriodKey = AmoebaPLService.BuildPeriodKey(request.Period),   // [批次5-S3] 手工填报当前为月度
                     FAmount = item.Amount,
                     FPerUnitValue = item.PerUnitValue,
                     FDataType = "manual",
