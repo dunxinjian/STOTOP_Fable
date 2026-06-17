@@ -25,6 +25,7 @@ public class AmoebaPLService
     private readonly IRepository<FinAccount> _accountRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IFormulaEngine _formulaEngine;
+    private readonly ICommonCostAllocationEngine _allocEngine;
 
     // 品牌来源关键词（用于排除收入类凭证去重）
     private static readonly string[] ExcludedRevenueVoucherSources = { "极兔导入", "韵达导入", "申通导入", "计费生成" };
@@ -35,7 +36,8 @@ public class AmoebaPLService
         IRepository<FinVoucher> voucherRepository,
         IRepository<FinAccount> accountRepository,
         IHttpContextAccessor httpContextAccessor,
-        IFormulaEngine formulaEngine)
+        IFormulaEngine formulaEngine,
+        ICommonCostAllocationEngine allocEngine)
     {
         _dbContext = dbContext;
         _voucherEntryRepository = voucherEntryRepository;
@@ -43,6 +45,7 @@ public class AmoebaPLService
         _accountRepository = accountRepository;
         _httpContextAccessor = httpContextAccessor;
         _formulaEngine = formulaEngine;
+        _allocEngine = allocEngine;
     }
 
     private long GetCurrentOrgId()
@@ -251,6 +254,9 @@ public class AmoebaPLService
         // 6. 顺序聚合各期间数据（避免 DbContext 并发冲突）
         // 全局品牌/网点/经营单元筛选已移除—— 所有数据点交由 公式驱动的 PLItem 独占匹配职责。
         var periodResults = new List<List<DataPoint>>();
+        // [批次5-S2] 子报表的同期全口径基线(scope 过滤前全集)，供公共费分摊取全额/全口径件量；全口径请求为 null
+        var periodFullScopePoints = new List<List<DataPoint>?>();
+        bool isSubReport = request.Scope?.IsSubReport == true;
         var periodRanges = periods.Select(PeriodToDateRange).ToList();
         for (int i = 0; i < periods.Count; i++)
         {
@@ -265,6 +271,9 @@ public class AmoebaPLService
             all.AddRange(voucher);
             all.AddRange(depreciation);
             all.AddRange(estimate);
+            // [批次5-S2] scope 过滤前留存全口径基线：聚合无 SQL 级 scope，ApplyScopeFilter 返回新列表不动 all，
+            // 故 all 即免费的全口径基线(纠正设计 §4.5 关于额外 DB 聚合的悲观假设)
+            periodFullScopePoints.Add(isSubReport ? all : null);
             // [方案B 批次4] L1 请求级 scope 预过滤(独占匹配之前)：网点/项目/方向等;Scope=null 则全口径不变
             all = ApplyScopeFilter(all, request.Scope);
             periodResults.Add(all);
@@ -306,6 +315,15 @@ public class AmoebaPLService
                 var (indMatched, _) = MatchDataPointsToPLItems(periodResults[i], indicatorItems);
                 foreach (var kv in indMatched)
                     matched[kv.Key] = kv.Value;
+            }
+
+            // [批次5-S2] 子报表公共费按件量分摊注入：覆盖公共费叶为「全额×scope件量/全口径件量」。
+            // 置于指标并入之后——ComputeVolumeBasis 需读 matched 内发件/派件票量 indicator 匹配值。
+            if (isSubReport && periodFullScopePoints[i] is { } fullPts)
+            {
+                var allocWarnings = new List<string>();
+                ApplyCommonCostAllocation(matched, periodResults[i], fullPts, plItems, indicatorItems, allItems, allocWarnings);
+                if (i == 0) unmatchedWarnings.AddRange(allocWarnings);
             }
         }
 
@@ -1207,6 +1225,91 @@ public class AmoebaPLService
         if (scope.Brands is { Count: > 0 }) filters.Add(new AuxFilter { AuxType = "express_brand", Codes = scope.Brands });
         if (filters.Count == 0) return points;
         return points.Where(p => AuxiliaryMatches(p, filters)).ToList();
+    }
+
+    // ===== [批次5-S2] 公共费按件量分摊「接入」辅助（纯函数，引擎在 CommonCostAllocationEngine）=====
+
+    /// <summary>公共费叶判定：F分摊方式=="volume"（大小写不敏感）。设计 spec §4.1。</summary>
+    internal static bool IsCommonCostLeaf(FinAmoebaPLItem leaf)
+        => string.Equals(leaf.F分摊方式, "volume", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 解析发件/派件票量 indicator 的 FID（FNodeRole=="indicator" 且名称含"发件票量"/"派件票量"）。
+    /// 与单票分母口径(currentTickets, PL.cs:322-335) 同源，供 ComputeVolumeBasis 取件量。设计 spec §4.2。
+    /// </summary>
+    internal static (long? SendId, long? DeliverId) ResolveVolumeIndicatorIds(List<FinAmoebaPLItem> items)
+    {
+        long? sendId = null, deliverId = null;
+        foreach (var i in items)
+        {
+            if (i.FNodeRole != "indicator") continue;
+            var name = i.FItemName ?? "";
+            if (sendId == null && name.Contains("发件票量")) sendId = i.FID;
+            if (deliverId == null && name.Contains("派件票量")) deliverId = i.FID;
+        }
+        return (sendId, deliverId);
+    }
+
+    /// <summary>
+    /// 计算件量基数（设计 spec §4.2 取值优先级）：
+    /// send = 出港计费 SUM(WaybillCount)（billing 源天然出港）→ 回退发件票量 indicator 匹配值；
+    /// deliver = 派件票量 indicator 匹配值（进港无 billing 源，由 estimate/手工 经独占匹配落入 matched）。
+    /// </summary>
+    internal static VolumeBasis ComputeVolumeBasis(
+        List<DataPoint> points, IReadOnlyDictionary<long, decimal> matched, long? sendId, long? deliverId)
+    {
+        long billingSend = points.Where(p => p.Source == "billing").Sum(p => (long)p.WaybillCount);
+        long send = billingSend > 0
+            ? billingSend
+            : (sendId is long sid && matched.TryGetValue(sid, out var sv) ? (long)sv : 0L);
+        long deliver = deliverId is long did && matched.TryGetValue(did, out var dv) ? (long)dv : 0L;
+        return new VolumeBasis { SendCount = send, DeliverCount = deliver };
+    }
+
+    /// <summary>
+    /// 子报表公共费按件量分摊注入（设计 spec §4.4/§4.5）：以 scope 过滤前的全口径基线(fullPoints)
+    /// 算各公共费叶全额 + 全口径件量，按 scope件量/全口径件量 比例分摊，覆盖 scopedMatched[叶FID]。
+    /// 仅在子报表(IsSubReport)时调用；全口径(scope=null)公共费叶走正常科目匹配，不进此方法。
+    /// fullPoints 为同期 scope 过滤前的全集——多期路径聚合本身无 SQL 级 scope(过滤在内存)，故零额外 DB 聚合即得基线。
+    /// 子报表口径下公共费叶值=分摊额或缺失，绝不保留直接归段残值(send 类公共费会随 scope 存活，须显式移除)。
+    /// </summary>
+    internal void ApplyCommonCostAllocation(
+        Dictionary<long, decimal> scopedMatched,
+        List<DataPoint> scopedPoints,
+        List<DataPoint> fullPoints,
+        List<FinAmoebaPLItem> plItems,
+        List<FinAmoebaPLItem> indicatorItems,
+        List<FinAmoebaPLItem> allItems,
+        List<string> warnings)
+    {
+        var commonLeaves = plItems.Where(IsCommonCostLeaf).ToList();
+        if (commonLeaves.Count == 0) return;
+
+        // 全口径基线匹配：取各公共费叶全额 + 票量 indicator 匹配值(含指标分区，镜像 scoped 路径的并入)
+        var (fullMatched, _) = MatchDataPointsToPLItems(fullPoints, plItems);
+        if (indicatorItems.Count > 0)
+        {
+            var (fullInd, _) = MatchDataPointsToPLItems(fullPoints, indicatorItems);
+            foreach (var kv in fullInd) fullMatched[kv.Key] = kv.Value;
+        }
+
+        var fullTotals = new Dictionary<long, decimal>();
+        foreach (var leaf in commonLeaves)
+            if (fullMatched.TryGetValue(leaf.FID, out var t)) fullTotals[leaf.FID] = t;
+
+        var (sendId, deliverId) = ResolveVolumeIndicatorIds(allItems);
+        var scopeVol = ComputeVolumeBasis(scopedPoints, scopedMatched, sendId, deliverId);
+        var fullVol = ComputeVolumeBasis(fullPoints, fullMatched, sendId, deliverId);
+
+        var alloc = _allocEngine.Allocate(commonLeaves, fullTotals, scopeVol, fullVol, out var w);
+        warnings.AddRange(w);
+
+        // 注入：命中分摊→写分摊额；未命中(全额为0/缺失)→移除直接归段残值，保证公共费叶不出非分摊值
+        foreach (var leaf in commonLeaves)
+        {
+            if (alloc.TryGetValue(leaf.FID, out var a)) scopedMatched[leaf.FID] = a;
+            else scopedMatched.Remove(leaf.FID);
+        }
     }
 
     /// <summary>损益项级辅助核算过滤条件</summary>

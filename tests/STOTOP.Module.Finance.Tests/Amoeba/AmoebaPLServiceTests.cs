@@ -337,6 +337,69 @@ public class AmoebaPLServiceTests
         Assert.Equal(reportPoints.Sum(d => d.Amount), drill.TotalAmount);
     }
 
+    [Fact]
+    public async Task ApplyCommonCostAllocation_allocates_common_cost_by_send_volume_share()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(ApplyCommonCostAllocation_allocates_common_cost_by_send_volume_share), orgId: 192);
+        var service = CreateService(db, currentOrgId: 192);
+
+        // 公共费叶：房租(科目560104, 按发件量分摊)
+        var rent = CreatePLItem(id: 601, name: "房租", sort: 1, relatedAccountsJson: """[{"code":"560104"}]""");
+        rent.F分摊方式 = "volume";
+        rent.F分摊基数 = "send";
+        var plItems = new List<FinAmoebaPLItem> { rent };
+
+        // 全口径基线：OUT-A 发件300 + OUT-B 发件200 = 500；房租公司全额 1000(CMB 凭证，无网点)
+        var fullPoints = new List<DataPoint>
+        {
+            new() { Source = "billing", SiteCode = "OUT-A", WaybillCount = 300, Amount = 3000m, IsPriced = true },
+            new() { Source = "billing", SiteCode = "OUT-B", WaybillCount = 200, Amount = 2000m, IsPriced = true },
+            new() { Source = "voucher", AccountCode = "560104", Amount = 1000m, Category = "expense", AuxValues = new() { ["business_direction"] = "CMB" } },
+        };
+        // 子报表 scope=OUT-A：房租 CMB 凭证被剔除，billing 仅留 OUT-A(发件300)
+        var scopedPoints = AmoebaPLService.ApplyScopeFilter(fullPoints, new AmoebaReportScope { Outlets = new() { "OUT-A" } });
+        var (scopedMatched, _) = service.MatchDataPointsToPLItems(scopedPoints, plItems);
+        var warnings = new List<string>();
+
+        service.ApplyCommonCostAllocation(scopedMatched, scopedPoints, fullPoints, plItems,
+            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings);
+
+        Assert.Equal(600m, scopedMatched[601]);   // 1000 × 300/500
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public async Task ApplyCommonCostAllocation_removes_direct_residual_when_full_total_absent()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(ApplyCommonCostAllocation_removes_direct_residual_when_full_total_absent), orgId: 192);
+        var service = CreateService(db, currentOrgId: 192);
+
+        // 出港操作费(科目540104, send 分摊)——出港方向随 scope 存活，直接匹配会出残值
+        var opFee = CreatePLItem(id: 610, name: "出港操作费", sort: 1, relatedAccountsJson: """[{"code":"540104"}]""");
+        opFee.F分摊方式 = "volume";
+        opFee.F分摊基数 = "send";
+        var plItems = new List<FinAmoebaPLItem> { opFee };
+
+        var scopedPoints = new List<DataPoint>
+        {
+            new() { Source = "billing", SiteCode = "OUT-A", WaybillCount = 100, Amount = 1000m, IsPriced = true },
+            new() { Source = "voucher", AccountCode = "540104", SiteCode = "OUT-A", Amount = 50m, Category = "cost", AuxValues = new() { ["business_direction"] = "OUT" } },
+        };
+        // 全口径基线无 540104 发生额 → 公共费叶全额缺失
+        var fullPoints = new List<DataPoint>
+        {
+            new() { Source = "billing", SiteCode = "OUT-A", WaybillCount = 100, Amount = 1000m, IsPriced = true },
+        };
+        var (scopedMatched, _) = service.MatchDataPointsToPLItems(scopedPoints, plItems);
+        Assert.Equal(50m, scopedMatched[610]);   // 前置：直接匹配确有残值
+
+        service.ApplyCommonCostAllocation(scopedMatched, scopedPoints, fullPoints, plItems,
+            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings: new List<string>());
+
+        // 子报表公共费叶不得留直接归段残值：全额缺失 → 移除(既不分摊也不直接归段)
+        Assert.False(scopedMatched.ContainsKey(610));
+    }
+
     private static FinAmoebaPLItem CreatePLItem(long id, string name, int sort, string? relatedAccountsJson)
     {
         return new FinAmoebaPLItem
@@ -479,6 +542,7 @@ public class AmoebaPLServiceTests
             new Repository<FinVoucher>(db),
             new Repository<FinAccount>(db),
             httpContextAccessor,
-            new FormulaEngineImpl());
+            new FormulaEngineImpl(),
+            new CommonCostAllocationEngine());
     }
 }
