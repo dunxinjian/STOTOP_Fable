@@ -15,6 +15,8 @@
     <!-- 显式提升 NPOI 2.7.2 的漏洞传递依赖（NU1903）；src 项目由 AspNetCore 框架提供该程序集，
          测试项目无框架引用需自行提升。NPOI 升级后可移除 -->
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+    <!-- SQL Server 冒烟测试：默认 Skip，需 STOTOP_TEST_CONNECTION 才实际执行 -->
+    <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
   </ItemGroup>
 
   <ItemGroup>
