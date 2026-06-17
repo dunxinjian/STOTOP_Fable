@@ -61,6 +61,8 @@ public class ExcelInputPlugin : InputPluginBase
     private string _targetTable = string.Empty;
     private int _headerRow = 1;
     private int _dataStartRow = 0;
+    // 可选：指定要解析的 Excel sheet 名（多 sheet 源用，如物流信息指数）。为空则读首表
+    private string? _sheetName;
 
     // 批次拆分配置
     private bool _batchSplitEnabled;
@@ -712,6 +714,7 @@ public class ExcelInputPlugin : InputPluginBase
         _targetTable = GetStringProp(root, "targetTable") ?? string.Empty;
         _headerRow = root.TryGetProperty("headerRow", out var hr) && hr.TryGetInt32(out var hrv) ? hrv : 1;
         _dataStartRow = root.TryGetProperty("dataStartRow", out var dsr) && dsr.TryGetInt32(out var dsrv) ? dsrv : _headerRow + 1;
+        _sheetName = GetStringProp(root, "sheetName");
 
         if (root.TryGetProperty("columnMapping", out var cmProp))
             _columnMappings = JsonSerializer.Deserialize<List<ColumnMappingItem>>(cmProp.GetRawText(), JsonOpts) ?? new();
@@ -830,7 +833,8 @@ public class ExcelInputPlugin : InputPluginBase
                 {
                     allRows.AddRange(batchRows);
                     return Task.CompletedTask;
-                });
+                },
+                sheetName: _sheetName);
 
             _logger.LogInformation("ExcelInputPlugin 读取 {Count} 行数据, 文件={File}", allRows.Count, fileName);
             return allRows;

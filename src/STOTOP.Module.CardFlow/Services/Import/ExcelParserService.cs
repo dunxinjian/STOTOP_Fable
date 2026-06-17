@@ -25,6 +25,11 @@ public class ExcelParserService
     /// </summary>
     /// <param name="headerRow">表头行号（1-based）</param>
     /// <param name="dataStartRow">数据起始行号（1-based），默认 = headerRow + 1</param>
+    /// <param name="sheetName">
+    /// 可选：指定要解析的 Excel sheet 名（仅对 Excel 生效，CSV 忽略）。
+    /// 命中则取该 sheet；为 null/空或不存在时退回首个 sheet（行为不变）。
+    /// 用于多 sheet 源（如物流信息指数）把各 sheet 各导入一张表。
+    /// </param>
     public async Task ParseAsync(
         Stream fileStream,
         string fileName,
@@ -32,7 +37,8 @@ public class ExcelParserService
         int dataStartRow,
         int batchSize,
         Func<List<Dictionary<string, string>>, int, Task> batchCallback,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? sheetName = null)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         if (extension == ".csv")
@@ -45,7 +51,7 @@ public class ExcelParserService
             // 或反向）。按文件头魔数判别真实格式后再选引擎，避免 MiniExcel 读 OLE2 报
             // "file type could not be inferred" 或 NPOI 读错格式。
             var realExtension = await SniffExcelFormatAsync(fileStream, extension, ct);
-            await ParseExcelAsync(fileStream, realExtension, headerRow, dataStartRow, batchSize, batchCallback, ct);
+            await ParseExcelAsync(fileStream, realExtension, headerRow, dataStartRow, batchSize, batchCallback, ct, sheetName);
         }
     }
 
@@ -156,17 +162,17 @@ public class ExcelParserService
     private static async Task ParseExcelAsync(
         Stream fileStream, string extension, int headerRow, int dataStartRow, int batchSize,
         Func<List<Dictionary<string, string>>, int, Task> batchCallback,
-        CancellationToken ct)
+        CancellationToken ct, string? sheetName = null)
     {
         if (extension?.ToLowerInvariant() == ".xls")
         {
             // .xls 是二进制格式，最大 ~65536 行，不会触发 2GB MemoryStream 限制
-            await ParseExcelWithNpoiAsync(fileStream, headerRow, dataStartRow, batchSize, batchCallback, ct);
+            await ParseExcelWithNpoiAsync(fileStream, headerRow, dataStartRow, batchSize, batchCallback, ct, sheetName);
         }
         else
         {
             // .xlsx 使用 MiniExcel 流式解析，避免 NPOI 解压 ZIP 条目时 "Stream was too long" 错误
-            await ParseExcelWithMiniExcelAsync(fileStream, headerRow, dataStartRow, batchSize, batchCallback, ct);
+            await ParseExcelWithMiniExcelAsync(fileStream, headerRow, dataStartRow, batchSize, batchCallback, ct, sheetName);
         }
     }
 
@@ -176,13 +182,15 @@ public class ExcelParserService
     private static async Task ParseExcelWithNpoiAsync(
         Stream fileStream, int headerRow, int dataStartRow, int batchSize,
         Func<List<Dictionary<string, string>>, int, Task> batchCallback,
-        CancellationToken ct)
+        CancellationToken ct, string? sheetName = null)
     {
         var prepared = PrepareStream(fileStream, out var ownsStream);
         IWorkbook workbook = CreateWorkbook(prepared, ".xls");
         try
         {
-            var sheet = workbook.GetSheetAt(0);
+            // 指定 sheet 名命中则取该 sheet，否则（为空/不存在）退回首表，行为不变
+            var sheet = (!string.IsNullOrEmpty(sheetName) ? workbook.GetSheet(sheetName) : null)
+                        ?? workbook.GetSheetAt(0);
             var headerRowObj = sheet.GetRow(headerRow - 1);
             if (headerRowObj == null) return;
 
@@ -244,13 +252,24 @@ public class ExcelParserService
     private static async Task ParseExcelWithMiniExcelAsync(
         Stream fileStream, int headerRow, int dataStartRow, int batchSize,
         Func<List<Dictionary<string, string>>, int, Task> batchCallback,
-        CancellationToken ct)
+        CancellationToken ct, string? sheetName = null)
     {
         if (fileStream.CanSeek)
             fileStream.Position = 0;
 
+        // 指定 sheet 名命中则取该 sheet，否则（为空/不存在）退回首表，行为不变
+        string? targetSheet = null;
+        if (!string.IsNullOrEmpty(sheetName))
+        {
+            var names = MiniExcel.GetSheetNames(fileStream);
+            if (names.Contains(sheetName))
+                targetSheet = sheetName;
+            if (fileStream.CanSeek)
+                fileStream.Position = 0;
+        }
+
         // MiniExcel.Query 返回 IEnumerable，流式遍历不加载整个文件到内存
-        var rows = MiniExcel.Query(fileStream, useHeaderRow: false)
+        var rows = MiniExcel.Query(fileStream, useHeaderRow: false, sheetName: targetSheet)
             .Cast<IDictionary<string, object>>();
 
         List<string>? headers = null;
