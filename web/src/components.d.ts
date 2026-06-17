@@ -122,6 +122,7 @@ declare module 'vue' {
     CardRelationPicker: typeof import('./components/cardflow/CardRelationPicker.vue')['default']
     CardTimeline: typeof import('./components/cardflow/CardTimeline.vue')['default']
     ConditionBuilder: typeof import('./components/cardflow/ConditionBuilder.vue')['default']
+    DataTable: typeof import('./components/DataTable.vue')['default']
     DepartmentSelect: typeof import('./components/form-widgets/DepartmentSelect.vue')['default']
     DetailTableComponent: typeof import('./components/cardflow/runtime/components/DetailTableComponent.vue')['default']
     DownloadStepEditor: typeof import('./components/DownloadStepEditor.vue')['default']
