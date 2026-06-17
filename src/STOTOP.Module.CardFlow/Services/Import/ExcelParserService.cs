@@ -41,7 +41,11 @@ public class ExcelParserService
         }
         else
         {
-            await ParseExcelAsync(fileStream, extension, headerRow, dataStartRow, batchSize, batchCallback, ct);
+            // 这批申通网点数据普遍存在「扩展名与真实格式不符」（如 xlsx 内容被命名为 .xls，
+            // 或反向）。按文件头魔数判别真实格式后再选引擎，避免 MiniExcel 读 OLE2 报
+            // "file type could not be inferred" 或 NPOI 读错格式。
+            var realExtension = await SniffExcelFormatAsync(fileStream, extension, ct);
+            await ParseExcelAsync(fileStream, realExtension, headerRow, dataStartRow, batchSize, batchCallback, ct);
         }
     }
 
@@ -123,6 +127,30 @@ public class ExcelParserService
             .Select(v => v?.ToString()?.Trim() ?? string.Empty)
             .TakeWhile(h => !string.IsNullOrEmpty(h))
             .ToList();
+    }
+
+    /// <summary>
+    /// 按文件头魔数判别 Excel 真实格式，返回 ".xlsx" 或 ".xls"。
+    /// - PK\x03\x04（OOXML/ZIP）→ ".xlsx"
+    /// - D0CF11E0（OLE2/BIFF）→ ".xls"
+    /// 流不可 Seek 或魔数无法识别时，退回传入的扩展名（行为不变）。
+    /// 读取后会恢复流的原始 Position，不影响后续解析。
+    /// </summary>
+    private static async Task<string> SniffExcelFormatAsync(Stream stream, string fallbackExtension, CancellationToken ct)
+    {
+        if (!stream.CanSeek) return fallbackExtension;
+
+        var head = new byte[8];
+        var pos = stream.Position;
+        var n = await stream.ReadAsync(head.AsMemory(0, 8), ct);
+        stream.Position = pos;
+
+        if (n >= 4 && head[0] == 0x50 && head[1] == 0x4B && head[2] == 0x03 && head[3] == 0x04)
+            return ".xlsx"; // ZIP/OOXML
+        if (n >= 8 && head[0] == 0xD0 && head[1] == 0xCF && head[2] == 0x11 && head[3] == 0xE0)
+            return ".xls";  // OLE2/BIFF
+
+        return fallbackExtension;
     }
 
     private static async Task ParseExcelAsync(
