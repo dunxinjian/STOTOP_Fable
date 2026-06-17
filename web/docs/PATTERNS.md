@@ -28,6 +28,8 @@
 
 **列表页迁移配方**（照样板 BuildingManage）：① `#toolbar` 内联 flex → `.page-toolbar`（`__group` 放筛选输入、`__filters` 放查询/重置）；② `a-card`+`a-table` → `<DataTable v-model:pagination="pagination" @change="fetch">`，删本页 `paginationConfig`/`handleTableChange`/序号列定义/序号 bodyCell 分支；③ `a-tag :color` 字面色 → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页用 `ref({pageIndex,pageSize,total})`，读 `.value.*`。
 
+> 列表页若需「状态计数 + 快筛」，用 `<StatFilterTabs>`（见 §二）替代顶部统计卡 + 状态下拉，放在工具栏与 DataTable 之间。
+
 ### 2. 详情页（样板：TaskDetail）
 
 ```
@@ -127,6 +129,18 @@
 - 翻页：`@change` 触发后父组件重新取数；不再每页手写 `paginationConfig`/`handleTableChange`。
 - 其余列单元格用父组件 `#bodyCell` 作用域插槽（序号列由组件内部渲染）。
 - 密度：不显式传 `size`，继承 `ConfigProvider` 全局 `small`。
+
+### StatFilterTabs
+
+带计数的状态快筛条（样板 `vehicle/VehicleManage`），把「KPI 统计卡 + 状态下拉」合一为一行可点击过滤的 Tab。
+
+| prop | 说明 |
+| --- | --- |
+| `tabs` | `[{key,label,count?,color?}]`；`key=''` 常表示「全部」；`color` 传 `var(--token)` 渲染状态圆点 |
+| `active`（v-model） | 当前选中 key；点击 emit `update:active` + `change(key)` |
+
+- 用法：`<StatFilterTabs v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />`，把状态过滤与计数合一，替代顶部 a-statistic 卡片与独立状态下拉。
+- 全令牌：选中态走 `--color-primary`/`--color-primary-light`，计数 `tabular-nums`；禁裸 hex。
 
 ---
 
