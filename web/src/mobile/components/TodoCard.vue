@@ -73,9 +73,9 @@ function formatAmount(amount: number): string {
 
     .flow-name {
       font-size: 13px;
-      color: var(--color-primary);
+      color: var(--text-2);
       font-weight: 500;
-      background: rgba(25, 137, 250, 0.08);
+      background: var(--bg-muted);
       padding: 2px 8px;
       border-radius: 4px;
     }

@@ -4,13 +4,13 @@
     <div v-if="!setupAuthenticated && !pageLoading" class="auth-gate">
       <div class="auth-gate-card">
         <div class="auth-gate-header">
-          <SettingOutlined :style="{ fontSize: '42px', color: 'var(--color-primary)' }" />
+          <SettingOutlined :style="{ fontSize: '42px', color: 'var(--text-2)' }" />
           <h2>系统配置</h2>
           <p class="auth-gate-desc">请选择认证方式以继续</p>
         </div>
         <div class="auth-gate-options">
           <div class="auth-option" @click="handleLoginAuth">
-            <UserOutlined :style="{ fontSize: '32px', color: 'var(--color-primary)' }" />
+            <UserOutlined :style="{ fontSize: '32px', color: 'var(--text-2)' }" />
             <h3>用户登录认证</h3>
             <p>使用系统账号登录后进入配置</p>
           </div>
@@ -47,7 +47,7 @@
               <ArrowLeftOutlined />返回管理
             </a-button>
           </div>
-          <DollarCircleOutlined :style="{ fontSize: '42px', color: 'var(--color-primary)' }" />
+          <DollarCircleOutlined :style="{ fontSize: '42px', color: 'var(--text-2)' }" />
           <h2>{{ reinitMode ? '全新初始化 - 重新配置数据库' : '系统初始化 - 配置主数据库' }}</h2>
           <p class="guide-desc">请填写 SQL Server 数据库连接信息，完成系统初始化</p>
         </div>
@@ -343,7 +343,7 @@
           </a-col>
           <a-col :span="12" v-if="dryRunResult.tablesToCreate.length > 0">
             <div class="dryrun-section dryrun-section--primary">
-              <div class="dryrun-section-title"><PlusOutlined style="color: var(--color-primary)" /> 将新建的缺失表（{{ dryRunResult.tablesToCreate.length }}）</div>
+              <div class="dryrun-section-title"><PlusOutlined style="color: var(--text-2)" /> 将新建的缺失表（{{ dryRunResult.tablesToCreate.length }}）</div>
               <div class="dryrun-tag-list"><a-tag v-for="t in dryRunResult.tablesToCreate" :key="t" color="blue" class="dryrun-tag">{{ t }}</a-tag></div>
             </div>
           </a-col>

@@ -777,7 +777,7 @@ onMounted(() => loadGroups(false))
   font-variant-numeric: tabular-nums;
 
   .fg-list-counts-flow { color: $text-secondary; }
-  .fg-list-counts-link { color: $color-primary; opacity: 0.7; }
+  .fg-list-counts-link { color: $text-secondary; opacity: 0.7; }
 }
 
 .fg-list-more {
@@ -919,8 +919,8 @@ onMounted(() => loadGroups(false))
   gap: 8px;
 
   .fg-section-count {
-    background: $color-primary-bg;
-    color: $color-primary;
+    background: var(--bg-muted);
+    color: $text-secondary;
     font-size: 11px;
     font-weight: 500;
     padding: 0 8px;

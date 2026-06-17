@@ -422,8 +422,8 @@ onBeforeUnmount(() => {
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  color: var(--text-2);
+  background: var(--bg-muted);
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -447,7 +447,7 @@ onBeforeUnmount(() => {
   color: var(--text-1);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid var(--border);
 }
 
 .kpi-dot {

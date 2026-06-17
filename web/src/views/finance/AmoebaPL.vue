@@ -1603,7 +1603,7 @@ function escapeHtml(s: string): string {
     width: 24px;
     height: 24px;
     padding: 0;
-    color: var(--color-primary);
+    color: var(--text-2);
 
     &:hover {
       color: var(--color-primary-hover);

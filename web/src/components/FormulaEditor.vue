@@ -291,7 +291,7 @@ function clearFormula() {
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid var(--border);
   margin: 4px 6px;
   border-radius: 3px;
   background: #fafafa;

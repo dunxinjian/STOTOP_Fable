@@ -46,7 +46,7 @@ function onPriceChange(value: number | null) {
 .price-label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-primary);
+  color: var(--text-1);
   white-space: nowrap;
 }
 

@@ -484,8 +484,8 @@ onBeforeUnmount(() => {
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  color: var(--text-2);
+  background: var(--bg-muted);
   width: 48px;
   height: 48px;
   border-radius: 50%;

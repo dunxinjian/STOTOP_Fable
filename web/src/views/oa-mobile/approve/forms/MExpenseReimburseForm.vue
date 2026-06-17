@@ -475,7 +475,7 @@ defineExpose({
   font-size: 13px;
   color: #999;
   padding: 4px 0;
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--border);
 }
 .detail-remove-btn {
   display: flex;
@@ -656,7 +656,7 @@ defineExpose({
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: var(--text-3);
 }
 .node-line {
   position: absolute;

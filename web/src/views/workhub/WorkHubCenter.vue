@@ -1136,8 +1136,8 @@ onUnmounted(() => {
   font-size: 26px;
   line-height: 1;
   margin-bottom: 6px;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  color: var(--text-3);
+  background: var(--bg-muted);
 }
 
 .empty-title {

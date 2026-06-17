@@ -221,14 +221,14 @@ watch(
 .mega-col-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--text-1);
   letter-spacing: 0.3px;
   padding: 4px 8px 10px;
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: linear-gradient(to right, var(--color-primary-light), transparent);
+  background: linear-gradient(to right, var(--bg-muted), transparent);
   border-radius: 4px;
   margin-left: -8px;
   margin-right: -8px;

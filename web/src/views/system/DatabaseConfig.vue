@@ -175,7 +175,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
-  color: $color-primary;
+  color: var(--text-1);
 }
 
 .status-info {

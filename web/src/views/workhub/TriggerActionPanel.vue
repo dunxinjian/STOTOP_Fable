@@ -411,12 +411,12 @@ onMounted(() => loadAll())
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  background: var(--color-primary-light);
+  background: var(--bg-muted);
 }
 
 .action-icon {
   font-size: 19px;
-  color: var(--color-primary);
+  color: var(--text-2);
 }
 
 .action-copy {

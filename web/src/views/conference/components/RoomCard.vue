@@ -110,8 +110,8 @@ function getInitial(name: string): string {
 /** 根据字符串哈希生成头像背景色 */
 function getAvatarColor(str: string): string {
   const colors = [
-    '#1677ff', '#52c41a', '#fa8c16', '#722ed1',
-    '#eb2f96', '#13c2c2', '#2f54eb', '#faad14',
+    '#5B7290', '#6BA292', '#C99A6B', '#9B8AB8',
+    '#C77B6B', '#8FB07E', '#7C9CB5', '#B0976A',
   ]
   let hash = 0
   for (let i = 0; i < str.length; i++) {

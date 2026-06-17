@@ -35,7 +35,7 @@
     <!-- 文件区域 -->
     <div v-if="accept === 'file' || accept === 'all'" class="file-section">
       <div v-for="item in fileItems" :key="item.id" class="file-item">
-        <van-icon name="description" size="20" color="var(--color-primary)" />
+        <van-icon name="description" size="20" color="var(--text-2)" />
         <span class="file-name">{{ item.name }}</span>
         <van-loading v-if="item.uploading" size="16" />
         <span v-else-if="item.progress !== undefined && item.progress < 100" class="file-progress">

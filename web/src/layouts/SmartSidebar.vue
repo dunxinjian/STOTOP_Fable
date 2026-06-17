@@ -374,7 +374,7 @@ function onResizeEnd() {
 
   .section-icon {
     font-size: 11px;
-    color: var(--color-primary);
+    color: var(--text-3);
   }
 }
 

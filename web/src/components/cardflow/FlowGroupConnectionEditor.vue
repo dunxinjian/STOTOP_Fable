@@ -368,7 +368,7 @@ const okDisabled = computed(() =>
 
 .fgce-arrow {
   font-size: 18px;
-  color: $color-primary;
+  color: var(--text-2);
 }
 
 .fgce-cond-wrap {
@@ -421,7 +421,7 @@ const okDisabled = computed(() =>
 .fgce-arrow-mini {
   width: 18px;
   text-align: center;
-  color: $color-primary;
+  color: var(--text-3);
   font-size: 12px;
 }
 

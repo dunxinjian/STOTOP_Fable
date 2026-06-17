@@ -237,7 +237,7 @@ function updateTrendChart() {
 
 function updatePieChart() {
   if (!pieChart) return
-  const sourceColors = ['#1890ff', '#52c41a', '#faad14']
+  const sourceColors = ['#5B7290', '#6BA292', '#C99A6B']
   const data = Object.entries(stagingStatsMap.value).map(([name, v], i) => ({
     name: name.replace('STG', '').replace('TC', ''),
     value: v.total,
@@ -500,8 +500,8 @@ function formatBytes(bytes: number): string {
 .quick-action-icon {
   font-size: 24px;
   margin-bottom: 8px;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  color: var(--text-2);
+  background: var(--bg-muted);
   width: 48px;
   height: 48px;
   border-radius: 50%;

@@ -155,7 +155,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-icon {
   font-size: 48px;
-  color: var(--color-primary);
+  color: var(--text-2);
   margin-bottom: 8px;
 }
 

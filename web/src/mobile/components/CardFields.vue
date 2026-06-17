@@ -111,7 +111,7 @@ function previewImage(current: string, images: string[]) {
 
     .file-icon {
       margin-right: 4px;
-      color: var(--color-primary);
+      color: var(--text-2);
     }
 
     .file-link {

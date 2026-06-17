@@ -17,7 +17,7 @@
     <!-- 有可用组织时的选择列表 -->
     <template v-else>
       <div class="org-select-desc">
-        <BankOutlined :style="{ fontSize: '20px', color: 'var(--color-primary)' }" />
+        <BankOutlined :style="{ fontSize: '20px', color: 'var(--text-2)' }" />
         <span>您有多个任职组织，请选择要进入的组织：</span>
       </div>
 

@@ -188,8 +188,8 @@ function formatRelativeTime(timestamp: number): string {
 
 .visit-count {
   font-size: var(--font-xs);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  background: var(--bg-muted);
+  color: var(--text-2);
   padding: 2px var(--space-sm8);
   border-radius: var(--radius-pill);
   font-weight: 500;

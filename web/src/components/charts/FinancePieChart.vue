@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
 
-const colors = ['#1890ff', '#52c41a', '#fa8c16', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#faad14']
+const colors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E', '#7C9CB5', '#B0976A']
 
 function renderChart() {
   if (!chartRef.value || !props.data?.length) return

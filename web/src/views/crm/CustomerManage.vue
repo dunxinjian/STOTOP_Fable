@@ -344,7 +344,7 @@ const tableColumns = [
 ]
 
 // BD头像色板
-const bdColors = ['#1890ff', '#52c41a', '#fa8c16', '#722ed1', '#eb2f96', '#13c2c2']
+const bdColors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
 function getBdColor(id?: number): string {
   if (!id) return '#d9d9d9'
   return bdColors[id % bdColors.length]

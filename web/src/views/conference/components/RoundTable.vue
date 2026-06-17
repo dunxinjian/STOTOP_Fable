@@ -325,7 +325,7 @@ function handleSeatClick(seat: SeatData, table: TableData) {
   &__seat {
     position: absolute;
     border-radius: 50%;
-    background: var(--color-primary);
+    background: var(--text-2);
     color: #fff;
     font-size: 12px;
     font-weight: 500;

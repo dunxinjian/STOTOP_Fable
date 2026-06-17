@@ -996,7 +996,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__action {
-    color: var(--color-primary);
+    color: var(--text-1);
   }
 
   &__opinion {

@@ -840,7 +840,7 @@ defineExpose({ open })
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--color-primary);
+    background: var(--text-3);
     opacity: 0.6;
   }
 }
@@ -880,8 +880,8 @@ defineExpose({ open })
 
   .item-module-tag {
     font-size: var(--font-xs);
-    color: var(--color-primary);
-    background: var(--color-primary-light);
+    color: var(--text-2);
+    background: var(--bg-muted);
     padding: 1px 7px;
     border-radius: var(--radius-sm);
     flex-shrink: 0;

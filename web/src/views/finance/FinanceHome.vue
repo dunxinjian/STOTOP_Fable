@@ -773,7 +773,7 @@ onUnmounted(() => {
 .report-icon {
   font-size: 32px;
   margin-bottom: 8px;
-  color: var(--color-primary);
+  color: var(--text-2);
 }
 .report-name {
   font-size: 14px;

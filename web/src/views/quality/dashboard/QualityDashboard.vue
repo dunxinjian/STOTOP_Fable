@@ -305,7 +305,7 @@ function initTrendChart() {
 function initSourceChart() {
   if (!sourceChartRef.value) return
   sourceChart = echarts.init(sourceChartRef.value)
-  const colors = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2']
+  const colors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
   sourceChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { bottom: 0, textStyle: { color: 'rgba(0,0,0,0.65)' } },
@@ -324,7 +324,7 @@ function initSourceChart() {
 function initPriorityChart() {
   if (!priorityChartRef.value) return
   priorityChart = echarts.init(priorityChartRef.value)
-  const colors = ['#ff4d4f', '#fa8c16', '#1890ff', '#52c41a']
+  const colors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8']
   priorityChart.setOption({
     tooltip: { trigger: 'axis' },
     grid: { left: 60, right: 20, top: 20, bottom: 40 },

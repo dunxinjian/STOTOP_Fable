@@ -579,7 +579,7 @@ function formatJournalFileSize(bytes: number): string {
 .negative-value { color: var(--color-danger); }
 .initial-label { font-size: 12px; color: #909399; background: #f4f4f5; padding: 2px 6px; border-radius: 3px; }
 :deep(.initial-balance-row) { background-color: #f9f9f9 !important; font-style: italic; color: #909399; }
-.voucher-no { font-size: 13px; color: var(--color-primary); }
+.voucher-no { font-size: 13px; color: var(--text-1); }
 .pagination-wrapper { display: flex; justify-content: flex-end; padding-top: $section-gap; }
 
 // 表格容器 - 填充剩余空间

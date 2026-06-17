@@ -158,7 +158,7 @@ const kpi = ref({
 
 // ===== 快捷操作 =====
 const quickActions = [
-  { key: 'register', label: '车辆登记', icon: PlusCircleOutlined, color: 'var(--color-primary)', route: '/vehicle/list' },
+  { key: 'register', label: '车辆登记', icon: PlusCircleOutlined, color: 'var(--text-2)', route: '/vehicle/list' },
   { key: 'maintenance', label: '维护记录', icon: ToolOutlined, color: 'var(--color-success)', route: '/vehicle/maintenance' },
   { key: 'insurance', label: '保险管理', icon: SafetyOutlined, color: 'var(--color-warning)', route: '/vehicle/insurance' },
   { key: 'rental', label: '租赁收费', icon: DollarOutlined, color: 'var(--biz-waybill)', route: '/vehicle/rental' },

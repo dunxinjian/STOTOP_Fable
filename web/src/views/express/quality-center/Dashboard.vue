@@ -230,7 +230,7 @@ const workloadData = ref<DashboardWorkloadItemDto[]>([])
 const overdueData = ref<DashboardOverdueItemDto[]>([])
 
 // ===== 饼图配置 =====
-const typeColors = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16']
+const typeColors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E', '#7C9CB5', '#B0976A']
 const typePieOption = computed(() => {
   if (!summary.value.byType.length) return null
   const data = summary.value.byType.map((item, i) => ({

@@ -207,7 +207,7 @@ async function handleSwitch(org: UserOrganizationDto) {
     height: auto;
     border-radius: 0;
     background: none;
-    color: $color-primary;
+    color: var(--text-2);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -58,10 +58,8 @@ import { get } from '@/api/request'
 
 defineOptions({ name: 'MobileReportCost' })
 
-// echarts 渲染到 canvas，无法解析 CSS 变量，故运行时从 :root 读取主色令牌，回退品牌橙
-const primaryColor =
-  getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#E85E00'
-const COLORS = [primaryColor, '#52c41a', '#fa8c16', '#722ed1', '#eb2f96', '#13c2c2', '#faad14', '#2f54eb']
+// 分类色板：淡雅协调多色（echarts 渲染到 canvas 无法解析 CSS 变量，故用固定 hex）
+const COLORS = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E', '#7C9CB5', '#B0976A']
 
 interface CostItem {
   name: string

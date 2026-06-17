@@ -13,7 +13,7 @@
     <!-- 快捷操作区 -->
     <div class="quick-actions">
       <div class="quick-actions__item" @click="$router.push('/m/scan')">
-        <van-icon name="scan" size="28" color="var(--color-primary)" />
+        <van-icon name="scan" size="28" color="var(--text-2)" />
         <span>扫一扫</span>
       </div>
       <div class="quick-actions__item" @click="$router.push('/m/submit/0')">

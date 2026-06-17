@@ -598,7 +598,7 @@ onMounted(async () => {
     font-weight: 500;
     color: $text-primary;
     padding-left: $spacing-sm + 4px;
-    border-left: 4px solid $color-primary;
+    border-left: 4px solid var(--border);
   }
 }
 </style>
