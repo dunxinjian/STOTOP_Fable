@@ -240,4 +240,21 @@ public class CardRedactionServiceTests
         var result = svc.Redact(new CardRedactionRequest { Card = card, CardSchemaJson = Schema });
         Assert.Equal("{}", result.RedactedDataJson);
     }
+
+    [Fact]
+    public void InitialDataJson_RedactedWithSameAllowlist()
+    {
+        var svc = new CardRedactionService();
+        var card = new CfCard
+        {
+            FDataJson = """{"amount":88}""",
+            FInitialDataJson = """{"amount":1,"payeeAccountNo":"6222021234567890123","srcOnly":"leak"}"""
+        };
+        var result = svc.Redact(new CardRedactionRequest { Card = card, CardSchemaJson = Schema });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedInitialDataJson);
+        var root = doc.RootElement;
+        Assert.Equal("**** **** **** 0123", root.GetProperty("payeeAccountNo").GetString()); // 敏感打码
+        Assert.False(root.TryGetProperty("srcOnly", out _));                                   // schema 外移除
+    }
 }

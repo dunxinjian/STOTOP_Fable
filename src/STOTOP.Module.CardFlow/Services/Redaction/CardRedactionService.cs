@@ -22,6 +22,7 @@ public sealed class CardRedactionService : ICardRedactionService
             FieldAccess = fieldAccess,
             DetailAccess = detailAccess,
             RedactedDataJson = ApplyAllowlist(request.Card.FDataJson, fieldAccess),
+            RedactedInitialDataJson = ApplyAllowlist(request.Card.FInitialDataJson, fieldAccess),
             RedactedDetails = request.Details
                 .OrderBy(d => d.FSortOrder)
                 .Select(d => new RedactedDetailRowResult

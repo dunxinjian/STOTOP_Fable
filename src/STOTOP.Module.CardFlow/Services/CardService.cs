@@ -254,6 +254,7 @@ public class CardService : ICardService
         });
 
         detail.DataJson = redaction.RedactedDataJson;
+        detail.InitialDataJson = redaction.RedactedInitialDataJson;
         detail.Details = redaction.RedactedDetails.Select(row => new CardDetailRowDto
         {
             Id = row.Id,

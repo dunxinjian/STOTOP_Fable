@@ -38,5 +38,6 @@ public sealed class CardRedactionResult
     public Dictionary<string, ResolvedAccess> FieldAccess { get; set; } = new();
     public Dictionary<string, ResolvedAccess> DetailAccess { get; set; } = new();
     public string RedactedDataJson { get; set; } = "{}";
+    public string RedactedInitialDataJson { get; set; } = "{}";
     public List<RedactedDetailRowResult> RedactedDetails { get; set; } = new();
 }
