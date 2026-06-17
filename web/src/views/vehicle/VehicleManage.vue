@@ -1,22 +1,18 @@
 <template>
   <div class="page-container">
     <PageHeader title="车辆台账" description="管理三轮车基础信息">
+      <template #left>
+        <StatFilterTabs inline v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
+      </template>
       <template #right>
-        <a-button type="primary" @click="handleAdd">
+        <a-input-search v-model:value="searchForm.keyword" placeholder="编码/车牌号" style="width: 200px" allow-clear size="middle" @search="handleSearch" />
+        <a-select v-model:value="searchForm.ownershipType" placeholder="权属类型" allow-clear style="width: 120px" size="middle" :options="ownershipOptions" @change="handleSearch" />
+        <a-button size="middle" @click="handleReset">
+          <template #icon><ReloadOutlined /></template>重置
+        </a-button>
+        <a-button type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新增车辆
         </a-button>
-      </template>
-      <template #toolbar>
-        <div class="page-toolbar">
-          <StatFilterTabs inline v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
-          <div class="page-toolbar__filters">
-            <a-input-search v-model:value="searchForm.keyword" placeholder="编码/车牌号" style="width: 200px" allow-clear @search="handleSearch" />
-            <a-select v-model:value="searchForm.ownershipType" placeholder="权属类型" allow-clear style="width: 120px" :options="ownershipOptions" @change="handleSearch" />
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>重置
-            </a-button>
-          </div>
-        </div>
       </template>
     </PageHeader>
 
