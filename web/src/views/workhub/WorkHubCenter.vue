@@ -246,15 +246,16 @@ async function handleNotificationClick(notification: NotificationListDto) {
 
 // ===== 待办 Tab 操作 =====
 function isSourceActive(key: string) {
-  return (hub.filters.value.sources as string[]).includes(key)
+  return hub.filters.value.sources.includes(key as WorkItem['source'])
 }
 
 function toggleSourceFilter(key: string) {
-  const current = hub.filters.value.sources as string[]
-  const next = current.includes(key)
-    ? current.filter((k) => k !== key)
-    : [...current, key]
-  hub.setFilter('sources', next as WorkItem['source'][])
+  const k = key as WorkItem['source']
+  const current = hub.filters.value.sources
+  const next = current.includes(k)
+    ? current.filter((s) => s !== k)
+    : [...current, k]
+  hub.setFilter('sources', next)
 }
 
 function onPriorityChange() {
