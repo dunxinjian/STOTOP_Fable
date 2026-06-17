@@ -121,3 +121,10 @@ function onChange(pag: any) {
   emit('change')
 }
 </script>
+
+<style scoped lang="scss">
+:deep(.ant-table-placeholder:hover > td),
+:deep(.ant-table-placeholder > td.ant-table-cell-row-hover) {
+  background: var(--bg-card) !important;
+}
+</style>

@@ -1,45 +1,35 @@
 <template>
   <div class="page-container">
     <PageHeader title="楼栋管理" description="管理宿舍楼栋信息">
-      <template #right>
-        <a-button type="primary" @click="handleAdd">
-          <template #icon><PlusOutlined /></template>新增楼栋
+      <template #left>
+        <a-input-search
+          v-model:value="searchForm.keyword"
+          placeholder="编码/名称"
+          allow-clear
+          size="middle"
+          style="width: 240px"
+          @search="handleSearch"
+        />
+        <a-select
+          v-model:value="searchForm.status"
+          placeholder="状态"
+          allow-clear
+          size="middle"
+          style="width: 110px"
+          :options="[
+            { label: '启用', value: 1 },
+            { label: '停用', value: 0 },
+          ]"
+          @change="handleSearch"
+        />
+        <a-button size="middle" @click="handleReset">
+          <template #icon><ReloadOutlined /></template>重置
         </a-button>
       </template>
-      <template #toolbar>
-        <div class="page-toolbar">
-          <div class="page-toolbar__group">
-            <a-form-item label="关键词" style="margin-bottom:0">
-              <a-input
-                v-model:value="searchForm.keyword"
-                placeholder="请输入编码/名称"
-                allow-clear
-                style="width: 280px"
-                @keyup.enter="handleSearch"
-              />
-            </a-form-item>
-            <a-form-item label="状态" style="margin-bottom:0">
-              <a-select
-                v-model:value="searchForm.status"
-                placeholder="全部"
-                allow-clear
-                style="width: 120px"
-                :options="[
-                  { label: '启用', value: 1 },
-                  { label: '停用', value: 0 },
-                ]"
-              />
-            </a-form-item>
-          </div>
-          <div class="page-toolbar__filters">
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><SearchOutlined /></template>查询
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><ReloadOutlined /></template>重置
-            </a-button>
-          </div>
-        </div>
+      <template #right>
+        <a-button type="primary" size="middle" @click="handleAdd">
+          <template #icon><PlusOutlined /></template>新增楼栋
+        </a-button>
       </template>
     </PageHeader>
 
@@ -215,7 +205,7 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import DataTable from '@/components/DataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'

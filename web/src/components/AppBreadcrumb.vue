@@ -39,8 +39,8 @@ const showToolbar = computed(() => {
 @use '@/styles/variables.scss' as *;
 
 .app-toolbar {
-  background: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
   position: relative;
@@ -49,11 +49,12 @@ const showToolbar = computed(() => {
 
 .toolbar-primary {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   min-height: 48px;
-  padding: 0 16px;
-  gap: 16px;
+  padding: 4px 16px;
+  gap: 8px 16px;
   position: relative;
 }
 

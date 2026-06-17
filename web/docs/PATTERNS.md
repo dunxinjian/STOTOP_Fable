@@ -10,25 +10,27 @@
 
 ## 一、四类页面标准骨架
 
-### 1. 列表页（样板：dormitory/BuildingManage —— DataTable 范式）
+### 1. 列表页（样板：dormitory/BuildingManage、vehicle/VehicleManage —— DataTable 范式）
+
+**页头布局规则**（首行不放标题/面包屑——标题在 Tab 上）：
 
 ```
-.page-container
-├─ <PageHeader>（#right/#actions 放主操作如「新增」；#toolbar 放筛选）
-│   └─ #toolbar：<div class="page-toolbar"> 内
-│        ├─ .page-toolbar__group    左侧簇：筛选输入（关键词/状态…）
-│        └─ .page-toolbar__filters  右推簇：查询/重置 按钮
-└─ <DataTable>（内建：序号列 + 分页「共 N 条」+ 空态；状态列用 <StatusTag>）
+PageHeader 首行（toolbar-primary，恒显示）：
+├─ #left（左）：状态快筛 <StatFilterTabs inline>（有则放）；无快筛则放筛选输入
+└─ #right（右）：筛选输入 / 重置 + 主操作「新增」
+<DataTable>（内建：序号列 + 分页「共 N 条」+ 空态；状态列 <StatusTag>）
 ```
 
-- **筛选条**用全局 `.page-toolbar`。列表页约定（按样板实际用法）：左侧簇 `__group` 放筛选输入，右推簇 `__filters`（`margin-left:auto`）放查询/重置按钮；主操作（新增等）放 PageHeader 的 `#right`/`#actions`，不进 #toolbar。
-- **表格**用 `<DataTable>`（见 §二），内建分页/序号列/空态；放 `.page-container` 直接子级自动获得 flex 滚动链。
-- **密度**：操作列等按钮**无需写 `size="small"`**，继承全局 `ConfigProvider component-size=small`；仅需大控件时显式标 `middle`/`large`。
-- 空数据由 DataTable 内建 `<EmptyState size="small">`，不再手写 `<a-empty>` 或 `#emptyText`。
+- **填满首行、别想藏**：首行恒渲染（`toolbarStore.register` 总置 `hasRow1=true`），故把内容填进去而非试图收起。默认**单行**：左=状态Tab（或筛选）、右=筛选+新增，中间自然留白。
+  - 有状态快筛：`#left` 放 `<StatFilterTabs inline>`，`#right` 放筛选输入 + 重置 + 新增（样板 VehicleManage）。
+  - 无状态快筛：`#left` 放筛选输入 + 重置，`#right` 放新增（样板 BuildingManage）。
+- **拥挤降级**：`toolbar-primary` 已加 `flex-wrap`，控件多/窄屏时右簇整组自动换行（零跳变）；控件特别多的页可显式把筛选放 `#toolbar` 第二行。
+- **不再用 `#toolbar`/`.page-toolbar` 第二行放筛选**（旧「布局 B」作废）。首行筛选/操作控件统一 `size="middle"`（32px，对齐首行按钮）。
+- **表格**用 `<DataTable>`（见 §二），内建分页/序号列/空态；放 `.page-container` 直接子级获 flex 滚动链。
+- **密度**：操作列按钮无需写 `size`（继承全局 small）；首行筛选/操作用 `size="middle"`。
+- 空数据由 DataTable 内建 `<EmptyState>`（占位行 hover 不高亮）；不手写 `<a-empty>`/`#emptyText`。
 
-**列表页迁移配方**（照样板 BuildingManage）：① `#toolbar` 内联 flex → `.page-toolbar`（`__group` 放筛选输入、`__filters` 放查询/重置）；② `a-card`+`a-table` → `<DataTable v-model:pagination="pagination" @change="fetch">`，删本页 `paginationConfig`/`handleTableChange`/序号列定义/序号 bodyCell 分支；③ `a-tag :color` 字面色 → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页用 `ref({pageIndex,pageSize,total})`，读 `.value.*`。
-
-> 列表页若需「状态计数 + 快筛」，用 `<StatFilterTabs inline>`（见 §二）放进 `#toolbar` **同一行**——左簇 `StatFilterTabs`（看数+筛选合一）+ 右推簇 `.page-toolbar__filters` 放筛选输入/下拉/重置，替代顶部统计卡 + 状态下拉。**这是标准（布局 B）**：省一行、不挤面包屑。仅当筛选控件特别多、一行容不下时才退回「Tab 与筛选各占一行」。样板 `vehicle/VehicleManage`。
+**列表页迁移配方**：① 筛选条 + 状态快筛 + 新增 全进 PageHeader 首行（`#left`/`#right`，见上规则），不用 `#toolbar`；② `a-card`+`a-table` → `<DataTable v-model:pagination @change>`，删 `paginationConfig`/`handleTableChange`/序号列/序号 bodyCell；③ `a-tag :color` → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页 `ref`，读 `.value.*`；⑥ 首行控件 `size="middle"`。
 
 ### 2. 详情页（样板：TaskDetail）
 
@@ -138,18 +140,18 @@
 | --- | --- |
 | `tabs` | `[{key,label,count?,color?}]`；`key=''` 常表示「全部」；`color` 传 `var(--token)` 渲染状态圆点 |
 | `active`（v-model） | 当前选中 key；点击 emit `update:active` + `change(key)` |
-| `inline` | 布尔，默认 false。置于 `#toolbar` 行内时传 `inline` 去掉底部外边距 |
+| `inline` | 布尔，默认 false。置于 PageHeader 首行 `#left` 内时传 `inline` 去掉底部外边距 |
 
-- **标准用法（布局 B）**：放进 `#toolbar` 同一行作左簇，筛选控件入右推簇 `.page-toolbar__filters`：
+- **标准用法**（见 §一.1 列表页头规则）：放进 PageHeader 首行 `#left`，筛选输入 + 主操作入 `#right`：
   ```
-  <template #toolbar>
-    <div class="page-toolbar">
+  <PageHeader>
+    <template #left>
       <StatFilterTabs inline v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />
-      <div class="page-toolbar__filters"> 搜索/下拉/重置 </div>
-    </div>
-  </template>
+    </template>
+    <template #right> 搜索 / 下拉 / 重置（size=middle）+ 新增 </template>
+  </PageHeader>
   ```
-  替代顶部 a-statistic 卡片与独立状态下拉；省一行、不挤面包屑。控件过多容不下时才退回独立两行（去 `inline`、放工具栏与 DataTable 之间）。
+  替代顶部 a-statistic 卡片与独立状态下拉，与筛选/新增同处首行；首行 `flex-wrap` 拥挤时自动换行。
 - 全令牌：选中态走 `--color-primary`/`--color-primary-light`，计数 `tabular-nums`；禁裸 hex。
 
 ### PageLayout
