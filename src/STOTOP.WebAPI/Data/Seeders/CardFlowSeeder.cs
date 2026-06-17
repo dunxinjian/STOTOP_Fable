@@ -61,6 +61,7 @@ public static class CardFlowSeeder
             new(39, "网点质控：接入 STG申通_应拦截明细（建表 + 规则3117 + 流程2317 + 首节点5117）(2026-06-18)", MigrateV39),
             new(40, "网点质控：接入 STG申通_渗透建站考核（建表 + 规则3118 + 流程2318 + 首节点5118）(2026-06-18)", MigrateV40),
             new(41, "网点质控：接入 STG申通_物流信息(及时/完整/准确)三汇总表（多sheet，建 3 表 + 规则3119-3121 + 流程2319-2321 + 首节点5119-5121）(2026-06-18)", MigrateV41),
+            new(42, "网点质控：接入 STG申通_签收率考核汇总（退化表头，建表 + 规则3122 + 流程2322 + 首节点5122）(2026-06-18)", MigrateV42),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -3853,6 +3854,111 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5121, 2321, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3121);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV42(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 退化混合表头「坑」源：签收率未达标考核
+        // （ossdfa26db73e7f4f548c21e65749ea6d65（签收率未达标考核）.xlsx，sheet Sheet1）。
+        // 第 1 行前 4 列是真名（日期/网点编号/网点名称/所属省区），第 5 列起是分段表头
+        // （应签量、48小时签收考核…168小时签收考核、总金额），分段下子字段在第 2 行且跨段大量重复；第 3 行起才是数据。
+        // 一期只抽第 1 行「全局唯一」的 6 列：日期/网点编号/网点名称/所属省区/应签量/总金额
+        // （应签量取当日应签量、总金额取总考核金额）。规则用 headerRow=1, dataStartRow=3。
+        // 分时段(48h/72h/96h/120h/144h/168h)明细因表头子字段重复无法按名映射，一期不逐列建模，
+        // 余列由插件自动归集进 F其他列数据。
+        // 路由：退化表头内容路由不可靠 → 靠 fileNamePattern *签收率未达标考核* 路由。
+        // ═══════════════════════════════════════════════════════════════════
+
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_签收率考核汇总')
+        CREATE TABLE [STG申通_签收率考核汇总] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3122 columnMapping，仅 6 列；分时段明细未逐列建模，归入 F其他列数据）
+            [F日期] NVARCHAR(200) NULL,
+            [F网点编号] NVARCHAR(200) NULL,
+            [F网点名称] NVARCHAR(200) NULL,
+            [F所属省区] NVARCHAR(200) NULL,
+            [F应签量] NVARCHAR(200) NULL,
+            [F总金额] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_签收率考核汇总_F批次ID' AND object_id = OBJECT_ID(N'STG申通_签收率考核汇总'))
+        CREATE INDEX [IX_STG申通_签收率考核汇总_F批次ID] ON [STG申通_签收率考核汇总]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_签收率考核汇总_数据作用域' AND object_id = OBJECT_ID(N'STG申通_签收率考核汇总'))
+        CREATE INDEX [IX_STG申通_签收率考核汇总_数据作用域] ON [STG申通_签收率考核汇总]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（网点编号 + 日期 + 组织，仅未撤销 + 网点编号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_签收率考核汇总_网点日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_签收率考核汇总'))
+        CREATE UNIQUE INDEX [UX_STG申通_签收率考核汇总_网点日期_未撤销]
+            ON [STG申通_签收率考核汇总]([F网点编号],[F日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F网点编号] IS NOT NULL AND [F网点编号] != '';
+        ");
+
+        // ═══ 规则 3122（退化表头：headerRow=1/dataStartRow=3，仅映射 6 列全局唯一名） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3122)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3122, 192, N'excelInput', N'申通签收率考核汇总导入规则',
+        N'{""targetTable"":""STG申通_签收率考核汇总"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":3,""columnIdentifier"":""日期,网点编号,网点名称,所属省区,应签量"",""fullColumnIdentifier"":""日期,网点编号,网点名称,所属省区,应签量,总金额"",""columnMapping"":[{""excelColumn"":""日期"",""dbColumn"":""F日期""},{""excelColumn"":""网点编号"",""dbColumn"":""F网点编号""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""所属省区"",""dbColumn"":""F所属省区""},{""excelColumn"":""应签量"",""dbColumn"":""F应签量""},{""excelColumn"":""总金额"",""dbColumn"":""F总金额""}],""keyFields"":[""网点编号"",""日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F网点编号"",""F日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通签收率未达标考核 Excel导入配置（退化表头，仅抽网点/日期/应签量/总考核金额6列，分时段明细未逐列建模）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 流程 2322（QC_ST_SIGNRATE_ASSESS；退化表头靠 fileNamePattern 路由） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2322)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2322, NULL, 1, GETDATE(), NULL, N'网点质控：申通签收率未达标考核 导入暂存（退化表头，靠 fileNamePattern 路由）', GETDATE(), NULL, N'申通签收率考核汇总导入', NULL, N'QC_ST_SIGNRATE_ASSESS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""*签收率未达标考核*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 版本 2322（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2322)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2322, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2322, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 首节点 5122（ExcelInput 批次级自动节点，插件注册=1，规则=3122） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5122)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5122, 2322, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3122);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
