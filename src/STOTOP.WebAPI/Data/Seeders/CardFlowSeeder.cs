@@ -63,6 +63,7 @@ public static class CardFlowSeeder
             new(41, "网点质控：接入 STG申通_物流信息(及时/完整/准确)三汇总表（多sheet，建 3 表 + 规则3119-3121 + 流程2319-2321 + 首节点5119-5121）(2026-06-18)", MigrateV41),
             new(42, "网点质控：接入 STG申通_签收率考核汇总（退化表头，建表 + 规则3122 + 流程2322 + 首节点5122）(2026-06-18)", MigrateV42),
             new(43, "网点质控：接入 STG申通_出仓考核汇总（含全角括号列，建表 + 规则3123 + 流程2323 + 首节点5123）(2026-06-18)", MigrateV43),
+            new(44, "网点质控：接入 STG申通_小件员履约指标（双行表头/员工级，建表 + 规则3124 + 流程2324 + 首节点5124）(2026-06-18)", MigrateV44),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -4082,6 +4083,121 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5123, 2323, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3123);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV44(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_小件员履约指标 暂存表（系统列 + 19 业务列 + 标准字段） ═══
+        // 双行表头「坑」源：第 1 行是分组名（当日派签情况/按需上门情况/工单情况/违规行为/真实情况），
+        // 第 2 行才是真字段名 → 规则用 headerRow=2, dataStartRow=3。
+        // 所属网点/所属小件员 虽为纵向合并单元格（A1:A2/B1:B2），但底层 XML 在 row2 同样写入真值，
+        // headerRow=2 时可正常按名映射；19 列名 row2 全唯一，全部映射。
+        // 员工级粒度（1 行/网点/小件员），此文件无日期列，按「所属网点 + 所属小件员」去重。
+        // 路由：upload-auto 读第 1 行=分组名，内容匹配无效 → 靠 fileNamePattern 小件员履约指标* 路由。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_小件员履约指标')
+        CREATE TABLE [STG申通_小件员履约指标] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3124 columnMapping，19 列，均为 row2 全局唯一列名）
+            [F所属网点] NVARCHAR(200) NULL,
+            [F所属小件员] NVARCHAR(200) NULL,
+            [F当日派签量] NVARCHAR(200) NULL,
+            [F未当日派签量] NVARCHAR(200) NULL,
+            [F当日派签率] NVARCHAR(200) NULL,
+            [F应上门量] NVARCHAR(200) NULL,
+            [F未上门量] NVARCHAR(200) NULL,
+            [F按需上门率] NVARCHAR(200) NULL,
+            [F客诉发起量] NVARCHAR(200) NULL,
+            [F工单定责量] NVARCHAR(200) NULL,
+            [F客诉发起率] NVARCHAR(200) NULL,
+            [F虚假电联] NVARCHAR(200) NULL,
+            [F无效电联] NVARCHAR(200) NULL,
+            [F双签] NVARCHAR(200) NULL,
+            [F照片定位虚假] NVARCHAR(200) NULL,
+            [F签收文本不规范] NVARCHAR(200) NULL,
+            [F引导代收] NVARCHAR(200) NULL,
+            [F回访虚假量] NVARCHAR(200) NULL,
+            [F回访真实率] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_小件员履约指标_F批次ID' AND object_id = OBJECT_ID(N'STG申通_小件员履约指标'))
+        CREATE INDEX [IX_STG申通_小件员履约指标_F批次ID] ON [STG申通_小件员履约指标]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_小件员履约指标_数据作用域' AND object_id = OBJECT_ID(N'STG申通_小件员履约指标'))
+        CREATE INDEX [IX_STG申通_小件员履约指标_数据作用域] ON [STG申通_小件员履约指标]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（所属网点 + 所属小件员 + 组织，仅未撤销 + 所属网点非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_小件员履约指标_网点小件员_未撤销' AND object_id = OBJECT_ID(N'STG申通_小件员履约指标'))
+        CREATE UNIQUE INDEX [UX_STG申通_小件员履约指标_网点小件员_未撤销]
+            ON [STG申通_小件员履约指标]([F所属网点],[F所属小件员],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F所属网点] IS NOT NULL AND [F所属网点] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3124（小件员履约指标导入，双行表头 headerRow=2/dataStartRow=3，全列映射） ═══
+        // 路由说明：upload-auto 读第 1 行做内容路由，本文件第 1 行是分组名（非字段名），columnIdentifier 内容匹配无效，
+        // 故必须靠 fileNamePattern 小件员履约指标* 路由；columnIdentifier 仍按 row2 字段写（无害）。
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3124)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3124, 192, N'excelInput', N'申通小件员履约指标导入规则',
+        N'{""targetTable"":""STG申通_小件员履约指标"",""outputMode"":""stg"",""headerRow"":2,""dataStartRow"":3,""columnIdentifier"":""所属网点,所属小件员,当日派签量,按需上门率,回访真实率"",""fullColumnIdentifier"":""所属网点,所属小件员,当日派签量,未当日派签量,当日派签率,应上门量,未上门量,按需上门率,客诉发起量,工单定责量,客诉发起率,虚假电联,无效电联,双签,照片定位虚假,签收文本不规范,引导代收,回访虚假量,回访真实率"",""columnMapping"":[{""excelColumn"":""所属网点"",""dbColumn"":""F所属网点""},{""excelColumn"":""所属小件员"",""dbColumn"":""F所属小件员""},{""excelColumn"":""当日派签量"",""dbColumn"":""F当日派签量""},{""excelColumn"":""未当日派签量"",""dbColumn"":""F未当日派签量""},{""excelColumn"":""当日派签率"",""dbColumn"":""F当日派签率""},{""excelColumn"":""应上门量"",""dbColumn"":""F应上门量""},{""excelColumn"":""未上门量"",""dbColumn"":""F未上门量""},{""excelColumn"":""按需上门率"",""dbColumn"":""F按需上门率""},{""excelColumn"":""客诉发起量"",""dbColumn"":""F客诉发起量""},{""excelColumn"":""工单定责量"",""dbColumn"":""F工单定责量""},{""excelColumn"":""客诉发起率"",""dbColumn"":""F客诉发起率""},{""excelColumn"":""虚假电联"",""dbColumn"":""F虚假电联""},{""excelColumn"":""无效电联"",""dbColumn"":""F无效电联""},{""excelColumn"":""双签"",""dbColumn"":""F双签""},{""excelColumn"":""照片定位虚假"",""dbColumn"":""F照片定位虚假""},{""excelColumn"":""签收文本不规范"",""dbColumn"":""F签收文本不规范""},{""excelColumn"":""引导代收"",""dbColumn"":""F引导代收""},{""excelColumn"":""回访虚假量"",""dbColumn"":""F回访虚假量""},{""excelColumn"":""回访真实率"",""dbColumn"":""F回访真实率""}],""keyFields"":[""所属网点"",""所属小件员""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F所属网点"",""F所属小件员""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通小件员履约指标历史数据 Excel导入配置（双行表头，headerRow=2 映射 19 列，员工级，靠 fileNamePattern 路由）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2324（QC_ST_COURIER_FULFILL；靠 fileNamePattern 路由） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2324)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2324, NULL, 1, GETDATE(), NULL, N'网点质控：申通小件员履约指标 导入暂存（双行表头/员工级，靠 fileNamePattern 路由）', GETDATE(), NULL, N'申通小件员履约指标导入', NULL, N'QC_ST_COURIER_FULFILL', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""小件员履约指标*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2324（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2324)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2324, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2324, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5124（ExcelInput 批次级自动节点，插件注册=1，规则=3124） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5124)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5124, 2324, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3124);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
