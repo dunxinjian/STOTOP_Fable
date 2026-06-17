@@ -76,6 +76,16 @@ body {
   padding-right: 0;
 }
 
+// 列表表格按内容高（不撑满整页），避免少数据时下方大片白；
+// 长列表由 .page-container 自身滚动，工具栏在面包屑行（外层）保持固定。
+.page-container--flush .ant-table-wrapper {
+  flex: none !important;
+}
+
+.page-container--flush .ant-table-body {
+  overflow-y: visible !important;
+}
+
 // === 全局表格 flex 滚动链 ===
 // 确保 .page-container 内的表格卡片自动获得完整滚动能力
 .page-container {
