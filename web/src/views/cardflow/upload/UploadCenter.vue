@@ -63,6 +63,173 @@
       </div>
     </div>
 
+    <!-- ===== 批量智能导入区（多文件内容路由） ===== -->
+    <div v-if="has(CardFlowPermissions.ImportUpload)" class="auto-import-panel">
+      <div class="auto-import-header">
+        <div class="auto-import-title">
+          <ThunderboltOutlined style="color: var(--color-primary); margin-right: 6px" />
+          批量智能导入
+          <span class="auto-import-hint">一次选多个文件，按表头内容自动路由到对应流程</span>
+        </div>
+        <div class="auto-import-actions">
+          <a-upload
+            :multiple="true"
+            :showUploadList="false"
+            accept=".xlsx,.xls,.csv"
+            :beforeUpload="onAutoBeforeUpload"
+            :disabled="uploadDisabled || autoImporting"
+          >
+            <a-button :disabled="uploadDisabled || autoImporting">
+              <UploadOutlined /> 选择文件
+            </a-button>
+          </a-upload>
+          <a-button
+            type="primary"
+            :disabled="autoFiles.length === 0 || uploadDisabled"
+            :loading="autoImporting"
+            @click="startAutoImport"
+          >
+            开始智能导入{{ autoFiles.length > 0 ? `（${autoFiles.length}）` : '' }}
+          </a-button>
+          <a-button
+            v-if="autoFiles.length > 0 && !autoImporting"
+            type="text"
+            @click="clearAutoFiles"
+          >清空</a-button>
+        </div>
+      </div>
+
+      <!-- 已选文件列表 -->
+      <div v-if="autoFiles.length > 0" class="auto-file-list">
+        <a-tag
+          v-for="(f, idx) in autoFiles"
+          :key="idx"
+          closable
+          class="auto-file-tag"
+          @close="removeAutoFile(idx)"
+        >
+          <FileExcelOutlined style="color: var(--color-success); margin-right: 4px" />
+          {{ f.name }}
+        </a-tag>
+      </div>
+
+      <!-- 结果分区展示 -->
+      <div v-if="autoResult" class="auto-result">
+        <!-- 已路由 -->
+        <div v-if="autoResult.routed.length > 0" class="auto-result-section">
+          <div class="auto-result-section-title">
+            <a-tag :color="'success'">已路由</a-tag>
+            <span class="auto-result-count">{{ autoResult.routed.length }} 个文件已触发导入</span>
+          </div>
+          <a-table
+            :columns="routedColumns"
+            :data-source="autoResult.routed"
+            :pagination="false"
+            size="small"
+            row-key="fileName"
+          />
+        </div>
+
+        <!-- 待认领 -->
+        <div v-if="autoResult.unmatched.length > 0" class="auto-result-section">
+          <div class="auto-result-section-title">
+            <a-tag :color="'warning'">待认领</a-tag>
+            <span class="auto-result-count">{{ autoResult.unmatched.length }} 个文件未匹配流程，需人工指派</span>
+          </div>
+          <a-list :data-source="autoResult.unmatched" size="small" :split="true">
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-list-item-meta>
+                  <template #title>
+                    <FileExcelOutlined style="color: var(--color-warning); margin-right: 6px" />
+                    {{ item.fileName }}
+                  </template>
+                  <template #description>
+                    <span class="auto-cols-label">识别到的列：</span>
+                    <a-tag v-for="(c, ci) in item.columns" :key="ci" class="auto-col-tag">{{ c }}</a-tag>
+                    <span v-if="item.columns.length === 0" class="auto-empty-cols">（未识别到列）</span>
+                  </template>
+                </a-list-item-meta>
+              </a-list-item>
+            </template>
+          </a-list>
+        </div>
+
+        <!-- 多义 -->
+        <div v-if="autoResult.ambiguous.length > 0" class="auto-result-section">
+          <div class="auto-result-section-title">
+            <a-tag :color="'processing'">多义</a-tag>
+            <span class="auto-result-count">{{ autoResult.ambiguous.length }} 个文件命中多个流程，需人工抉择</span>
+          </div>
+          <a-list :data-source="autoResult.ambiguous" size="small" :split="true">
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-list-item-meta>
+                  <template #title>
+                    <FileExcelOutlined style="color: var(--color-info); margin-right: 6px" />
+                    {{ item.fileName }}
+                  </template>
+                  <template #description>
+                    <span class="auto-cols-label">候选流程：</span>
+                    <a-tag v-for="(c, ci) in item.candidates" :key="ci" color="blue" class="auto-col-tag">
+                      流程 #{{ c.flowDefinitionId }} / 规则 #{{ c.pluginRuleId }}
+                    </a-tag>
+                  </template>
+                </a-list-item-meta>
+              </a-list-item>
+            </template>
+          </a-list>
+        </div>
+
+        <!-- 读取失败 -->
+        <div v-if="autoResult.readErrors.length > 0" class="auto-result-section">
+          <div class="auto-result-section-title">
+            <a-tag :color="'error'">读取失败</a-tag>
+            <span class="auto-result-count">{{ autoResult.readErrors.length }} 个文件无法读取</span>
+          </div>
+          <a-list :data-source="autoResult.readErrors" size="small" :split="true">
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-list-item-meta>
+                  <template #title>
+                    <FileExcelOutlined style="color: var(--color-danger); margin-right: 6px" />
+                    {{ item.fileName }}
+                  </template>
+                  <template #description>
+                    <span class="auto-error-text">{{ item.error }}</span>
+                  </template>
+                </a-list-item-meta>
+              </a-list-item>
+            </template>
+          </a-list>
+        </div>
+
+        <!-- 触发失败 -->
+        <div v-if="autoResult.triggerErrors.length > 0" class="auto-result-section">
+          <div class="auto-result-section-title">
+            <a-tag :color="'error'">触发失败</a-tag>
+            <span class="auto-result-count">{{ autoResult.triggerErrors.length }} 个文件命中流程但触发导入失败</span>
+          </div>
+          <a-list :data-source="autoResult.triggerErrors" size="small" :split="true">
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-list-item-meta>
+                  <template #title>
+                    <FileExcelOutlined style="color: var(--color-danger); margin-right: 6px" />
+                    {{ item.fileName }}
+                    <a-tag color="blue" class="auto-col-tag">流程 #{{ item.flowDefinitionId }}</a-tag>
+                  </template>
+                  <template #description>
+                    <span class="auto-error-text">{{ item.error }}</span>
+                  </template>
+                </a-list-item-meta>
+              </a-list-item>
+            </template>
+          </a-list>
+        </div>
+      </div>
+    </div>
+
     <!-- 上传拖拽区（可折叠） -->
     <UploadDropZone
       v-if="has(CardFlowPermissions.ImportUpload)"
@@ -260,14 +427,14 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   UploadOutlined, FileExcelOutlined, DeleteOutlined, LoadingOutlined, WarningOutlined,
-  AppstoreOutlined,
+  AppstoreOutlined, ThunderboltOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { usePermission, CardFlowPermissions } from '@/utils/permission'
 import { useUploadCenter } from './composables/useUploadCenter'
 import type { BatchItem, RoleType } from './composables/useUploadCenter'
-import { getFlowDefinitionCandidates, assignPipeline } from '@/api/cardflow'
-import type { FlowDefinitionCandidateDto } from '@/api/cardflow'
+import { getFlowDefinitionCandidates, assignPipeline, uploadAutoBatch } from '@/api/cardflow'
+import type { FlowDefinitionCandidateDto, UploadAutoResult } from '@/api/cardflow'
 
 import UploadDropZone from './components/UploadDropZone.vue'
 import BatchStatsBar from './components/BatchStatsBar.vue'
@@ -440,6 +607,59 @@ async function confirmFlowSelect() {
 function onBeforeUpload(file: File) {
   handleFileUpload(file)
   return false
+}
+
+// ===== 批量智能导入（多文件内容路由） =====
+const autoFiles = ref<File[]>([])
+const autoImporting = ref(false)
+const autoResult = ref<UploadAutoResult | null>(null)
+
+const routedColumns = [
+  { title: '文件名', dataIndex: 'fileName', key: 'fileName', ellipsis: true },
+  { title: '批次号', dataIndex: 'batchId', key: 'batchId', width: 120 },
+  { title: '流程定义', dataIndex: 'flowDefinitionId', key: 'flowDefinitionId', width: 120 },
+]
+
+// 收集文件、阻止 a-upload 自动上传
+function onAutoBeforeUpload(file: File) {
+  autoFiles.value = [...autoFiles.value, file]
+  return false
+}
+
+function removeAutoFile(idx: number) {
+  autoFiles.value = autoFiles.value.filter((_, i) => i !== idx)
+}
+
+function clearAutoFiles() {
+  autoFiles.value = []
+}
+
+async function startAutoImport() {
+  if (autoFiles.value.length === 0) {
+    message.warning('请先选择文件')
+    return
+  }
+  autoImporting.value = true
+  try {
+    const result = await uploadAutoBatch(autoFiles.value)
+    autoResult.value = result
+    const routed = result.routed.length
+    const unmatched = result.unmatched.length
+    const ambiguous = result.ambiguous.length
+    const triggerErrors = result.triggerErrors.length
+    message.success(
+      `路由完成：触发 ${routed}，待认领 ${unmatched}，多义 ${ambiguous}，触发失败 ${triggerErrors}`
+    )
+    // 触发成功后清空已选文件，刷新批次列表
+    autoFiles.value = []
+    if (routed > 0) {
+      loadBatches()
+    }
+  } catch (e: any) {
+    message.error(e?.message || '智能导入失败')
+  } finally {
+    autoImporting.value = false
+  }
 }
 
 // ===== 批次操作分发 =====
@@ -665,6 +885,99 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .inline-upload {
   display: inline-block;
+}
+
+// 批量智能导入区
+.auto-import-panel {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 14px 20px;
+  margin-bottom: 8px;
+}
+
+.auto-import-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.auto-import-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  display: flex;
+  align-items: center;
+}
+
+.auto-import-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.45);
+  margin-left: 10px;
+}
+
+.auto-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-file-list {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.auto-file-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 280px;
+  margin: 0;
+}
+
+.auto-result {
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auto-result-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.auto-result-count {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.auto-cols-label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-right: 4px;
+}
+
+.auto-col-tag {
+  margin: 2px 4px 2px 0;
+}
+
+.auto-empty-cols {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.auto-error-text {
+  font-size: 12px;
+  color: var(--color-danger-text);
 }
 
 .toolbar-btn {

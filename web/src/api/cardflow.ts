@@ -430,6 +430,68 @@ export function uploadBatch(data: FormData) {
   })
 }
 
+// ===== 多文件智能导入（内容路由）API =====
+
+/** 已路由文件项（命中唯一流程，已触发导入） */
+export interface AutoRoutedItem {
+  fileName: string
+  batchId: number
+  flowDefinitionId: number
+}
+
+/** 待认领文件项（未命中任何流程，需人工指派） */
+export interface AutoUnmatchedItem {
+  fileName: string
+  columns: string[]
+}
+
+/** 多义候选流程项 */
+export interface AutoAmbiguousCandidate {
+  flowDefinitionId: number
+  pluginRuleId: number
+}
+
+/** 多义文件项（命中多个流程，需人工抉择） */
+export interface AutoAmbiguousItem {
+  fileName: string
+  candidates: AutoAmbiguousCandidate[]
+}
+
+/** 读取失败文件项（损坏/非表格） */
+export interface AutoReadErrorItem {
+  fileName: string
+  error: string
+}
+
+/** 触发失败文件项（命中流程但触发导入异常） */
+export interface AutoTriggerErrorItem {
+  fileName: string
+  flowDefinitionId: number
+  error: string
+}
+
+/** 多文件智能导入结果 */
+export interface UploadAutoResult {
+  routed: AutoRoutedItem[]
+  unmatched: AutoUnmatchedItem[]
+  ambiguous: AutoAmbiguousItem[]
+  readErrors: AutoReadErrorItem[]
+  triggerErrors: AutoTriggerErrorItem[]
+}
+
+/**
+ * 多文件智能导入：一次上传多个文件，后端逐个按表头内容路由分类。
+ * 组织上下文头由请求拦截器自动注入，无需手动传 orgId。
+ */
+export function uploadAutoBatch(files: File[]) {
+  const formData = new FormData()
+  files.forEach((file) => formData.append('files', file))
+  return service.post<any, UploadAutoResult>('/cardflow/batches/upload-auto', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120_000,
+  })
+}
+
 /** 获取批次列表 */
 export function getBatches(params?: CfBatchQueryRequest) {
   return get<PagedResult<CfBatch>>('/cardflow/batches', params)
