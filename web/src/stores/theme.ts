@@ -51,10 +51,10 @@ export interface ThemeConfig {
 
 const defaultThemeConfig: ThemeConfig = {
   colorPrimary: '#E85E00',
-  colorSuccess: '#2BA471',
-  colorWarning: '#E6A700',
-  colorError: '#E5484D',
-  colorInfo: '#3A6FB0',
+  colorSuccess: '#3E9E6E',
+  colorWarning: '#D49A2E',
+  colorError: '#D6584E',
+  colorInfo: '#5B7290',
   borderRadius: 6,
   fontSize: 14,
   sizeStep: 4,
@@ -246,31 +246,31 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--color-primary-light', '#FFF3EA')
     s.setProperty('--color-primary-border', 'rgba(232,94,0,0.30)')
     // —— 动态：状态主色由 themeConfig 派生；浅底/文字为常量
-    s.setProperty('--color-success', c.colorSuccess || '#2BA471')
-    s.setProperty('--color-success-light', '#E7F5EF')
-    s.setProperty('--color-success-text', '#0F6E56')
-    s.setProperty('--color-warning', c.colorWarning || '#E6A700')
-    s.setProperty('--color-warning-light', '#FBF1D8')
-    s.setProperty('--color-warning-text', '#8A6200')
-    s.setProperty('--color-danger', c.colorError || '#E5484D')
-    s.setProperty('--color-danger-light', '#FCEBEC')
-    s.setProperty('--color-danger-text', '#A3282C')
-    s.setProperty('--color-info', c.colorInfo || '#3A6FB0')
-    s.setProperty('--color-info-light', '#E9F0F8')
-    s.setProperty('--color-info-text', '#1C4366')
+    s.setProperty('--color-success', c.colorSuccess || '#3E9E6E')
+    s.setProperty('--color-success-light', '#EAF4EF')
+    s.setProperty('--color-success-text', '#2A6B4C')
+    s.setProperty('--color-warning', c.colorWarning || '#D49A2E')
+    s.setProperty('--color-warning-light', '#FAF1DD')
+    s.setProperty('--color-warning-text', '#8A6212')
+    s.setProperty('--color-danger', c.colorError || '#D6584E')
+    s.setProperty('--color-danger-light', '#FBEEEC')
+    s.setProperty('--color-danger-text', '#9E332B')
+    s.setProperty('--color-info', c.colorInfo || '#5B7290')
+    s.setProperty('--color-info-light', '#EBEFF4')
+    s.setProperty('--color-info-text', '#34455A')
     // —— 静态：文字
     s.setProperty('--text-1', '#1F2329')
     s.setProperty('--text-2', '#5A6068')
     s.setProperty('--text-3', '#8A9099')
     s.setProperty('--text-disabled', '#BFC3C9')
     // —— 静态：表面/边框
-    s.setProperty('--bg-page', '#F5F6F8')
+    s.setProperty('--bg-page', '#F7F8FA')
     s.setProperty('--bg-card', '#FFFFFF')
-    s.setProperty('--bg-muted', '#EEF0F3')
-    s.setProperty('--border', '#E6E8EB')
-    s.setProperty('--border-strong', '#D6D9DD')
+    s.setProperty('--bg-muted', '#F1F3F6')
+    s.setProperty('--border', '#ECEEF1')
+    s.setProperty('--border-strong', '#DDE0E4')
     // —— 静态：外壳
-    s.setProperty('--topbar-ink', '#1F2430')
+    s.setProperty('--topbar-ink', '#232834')
     s.setProperty('--topbar-ink-admin', '#171A22')
     s.setProperty('--topbar-border', 'rgba(255,255,255,0.10)')
     // 注：--sidebar-bg / --sidebar-item-active-bg 由 applySidebarCSS 按 themeConfig 注入，此处补静态项
@@ -280,7 +280,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--biz-waybill', '#6B4FB0')
     s.setProperty('--biz-contract', '#8A6D3B')
     s.setProperty('--biz-quality', '#D9603A')
-    s.setProperty('--biz-approval', '#3A6FB0')
+    s.setProperty('--biz-approval', '#5B7290')
     s.setProperty('--biz-points', '#C99A2E')
     s.setProperty('--biz-finance', '#B8860B')
     // —— 静态：圆角
