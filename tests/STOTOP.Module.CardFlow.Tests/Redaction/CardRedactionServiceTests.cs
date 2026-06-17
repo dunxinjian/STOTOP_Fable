@@ -180,4 +180,64 @@ public class CardRedactionServiceTests
         Assert.Equal("1101**********5678", root.GetProperty("idNo").GetString());
         Assert.False(root.TryGetProperty("junk", out _));         // schema 外明细列移除
     }
+
+    [Fact]
+    public void Detail_MultiTableSchema_RedactsPerTable()
+    {
+        var svc = new CardRedactionService();
+        const string detailSchema =
+            """{"version":2,"tables":[{"detailTableKey":"lines","columns":[{"key":"amt","type":"money"},{"key":"idNo","type":"text","sensitive":true,"maskPattern":"idCard"}]}]}""";
+        var details = new List<CfCardDetail>
+        {
+            new() { FID = 1, FSortOrder = 0, FDetailTableKey = "lines",
+                    FDataJson = """{"amt":100,"idNo":"110101199003075678","junk":"z"}""" }
+        };
+        var result = svc.Redact(new CardRedactionRequest
+        {
+            Card = Card(), CardSchemaJson = Schema, DetailSchemaJson = detailSchema, Details = details
+        });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDetails.Single().DataJson);
+        var root = doc.RootElement;
+        Assert.Equal("1101**********5678", root.GetProperty("idNo").GetString());  // 非default表也脱敏
+        Assert.True(root.TryGetProperty("amt", out _));                            // 非敏感列保留
+        Assert.False(root.TryGetProperty("junk", out _));                          // schema 外列移除
+    }
+
+    [Fact]
+    public void HiddenField_OmittedFromOutput()
+    {
+        var svc = new CardRedactionService();
+        var active = new StageConfigEnvelope
+        {
+            Version = 2,
+            ViewProfile = new StageViewProfile { FieldAccess = new() { ["amount"] = new() { Access = "hidden" } } }
+        };
+        var result = svc.Redact(new CardRedactionRequest { Card = Card(), CardSchemaJson = Schema, ActiveStageConfig = active });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDataJson);
+        Assert.False(doc.RootElement.TryGetProperty("amount", out _));
+    }
+
+    [Fact]
+    public void MaskedNumericField_FullyMasked()
+    {
+        var svc = new CardRedactionService();
+        // amount 标敏感，数字 88 打码后不得出现原值
+        const string schema = """[{"key":"amount","type":"money","sensitive":true}]""";
+        var card = new CfCard { FDataJson = """{"amount":88}""" };
+        var result = svc.Redact(new CardRedactionRequest { Card = card, CardSchemaJson = schema });
+
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDataJson);
+        Assert.Equal("****", doc.RootElement.GetProperty("amount").GetString());
+    }
+
+    [Fact]
+    public void MalformedDataJson_FailsClosedToEmpty()
+    {
+        var svc = new CardRedactionService();
+        var card = new CfCard { FDataJson = "{not valid json" };
+        var result = svc.Redact(new CardRedactionRequest { Card = card, CardSchemaJson = Schema });
+        Assert.Equal("{}", result.RedactedDataJson);
+    }
 }

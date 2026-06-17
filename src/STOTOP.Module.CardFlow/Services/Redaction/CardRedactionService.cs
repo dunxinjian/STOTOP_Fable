@@ -15,8 +15,7 @@ public sealed class CardRedactionService : ICardRedactionService
         var fields = ReadFields(request.CardSchemaJson);
         var fieldAccess = ComputeFieldAccess(fields, request);
 
-        var detailFields = ReadFields(request.DetailSchemaJson);
-        var detailAccess = ComputeDetailAccess(detailFields, request);
+        var detailAccess = ComputeDetailAccess(request.DetailSchemaJson, request);
 
         return new CardRedactionResult
         {
@@ -172,35 +171,91 @@ public sealed class CardRedactionService : ICardRedactionService
     }
 
     private static Dictionary<string, ResolvedAccess> ComputeDetailAccess(
-        IReadOnlyCollection<CardFieldDefinitionV2> detailFields,
+        string? detailSchemaJson,
         CardRedactionRequest request)
     {
-        // 明细列基线（按列敏感位）；明细 MVP 与字段同基线规则，仅叠加 active 节点 DetailAccess 覆盖。
         var result = new Dictionary<string, ResolvedAccess>(StringComparer.Ordinal);
-        foreach (var col in detailFields)
+        foreach (var (tableKey, columns) in ReadDetailTables(detailSchemaJson))
         {
-            if (string.IsNullOrWhiteSpace(col.Key))
+            foreach (var col in columns)
             {
-                continue;
+                if (string.IsNullOrWhiteSpace(col.Key))
+                {
+                    continue;
+                }
+
+                var access = new ResolvedAccess
+                {
+                    Access = col.Sensitive ? "masked" : "readonly",
+                    MaskPattern = col.MaskPattern
+                };
+
+                var accessKey = $"{tableKey}.{col.Key}";
+                if (request.ActiveStageConfig?.ViewProfile?.DetailAccess != null
+                    && request.ActiveStageConfig.ViewProfile.DetailAccess.TryGetValue(accessKey, out var r))
+                {
+                    access.Access = NormalizeAccess(r.Access);
+                    access.MaskPattern = r.MaskPattern ?? col.MaskPattern;
+                }
+
+                result[accessKey] = access;
             }
-
-            var access = new ResolvedAccess
-            {
-                Access = col.Sensitive ? "masked" : "readonly",
-                MaskPattern = col.MaskPattern
-            };
-
-            if (request.ActiveStageConfig?.ViewProfile?.DetailAccess != null
-                && request.ActiveStageConfig.ViewProfile.DetailAccess.TryGetValue($"default.{col.Key}", out var r))
-            {
-                access.Access = NormalizeAccess(r.Access);
-                access.MaskPattern = r.MaskPattern ?? col.MaskPattern;
-            }
-
-            result[$"default.{col.Key}"] = access;
         }
 
         return result;
+    }
+
+    // 明细 schema 三形态：顶层数组 / {fields:[]} → 单 default 表；{tables:[...]}（CardDetailSchemaV2）→ 多表
+    private static List<(string TableKey, List<CardFieldDefinitionV2> Columns)> ReadDetailTables(string? detailSchemaJson)
+    {
+        var tables = new List<(string, List<CardFieldDefinitionV2>)>();
+        if (string.IsNullOrWhiteSpace(detailSchemaJson))
+        {
+            return tables;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(detailSchemaJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                tables.Add(("default", JsonSerializer.Deserialize<List<CardFieldDefinitionV2>>(detailSchemaJson, JsonOptions) ?? new()));
+                return tables;
+            }
+
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("tables", out var t) && t.ValueKind == JsonValueKind.Array)
+                {
+                    var schema = JsonSerializer.Deserialize<CardDetailSchemaV2>(detailSchemaJson, JsonOptions);
+                    if (schema?.Tables != null)
+                    {
+                        foreach (var tbl in schema.Tables)
+                        {
+                            var key = string.IsNullOrWhiteSpace(tbl.DetailTableKey) ? "default" : tbl.DetailTableKey;
+                            tables.Add((key, tbl.Columns ?? new List<CardFieldDefinitionV2>()));
+                        }
+                    }
+
+                    return tables;
+                }
+
+                if (root.TryGetProperty("fields", out var f) && f.ValueKind == JsonValueKind.Array)
+                {
+                    var schema = JsonSerializer.Deserialize<CardSchemaV2>(detailSchemaJson, JsonOptions);
+                    tables.Add(("default", schema?.Fields ?? new List<CardFieldDefinitionV2>()));
+                    return tables;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // 解析失败 → 无表 → 明细全部 fail-closed
+        }
+
+        return tables;
     }
 
     private static string ApplyAllowlist(string? dataJson, Dictionary<string, ResolvedAccess> access)
@@ -215,7 +270,7 @@ public sealed class CardRedactionService : ICardRedactionService
             }
 
             output[key] = rule.Access == "masked"
-                ? FieldMasker.Mask(NodeToText(val), rule.MaskPattern)
+                ? MaskNode(val, rule.MaskPattern)
                 : val?.DeepClone();
         }
 
@@ -242,11 +297,22 @@ public sealed class CardRedactionService : ICardRedactionService
             }
 
             output[col] = rule.Access == "masked"
-                ? FieldMasker.Mask(NodeToText(val), rule.MaskPattern)
+                ? MaskNode(val, rule.MaskPattern)
                 : val?.DeepClone();
         }
 
         return output.ToJsonString();
+    }
+
+    private static string MaskNode(JsonNode? value, string? pattern)
+    {
+        // 复杂值（对象/数组）整体打码，避免按长度模式暴露序列化尾字符
+        if (value is JsonObject || value is JsonArray)
+        {
+            return "****";
+        }
+
+        return FieldMasker.Mask(NodeToText(value), pattern);
     }
 
     private static string NormalizeTable(string? key)
