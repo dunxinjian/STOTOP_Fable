@@ -47,6 +47,7 @@ public static class CardFlowSeeder
             new(25, "网点质控：接入 STG申通_揽收分析明细（建表 + 规则3103 + 流程2303 + 首节点5103）(2026-06-17)", MigrateV25),
             new(26, "网点质控：接入 STG申通_未出仓监控明细（建表 + 规则3104 + 流程2304 + 首节点5104）(2026-06-17)", MigrateV26),
             new(27, "网点质控：接入 STG申通_交货滞留明细（建表 + 规则3105 + 流程2305 + 首节点5105）(2026-06-17)", MigrateV27),
+            new(28, "网点质控：接入 STG申通_末端派送考核明细（建表 + 规则3106 + 流程2306 + 首节点5106）(2026-06-18)", MigrateV28),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2020,6 +2021,158 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5105, 2305, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3105);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV28(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_末端派送考核明细 暂存表（系统列 + 63 业务列 + 标准字段） ═══
+        // 注意：「当天签收延迟0-24h标识」「当天签收延迟24-48h标识」含非法字符 -，dbColumn 去掉斜杠为 F当天签收延迟024h标识 / F当天签收延迟2448h标识（实体/EF/DDL/映射四处一致）。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_末端派送考核明细')
+        CREATE TABLE [STG申通_末端派送考核明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3106 columnMapping，63 列）
+            [F运单号] NVARCHAR(200) NULL,
+            [F统计日期] NVARCHAR(200) NULL,
+            [F中转站名称] NVARCHAR(200) NULL,
+            [F应签收所属网点名称] NVARCHAR(200) NULL,
+            [F应签收网点名称] NVARCHAR(200) NULL,
+            [F发件频次名称] NVARCHAR(200) NULL,
+            [F中转站发件时间] NVARCHAR(200) NULL,
+            [F派件时间] NVARCHAR(200) NULL,
+            [F签收时间] NVARCHAR(200) NULL,
+            [F一阶段签收时限] NVARCHAR(200) NULL,
+            [F一阶段内签收标识] NVARCHAR(200) NULL,
+            [F二阶段签收时限] NVARCHAR(200) NULL,
+            [F二阶段内签收标识] NVARCHAR(200) NULL,
+            [F当天签收时限] NVARCHAR(200) NULL,
+            [F当天签收标识] NVARCHAR(200) NULL,
+            [F频次开始时间] NVARCHAR(200) NULL,
+            [F频次截止时间] NVARCHAR(200) NULL,
+            [F带货网点名称] NVARCHAR(200) NULL,
+            [F派件员姓名] NVARCHAR(200) NULL,
+            [F四级区域名称] NVARCHAR(200) NULL,
+            [F五级区域名称] NVARCHAR(200) NULL,
+            [F派件网点名称] NVARCHAR(200) NULL,
+            [F签收网点名称] NVARCHAR(200) NULL,
+            [F派次类型名称] NVARCHAR(200) NULL,
+            [F签收类型名称] NVARCHAR(200) NULL,
+            [F签收时长] NVARCHAR(200) NULL,
+            [F网点时效用时] NVARCHAR(200) NULL,
+            [F时效配置] NVARCHAR(200) NULL,
+            [F发件日期] NVARCHAR(200) NULL,
+            [FT0延迟签收标识] NVARCHAR(200) NULL,
+            [FT1延迟签收标识] NVARCHAR(200) NULL,
+            [FT2延迟签收标识] NVARCHAR(200) NULL,
+            [FT3延迟签收标识] NVARCHAR(200) NULL,
+            [F当天签收延迟024h标识] NVARCHAR(200) NULL,
+            [F当天签收延迟2448h标识] NVARCHAR(200) NULL,
+            [F当天签收延迟超48h标识] NVARCHAR(200) NULL,
+            [F14点签收时限] NVARCHAR(200) NULL,
+            [F14点签收标识] NVARCHAR(200) NULL,
+            [F20点签收时限] NVARCHAR(200) NULL,
+            [F20点签收标识] NVARCHAR(200) NULL,
+            [F已签收标识] NVARCHAR(200) NULL,
+            [F未签收有问题件标识] NVARCHAR(200) NULL,
+            [F已派未签标识] NVARCHAR(200) NULL,
+            [F进村件标识] NVARCHAR(200) NULL,
+            [F有进村件配置标识] NVARCHAR(200) NULL,
+            [F进村件顺延天数] NVARCHAR(200) NULL,
+            [F问题件原因] NVARCHAR(200) NULL,
+            [F问题件类型名称] NVARCHAR(200) NULL,
+            [F问题件登记时间] NVARCHAR(200) NULL,
+            [F退回件原因] NVARCHAR(200) NULL,
+            [F退回件扫描时间] NVARCHAR(200) NULL,
+            [F是否曾经退回标识] NVARCHAR(200) NULL,
+            [F是否曾经问题件标识] NVARCHAR(200) NULL,
+            [F时效配置类型名称] NVARCHAR(200) NULL,
+            [F未签收退回件标识] NVARCHAR(200) NULL,
+            [F包号] NVARCHAR(200) NULL,
+            [F预售标识] NVARCHAR(200) NULL,
+            [F电商平台] NVARCHAR(200) NULL,
+            [F配送类型名称] NVARCHAR(200) NULL,
+            [F一阶段考核标识] NVARCHAR(200) NULL,
+            [F二阶段考核标识] NVARCHAR(200) NULL,
+            [F区域时效件] NVARCHAR(200) NULL,
+            [F三段码] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_末端派送考核明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_末端派送考核明细'))
+        CREATE INDEX [IX_STG申通_末端派送考核明细_F批次ID] ON [STG申通_末端派送考核明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_末端派送考核明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_末端派送考核明细'))
+        CREATE INDEX [IX_STG申通_末端派送考核明细_数据作用域] ON [STG申通_末端派送考核明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_末端派送考核明细_运单号_未撤销' AND object_id = OBJECT_ID(N'STG申通_末端派送考核明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_末端派送考核明细_运单号_未撤销]
+            ON [STG申通_末端派送考核明细]([F运单号],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3106（末端派送考核明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3106)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3106, 192, N'excelInput', N'申通末端派送考核明细导入规则',
+        N'{""targetTable"":""STG申通_末端派送考核明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,一阶段内签收标识,T0延迟签收标识,当天签收标识"",""fullColumnIdentifier"":""运单号,统计日期,中转站名称,应签收所属网点名称,应签收网点名称,发件频次名称,中转站发件时间,派件时间,签收时间,一阶段签收时限,一阶段内签收标识,二阶段签收时限,二阶段内签收标识,当天签收时限,当天签收标识,频次开始时间,频次截止时间,带货网点名称,派件员姓名,四级区域名称,五级区域名称,派件网点名称,签收网点名称,派次类型名称,签收类型名称,签收时长,网点时效用时,时效配置,发件日期,T0延迟签收标识,T1延迟签收标识,T2延迟签收标识,T3延迟签收标识,当天签收延迟0-24h标识,当天签收延迟24-48h标识,当天签收延迟超48h标识,14点签收时限,14点签收标识,20点签收时限,20点签收标识,已签收标识,未签收有问题件标识,已派未签标识,进村件标识,有进村件配置标识,进村件顺延天数,问题件原因,问题件类型名称,问题件登记时间,退回件原因,退回件扫描时间,是否曾经退回标识,是否曾经问题件标识,时效配置类型名称,未签收退回件标识,包号,预售标识,电商平台,配送类型名称,一阶段考核标识,二阶段考核标识,区域时效件,三段码"",""columnMapping"":[{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""中转站名称"",""dbColumn"":""F中转站名称""},{""excelColumn"":""应签收所属网点名称"",""dbColumn"":""F应签收所属网点名称""},{""excelColumn"":""应签收网点名称"",""dbColumn"":""F应签收网点名称""},{""excelColumn"":""发件频次名称"",""dbColumn"":""F发件频次名称""},{""excelColumn"":""中转站发件时间"",""dbColumn"":""F中转站发件时间""},{""excelColumn"":""派件时间"",""dbColumn"":""F派件时间""},{""excelColumn"":""签收时间"",""dbColumn"":""F签收时间""},{""excelColumn"":""一阶段签收时限"",""dbColumn"":""F一阶段签收时限""},{""excelColumn"":""一阶段内签收标识"",""dbColumn"":""F一阶段内签收标识""},{""excelColumn"":""二阶段签收时限"",""dbColumn"":""F二阶段签收时限""},{""excelColumn"":""二阶段内签收标识"",""dbColumn"":""F二阶段内签收标识""},{""excelColumn"":""当天签收时限"",""dbColumn"":""F当天签收时限""},{""excelColumn"":""当天签收标识"",""dbColumn"":""F当天签收标识""},{""excelColumn"":""频次开始时间"",""dbColumn"":""F频次开始时间""},{""excelColumn"":""频次截止时间"",""dbColumn"":""F频次截止时间""},{""excelColumn"":""带货网点名称"",""dbColumn"":""F带货网点名称""},{""excelColumn"":""派件员姓名"",""dbColumn"":""F派件员姓名""},{""excelColumn"":""四级区域名称"",""dbColumn"":""F四级区域名称""},{""excelColumn"":""五级区域名称"",""dbColumn"":""F五级区域名称""},{""excelColumn"":""派件网点名称"",""dbColumn"":""F派件网点名称""},{""excelColumn"":""签收网点名称"",""dbColumn"":""F签收网点名称""},{""excelColumn"":""派次类型名称"",""dbColumn"":""F派次类型名称""},{""excelColumn"":""签收类型名称"",""dbColumn"":""F签收类型名称""},{""excelColumn"":""签收时长"",""dbColumn"":""F签收时长""},{""excelColumn"":""网点时效用时"",""dbColumn"":""F网点时效用时""},{""excelColumn"":""时效配置"",""dbColumn"":""F时效配置""},{""excelColumn"":""发件日期"",""dbColumn"":""F发件日期""},{""excelColumn"":""T0延迟签收标识"",""dbColumn"":""FT0延迟签收标识""},{""excelColumn"":""T1延迟签收标识"",""dbColumn"":""FT1延迟签收标识""},{""excelColumn"":""T2延迟签收标识"",""dbColumn"":""FT2延迟签收标识""},{""excelColumn"":""T3延迟签收标识"",""dbColumn"":""FT3延迟签收标识""},{""excelColumn"":""当天签收延迟0-24h标识"",""dbColumn"":""F当天签收延迟024h标识""},{""excelColumn"":""当天签收延迟24-48h标识"",""dbColumn"":""F当天签收延迟2448h标识""},{""excelColumn"":""当天签收延迟超48h标识"",""dbColumn"":""F当天签收延迟超48h标识""},{""excelColumn"":""14点签收时限"",""dbColumn"":""F14点签收时限""},{""excelColumn"":""14点签收标识"",""dbColumn"":""F14点签收标识""},{""excelColumn"":""20点签收时限"",""dbColumn"":""F20点签收时限""},{""excelColumn"":""20点签收标识"",""dbColumn"":""F20点签收标识""},{""excelColumn"":""已签收标识"",""dbColumn"":""F已签收标识""},{""excelColumn"":""未签收有问题件标识"",""dbColumn"":""F未签收有问题件标识""},{""excelColumn"":""已派未签标识"",""dbColumn"":""F已派未签标识""},{""excelColumn"":""进村件标识"",""dbColumn"":""F进村件标识""},{""excelColumn"":""有进村件配置标识"",""dbColumn"":""F有进村件配置标识""},{""excelColumn"":""进村件顺延天数"",""dbColumn"":""F进村件顺延天数""},{""excelColumn"":""问题件原因"",""dbColumn"":""F问题件原因""},{""excelColumn"":""问题件类型名称"",""dbColumn"":""F问题件类型名称""},{""excelColumn"":""问题件登记时间"",""dbColumn"":""F问题件登记时间""},{""excelColumn"":""退回件原因"",""dbColumn"":""F退回件原因""},{""excelColumn"":""退回件扫描时间"",""dbColumn"":""F退回件扫描时间""},{""excelColumn"":""是否曾经退回标识"",""dbColumn"":""F是否曾经退回标识""},{""excelColumn"":""是否曾经问题件标识"",""dbColumn"":""F是否曾经问题件标识""},{""excelColumn"":""时效配置类型名称"",""dbColumn"":""F时效配置类型名称""},{""excelColumn"":""未签收退回件标识"",""dbColumn"":""F未签收退回件标识""},{""excelColumn"":""包号"",""dbColumn"":""F包号""},{""excelColumn"":""预售标识"",""dbColumn"":""F预售标识""},{""excelColumn"":""电商平台"",""dbColumn"":""F电商平台""},{""excelColumn"":""配送类型名称"",""dbColumn"":""F配送类型名称""},{""excelColumn"":""一阶段考核标识"",""dbColumn"":""F一阶段考核标识""},{""excelColumn"":""二阶段考核标识"",""dbColumn"":""F二阶段考核标识""},{""excelColumn"":""区域时效件"",""dbColumn"":""F区域时效件""},{""excelColumn"":""三段码"",""dbColumn"":""F三段码""}],""keyFields"":[""运单号""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通末端派送考核(新)明细V2 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2306（QC_ST_DELIVERY_ASSESS） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2306)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2306, NULL, 1, GETDATE(), NULL, N'网点质控：申通末端派送考核(新)明细V2 导入暂存', GETDATE(), NULL, N'申通末端派送考核明细导入', NULL, N'QC_ST_DELIVERY_ASSESS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""末端派送考核(新)明细*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2306（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2306)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2306, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2306, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5106（ExcelInput 批次级自动节点，插件注册=1，规则=3106） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5106)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5106, 2306, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3106);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");

@@ -1,0 +1,22 @@
+==== B5 :: 末端派送考核(新)明细V2-2262ba2ddacb46319941bc759695b916.xlsx
+  SHEET[sheet1]
+    row1 len=1 nonempty=1 :: ['运单号']
+    row2 len=1 nonempty=1 :: ['621248350006792']
+    row3 len=1 nonempty=1 :: ['770018135717165']
+    row4 len=1 nonempty=1 :: ['770018141827221']
+==== B6 :: ossf0ba7cd6c1524ab8898e157103219f0f签收未达标.xlsx
+  SHEET[数据]
+    row1 len=1 nonempty=1 :: ['运单号']
+    row2 len=1 nonempty=1 :: ['770018148374917']
+    row3 len=1 nonempty=1 :: ['770018161877765']
+    row4 len=1 nonempty=1 :: ['770324383973345']
+==== B7 :: 末端时效积压明细_导出任务_20260617_109357653.xlsx
+  SHEET[末端时效积压明细]
+    row1 len=1 nonempty=1 :: ['业务日期']
+    row2 len=1 nonempty=1 :: ['20260614']
+    row3 len=1 nonempty=1 :: ['20260614']
+    row4 len=1 nonempty=1 :: ['20260614']
+==== B8 :: 申通_网点疑似遗失明细导出v5-98e7653ecc6a44f39746776c1bf953db.xlsx
+  SHEET[sheet1]
+    row1 len=1 nonempty=1 :: ['运单号']
+    row2 len=1 nonempty=1 :: ['770325149130154']
