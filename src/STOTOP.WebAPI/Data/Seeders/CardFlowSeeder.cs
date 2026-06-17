@@ -49,6 +49,7 @@ public static class CardFlowSeeder
             new(27, "网点质控：接入 STG申通_交货滞留明细（建表 + 规则3105 + 流程2305 + 首节点5105）(2026-06-17)", MigrateV27),
             new(28, "网点质控：接入 STG申通_末端派送考核明细（建表 + 规则3106 + 流程2306 + 首节点5106）(2026-06-18)", MigrateV28),
             new(29, "网点质控：接入 STG申通_签收未达标明细（建表 + 规则3107 + 流程2307 + 首节点5107）(2026-06-18)", MigrateV29),
+            new(30, "网点质控：接入 STG申通_积压明细（建表 + 规则3108 + 流程2308 + 首节点5108）(2026-06-18)", MigrateV30),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2278,6 +2279,136 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5107, 2307, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3107);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV30(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_积压明细 暂存表（系统列 + 41 业务列 + 标准字段） ═══
+        // 注意：「积压8-15天标识」「积压16-30天标识」「积压31-60天标识」含非法字符 -，dbColumn 去掉斜杠为 F积压815天标识 / F积压1630天标识 / F积压3160天标识（实体/EF/DDL/映射四处一致）。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_积压明细')
+        CREATE TABLE [STG申通_积压明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3108 columnMapping，41 列）
+            [F业务日期] NVARCHAR(200) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F大区名称] NVARCHAR(200) NULL,
+            [F省区名称] NVARCHAR(200) NULL,
+            [F省份名称] NVARCHAR(200) NULL,
+            [F所属网点编码] NVARCHAR(200) NULL,
+            [F所属网点名称] NVARCHAR(200) NULL,
+            [F应签网点编码] NVARCHAR(200) NULL,
+            [F应签网点] NVARCHAR(200) NULL,
+            [F四级区域编码] NVARCHAR(200) NULL,
+            [F四级区域] NVARCHAR(200) NULL,
+            [F三段码] NVARCHAR(200) NULL,
+            [F最后扫描组织编码] NVARCHAR(200) NULL,
+            [F最后扫描组织名称] NVARCHAR(200) NULL,
+            [F最后扫描组织父级编码] NVARCHAR(200) NULL,
+            [F最后扫描组织父级名称] NVARCHAR(200) NULL,
+            [F最后扫描时间] NVARCHAR(200) NULL,
+            [F最后扫描类型] NVARCHAR(200) NULL,
+            [F最后扫描类型编码] NVARCHAR(200) NULL,
+            [F扫描员] NVARCHAR(200) NULL,
+            [F扫描员编码] NVARCHAR(200) NULL,
+            [F业务员] NVARCHAR(200) NULL,
+            [F业务员编码] NVARCHAR(200) NULL,
+            [F问题件一级类型] NVARCHAR(200) NULL,
+            [F问题件二级类型] NVARCHAR(200) NULL,
+            [F退回件标识] NVARCHAR(200) NULL,
+            [F积压1天标识] NVARCHAR(200) NULL,
+            [F积压2天标识] NVARCHAR(200) NULL,
+            [F积压3天标识] NVARCHAR(200) NULL,
+            [F积压4天标识] NVARCHAR(200) NULL,
+            [F积压5天标识] NVARCHAR(200) NULL,
+            [F积压六6天标识] NVARCHAR(200) NULL,
+            [F积压7天标识] NVARCHAR(200) NULL,
+            [F积压815天标识] NVARCHAR(200) NULL,
+            [F积压1630天标识] NVARCHAR(200) NULL,
+            [F积压3160天标识] NVARCHAR(200) NULL,
+            [F超过3天标识] NVARCHAR(200) NULL,
+            [F超过5天标识] NVARCHAR(200) NULL,
+            [F超过7天标识] NVARCHAR(200) NULL,
+            [F是否积压剔除标识] NVARCHAR(200) NULL,
+            [F是否实时签收] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_积压明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_积压明细'))
+        CREATE INDEX [IX_STG申通_积压明细_F批次ID] ON [STG申通_积压明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_积压明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_积压明细'))
+        CREATE INDEX [IX_STG申通_积压明细_数据作用域] ON [STG申通_积压明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_积压明细_运单号_未撤销' AND object_id = OBJECT_ID(N'STG申通_积压明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_积压明细_运单号_未撤销]
+            ON [STG申通_积压明细]([F运单号],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3108（积压明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3108)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3108, 192, N'excelInput', N'申通积压明细导入规则',
+        N'{""targetTable"":""STG申通_积压明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,积压3天标识,问题件一级类型,最后扫描类型"",""fullColumnIdentifier"":""业务日期,运单号,大区名称,省区名称,省份名称,所属网点编码,所属网点名称,应签网点编码,应签网点,四级区域编码,四级区域,三段码,最后扫描组织编码,最后扫描组织名称,最后扫描组织父级编码,最后扫描组织父级名称,最后扫描时间,最后扫描类型,最后扫描类型编码,扫描员,扫描员编码,业务员,业务员编码,问题件一级类型,问题件二级类型,退回件标识,积压1天标识,积压2天标识,积压3天标识,积压4天标识,积压5天标识,积压六6天标识,积压7天标识,积压8-15天标识,积压16-30天标识,积压31-60天标识,超过3天标识,超过5天标识,超过7天标识,是否积压剔除标识,是否实时签收"",""columnMapping"":[{""excelColumn"":""业务日期"",""dbColumn"":""F业务日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""大区名称"",""dbColumn"":""F大区名称""},{""excelColumn"":""省区名称"",""dbColumn"":""F省区名称""},{""excelColumn"":""省份名称"",""dbColumn"":""F省份名称""},{""excelColumn"":""所属网点编码"",""dbColumn"":""F所属网点编码""},{""excelColumn"":""所属网点名称"",""dbColumn"":""F所属网点名称""},{""excelColumn"":""应签网点编码"",""dbColumn"":""F应签网点编码""},{""excelColumn"":""应签网点"",""dbColumn"":""F应签网点""},{""excelColumn"":""四级区域编码"",""dbColumn"":""F四级区域编码""},{""excelColumn"":""四级区域"",""dbColumn"":""F四级区域""},{""excelColumn"":""三段码"",""dbColumn"":""F三段码""},{""excelColumn"":""最后扫描组织编码"",""dbColumn"":""F最后扫描组织编码""},{""excelColumn"":""最后扫描组织名称"",""dbColumn"":""F最后扫描组织名称""},{""excelColumn"":""最后扫描组织父级编码"",""dbColumn"":""F最后扫描组织父级编码""},{""excelColumn"":""最后扫描组织父级名称"",""dbColumn"":""F最后扫描组织父级名称""},{""excelColumn"":""最后扫描时间"",""dbColumn"":""F最后扫描时间""},{""excelColumn"":""最后扫描类型"",""dbColumn"":""F最后扫描类型""},{""excelColumn"":""最后扫描类型编码"",""dbColumn"":""F最后扫描类型编码""},{""excelColumn"":""扫描员"",""dbColumn"":""F扫描员""},{""excelColumn"":""扫描员编码"",""dbColumn"":""F扫描员编码""},{""excelColumn"":""业务员"",""dbColumn"":""F业务员""},{""excelColumn"":""业务员编码"",""dbColumn"":""F业务员编码""},{""excelColumn"":""问题件一级类型"",""dbColumn"":""F问题件一级类型""},{""excelColumn"":""问题件二级类型"",""dbColumn"":""F问题件二级类型""},{""excelColumn"":""退回件标识"",""dbColumn"":""F退回件标识""},{""excelColumn"":""积压1天标识"",""dbColumn"":""F积压1天标识""},{""excelColumn"":""积压2天标识"",""dbColumn"":""F积压2天标识""},{""excelColumn"":""积压3天标识"",""dbColumn"":""F积压3天标识""},{""excelColumn"":""积压4天标识"",""dbColumn"":""F积压4天标识""},{""excelColumn"":""积压5天标识"",""dbColumn"":""F积压5天标识""},{""excelColumn"":""积压六6天标识"",""dbColumn"":""F积压六6天标识""},{""excelColumn"":""积压7天标识"",""dbColumn"":""F积压7天标识""},{""excelColumn"":""积压8-15天标识"",""dbColumn"":""F积压815天标识""},{""excelColumn"":""积压16-30天标识"",""dbColumn"":""F积压1630天标识""},{""excelColumn"":""积压31-60天标识"",""dbColumn"":""F积压3160天标识""},{""excelColumn"":""超过3天标识"",""dbColumn"":""F超过3天标识""},{""excelColumn"":""超过5天标识"",""dbColumn"":""F超过5天标识""},{""excelColumn"":""超过7天标识"",""dbColumn"":""F超过7天标识""},{""excelColumn"":""是否积压剔除标识"",""dbColumn"":""F是否积压剔除标识""},{""excelColumn"":""是否实时签收"",""dbColumn"":""F是否实时签收""}],""keyFields"":[""运单号""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通末端时效积压明细 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2308（QC_ST_BACKLOG） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2308)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2308, NULL, 1, GETDATE(), NULL, N'网点质控：申通末端时效积压明细 导入暂存', GETDATE(), NULL, N'申通积压明细导入', NULL, N'QC_ST_BACKLOG', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""末端时效积压明细*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2308（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2308)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2308, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2308, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5108（ExcelInput 批次级自动节点，插件注册=1，规则=3108） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5108)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5108, 2308, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3108);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
