@@ -10,6 +10,7 @@ using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.System.Entities;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -235,13 +236,13 @@ public class AmoebaPLService
 
         // 4. 推算期间列表：[当期, 环比期, 同比期(可选)]
         var periods = new List<string> { request.MainPeriod };
-        var momPeriod = CalcPreviousMonth(request.MainPeriod);
+        var momPeriod = CalcPreviousPeriod(request.MainPeriod);
         periods.Add(momPeriod);
         string? yoyPeriod = null;
         if (request.IncludeYoy)
         {
             yoyPeriod = CalcYoyPeriod(request.MainPeriod);
-            periods.Add(yoyPeriod);
+            if (yoyPeriod != null) periods.Add(yoyPeriod);   // 日/周粒度无同比，CalcYoyPeriod 返回 null
         }
 
         // 5. 加载映射规则（仅供下游调度，不再作为报表主流程的全局筛选依据）
@@ -257,7 +258,7 @@ public class AmoebaPLService
         // [批次5-S2] 子报表的同期全口径基线(scope 过滤前全集)，供公共费分摊取全额/全口径件量；全口径请求为 null
         var periodFullScopePoints = new List<List<DataPoint>?>();
         bool isSubReport = request.Scope?.IsSubReport == true;
-        var periodRanges = periods.Select(PeriodToDateRange).ToList();
+        var periodRanges = periods.Select(p => PeriodToDateRange(p)).ToList();
         for (int i = 0; i < periods.Count; i++)
         {
             var (startDate, endDate) = periodRanges[i];
@@ -612,42 +613,174 @@ public class AmoebaPLService
         return false;
     }
 
-    /// <summary>校验 YYYYMM 期间格式</summary>
-    private static bool IsValidPeriod(string? period)
+    // ===== [批次5-S3] 周期粒度泛化（day/week/month/quarter/year）。设计 spec §5.3。 =====
+
+    /// <summary>归一化粒度：null/空→month；统一小写；非法值抛 ArgumentException。</summary>
+    internal static string NormalizeGranularity(string? granularity)
     {
-        return !string.IsNullOrEmpty(period)
-            && period.Length == 6
-            && int.TryParse(period.Substring(0, 4), out var year) && year is >= 1900 and <= 9999
-            && int.TryParse(period.Substring(4, 2), out var month) && month is >= 1 and <= 12;
+        var g = string.IsNullOrWhiteSpace(granularity) ? "month" : granularity.Trim().ToLowerInvariant();
+        return g switch
+        {
+            "day" or "week" or "month" or "quarter" or "year" => g,
+            _ => throw new ArgumentException($"不支持的周期粒度：{granularity}"),
+        };
     }
 
-    /// <summary>YYYYMM 字符串 -> (月初, 月末)</summary>
-    private static (DateTime Start, DateTime End) PeriodToDateRange(string period)
+    /// <summary>台账粒度(月/季/年走凭证+折旧实时聚合) vs 估算粒度(日/周走估算)。设计 §5.1 裁决C1。</summary>
+    internal static bool IsLedgerGranularity(string? granularity) =>
+        NormalizeGranularity(granularity) is "month" or "quarter" or "year";
+
+    /// <summary>期间键 = 粒度前缀 + 期间（设计 §5.3）：D:/W:/M:/Q:/Y:。存量(全月)迁移回填 'M:'+期间。</summary>
+    internal static string BuildPeriodKey(string period, string granularity = "month")
     {
-        if (!IsValidPeriod(period))
-            throw new ArgumentException($"期间格式应为 YYYYMM，当前值：{period}");
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        var start = new DateTime(year, month, 1);
-        var end = start.AddMonths(1).AddDays(-1);
-        return (start, end);
+        var prefix = NormalizeGranularity(granularity) switch
+        {
+            "day" => "D",
+            "week" => "W",
+            "quarter" => "Q",
+            "year" => "Y",
+            _ => "M",
+        };
+        return $"{prefix}:{period}";
     }
 
-    /// <summary>上月：202603 -> 202602；202601 -> 202512</summary>
-    private static string CalcPreviousMonth(string period)
+    /// <summary>解析 ISO 周字符串 "YYYY-Www"（如 2026-W11）→ 该周周一；非法返回 false。</summary>
+    private static bool TryParseIsoWeek(string? period, out DateTime monday)
     {
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        var dt = new DateTime(year, month, 1).AddMonths(-1);
-        return dt.ToString("yyyyMM");
+        monday = default;
+        if (string.IsNullOrEmpty(period) || period.Length != 8 || period[4] != '-' || period[5] != 'W')
+            return false;
+        if (!int.TryParse(period.AsSpan(0, 4), out var year) || year is < 1900 or > 9999) return false;
+        if (!int.TryParse(period.AsSpan(6, 2), out var week) || week < 1) return false;
+        if (week > ISOWeek.GetWeeksInYear(year)) return false;
+        monday = ISOWeek.ToDateTime(year, week, DayOfWeek.Monday);
+        return true;
     }
 
-    /// <summary>去年同月：202603 -> 202503</summary>
-    private static string CalcYoyPeriod(string period)
+    /// <summary>DateTime → ISO 周字符串 "YYYY-Www"（ISO 年可能与日历年在年初/末跨界）。</summary>
+    private static string FormatIsoWeek(DateTime date) =>
+        $"{ISOWeek.GetYear(date):D4}-W{ISOWeek.GetWeekOfYear(date):D2}";
+
+    /// <summary>校验期间字符串与粒度匹配（设计 §5.3 格式表）。granularity 默认 month 保持旧调用兼容。</summary>
+    internal static bool IsValidPeriod(string? period, string granularity = "month")
     {
-        var year = int.Parse(period.Substring(0, 4));
-        var month = int.Parse(period.Substring(4, 2));
-        return $"{year - 1:D4}{month:D2}";
+        if (string.IsNullOrWhiteSpace(period)) return false;
+        switch (NormalizeGranularity(granularity))
+        {
+            case "day":
+                return period.Length == 8
+                    && DateTime.TryParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+            case "week":
+                return TryParseIsoWeek(period, out _);
+            case "quarter":
+                return period.Length == 6 && period[4] == 'Q'
+                    && int.TryParse(period.AsSpan(0, 4), out var qy) && qy is >= 1900 and <= 9999
+                    && int.TryParse(period.AsSpan(5, 1), out var qn) && qn is >= 1 and <= 4;
+            case "year":
+                return period.Length == 4
+                    && int.TryParse(period, out var yy) && yy is >= 1900 and <= 9999;
+            default: // month
+                return period.Length == 6
+                    && int.TryParse(period.AsSpan(0, 4), out var my) && my is >= 1900 and <= 9999
+                    && int.TryParse(period.AsSpan(4, 2), out var mm) && mm is >= 1 and <= 12;
+        }
+    }
+
+    /// <summary>
+    /// 期间字符串 → (起始, 闭区间末日)。末日取「本期最后一天」，聚合内部 &lt; end.AddDays(1)
+    /// 自动转半开 [start, nextStart)（与 AggregateVoucherData 的半开过滤一致）。设计 §5.3。
+    /// </summary>
+    internal static (DateTime Start, DateTime End) PeriodToDateRange(string period, string granularity = "month")
+    {
+        var g = NormalizeGranularity(granularity);
+        if (!IsValidPeriod(period, g))
+            throw new ArgumentException($"期间格式与粒度({g})不符，当前值：{period}");
+        switch (g)
+        {
+            case "day":
+            {
+                var d = DateTime.ParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture);
+                return (d, d);
+            }
+            case "week":
+            {
+                TryParseIsoWeek(period, out var monday);
+                return (monday, monday.AddDays(6));
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                var start = new DateTime(qy, (qn - 1) * 3 + 1, 1);
+                return (start, start.AddMonths(3).AddDays(-1));
+            }
+            case "year":
+            {
+                var y = int.Parse(period);
+                return (new DateTime(y, 1, 1), new DateTime(y, 12, 31));
+            }
+            default: // month
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                var start = new DateTime(year, month, 1);
+                return (start, start.AddMonths(1).AddDays(-1));
+            }
+        }
+    }
+
+    /// <summary>上一期（按粒度）：月→上月, 日→昨日, 周→上周, 季→上季, 年→去年。</summary>
+    internal static string CalcPreviousPeriod(string period, string granularity = "month")
+    {
+        switch (NormalizeGranularity(granularity))
+        {
+            case "day":
+                return DateTime.ParseExact(period, "yyyyMMdd", CultureInfo.InvariantCulture).AddDays(-1).ToString("yyyyMMdd");
+            case "week":
+            {
+                TryParseIsoWeek(period, out var monday);
+                return FormatIsoWeek(monday.AddDays(-7));
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                qn--; if (qn == 0) { qn = 4; qy--; }
+                return $"{qy:D4}Q{qn}";
+            }
+            case "year":
+                return $"{int.Parse(period) - 1:D4}";
+            default: // month
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                return new DateTime(year, month, 1).AddMonths(-1).ToString("yyyyMM");
+            }
+        }
+    }
+
+    /// <summary>去年同期：月/季/年→年-1；日/周→null（无同比意义，设计 §5.3）。</summary>
+    internal static string? CalcYoyPeriod(string period, string granularity = "month")
+    {
+        switch (NormalizeGranularity(granularity))
+        {
+            case "month":
+            {
+                var year = int.Parse(period.AsSpan(0, 4));
+                var month = int.Parse(period.AsSpan(4, 2));
+                return $"{year - 1:D4}{month:D2}";
+            }
+            case "quarter":
+            {
+                var qy = int.Parse(period.AsSpan(0, 4));
+                var qn = int.Parse(period.AsSpan(5, 1));
+                return $"{qy - 1:D4}Q{qn}";
+            }
+            case "year":
+                return $"{int.Parse(period) - 1:D4}";
+            default: // day, week
+                return null;
+        }
     }
 
     /// <summary>
