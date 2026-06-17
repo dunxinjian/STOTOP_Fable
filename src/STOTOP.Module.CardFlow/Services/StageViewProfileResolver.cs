@@ -252,13 +252,27 @@ public sealed class StageViewProfileResolver : IStageViewProfileResolver
         try
         {
             using var document = JsonDocument.Parse(schemaJson);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            var root = document.RootElement;
+
+            // 字段数组：v1 扁平为顶层 Array；v2 信封为 { "fields": [...] }
+            JsonElement fieldsArray;
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                fieldsArray = root;
+            }
+            else if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("fields", out var fieldsProp)
+                && fieldsProp.ValueKind == JsonValueKind.Array)
+            {
+                fieldsArray = fieldsProp;
+            }
+            else
             {
                 return new List<string>();
             }
 
             var result = new List<string>();
-            foreach (var field in document.RootElement.EnumerateArray())
+            foreach (var field in fieldsArray.EnumerateArray())
             {
                 if (field.ValueKind == JsonValueKind.Object
                     && field.TryGetProperty("key", out var keyProperty)

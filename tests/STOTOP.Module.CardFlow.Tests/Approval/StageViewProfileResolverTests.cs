@@ -96,4 +96,29 @@ public class StageViewProfileResolverTests
         Assert.False(detailJson.RootElement.TryGetProperty("invoiceNo", out _));
         Assert.Equal("6601", detailJson.RootElement.GetProperty("accountSubject").GetString());
     }
+
+    [Fact]
+    public void ResolveLegacyFallback_ObjectSchema_ExtractsFieldKeys()
+    {
+        var resolver = new StageViewProfileResolver();
+        var card = new CfCard { FDataJson = """{"accountCode":"1001","amount":88}""" };
+        var config = new StageConfigEnvelope
+        {
+            Version = 1,
+            InputFields = new List<string> { "accountCode" }
+        };
+
+        var result = resolver.Resolve(
+            """{"version":2,"fields":[{"key":"accountCode","label":"科目"},{"key":"amount","label":"金额"}]}""",
+            null,
+            new CfStageDefinition { FStageName = "财务复核" },
+            card,
+            new List<CfCardDetail>(),
+            operatorId: 1,
+            config);
+
+        // 修复前：ReadFieldKeys 对 Object 形态返回空 → FieldAccess 不含这些键（取值抛 KeyNotFound）
+        Assert.Equal("editable", result.FieldAccess["accountCode"].Access);
+        Assert.Equal("readonly", result.FieldAccess["amount"].Access);
+    }
 }

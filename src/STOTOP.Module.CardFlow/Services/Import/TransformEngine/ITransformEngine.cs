@@ -6,11 +6,6 @@ public interface ITransformEngine
     Dictionary<string, object?> Execute(
         Dictionary<string, string> row,
         List<TransformRule> rules);
-
-    /// <summary>对样本数据执行转换，用于前端预览</summary>
-    List<Dictionary<string, object?>> Preview(
-        List<Dictionary<string, string>> sampleRows,
-        List<TransformRule> rules);
 }
 
 public class TransformRule
