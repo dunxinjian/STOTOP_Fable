@@ -14,11 +14,11 @@ public static class FieldMasker
         switch ((pattern ?? string.Empty).Trim().ToLowerInvariant())
         {
             case "phone":
-                return v.Length >= 7 ? $"{v[..3]}****{v[^4..]}" : Generic(v);
+                return v.Length > 7 ? $"{v[..3]}****{v[^4..]}" : Generic(v);
             case "idcard":
-                return v.Length >= 8 ? $"{v[..4]}**********{v[^4..]}" : Generic(v);
+                return v.Length > 8 ? $"{v[..4]}**********{v[^4..]}" : Generic(v);
             case "bankcard":
-                return v.Length >= 4 ? $"**** **** **** {v[^4..]}" : "****";
+                return v.Length > 4 ? $"**** **** **** {v[^4..]}" : "****";
             case "email":
                 var at = v.IndexOf('@');
                 return at >= 1 ? $"{v[0]}***{v[at..]}" : Generic(v);
@@ -29,5 +29,6 @@ public static class FieldMasker
         }
     }
 
-    private static string Generic(string v) => v.Length <= 4 ? "****" : $"{v[..2]}****{v[^2..]}";
+    // 短值整体打码，避免暴露多数字符。
+    private static string Generic(string v) => v.Length <= 7 ? "****" : $"{v[..2]}****{v[^2..]}";
 }
