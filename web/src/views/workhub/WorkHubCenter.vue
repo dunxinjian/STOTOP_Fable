@@ -48,7 +48,6 @@ const notificationUnreadCount = ref(0)
 const notificationsLoading = ref(false)
 
 // ===== 待办 Tab 状态 =====
-const activeSource = ref<string>('')
 const dateRangeValue = ref<[Dayjs, Dayjs] | undefined>(undefined)
 
 // ===== 来源配置 =====
@@ -60,15 +59,6 @@ const statsItems = computed(() => [
   { key: 'contract', label: '合同', count: hub.stats.value.notification, color: 'var(--biz-contract)', icon: FileTextOutlined },
   { key: 'points', label: '积分', count: 0, color: 'var(--biz-points)', icon: TrophyOutlined },
 ])
-
-const sourceOptions = [
-  { label: 'OA', value: 'oa' },
-  { label: '质量', value: 'quality' },
-  { label: '任务', value: 'task' },
-  { label: '运单', value: 'datacenter' },
-  { label: '合同', value: 'contract' },
-  { label: '积分', value: 'points' },
-]
 
 const hasActiveFilters = computed(() =>
   hub.filters.value.sources.length > 0 ||
@@ -255,20 +245,16 @@ async function handleNotificationClick(notification: NotificationListDto) {
 }
 
 // ===== 待办 Tab 操作 =====
-function toggleSourceFilter(key: string) {
-  if (activeSource.value === key) {
-    activeSource.value = ''
-    hub.setFilter('sources', [])
-  } else {
-    activeSource.value = key
-    hub.setFilter('sources', [key as WorkItem['source']])
-  }
+function isSourceActive(key: string) {
+  return (hub.filters.value.sources as string[]).includes(key)
 }
 
-function onSourcesChange() {
-  activeSource.value = ''
-  hub.fetchItems(true)
-  hub.fetchStats()
+function toggleSourceFilter(key: string) {
+  const current = hub.filters.value.sources as string[]
+  const next = current.includes(key)
+    ? current.filter((k) => k !== key)
+    : [...current, key]
+  hub.setFilter('sources', next as WorkItem['source'][])
 }
 
 function onPriorityChange() {
@@ -290,7 +276,6 @@ function onDateRangeChange(dates: [Dayjs, Dayjs] | [string, string] | null | und
 
 function handleResetFilters() {
   dateRangeValue.value = undefined
-  activeSource.value = ''
   hub.resetFilters()
 }
 
@@ -505,20 +490,22 @@ onUnmounted(() => {
         </template>
 
         <div class="tab-content scrollable">
-          <!-- 统计栏 -->
+          <!-- 来源筛选（带计数的统计 chip，多选） -->
           <div class="stats-bar">
-            <div
+            <button
               v-for="stat in statsItems"
               :key="stat.key"
+              type="button"
               class="stat-item"
-              :class="{ active: activeSource === stat.key }"
+              :class="{ active: isSourceActive(stat.key) }"
+              :aria-pressed="isSourceActive(stat.key)"
               :style="{ '--stat-color': stat.color }"
               @click="toggleSourceFilter(stat.key)"
             >
               <component :is="stat.icon" class="stat-icon" />
               <span class="stat-label">{{ stat.label }}</span>
               <span class="stat-count" v-if="stat.count > 0">{{ stat.count }}</span>
-            </div>
+            </button>
           </div>
 
           <!-- 紧急摘要行 -->
@@ -550,14 +537,6 @@ onUnmounted(() => {
           <!-- 筛选器栏（非多选模式下可见） -->
           <div class="filter-bar" v-if="!hub.isMultiSelectMode.value">
             <div class="filter-row">
-              <div class="filter-group">
-                <span class="filter-label">来源：</span>
-                <a-checkbox-group
-                  v-model:value="hub.filters.value.sources"
-                  :options="sourceOptions"
-                  @change="onSourcesChange"
-                />
-              </div>
               <div class="filter-group">
                 <span class="filter-label">优先级：</span>
                 <a-select
@@ -912,6 +891,9 @@ onUnmounted(() => {
   transition: all 0.18s ease;
   border: 1px solid var(--border);
   user-select: none;
+  font-family: inherit;
+  text-align: left;
+  appearance: none;
 
   &:hover {
     box-shadow: var(--shadow-md);
