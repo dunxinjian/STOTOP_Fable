@@ -791,14 +791,14 @@ onMounted(async () => {
 
 // 流程名称
 .flow-name {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
   line-height: 1.4;
 
   &:hover {
-    color: #4096ff;
+    color: var(--color-primary);
     text-decoration: none;
   }
 }

@@ -559,7 +559,7 @@ watch(() => accountSetStore.currentAccountSetId, async (newId) => {
     position: relative;
 
     &.active {
-      color: var(--color-primary);
+      color: var(--text-1);
       &::after {
         content: '';
         position: absolute;

@@ -243,9 +243,10 @@ async function fetchGroups(shopName: string) {
 }
 
 .plan-name-link {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   &:hover {
+    color: var(--color-primary);
     text-decoration: underline;
   }
 }

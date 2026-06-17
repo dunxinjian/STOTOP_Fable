@@ -198,7 +198,7 @@ function handleReset() {
 }
 
 .nav-item.active {
-  color: var(--color-primary);
+  color: var(--text-1);
   background: var(--color-primary-light);
   border-left-color: var(--color-primary);
   font-weight: 500;

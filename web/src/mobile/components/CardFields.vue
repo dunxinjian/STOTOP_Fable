@@ -115,9 +115,13 @@ function previewImage(current: string, images: string[]) {
     }
 
     .file-link {
-      color: var(--color-primary);
+      color: var(--text-1);
       text-decoration: none;
       font-size: 14px;
+
+      &:hover {
+        color: var(--color-primary);
+      }
     }
   }
 }

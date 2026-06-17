@@ -534,11 +534,12 @@ onBeforeUnmount(() => {
 
 /* 异常详情表格样式 */
 .exception-link {
-  color: var(--color-primary);
+  color: var(--text-1);
   font-weight: 500;
   cursor: pointer;
 }
 .exception-link:hover {
+  color: var(--color-primary);
   text-decoration: underline;
 }
 

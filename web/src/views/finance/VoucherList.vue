@@ -264,7 +264,7 @@
         <p class="ant-upload-text">点击或拖拽Excel文件到此区域</p>
       </a-upload-dragger>
       <div style="margin-top: 12px;">
-        <a @click="downloadImportTemplate" style="color: var(--color-primary);">下载导入模板</a>
+        <a @click="downloadImportTemplate" style="color: var(--text-1);">下载导入模板</a>
       </div>
     </a-modal>
     </template>

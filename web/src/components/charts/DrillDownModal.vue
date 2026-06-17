@@ -80,10 +80,11 @@ function goToVoucher(record: any) {
 
 <style scoped>
 .voucher-link {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
 }
 .voucher-link:hover {
+  color: var(--color-primary);
   text-decoration: underline;
 }
 </style>

@@ -608,6 +608,9 @@ defineExpose({
 }
 .process-link {
   font-size: 13px;
+  color: var(--text-1);
+}
+.process-link:hover {
   color: var(--color-primary);
 }
 .process-node {

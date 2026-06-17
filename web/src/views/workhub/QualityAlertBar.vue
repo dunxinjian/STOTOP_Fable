@@ -131,12 +131,13 @@ onUnmounted(() => {
 
 .alert-right {
   font-size: 13px;
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;
 
   &:hover {
+    color: var(--color-primary);
     opacity: 0.8;
   }
 }

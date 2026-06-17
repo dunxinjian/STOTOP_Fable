@@ -697,7 +697,7 @@ onMounted(() => { fetchUserList(); fetchDeptTree(); fetchRoleOptions() })
 
   :deep(.ant-typography) {
     font-size: $font-size-sm;
-    color: $color-primary;
+    color: $text-primary;
     transition: $transition-fast;
     white-space: nowrap;
 

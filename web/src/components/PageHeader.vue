@@ -126,12 +126,13 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--space-xs4);
   font-size: var(--font-base);
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   padding: var(--space-xs4) var(--space-sm8);
   border-radius: var(--radius-sm);
   transition: background 0.2s;
   &:hover {
+    color: var(--color-primary);
     background: var(--color-primary-light);
   }
 }

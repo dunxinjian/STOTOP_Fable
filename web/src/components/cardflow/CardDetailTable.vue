@@ -867,10 +867,14 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .expand-btn {
-    color: var(--color-primary);
+    color: var(--text-1);
     font-size: 13px;
     cursor: pointer;
     user-select: none;
+
+    &:hover {
+      color: var(--color-primary);
+    }
   }
 }
 
@@ -904,10 +908,14 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .collapse-btn {
-    color: var(--color-primary);
+    color: var(--text-1);
     font-size: 13px;
     cursor: pointer;
     user-select: none;
+
+    &:hover {
+      color: var(--color-primary);
+    }
   }
 }
 

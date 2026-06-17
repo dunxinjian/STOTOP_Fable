@@ -928,9 +928,10 @@ onMounted(async () => {
 }
 
 .link-text {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   &:hover {
+    color: var(--color-primary);
     text-decoration: underline;
   }
 }

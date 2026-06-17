@@ -629,12 +629,13 @@ async function loadChartData() {
 
 .rule-link {
   margin-left: 16px;
-  color: var(--color-primary);
+  color: var(--text-1);
   font-size: 14px;
   cursor: pointer;
   text-decoration: none;
 
   &:hover {
+    color: var(--color-primary);
     text-decoration: underline;
   }
 }
@@ -775,11 +776,12 @@ async function loadChartData() {
 }
 
 .drill-link {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   text-decoration: none;
 
   &:hover {
+    color: var(--color-primary);
     text-decoration: underline;
   }
 }

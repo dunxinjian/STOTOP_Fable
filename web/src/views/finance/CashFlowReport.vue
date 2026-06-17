@@ -286,8 +286,8 @@ function exportToExcel() {
 }
 
 .drill-link {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
-  &:hover { text-decoration: underline; }
+  &:hover { color: var(--color-primary); text-decoration: underline; }
 }
 </style>

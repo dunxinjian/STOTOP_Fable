@@ -73,7 +73,7 @@ const defaultThemeConfig: ThemeConfig = {
   sidebarExpandedWidth: 180,
   sidebarCollapsedWidth: 48,
   sidebarBgColor: '#EDEEF1',
-  sidebarActiveBgColor: '#FFF3EA',
+  sidebarActiveBgColor: '#F1F3F6',
   sidebarMaxTabs: 12,
 }
 
@@ -131,6 +131,16 @@ export const useThemeStore = defineStore('theme', () => {
         Button: {
           controlHeight: 32,
           controlHeightSM: 24,
+        },
+        Tabs: {
+          itemColor: '#5A6068',
+          itemSelectedColor: '#1F2329',   // 激活页签文字中性；下划线(inkBar)留橙作标记
+          itemHoverColor: themeConfig.value.colorPrimary,
+          inkBarColor: themeConfig.value.colorPrimary,
+        },
+        Menu: {
+          itemSelectedColor: '#1F2329',    // 激活菜单文字中性
+          itemSelectedBg: '#F1F3F6',       // 激活菜单底中性
         },
       },
       algorithm: algorithms,
@@ -278,7 +288,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--topbar-border', 'rgba(255,255,255,0.10)')
     // 注：--sidebar-bg / --sidebar-item-active-bg 由 applySidebarCSS 按 themeConfig 注入，此处补静态项
     s.setProperty('--sidebar-item-hover', 'rgba(0,0,0,0.05)')
-    s.setProperty('--sidebar-item-active-text', 'var(--color-primary)')
+    s.setProperty('--sidebar-item-active-text', 'var(--text-1)')
     // —— 静态：业务色
     s.setProperty('--biz-waybill', '#6B4FB0')
     s.setProperty('--biz-contract', '#8A6D3B')

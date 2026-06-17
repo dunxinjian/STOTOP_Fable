@@ -233,9 +233,12 @@ onMounted(() => loadData())
   margin-bottom: 8px;
 }
 .close-btn {
-  color: var(--color-primary);
+  color: var(--text-1);
   font-weight: 400;
   font-size: 13px;
+}
+.close-btn:hover {
+  color: var(--color-primary);
 }
 .detail-row {
   display: flex;

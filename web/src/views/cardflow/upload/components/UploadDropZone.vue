@@ -127,7 +127,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-toggle {
   cursor: pointer;
-  color: var(--color-primary);
+  color: var(--text-1);
   font-size: 13px;
   user-select: none;
   display: flex;
@@ -135,7 +135,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
   gap: 4px;
 
   &:hover {
-    color: #4096ff;
+    color: var(--color-primary);
   }
 }
 

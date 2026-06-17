@@ -624,8 +624,9 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 // ===== Toolbar title (center slot) =====
 .ribbon-back {
   font-size: 13px;
-  color: var(--color-primary);
+  color: var(--text-1);
   padding: 0 8px;
+  &:hover { color: var(--color-primary); }
 }
 
 .ribbon-title {
@@ -837,12 +838,13 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   &__link {
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
-    color: var(--color-primary);
+    color: var(--text-1);
     font-weight: 500;
     cursor: pointer;
     letter-spacing: 0.02em;
 
     &:hover {
+      color: var(--color-primary);
       text-decoration: underline;
     }
   }

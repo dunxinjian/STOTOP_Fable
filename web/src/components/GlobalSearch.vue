@@ -1041,11 +1041,12 @@ defineExpose({ open })
   padding: var(--space-sm8) var(--space-lg16);
   text-align: center;
   font-size: var(--font-sm);
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   border-top: 1px solid var(--border);
 
   &:hover {
+    color: var(--color-primary);
     background: var(--bg-muted);
   }
 }

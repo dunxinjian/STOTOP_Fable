@@ -342,10 +342,10 @@ onMounted(async () => {
 }
 
 .link-name {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   font-weight: 500;
-  &:hover { text-decoration: underline; }
+  &:hover { color: var(--color-primary); text-decoration: underline; }
 }
 
 .status-tag {

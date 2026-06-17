@@ -495,12 +495,13 @@ function handleMigration(row: any) {
 @use '@/styles/variables' as *;
 
 .link-text {
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   text-decoration: none;
 }
 
 .link-text:hover {
+  color: var(--color-primary);
   text-decoration: underline;
 }
 </style>

@@ -361,11 +361,11 @@ onUnmounted(() => {
 
   &__action {
     font-size: 13px;
-    color: var(--color-primary);
+    color: var(--text-1);
     cursor: pointer;
 
     &:hover {
-      color: var(--color-primary-hover);
+      color: var(--color-primary);
     }
   }
 
@@ -395,12 +395,12 @@ onUnmounted(() => {
     padding: 10px 0;
     border-top: 1px solid #f0f0f0;
     font-size: 13px;
-    color: var(--color-primary);
+    color: var(--text-1);
     cursor: pointer;
 
     &:hover {
       background: #fafafa;
-      color: var(--color-primary-hover);
+      color: var(--color-primary);
     }
   }
 }

@@ -897,7 +897,7 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   }
 
   &.active {
-    color: var(--color-primary);
+    color: var(--text-1);
     font-weight: 600;
 
     &::after {

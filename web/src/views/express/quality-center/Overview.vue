@@ -350,12 +350,12 @@ onMounted(() => {
 
 .flow-link {
   font-size: 13px;
-  color: var(--color-primary);
+  color: var(--text-1);
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    color: var(--color-primary-hover);
+    color: var(--color-primary);
   }
 }
 </style>
