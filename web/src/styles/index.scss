@@ -69,6 +69,13 @@ body {
   overflow-y: auto;
 }
 
+// 列表贴边修饰类：去左右留白让表格满宽（可选，不动全局令牌、非每页 scoped 覆写）。
+// 表格单元格自带内边距，内容仍与工具栏对齐；仅去掉页容器的横向留白。
+.page-container--flush {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 // === 全局表格 flex 滚动链 ===
 // 确保 .page-container 内的表格卡片自动获得完整滚动能力
 .page-container {

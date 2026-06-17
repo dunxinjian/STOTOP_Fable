@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="楼栋管理" description="管理宿舍楼栋信息">
       <template #left>
         <a-input-search

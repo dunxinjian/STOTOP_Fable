@@ -7,7 +7,7 @@
   与 PageHeader（工具栏 Teleport）正交：标题→面包屑、操作→PageHeader、内容→PageLayout。
 -->
 <template>
-  <div :class="variant === 'flow' ? 'page-flow' : 'page-container'">
+  <div :class="[variant === 'flow' ? 'page-flow' : 'page-container', { 'page-container--flush': flush && variant !== 'flow' }]">
     <slot />
   </div>
 </template>
@@ -16,8 +16,11 @@
 withDefaults(defineProps<{
   /** table=单表列表页（保留全局表格滚动链）；flow=多卡片纵向流式 */
   variant?: 'table' | 'flow'
+  /** 列表贴边：去 .page-container 左右留白让表格满宽（仅 table variant 生效） */
+  flush?: boolean
 }>(), {
   variant: 'table',
+  flush: false,
 })
 </script>
 

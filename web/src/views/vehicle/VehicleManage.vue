@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="车辆台账" description="管理三轮车基础信息">
       <template #left>
         <StatFilterTabs inline v-model:active="searchForm.vehicleStatus" :tabs="statusTabs" @change="handleSearch" />
