@@ -327,24 +327,22 @@ public class AmoebaPLService
             .GroupBy(m => (m.FPeriodKey ?? "", m.FPLItemId))   // 期间键归一非空，键型保持 (string, long?)
             .ToDictionary(g => g.Key, g => g.First());
 
-        // 8. 当期总票数：供"单票&均"自动计算使用。
-        // 候选取全模板（含指标分区内）名称含"票量"的 indicator 项，按 总票 > 发件/出港 > 排序首个 的
-        // 优先级选定；取值优先手工填报，票量为系统数据源时回退到独占匹配结果
-        int currentTickets = 0;
-        var ticketCandidates = allItems
-            .Where(i => i.FNodeRole == "indicator" && (i.FItemName ?? "").Contains("票量"))
-            .OrderBy(i => i.FSort)
-            .ToList();
-        var ticketItem = ticketCandidates.FirstOrDefault(i => i.FItemName!.Contains("总票"))
-            ?? ticketCandidates.FirstOrDefault(i => i.FItemName!.Contains("发件") || i.FItemName!.Contains("出港"))
-            ?? ticketCandidates.FirstOrDefault();
-        if (ticketItem != null)
+        // 8. 单票&均：方向化分母 [批次5-S5]（替代原全局单一 currentTickets）。
+        //    出港 tab→发件票量、进港→派件票量、公共/指标→合计件量；按当期取(手工填报优先→独占匹配)，
+        //    环比/同比各列独立计算。
+        var (sendIndId, deliverIndId) = ResolveVolumeIndicatorIds(allItems);
+        decimal TicketValue(long? indicatorId, int p)
         {
-            if (manualLookup.TryGetValue((periodKeys[0], (long?)ticketItem.FID), out var ticketManual))
-                currentTickets = (int)ticketManual.FAmount;
-            else if (perPeriodAmounts.Count > 0 && perPeriodAmounts[0].TryGetValue(ticketItem.FID, out var ticketMatched))
-                currentTickets = (int)ticketMatched;
+            if (indicatorId is not long id) return 0m;
+            if (manualLookup.TryGetValue((periodKeys[p], (long?)id), out var md)) return md.FAmount;
+            return perPeriodAmounts[p].TryGetValue(id, out var matched) ? matched : 0m;
         }
+        decimal? ComputePerUnit(long tabAncestorId, decimal amount, int periodIdx)
+            => PerUnitValue(
+                TabToDirection(allItems.FirstOrDefault(i => i.FID == tabAncestorId)?.FItemName),
+                amount, TicketValue(sendIndId, periodIdx), TicketValue(deliverIndId, periodIdx));
+        // 当期(period 0)合计票数：供响应 Summary 展示
+        int currentPeriodTickets = (int)(TicketValue(sendIndId, 0) + TicketValue(deliverIndId, 0));
 
         // 9. 构建 TabAncestorId 映射（每个节点寻找其 depth=0 的 group 祖先）
         var tabAncestorMap = BuildTabAncestorMap(plItems, tabRoots);
@@ -433,12 +431,10 @@ public class AmoebaPLService
                             amount = amt;
                     }
         
-                    // 单票&均自动计算
-                    if (perUnit == null && child.FPerUnitMode == "auto" && currentTickets > 0 && p == 0)
-                    {
-                        perUnit = amount / currentTickets;
-                    }
-        
+                    // 单票&均自动计算 [批次5-S5]：方向化分母(随 Tab) + 按当期(含环比/同比)
+                    if (perUnit == null && child.FPerUnitMode == "auto")
+                        perUnit = ComputePerUnit(root.FID, amount, p);
+
                     item.PeriodValues.Add(new PeriodValue
                     {
                         PeriodLabel = period,
@@ -510,8 +506,8 @@ public class AmoebaPLService
                         if (perPeriodAmounts[p].TryGetValue(child.FID, out var amt))
                             amount = amt;
                     }
-                    if (perUnit == null && child.FPerUnitMode == "auto" && currentTickets > 0 && p == 0)
-                        perUnit = amount / currentTickets;
+                    if (perUnit == null && child.FPerUnitMode == "auto")
+                        perUnit = ComputePerUnit(sectionRoot.FID, amount, p);   // [批次5-S5] 指标分区按其方向(名称)取分母
                     indItem.PeriodValues.Add(new PeriodValue { PeriodLabel = period, Amount = amount, PerUnitValue = perUnit });
                 }
                 indSection.Items.Add(indItem);
@@ -587,7 +583,7 @@ public class AmoebaPLService
             Summary = new MultiPeriodSummary
             {
                 MarginTotals = marginTotals,
-                CurrentPeriodTickets = currentTickets,
+                CurrentPeriodTickets = currentPeriodTickets,
             },
         };
     }
@@ -1379,7 +1375,7 @@ public class AmoebaPLService
 
     /// <summary>
     /// 解析发件/派件票量 indicator 的 FID（FNodeRole=="indicator" 且名称含"发件票量"/"派件票量"）。
-    /// 与单票分母口径(currentTickets, PL.cs:322-335) 同源，供 ComputeVolumeBasis 取件量。设计 spec §4.2。
+    /// 供公共费分摊 ComputeVolumeBasis(§4.2) 与单票方向化 ComputePerUnit(§5.4, 批次5-S5) 共用。
     /// </summary>
     internal static (long? SendId, long? DeliverId) ResolveVolumeIndicatorIds(List<FinAmoebaPLItem> items)
     {
@@ -1408,6 +1404,32 @@ public class AmoebaPLService
             : (sendId is long sid && matched.TryGetValue(sid, out var sv) ? (long)sv : 0L);
         long deliver = deliverId is long did && matched.TryGetValue(did, out var dv) ? (long)dv : 0L;
         return new VolumeBasis { SendCount = send, DeliverCount = deliver };
+    }
+
+    // ===== [批次5-S5] 单票&均方向化（设计 spec §5.4）=====
+
+    /// <summary>Tab 名→方向：含"出港"→OUT、含"进港"→IN、其余(公共/综合/指标)→CMB。</summary>
+    internal static string TabToDirection(string? tabName)
+    {
+        var n = tabName ?? "";
+        if (n.Contains("出港")) return "OUT";
+        if (n.Contains("进港")) return "IN";
+        return "CMB";
+    }
+
+    /// <summary>
+    /// 单票均值：按方向选件量分母——出港÷发件票量、进港÷派件票量、公共÷合计(发件+派件)；
+    /// 分母≤0 返 null(不显示单票)。设计 §5.4。
+    /// </summary>
+    internal static decimal? PerUnitValue(string? direction, decimal amount, decimal sendCount, decimal deliverCount)
+    {
+        decimal denom = direction switch
+        {
+            "OUT" => sendCount,
+            "IN" => deliverCount,
+            _ => sendCount + deliverCount,
+        };
+        return denom > 0 ? amount / denom : (decimal?)null;
     }
 
     /// <summary>
