@@ -66,6 +66,7 @@ public static class CardFlowSeeder
             new(44, "网点质控：接入 STG申通_小件员履约指标（双行表头/员工级，建表 + 规则3124 + 流程2324 + 首节点5124）(2026-06-18)", MigrateV44),
             new(45, "网点质控：接入 STG申通_末端派送网点汇总（单行表头55列，建表 + 规则3125 + 流程2325 + 首节点5125）(2026-06-18)", MigrateV45),
             new(46, "网点质控：接入 STG申通_积压监控汇总（单行表头64列含括号/连字符列，建表 + 规则3126 + 流程2326 + 首节点5126）(2026-06-18)", MigrateV46),
+            new(47, "网点质控：接入 STG申通_交货滞留汇总（单行表头30列含括号/连字符/'&'列，建表 + 规则3127 + 流程2327 + 首节点5127）(2026-06-18)", MigrateV47),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -4500,6 +4501,127 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5126, 2326, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3126);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV47(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_交货滞留汇总 暂存表（系统列 + 30 业务列 + 标准字段） ═══
+        // 单行表头，30 列，揽收所属网点×日期粒度（1 行/网点/日期），sheet sheet1。
+        // 含括号列（交货平均用时(h) → F交货平均用时h）、'&' 列（考核滞留&揽收超48h量 → F考核滞留揽收超48h量）、
+        // 连字符列（揽收超48小时预估考核-日 → F揽收超48小时预估考核日 / 滞留预估考核-日 → F滞留预估考核日）。excelColumn 保留原文。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_交货滞留汇总')
+        CREATE TABLE [STG申通_交货滞留汇总] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3127 columnMapping，30 列；括号/连字符/'&' 列已去除非法字符）
+            [F统计日期] NVARCHAR(200) NULL,
+            [F揽收网点] NVARCHAR(200) NULL,
+            [F揽收网点编码] NVARCHAR(200) NULL,
+            [F揽收网点所属网点] NVARCHAR(200) NULL,
+            [F揽收所属网点编码] NVARCHAR(200) NULL,
+            [F揽收网点省区] NVARCHAR(200) NULL,
+            [F揽收网点大区] NVARCHAR(200) NULL,
+            [F揽收网点省份] NVARCHAR(200) NULL,
+            [F中心名称] NVARCHAR(200) NULL,
+            [F客户编码] NVARCHAR(200) NULL,
+            [F客户名称] NVARCHAR(200) NULL,
+            [F线路类型] NVARCHAR(200) NULL,
+            [F原始揽收量] NVARCHAR(200) NULL,
+            [F总揽收量] NVARCHAR(200) NULL,
+            [F交货平均用时h] NVARCHAR(200) NULL,
+            [F交货及时量] NVARCHAR(200) NULL,
+            [F交货延误量] NVARCHAR(200) NULL,
+            [F总滞留量] NVARCHAR(200) NULL,
+            [F未交货量] NVARCHAR(200) NULL,
+            [F滞留率] NVARCHAR(200) NULL,
+            [F目标值] NVARCHAR(200) NULL,
+            [F揽收超48h总量] NVARCHAR(200) NULL,
+            [F揽收超48h已交货量] NVARCHAR(200) NULL,
+            [F揽收超48h未交货量] NVARCHAR(200) NULL,
+            [F考核滞留揽收超48h量] NVARCHAR(200) NULL,
+            [F揽收超48小时预估考核日] NVARCHAR(200) NULL,
+            [F滞留预估考核日] NVARCHAR(200) NULL,
+            [F考核滞留量] NVARCHAR(200) NULL,
+            [F白名单标识] NVARCHAR(200) NULL,
+            [F分频次标识] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_交货滞留汇总_F批次ID' AND object_id = OBJECT_ID(N'STG申通_交货滞留汇总'))
+        CREATE INDEX [IX_STG申通_交货滞留汇总_F批次ID] ON [STG申通_交货滞留汇总]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_交货滞留汇总_数据作用域' AND object_id = OBJECT_ID(N'STG申通_交货滞留汇总'))
+        CREATE INDEX [IX_STG申通_交货滞留汇总_数据作用域] ON [STG申通_交货滞留汇总]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（揽收所属网点编码 + 统计日期 + 组织，仅未撤销 + 揽收所属网点编码非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_交货滞留汇总_网点日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_交货滞留汇总'))
+        CREATE UNIQUE INDEX [UX_STG申通_交货滞留汇总_网点日期_未撤销]
+            ON [STG申通_交货滞留汇总]([F揽收所属网点编码],[F统计日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F揽收所属网点编码] IS NOT NULL AND [F揽收所属网点编码] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3127（交货滞留汇总导入，全列映射） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3127)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3127, 192, N'excelInput', N'申通交货滞留汇总导入规则',
+        N'{""targetTable"":""STG申通_交货滞留汇总"",""outputMode"":""stg"",""headerRow"":1,""sheetName"":""sheet1"",""columnIdentifier"":""揽收所属网点编码,滞留率,考核滞留量,目标值"",""fullColumnIdentifier"":""统计日期,揽收网点,揽收网点编码,揽收网点所属网点,揽收所属网点编码,揽收网点省区,揽收网点大区,揽收网点省份,中心名称,客户编码,客户名称,线路类型,原始揽收量,总揽收量,交货平均用时(h),交货及时量,交货延误量,总滞留量,未交货量,滞留率,目标值,揽收超48h总量,揽收超48h已交货量,揽收超48h未交货量,考核滞留&揽收超48h量,揽收超48小时预估考核-日,滞留预估考核-日,考核滞留量,白名单标识,分频次标识"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""揽收网点"",""dbColumn"":""F揽收网点""},{""excelColumn"":""揽收网点编码"",""dbColumn"":""F揽收网点编码""},{""excelColumn"":""揽收网点所属网点"",""dbColumn"":""F揽收网点所属网点""},{""excelColumn"":""揽收所属网点编码"",""dbColumn"":""F揽收所属网点编码""},{""excelColumn"":""揽收网点省区"",""dbColumn"":""F揽收网点省区""},{""excelColumn"":""揽收网点大区"",""dbColumn"":""F揽收网点大区""},{""excelColumn"":""揽收网点省份"",""dbColumn"":""F揽收网点省份""},{""excelColumn"":""中心名称"",""dbColumn"":""F中心名称""},{""excelColumn"":""客户编码"",""dbColumn"":""F客户编码""},{""excelColumn"":""客户名称"",""dbColumn"":""F客户名称""},{""excelColumn"":""线路类型"",""dbColumn"":""F线路类型""},{""excelColumn"":""原始揽收量"",""dbColumn"":""F原始揽收量""},{""excelColumn"":""总揽收量"",""dbColumn"":""F总揽收量""},{""excelColumn"":""交货平均用时(h)"",""dbColumn"":""F交货平均用时h""},{""excelColumn"":""交货及时量"",""dbColumn"":""F交货及时量""},{""excelColumn"":""交货延误量"",""dbColumn"":""F交货延误量""},{""excelColumn"":""总滞留量"",""dbColumn"":""F总滞留量""},{""excelColumn"":""未交货量"",""dbColumn"":""F未交货量""},{""excelColumn"":""滞留率"",""dbColumn"":""F滞留率""},{""excelColumn"":""目标值"",""dbColumn"":""F目标值""},{""excelColumn"":""揽收超48h总量"",""dbColumn"":""F揽收超48h总量""},{""excelColumn"":""揽收超48h已交货量"",""dbColumn"":""F揽收超48h已交货量""},{""excelColumn"":""揽收超48h未交货量"",""dbColumn"":""F揽收超48h未交货量""},{""excelColumn"":""考核滞留&揽收超48h量"",""dbColumn"":""F考核滞留揽收超48h量""},{""excelColumn"":""揽收超48小时预估考核-日"",""dbColumn"":""F揽收超48小时预估考核日""},{""excelColumn"":""滞留预估考核-日"",""dbColumn"":""F滞留预估考核日""},{""excelColumn"":""考核滞留量"",""dbColumn"":""F考核滞留量""},{""excelColumn"":""白名单标识"",""dbColumn"":""F白名单标识""},{""excelColumn"":""分频次标识"",""dbColumn"":""F分频次标识""}],""keyFields"":[""揽收所属网点编码"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F揽收所属网点编码"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通网点交货滞留v3汇总 Excel导入配置（单行表头30列，含括号/连字符/''&'' 列 dbColumn 去除非法字符，sheet sheet1）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2327（QC_ST_HANDOVER_SUMMARY） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2327)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2327, NULL, 1, GETDATE(), NULL, N'网点质控：申通网点交货滞留v3汇总 导入暂存', GETDATE(), NULL, N'申通交货滞留汇总导入', NULL, N'QC_ST_HANDOVER_SUMMARY', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""网点交货滞留v3汇总*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2327（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2327)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2327, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2327, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5127（ExcelInput 批次级自动节点，插件注册=1，规则=3127） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5127)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5127, 2327, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3127);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
