@@ -58,6 +58,7 @@ public static class CardFlowSeeder
             new(36, "网点质控：接入 STG申通_照片质检明细（建表 + 规则3114 + 流程2314 + 首节点5114）(2026-06-18)", MigrateV36),
             new(37, "网点质控：接入 STG申通_履约率明细（建表 + 规则3115 + 流程2315 + 首节点5115）(2026-06-18)", MigrateV37),
             new(38, "网点质控：接入 STG申通_送货上门明细（建表 + 规则3116 + 流程2316 + 首节点5116）(2026-06-18)", MigrateV38),
+            new(39, "网点质控：接入 STG申通_应拦截明细（建表 + 规则3117 + 流程2317 + 首节点5117）(2026-06-18)", MigrateV39),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -3356,6 +3357,120 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5116, 2316, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3116);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+    private static void MigrateV39(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_应拦截明细 暂存表（系统列 + 26 业务列 + 标准字段） ═══
+        // 源文件后缀 .xls 但实为 xlsx（A1 魔数 PK），ExcelInputPlugin 已支持。sheet「0」，单行表头，26 列。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_应拦截明细')
+        CREATE TABLE [STG申通_应拦截明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3117 columnMapping，26 列）
+            [F统计日期] NVARCHAR(200) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F拦截来源] NVARCHAR(200) NULL,
+            [F应拦截网点] NVARCHAR(200) NULL,
+            [F所属网点] NVARCHAR(200) NULL,
+            [F拦截类型] NVARCHAR(200) NULL,
+            [F派件小件员] NVARCHAR(200) NULL,
+            [F到件时间] NVARCHAR(200) NULL,
+            [F最新OP时间] NVARCHAR(200) NULL,
+            [F最新OP节点] NVARCHAR(200) NULL,
+            [F驿站名称] NVARCHAR(200) NULL,
+            [F退件打印时间] NVARCHAR(200) NULL,
+            [F退件操作人] NVARCHAR(200) NULL,
+            [F最迟转出时间] NVARCHAR(200) NULL,
+            [F逆向转出时间] NVARCHAR(200) NULL,
+            [F逆向交货组织] NVARCHAR(200) NULL,
+            [F逆向转出时长] NVARCHAR(200) NULL,
+            [F逆向转出时效] NVARCHAR(200) NULL,
+            [F预计考核金额] NVARCHAR(200) NULL,
+            [F拦截录入网点] NVARCHAR(200) NULL,
+            [F拦截录入时间] NVARCHAR(200) NULL,
+            [F拦截发起节点] NVARCHAR(200) NULL,
+            [F是否拦截成功] NVARCHAR(200) NULL,
+            [F是否转出] NVARCHAR(200) NULL,
+            [F是否及时转出] NVARCHAR(200) NULL,
+            [F正向签收] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_应拦截明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_应拦截明细'))
+        CREATE INDEX [IX_STG申通_应拦截明细_F批次ID] ON [STG申通_应拦截明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_应拦截明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_应拦截明细'))
+        CREATE INDEX [IX_STG申通_应拦截明细_数据作用域] ON [STG申通_应拦截明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 统计日期 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_应拦截明细_运单统计日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_应拦截明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_应拦截明细_运单统计日期_未撤销]
+            ON [STG申通_应拦截明细]([F运单号],[F统计日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3117（应拦截明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3117)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3117, 192, N'excelInput', N'申通应拦截明细导入规则',
+        N'{""targetTable"":""STG申通_应拦截明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,拦截类型,是否拦截成功,是否及时转出"",""fullColumnIdentifier"":""统计日期,运单号,拦截来源,应拦截网点,所属网点,拦截类型,派件小件员,到件时间,最新OP时间,最新OP节点,驿站名称,退件打印时间,退件操作人,最迟转出时间,逆向转出时间,逆向交货组织,逆向转出时长,逆向转出时效,预计考核金额,拦截录入网点,拦截录入时间,拦截发起节点,是否拦截成功,是否转出,是否及时转出,正向签收"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""拦截来源"",""dbColumn"":""F拦截来源""},{""excelColumn"":""应拦截网点"",""dbColumn"":""F应拦截网点""},{""excelColumn"":""所属网点"",""dbColumn"":""F所属网点""},{""excelColumn"":""拦截类型"",""dbColumn"":""F拦截类型""},{""excelColumn"":""派件小件员"",""dbColumn"":""F派件小件员""},{""excelColumn"":""到件时间"",""dbColumn"":""F到件时间""},{""excelColumn"":""最新OP时间"",""dbColumn"":""F最新OP时间""},{""excelColumn"":""最新OP节点"",""dbColumn"":""F最新OP节点""},{""excelColumn"":""驿站名称"",""dbColumn"":""F驿站名称""},{""excelColumn"":""退件打印时间"",""dbColumn"":""F退件打印时间""},{""excelColumn"":""退件操作人"",""dbColumn"":""F退件操作人""},{""excelColumn"":""最迟转出时间"",""dbColumn"":""F最迟转出时间""},{""excelColumn"":""逆向转出时间"",""dbColumn"":""F逆向转出时间""},{""excelColumn"":""逆向交货组织"",""dbColumn"":""F逆向交货组织""},{""excelColumn"":""逆向转出时长"",""dbColumn"":""F逆向转出时长""},{""excelColumn"":""逆向转出时效"",""dbColumn"":""F逆向转出时效""},{""excelColumn"":""预计考核金额"",""dbColumn"":""F预计考核金额""},{""excelColumn"":""拦截录入网点"",""dbColumn"":""F拦截录入网点""},{""excelColumn"":""拦截录入时间"",""dbColumn"":""F拦截录入时间""},{""excelColumn"":""拦截发起节点"",""dbColumn"":""F拦截发起节点""},{""excelColumn"":""是否拦截成功"",""dbColumn"":""F是否拦截成功""},{""excelColumn"":""是否转出"",""dbColumn"":""F是否转出""},{""excelColumn"":""是否及时转出"",""dbColumn"":""F是否及时转出""},{""excelColumn"":""正向签收"",""dbColumn"":""F正向签收""}],""keyFields"":[""运单号"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通应拦截量数据报表明细 Excel导入配置（.xls 实为 xlsx）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2317（QC_ST_INTERCEPT） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2317)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2317, NULL, 1, GETDATE(), NULL, N'网点质控：申通应拦截量数据报表明细 导入暂存', GETDATE(), NULL, N'申通应拦截明细导入', NULL, N'QC_ST_INTERCEPT', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""应拦截量数据报表*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2317（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2317)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2317, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2317, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5117（ExcelInput 批次级自动节点，插件注册=1，规则=3117） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5117)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5117, 2317, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3117);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
