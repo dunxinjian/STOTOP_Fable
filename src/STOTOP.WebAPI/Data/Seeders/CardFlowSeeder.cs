@@ -44,6 +44,7 @@ public static class CardFlowSeeder
             new(22, "费用报销 FOrgId=0 全局模板种子 (2026-06-16)", MigrateV22),
             new(23, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17)", MigrateV23),
             new(24, "网点质控：接入 STG申通_物流及时准确明细（建表 + 规则3102 + 流程2302 + 首节点5102）(2026-06-17)", MigrateV24),
+            new(25, "网点质控：接入 STG申通_揽收分析明细（建表 + 规则3103 + 流程2303 + 首节点5103）(2026-06-17)", MigrateV25),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1680,6 +1681,119 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5102, 2302, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3102);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV25(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_揽收分析明细 暂存表（系统列 + 24 业务列 + 标准字段） ═══
+        // 注意：「订单揽收用时/h」含非法字符 /，dbColumn 去掉斜杠为 F订单揽收用时h（实体/EF/DDL/映射四处一致）。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_揽收分析明细')
+        CREATE TABLE [STG申通_揽收分析明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3103 columnMapping，24 列）
+            [F统计日期] NVARCHAR(100) NULL,
+            [F电商平台] NVARCHAR(100) NULL,
+            [F运单编号] NVARCHAR(200) NULL,
+            [F订单编号] NVARCHAR(200) NULL,
+            [F时效类型] NVARCHAR(100) NULL,
+            [F频次] NVARCHAR(50) NULL,
+            [F订单时间] NVARCHAR(100) NULL,
+            [F揽收时间] NVARCHAR(100) NULL,
+            [F揽收截止时间] NVARCHAR(100) NULL,
+            [F订单揽收用时h] NVARCHAR(50) NULL,
+            [F揽收标识] NVARCHAR(50) NULL,
+            [F揽收及时标识] NVARCHAR(50) NULL,
+            [F商家名称] NVARCHAR(200) NULL,
+            [F订单网点] NVARCHAR(200) NULL,
+            [F订单所属网点] NVARCHAR(200) NULL,
+            [F揽收网点] NVARCHAR(200) NULL,
+            [F揽收所属网点] NVARCHAR(200) NULL,
+            [F收件员] NVARCHAR(200) NULL,
+            [F订单始发城市] NVARCHAR(100) NULL,
+            [F订单目的城市] NVARCHAR(100) NULL,
+            [F仓类型] NVARCHAR(100) NULL,
+            [F菜鸟仓编号] NVARCHAR(100) NULL,
+            [F菜鸟仓名称] NVARCHAR(200) NULL,
+            [F揽收超15天标识] NVARCHAR(50) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_揽收分析明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_揽收分析明细'))
+        CREATE INDEX [IX_STG申通_揽收分析明细_F批次ID] ON [STG申通_揽收分析明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_揽收分析明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_揽收分析明细'))
+        CREATE INDEX [IX_STG申通_揽收分析明细_数据作用域] ON [STG申通_揽收分析明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单编号 + 组织，仅未撤销 + 运单编号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_揽收分析明细_运单编号_未撤销' AND object_id = OBJECT_ID(N'STG申通_揽收分析明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_揽收分析明细_运单编号_未撤销]
+            ON [STG申通_揽收分析明细]([F运单编号],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单编号] IS NOT NULL AND [F运单编号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3103（揽收分析明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3103)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3103, 192, N'excelInput', N'申通揽收分析明细导入规则',
+        N'{""targetTable"":""STG申通_揽收分析明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单编号,订单编号,揽收截止时间,揽收及时标识"",""fullColumnIdentifier"":""统计日期,电商平台,运单编号,订单编号,时效类型,频次,订单时间,揽收时间,揽收截止时间,订单揽收用时/h,揽收标识,揽收及时标识,商家名称,订单网点,订单所属网点,揽收网点,揽收所属网点,收件员,订单始发城市,订单目的城市,仓类型,菜鸟仓编号,菜鸟仓名称,揽收超15天标识"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""电商平台"",""dbColumn"":""F电商平台""},{""excelColumn"":""运单编号"",""dbColumn"":""F运单编号""},{""excelColumn"":""订单编号"",""dbColumn"":""F订单编号""},{""excelColumn"":""时效类型"",""dbColumn"":""F时效类型""},{""excelColumn"":""频次"",""dbColumn"":""F频次""},{""excelColumn"":""订单时间"",""dbColumn"":""F订单时间""},{""excelColumn"":""揽收时间"",""dbColumn"":""F揽收时间""},{""excelColumn"":""揽收截止时间"",""dbColumn"":""F揽收截止时间""},{""excelColumn"":""订单揽收用时/h"",""dbColumn"":""F订单揽收用时h""},{""excelColumn"":""揽收标识"",""dbColumn"":""F揽收标识""},{""excelColumn"":""揽收及时标识"",""dbColumn"":""F揽收及时标识""},{""excelColumn"":""商家名称"",""dbColumn"":""F商家名称""},{""excelColumn"":""订单网点"",""dbColumn"":""F订单网点""},{""excelColumn"":""订单所属网点"",""dbColumn"":""F订单所属网点""},{""excelColumn"":""揽收网点"",""dbColumn"":""F揽收网点""},{""excelColumn"":""揽收所属网点"",""dbColumn"":""F揽收所属网点""},{""excelColumn"":""收件员"",""dbColumn"":""F收件员""},{""excelColumn"":""订单始发城市"",""dbColumn"":""F订单始发城市""},{""excelColumn"":""订单目的城市"",""dbColumn"":""F订单目的城市""},{""excelColumn"":""仓类型"",""dbColumn"":""F仓类型""},{""excelColumn"":""菜鸟仓编号"",""dbColumn"":""F菜鸟仓编号""},{""excelColumn"":""菜鸟仓名称"",""dbColumn"":""F菜鸟仓名称""},{""excelColumn"":""揽收超15天标识"",""dbColumn"":""F揽收超15天标识""}],""keyFields"":[""运单编号""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单编号""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通订单揽收分析明细V3 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2303（QC_ST_PICKUP_ANALYSIS） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2303)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2303, NULL, 1, GETDATE(), NULL, N'网点质控：申通订单揽收分析明细V3 导入暂存', GETDATE(), NULL, N'申通揽收分析明细导入', NULL, N'QC_ST_PICKUP_ANALYSIS', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""订单揽收分析明细*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2303（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2303)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2303, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2303, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5103（ExcelInput 批次级自动节点，插件注册=1，规则=3103） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5103)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5103, 2303, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3103);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
