@@ -28,7 +28,7 @@
 
 **列表页迁移配方**（照样板 BuildingManage）：① `#toolbar` 内联 flex → `.page-toolbar`（`__group` 放筛选输入、`__filters` 放查询/重置）；② `a-card`+`a-table` → `<DataTable v-model:pagination="pagination" @change="fetch">`，删本页 `paginationConfig`/`handleTableChange`/序号列定义/序号 bodyCell 分支；③ `a-tag :color` 字面色 → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页用 `ref({pageIndex,pageSize,total})`，读 `.value.*`。
 
-> 列表页若需「状态计数 + 快筛」，用 `<StatFilterTabs>`（见 §二）替代顶部统计卡 + 状态下拉，放在工具栏与 DataTable 之间。
+> 列表页若需「状态计数 + 快筛」，用 `<StatFilterTabs inline>`（见 §二）放进 `#toolbar` **同一行**——左簇 `StatFilterTabs`（看数+筛选合一）+ 右推簇 `.page-toolbar__filters` 放筛选输入/下拉/重置，替代顶部统计卡 + 状态下拉。**这是标准（布局 B）**：省一行、不挤面包屑。仅当筛选控件特别多、一行容不下时才退回「Tab 与筛选各占一行」。样板 `vehicle/VehicleManage`。
 
 ### 2. 详情页（样板：TaskDetail）
 
@@ -138,8 +138,18 @@
 | --- | --- |
 | `tabs` | `[{key,label,count?,color?}]`；`key=''` 常表示「全部」；`color` 传 `var(--token)` 渲染状态圆点 |
 | `active`（v-model） | 当前选中 key；点击 emit `update:active` + `change(key)` |
+| `inline` | 布尔，默认 false。置于 `#toolbar` 行内时传 `inline` 去掉底部外边距 |
 
-- 用法：`<StatFilterTabs v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />`，把状态过滤与计数合一，替代顶部 a-statistic 卡片与独立状态下拉。
+- **标准用法（布局 B）**：放进 `#toolbar` 同一行作左簇，筛选控件入右推簇 `.page-toolbar__filters`：
+  ```
+  <template #toolbar>
+    <div class="page-toolbar">
+      <StatFilterTabs inline v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />
+      <div class="page-toolbar__filters"> 搜索/下拉/重置 </div>
+    </div>
+  </template>
+  ```
+  替代顶部 a-statistic 卡片与独立状态下拉；省一行、不挤面包屑。控件过多容不下时才退回独立两行（去 `inline`、放工具栏与 DataTable 之间）。
 - 全令牌：选中态走 `--color-primary`/`--color-primary-light`，计数 `tabular-nums`；禁裸 hex。
 
 ### PageLayout
