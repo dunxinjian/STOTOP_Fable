@@ -1486,11 +1486,12 @@ public class AmoebaPLService
         }
     }
 
-    /// <summary>递归求 root 下所有叶子项的 Amount 之和（叶子=无子节点），排除 formula 和 indicator</summary>
+    /// <summary>递归求 root 下所有叶子项的 Amount 之和（叶子=无子节点），排除 formula 和 indicator。
+    /// manualLookup 按期间键 [批次5-S3]（与 SumChildrenForGroup 同口径）。</summary>
     private decimal SumLeafDescendants(FinAmoebaPLItem root, List<FinAmoebaPLItem> all,
         Dictionary<long, decimal> matchedAmounts,
         Dictionary<(string, long?), FinAmoebaManualData> manualLookup,
-        string period)
+        string periodKey)
     {
         var directChildren = all.Where(i => i.FParentId == root.FID).ToList();
         if (directChildren.Count == 0)
@@ -1499,7 +1500,7 @@ public class AmoebaPLService
             if (root.FNodeRole == "formula" || root.FNodeRole == "indicator") return 0m;
             if (root.FIsManualEntry)
             {
-                return manualLookup.TryGetValue((period, (long?)root.FID), out var md) ? md.FAmount : 0m;
+                return manualLookup.TryGetValue((periodKey, (long?)root.FID), out var md) ? md.FAmount : 0m;
             }
             return matchedAmounts.TryGetValue(root.FID, out var amt) ? amt : 0m;
         }
@@ -1508,7 +1509,7 @@ public class AmoebaPLService
         {
             // 排除 formula 和 indicator 子项
             if (c.FNodeRole == "formula" || c.FNodeRole == "indicator") continue;
-            sum += SumLeafDescendants(c, all, matchedAmounts, manualLookup, period);
+            sum += SumLeafDescendants(c, all, matchedAmounts, manualLookup, periodKey);
         }
         return sum;
     }
@@ -2075,10 +2076,12 @@ public class AmoebaPLService
                     COUNT(*) AS WaybillCount,
                     ISNULL(SUM([F计费重量]), 0) AS TotalWeight
                 FROM [EXP出港运单_计费结果]
-                WHERE [F运单日期] >= {0} AND [F运单日期] <= {1}
+                WHERE [F运单日期] >= {0} AND [F运单日期] < {1}
                     AND [F组织ID] = {2}";
 
-        var parameters = new List<object> { startDate, endDate, orgId };
+        // 半开区间 [起, 末日+1)：F运单日期可能带时分(import 保留)，闭区间 <=末日(0点) 会把末日带时分的运单漏掉；
+        // 与 AggregateVoucherData 的 < end.AddDays(1) 口径一致。[批次5-S3] day 粒度下尤为关键(否则整日全丢)。
+        var parameters = new List<object> { startDate, endDate.AddDays(1), orgId };
 
         if (targetSiteCodes != null)
         {
@@ -2451,6 +2454,7 @@ public class AmoebaPLService
         {
             existing.FAmount = dto.Amount;
             existing.FPerUnitValue = dto.PerUnitValue;
+            existing.FPeriodKey = BuildPeriodKey(dto.Period);   // [批次5-S3] 自愈：补/纠正期间键(幂等)
             existing.FUpdatedTime = DateTime.Now;
         }
         else

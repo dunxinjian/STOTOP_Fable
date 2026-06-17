@@ -421,6 +421,32 @@ public class AmoebaPLServiceTests
         Assert.Equal("M:202603", saved.FPeriodKey);   // 估值录入 UI 当前为月度，期间键 = 'M:'+期间
     }
 
+    [Fact]
+    public async Task SaveEstimateData_update_branch_backfills_null_period_key()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(SaveEstimateData_update_branch_backfills_null_period_key), orgId: 192);
+        // 模拟存量/异常路径插入的 FPeriodKey 残留 NULL 的估值行
+        db.Set<FinAmoebaManualData>().Add(new FinAmoebaManualData
+        {
+            FTemplateId = 1, FOrgId = 192, FPeriod = "202603", FPeriodKey = null,
+            FDataType = "estimate", FAccountCode = "560104", FAuxiliaryJson = "[]",
+            FAmount = 100m, FCreatedTime = DateTime.Now, FUpdatedTime = DateTime.Now,
+        });
+        await db.SaveChangesAsync();
+        var service = CreateService(db, currentOrgId: 192);
+
+        // UPSERT 命中 update 分支（同 Template/Org/Period/AccountCode/AuxJson）
+        await service.SaveEstimateDataAsync(new ManualDataDto
+        {
+            TemplateId = 1, OrgId = 192, Period = "202603",
+            Amount = 200m, AccountCode = "560104", AuxiliaryJson = "[]",
+        });
+
+        var saved = await db.Set<FinAmoebaManualData>().SingleAsync();
+        Assert.Equal(200m, saved.FAmount);            // 确为 update（非新增第二行）
+        Assert.Equal("M:202603", saved.FPeriodKey);   // 自愈：NULL 期间键被回填
+    }
+
     private static FinAmoebaPLItem CreatePLItem(long id, string name, int sort, string? relatedAccountsJson)
     {
         return new FinAmoebaPLItem

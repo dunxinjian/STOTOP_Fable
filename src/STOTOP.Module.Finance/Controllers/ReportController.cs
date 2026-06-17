@@ -401,6 +401,7 @@ public class ReportController : ControllerBase
             {
                 existing.FAmount = item.Amount;
                 existing.FPerUnitValue = item.PerUnitValue;
+                existing.FPeriodKey = AmoebaPLService.BuildPeriodKey(request.Period);   // [批次5-S3] 自愈期间键(幂等)
                 existing.FUpdatedTime = now;
             }
             else
