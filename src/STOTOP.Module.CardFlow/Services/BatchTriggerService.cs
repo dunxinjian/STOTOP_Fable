@@ -685,6 +685,14 @@ public class BatchTriggerService : IBatchTriggerService
             .ToListAsync();
     }
 
+    // F匹配规则 JSON 的键为 camelCase（fileNamePattern/columnIdentifier/fullColumnIdentifier），
+    // 而 MatchPatternData 属性为 PascalCase；默认反序列化区分大小写会全部映射为 null，
+    // 导致第三轮 fileNamePattern 回退完全失效（投诉账单/小件员等退化表头源无法路由）。
+    private static readonly JsonSerializerOptions MatchPatternJsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
     /// <summary>
     /// 解析 FMatchPattern JSON 为 MatchPatternData 对象
     /// </summary>
@@ -692,7 +700,7 @@ public class BatchTriggerService : IBatchTriggerService
     {
         try
         {
-            return JsonSerializer.Deserialize<MatchPatternData>(json);
+            return JsonSerializer.Deserialize<MatchPatternData>(json, MatchPatternJsonOpts);
         }
         catch (JsonException)
         {
