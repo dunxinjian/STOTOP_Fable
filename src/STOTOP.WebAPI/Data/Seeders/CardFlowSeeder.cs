@@ -45,6 +45,7 @@ public static class CardFlowSeeder
             new(23, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17)", MigrateV23),
             new(24, "网点质控：接入 STG申通_物流及时准确明细（建表 + 规则3102 + 流程2302 + 首节点5102）(2026-06-17)", MigrateV24),
             new(25, "网点质控：接入 STG申通_揽收分析明细（建表 + 规则3103 + 流程2303 + 首节点5103）(2026-06-17)", MigrateV25),
+            new(26, "网点质控：接入 STG申通_未出仓监控明细（建表 + 规则3104 + 流程2304 + 首节点5104）(2026-06-17)", MigrateV26),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1794,6 +1795,107 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5103, 2303, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3103);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV26(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_未出仓监控明细 暂存表（系统列 + 13 业务列 + 标准字段） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_未出仓监控明细')
+        CREATE TABLE [STG申通_未出仓监控明细] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3104 columnMapping，13 列）
+            [F统计日期] NVARCHAR(100) NULL,
+            [F运单号] NVARCHAR(200) NULL,
+            [F中转站] NVARCHAR(200) NULL,
+            [F应签所属网点] NVARCHAR(200) NULL,
+            [F应签所属网点编码] NVARCHAR(100) NULL,
+            [F应签站点] NVARCHAR(200) NULL,
+            [F应签站点编码] NVARCHAR(100) NULL,
+            [F派件员] NVARCHAR(200) NULL,
+            [F三段码] NVARCHAR(100) NULL,
+            [F出仓距离] NVARCHAR(50) NULL,
+            [F实际出仓时间] NVARCHAR(100) NULL,
+            [F理论应出仓日期] NVARCHAR(100) NULL,
+            [F理论应出仓时间] NVARCHAR(100) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_未出仓监控明细_F批次ID' AND object_id = OBJECT_ID(N'STG申通_未出仓监控明细'))
+        CREATE INDEX [IX_STG申通_未出仓监控明细_F批次ID] ON [STG申通_未出仓监控明细]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_未出仓监控明细_数据作用域' AND object_id = OBJECT_ID(N'STG申通_未出仓监控明细'))
+        CREATE INDEX [IX_STG申通_未出仓监控明细_数据作用域] ON [STG申通_未出仓监控明细]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（运单号 + 组织，仅未撤销 + 运单号非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_未出仓监控明细_运单号_未撤销' AND object_id = OBJECT_ID(N'STG申通_未出仓监控明细'))
+        CREATE UNIQUE INDEX [UX_STG申通_未出仓监控明细_运单号_未撤销]
+            ON [STG申通_未出仓监控明细]([F运单号],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F运单号] IS NOT NULL AND [F运单号] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3104（未出仓监控明细导入） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3104)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3104, 192, N'excelInput', N'申通未出仓监控明细导入规则',
+        N'{""targetTable"":""STG申通_未出仓监控明细"",""outputMode"":""stg"",""headerRow"":1,""dataStartRow"":2,""columnIdentifier"":""运单号,应签所属网点,理论应出仓时间,实际出仓时间"",""fullColumnIdentifier"":""统计日期,运单号,中转站,应签所属网点,应签所属网点编码,应签站点,应签站点编码,派件员,三段码,出仓距离,实际出仓时间,理论应出仓日期,理论应出仓时间"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""运单号"",""dbColumn"":""F运单号""},{""excelColumn"":""中转站"",""dbColumn"":""F中转站""},{""excelColumn"":""应签所属网点"",""dbColumn"":""F应签所属网点""},{""excelColumn"":""应签所属网点编码"",""dbColumn"":""F应签所属网点编码""},{""excelColumn"":""应签站点"",""dbColumn"":""F应签站点""},{""excelColumn"":""应签站点编码"",""dbColumn"":""F应签站点编码""},{""excelColumn"":""派件员"",""dbColumn"":""F派件员""},{""excelColumn"":""三段码"",""dbColumn"":""F三段码""},{""excelColumn"":""出仓距离"",""dbColumn"":""F出仓距离""},{""excelColumn"":""实际出仓时间"",""dbColumn"":""F实际出仓时间""},{""excelColumn"":""理论应出仓日期"",""dbColumn"":""F理论应出仓日期""},{""excelColumn"":""理论应出仓时间"",""dbColumn"":""F理论应出仓时间""}],""keyFields"":[""运单号""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F运单号""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通未出仓实时监控明细 Excel导入配置', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2304（QC_ST_OUTBOUND_MONITOR） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2304)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2304, NULL, 1, GETDATE(), NULL, N'网点质控：申通未出仓实时监控明细 导入暂存', GETDATE(), NULL, N'申通未出仓监控明细导入', NULL, N'QC_ST_OUTBOUND_MONITOR', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""未出仓实时监控*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2304（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2304)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2304, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2304, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5104（ExcelInput 批次级自动节点，插件注册=1，规则=3104） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5104)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5104, 2304, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3104);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
