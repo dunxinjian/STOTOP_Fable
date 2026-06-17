@@ -361,8 +361,10 @@ public class AmoebaPLServiceTests
         var (scopedMatched, _) = service.MatchDataPointsToPLItems(scopedPoints, plItems);
         var warnings = new List<string>();
 
+        // send 基数叶，deliver 件量不参与该叶分摊，传 0/0
         service.ApplyCommonCostAllocation(scopedMatched, scopedPoints, fullPoints, plItems,
-            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings);
+            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings,
+            scopedDeliver: 0L, fullDeliver: 0L);
 
         Assert.Equal(600m, scopedMatched[601]);   // 1000 × 300/500
         Assert.Empty(warnings);
@@ -394,7 +396,8 @@ public class AmoebaPLServiceTests
         Assert.Equal(50m, scopedMatched[610]);   // 前置：直接匹配确有残值
 
         service.ApplyCommonCostAllocation(scopedMatched, scopedPoints, fullPoints, plItems,
-            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings: new List<string>());
+            indicatorItems: new List<FinAmoebaPLItem>(), allItems: plItems, warnings: new List<string>(),
+            scopedDeliver: 0L, fullDeliver: 0L);
 
         // 子报表公共费叶不得留直接归段残值：全额缺失 → 移除(既不分摊也不直接归段)
         Assert.False(scopedMatched.ContainsKey(610));
