@@ -11,6 +11,7 @@ using STOTOP.Module.Quality.Services.Performance;
 using STOTOP.Module.Quality.Services.Review;
 using STOTOP.Module.Quality.Services.Alert;
 using STOTOP.Module.Quality.Services.Rule;
+using STOTOP.Module.Quality.Services.Unification;
 
 namespace STOTOP.Module.Quality;
 
@@ -30,6 +31,9 @@ public static class QualityModuleExtensions
         services.AddScoped<IKnowledgeService, KnowledgeService>();
         services.AddScoped<IPerformanceService, PerformanceService>();
         services.AddScoped<IAlertConfigService, AlertConfigService>();
+
+        // 统一质控：主数据匹配
+        services.AddScoped<IMasterDataMatcher, MasterDataMatcher>();
 
         // 事件处理器
         services.AddScoped<IEventHandler<ExceptionCreatedEvent>, ExceptionCreatedEventHandler>();
