@@ -257,4 +257,15 @@ public class CardRedactionServiceTests
         Assert.Equal("**** **** **** 0123", root.GetProperty("payeeAccountNo").GetString()); // 敏感打码
         Assert.False(root.TryGetProperty("srcOnly", out _));                                   // schema 外移除
     }
+
+    [Fact]
+    public void OwnerEditMode_GivesClearViewForDraftOwner()
+    {
+        var svc = new CardRedactionService();
+        var result = svc.Redact(new CardRedactionRequest { Card = Card(), CardSchemaJson = Schema, OwnerEditMode = true });
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDataJson);
+        // 草稿所有者看到明文（敏感字段不打码），但 schema 外键仍移除
+        Assert.Equal("6222021234567890123", doc.RootElement.GetProperty("payeeAccountNo").GetString());
+        Assert.False(doc.RootElement.TryGetProperty("legacyNote", out _));
+    }
 }

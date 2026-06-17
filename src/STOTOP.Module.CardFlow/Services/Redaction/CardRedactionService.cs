@@ -40,6 +40,13 @@ public sealed class CardRedactionService : ICardRedactionService
         IReadOnlyCollection<CardFieldDefinitionV2> fields,
         CardRedactionRequest request)
     {
+        if (request.OwnerEditMode)
+        {
+            return fields
+                .Where(f => !string.IsNullOrWhiteSpace(f.Key))
+                .ToDictionary(f => f.Key, f => new ResolvedAccess { Access = "editable", MaskPattern = f.MaskPattern }, StringComparer.Ordinal);
+        }
+
         var result = new Dictionary<string, ResolvedAccess>(StringComparer.Ordinal);
         foreach (var field in fields)
         {
@@ -175,6 +182,23 @@ public sealed class CardRedactionService : ICardRedactionService
         string? detailSchemaJson,
         CardRedactionRequest request)
     {
+        if (request.OwnerEditMode)
+        {
+            var ownerResult = new Dictionary<string, ResolvedAccess>(StringComparer.Ordinal);
+            foreach (var (tableKey, columns) in ReadDetailTables(detailSchemaJson))
+            {
+                foreach (var col in columns)
+                {
+                    if (!string.IsNullOrWhiteSpace(col.Key))
+                    {
+                        ownerResult[$"{tableKey}.{col.Key}"] = new ResolvedAccess { Access = "editable", MaskPattern = col.MaskPattern };
+                    }
+                }
+            }
+
+            return ownerResult;
+        }
+
         var result = new Dictionary<string, ResolvedAccess>(StringComparer.Ordinal);
         foreach (var (tableKey, columns) in ReadDetailTables(detailSchemaJson))
         {

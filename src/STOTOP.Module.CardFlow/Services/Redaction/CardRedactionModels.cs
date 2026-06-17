@@ -17,6 +17,9 @@ public sealed class CardRedactionRequest
     /// <summary>查看者历史上处理过（非当前 active）的节点配置，用于粘附授权（提权保留）。</summary>
     public IReadOnlyCollection<StageConfigEnvelope> HandledStageConfigs { get; init; }
         = Array.Empty<StageConfigEnvelope>();
+
+    /// <summary>草稿所有者编辑态：对所有字段给明文（仍走 allowlist 丢弃 schema 外键）。</summary>
+    public bool OwnerEditMode { get; init; }
 }
 
 public sealed class ResolvedAccess

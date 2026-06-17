@@ -250,7 +250,8 @@ public class CardService : ICardService
             DetailSchemaJson = flowVersion?.FDetailSchemaJson,
             Details = cardDetails,
             ActiveStageConfig = activeConfig,
-            HandledStageConfigs = handledConfigs
+            HandledStageConfigs = handledConfigs,
+            OwnerEditMode = isInitiator && string.Equals(card.FStatus, "draft", StringComparison.OrdinalIgnoreCase)
         });
 
         detail.DataJson = redaction.RedactedDataJson;

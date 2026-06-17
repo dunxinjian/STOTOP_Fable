@@ -121,4 +121,24 @@ public class StageViewProfileResolverTests
         Assert.Equal("editable", result.FieldAccess["accountCode"].Access);
         Assert.Equal("readonly", result.FieldAccess["amount"].Access);
     }
+
+    [Fact]
+    public void Resolve_SensitiveFieldNotGrantedByNode_DefaultsToMaskedInWorkView()
+    {
+        var resolver = new StageViewProfileResolver();
+        var card = new CfCard { FDataJson = """{"amount":88,"payeeAccountNo":"6222021234567890123"}""" };
+        var config = new StageConfigEnvelope { Version = 2, InputFields = new List<string> { "amount" } };
+        var result = resolver.Resolve(
+            """[{"key":"amount","type":"money"},{"key":"payeeAccountNo","type":"text","sensitive":true,"maskPattern":"bankCard"}]""",
+            null,
+            new CfStageDefinition { FStageName = "审批" },
+            card,
+            new List<CfCardDetail>(),
+            operatorId: 1,
+            config);
+        Assert.Equal("editable", result.FieldAccess["amount"].Access);          // 节点收集字段
+        Assert.Equal("masked", result.FieldAccess["payeeAccountNo"].Access);    // 敏感且未授予 → 工作视图也 masked
+        using var doc = global::System.Text.Json.JsonDocument.Parse(result.RedactedDataJson);
+        Assert.NotEqual("6222021234567890123", doc.RootElement.GetProperty("payeeAccountNo").GetString());
+    }
 }
