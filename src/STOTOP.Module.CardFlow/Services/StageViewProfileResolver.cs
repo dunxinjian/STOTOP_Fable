@@ -4,6 +4,7 @@ using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Models.Approval;
 using STOTOP.Module.CardFlow.Models.Schema;
 using STOTOP.Module.CardFlow.Services.Interfaces;
+using STOTOP.Module.CardFlow.Services.Redaction;
 
 namespace STOTOP.Module.CardFlow.Services;
 
@@ -171,7 +172,7 @@ public sealed class StageViewProfileResolver : IStageViewProfileResolver
             }
             else if (rule.Access.Equals("masked", StringComparison.OrdinalIgnoreCase) && obj.ContainsKey(key))
             {
-                obj[key] = MaskValue(obj[key]);
+                obj[key] = MaskValue(obj[key], rule.MaskPattern);
             }
         }
 
@@ -199,7 +200,7 @@ public sealed class StageViewProfileResolver : IStageViewProfileResolver
             }
             else if (rule.Access.Equals("masked", StringComparison.OrdinalIgnoreCase) && obj.ContainsKey(columnKey))
             {
-                obj[columnKey] = MaskValue(obj[columnKey]);
+                obj[columnKey] = MaskValue(obj[columnKey], rule.MaskPattern);
             }
         }
 
@@ -223,7 +224,7 @@ public sealed class StageViewProfileResolver : IStageViewProfileResolver
         }
     }
 
-    private static JsonNode MaskValue(JsonNode? value)
+    private static JsonNode MaskValue(JsonNode? value, string? pattern = null)
     {
         if (value is null)
         {
@@ -234,12 +235,7 @@ public sealed class StageViewProfileResolver : IStageViewProfileResolver
             ? value.GetValue<string>()
             : value.ToJsonString();
 
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        return text.Length <= 4 ? "****" : $"{text[..2]}****{text[^2..]}";
+        return FieldMasker.Mask(text, pattern);
     }
 
     private static List<string> ReadFieldKeys(string? schemaJson)

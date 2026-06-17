@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Models.Schema;
 using STOTOP.Module.CardFlow.Services.Interfaces;
+using STOTOP.Module.CardFlow.Services.Redaction;
 
 namespace STOTOP.Module.CardFlow.Services;
 
@@ -546,15 +547,10 @@ public sealed class CardPresentationResolver : ICardPresentationResolver
         };
     }
 
-    private static string MaskValue(JsonNode? value)
+    private static string MaskValue(JsonNode? value, string? pattern = null)
     {
         var text = ConvertNodeValue(value)?.ToString() ?? string.Empty;
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        return text.Length <= 4 ? "****" : $"{text[..2]}****{text[^2..]}";
+        return FieldMasker.Mask(text, pattern);
     }
 
     private static bool TryReadDecimal(JsonNode? value, out decimal result)
