@@ -34,7 +34,6 @@ public class AmoebaPLItemDto
     public string? ValueSource { get; set; }         // F值来源: system/formula/manual
     public string? SystemDataSource { get; set; }    // F系统数据源: voucher/billing/estimate/depreciation
     public bool IsIndicatorSection { get; set; }     // F是否指标分区
-    public string? IndicatorDirectionScope { get; set; }  // F指标方向范围 JSON
     public List<AmoebaPLItemDto> Children { get; set; } = new();
 }
 
@@ -80,7 +79,6 @@ public class CreateAmoebaPLItemRequest
     public string? ValueSource { get; set; }         // F值来源: system/formula/manual
     public string? SystemDataSource { get; set; }    // F系统数据源: voucher/billing/estimate/depreciation
     public bool IsIndicatorSection { get; set; }     // F是否指标分区
-    public string? IndicatorDirectionScope { get; set; }  // F指标方向范围 JSON
 }
 
 public class UpdateAmoebaPLItemRequest
@@ -105,7 +103,6 @@ public class UpdateAmoebaPLItemRequest
     public string? ValueSource { get; set; }         // F值来源: system/formula/manual
     public string? SystemDataSource { get; set; }    // F系统数据源: voucher/billing/estimate/depreciation
     public bool? IsIndicatorSection { get; set; }    // F是否指标分区
-    public string? IndicatorDirectionScope { get; set; }  // F指标方向范围 JSON
 }
 
 public class ReorderAmoebaPLItemRequest

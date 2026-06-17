@@ -264,14 +264,6 @@
                     <a-select-option value="depreciation">折旧</a-select-option>
                   </a-select>
                 </a-form-item>
-                <!-- ④′ 方向范围（indicator + system 时显示） -->
-                <a-form-item v-if="itemForm.itemCategory === 'indicator' && itemForm.valueSource === 'system'" label="方向范围">
-                  <a-checkbox-group v-model:value="directionScope" :options="[
-                    { label: '出港', value: 'outbound' },
-                    { label: '进港', value: 'inbound' },
-                    { label: '综合', value: 'comprehensive' },
-                  ]" />
-                </a-form-item>
                 <a-form-item v-if="itemForm.nodeRole !== 'group'">
                   <template #label>
                     <span @click="onFieldFocus('unit')" style="cursor: pointer">单位</span>
@@ -788,14 +780,6 @@
             <a-select-option value="estimate">暂估</a-select-option>
             <a-select-option value="depreciation">折旧</a-select-option>
           </a-select>
-        </a-form-item>
-        <!-- 方向范围（indicator + system 时显示） -->
-        <a-form-item v-if="addItemForm.itemCategory === 'indicator' && addItemForm.valueSource === 'system'" label="方向范围">
-          <a-checkbox-group v-model:value="addItemDirectionScope" :options="[
-            { label: '出港', value: 'outbound' },
-            { label: '进港', value: 'inbound' },
-            { label: '综合', value: 'comprehensive' },
-          ]" />
         </a-form-item>
         <a-form-item label="所属位置" required>
           <a-select
@@ -1757,7 +1741,6 @@ function buildItemUpdatePayload(item: any, overrides: Record<string, any> = {}) 
     valueSource: item.valueSource ?? item.f值来源 ?? null,
     systemDataSource: item.systemDataSource ?? item.f系统数据源 ?? null,
     isIndicatorSection: item.isIndicatorSection ?? item.f是否指标分区 ?? false,
-    indicatorDirectionScope: item.indicatorDirectionScope ?? item.f指标方向范围 ?? null,
     summaryKeywordsJson: normalizeJsonField(item.summaryKeywordsJson ?? item.summaryKeywords ?? item.fSummaryKeywords),
     relatedAccountsJson: normalizeJsonField(item.relatedAccountsJson ?? item.accountCodes ?? item.fAccountCodes),
     formula: item.formula ?? item.fFormula ?? null,
@@ -1960,7 +1943,6 @@ const itemForm = reactive({
   valueSource: '' as string,
   systemDataSource: '' as string,
   isIndicatorSection: false as boolean,
-  indicatorDirectionScope: '' as string,
   summaryKeywords: [] as string[],
   accountCodes: [] as string[],
   // 科目级独立辅助过滤：{ 科目编码: [{auxType, codes}] }
@@ -1997,7 +1979,6 @@ function getFormSnapshot() {
     valueSource: itemForm.valueSource,
     systemDataSource: itemForm.systemDataSource,
     isIndicatorSection: itemForm.isIndicatorSection,
-    indicatorDirectionScope: itemForm.indicatorDirectionScope,
     summaryKeywords: itemForm.summaryKeywords,
     accountCodes: itemForm.accountCodes,
     accountFilters: itemForm.accountFilters,
@@ -2048,30 +2029,6 @@ const isUnderIndicatorSection = computed(() => {
   return checkAncestorIsIndicatorSection(selectedItem.value?.parentId)
 })
 
-/** 编辑面板：方向范围 JSON 序列化 */
-const directionScope = computed({
-  get(): string[] {
-    try {
-      return JSON.parse(itemForm.indicatorDirectionScope || '[]')
-    } catch { return [] }
-  },
-  set(val: string[]) {
-    itemForm.indicatorDirectionScope = JSON.stringify(val)
-  }
-})
-
-/** 新增弹窗：方向范围 JSON 序列化 */
-const addItemDirectionScope = computed({
-  get(): string[] {
-    try {
-      return JSON.parse(addItemForm.indicatorDirectionScope || '[]')
-    } catch { return [] }
-  },
-  set(val: string[]) {
-    addItemForm.indicatorDirectionScope = JSON.stringify(val)
-  }
-})
-
 /** 向后兼容：同步旧字段 */
 function syncLegacyFields() {
   if (itemForm.itemCategory === 'section') itemForm.nodeRole = 'group'
@@ -2094,10 +2051,6 @@ function onItemCategoryChange(val: string) {
   if (val === 'profit') {
     itemForm.valueSource = 'formula'
   }
-  // 方向范围仅对 indicator 类别有意义，切到其他类别时清空，避免残留 JSON 随保存写库
-  if (val !== 'indicator' && !itemForm.isIndicatorSection) {
-    itemForm.indicatorDirectionScope = ''
-  }
   syncLegacyFields()
 }
 
@@ -2105,9 +2058,6 @@ function onItemCategoryChange(val: string) {
 function onValueSourceChange(val: string) {
   if (val !== 'system') {
     itemForm.systemDataSource = ''
-  }
-  if (val !== 'system' || itemForm.itemCategory !== 'indicator') {
-    itemForm.indicatorDirectionScope = ''
   }
   syncLegacyFields()
 }
@@ -2134,10 +2084,6 @@ function onAddItemCategoryChange(val: string) {
   if (val === 'profit') {
     addItemForm.valueSource = 'formula'
   }
-  // 方向范围仅对 indicator 类别有意义
-  if (val !== 'indicator' && !addItemForm.isIndicatorSection) {
-    addItemForm.indicatorDirectionScope = null
-  }
   syncAddItemLegacyFields()
 }
 
@@ -2145,9 +2091,6 @@ function onAddItemCategoryChange(val: string) {
 function onAddValueSourceChange(val: string) {
   if (val !== 'system') {
     addItemForm.systemDataSource = null
-  }
-  if (val !== 'system' || addItemForm.itemCategory !== 'indicator') {
-    addItemForm.indicatorDirectionScope = null
   }
   syncAddItemLegacyFields()
 }
@@ -2487,7 +2430,6 @@ function fillItemForm(item: any) {
     itemForm.valueSource = item.valueSource || ''
     itemForm.systemDataSource = item.systemDataSource || ''
     itemForm.isIndicatorSection = item.isIndicatorSection || false
-    itemForm.indicatorDirectionScope = item.indicatorDirectionScope || ''
     syncLegacyFields()
   } else {
     const role = getNodeRole(item)
@@ -2508,7 +2450,6 @@ function fillItemForm(item: any) {
       itemForm.valueSource = 'manual'
     }
     itemForm.isIndicatorSection = item.isIndicatorSection || false
-    itemForm.indicatorDirectionScope = item.indicatorDirectionScope || ''
   }
   try {
     const kw = item.summaryKeywordsJson || item.summaryKeywords || item.fSummaryKeywords
@@ -2606,7 +2547,6 @@ async function handleSaveItem() {
       valueSource: itemForm.valueSource || null,
       systemDataSource: itemForm.systemDataSource || null,
       isIndicatorSection: itemForm.isIndicatorSection || false,
-      indicatorDirectionScope: itemForm.indicatorDirectionScope || null,
       summaryKeywordsJson: itemForm.summaryKeywords.length ? JSON.stringify(itemForm.summaryKeywords) : null,
       relatedAccountsJson: serializeRelatedAccounts(),
       formula: itemForm.formula || null,
@@ -2617,7 +2557,6 @@ async function handleSaveItem() {
       dataSourceRemark: itemForm.dataSourceRemark || null,
       calculationLogic: itemForm.calculationLogic || null,
       isManualEntry: ['voucher', 'billing', 'depreciation', 'estimate', 'allocation'].includes(itemForm.dataSourceType) ? false : itemForm.isManualEntry,
-      auxiliaryFilterJson: null,
       billingFilterJson: itemForm.dataSourceType === 'billing'
         ? JSON.stringify({
             outlets: itemForm.billingFilter.outlets,
@@ -2686,7 +2625,6 @@ const addItemForm = reactive({
   valueSource: 'system' as string,
   systemDataSource: null as string | null,
   isIndicatorSection: false as boolean,
-  indicatorDirectionScope: null as string | null,
 })
 
 const addItemSystemDataSourceSelectValue = computed<any>({
@@ -2756,7 +2694,6 @@ async function handleAddItem(parentItem: any) {
   }
   addItemForm.systemDataSource = null
   addItemForm.isIndicatorSection = false
-  addItemForm.indicatorDirectionScope = null
   syncAddItemLegacyFields()
   addItemModalVisible.value = true
 }
@@ -2822,7 +2759,6 @@ async function handleAddItemSubmit() {
       valueSource: addItemForm.valueSource || null,
       systemDataSource: addItemForm.systemDataSource || null,
       isIndicatorSection: addItemForm.isIndicatorSection || false,
-      indicatorDirectionScope: addItemForm.indicatorDirectionScope || null,
     })
     message.success('新增成功')
     addItemModalVisible.value = false

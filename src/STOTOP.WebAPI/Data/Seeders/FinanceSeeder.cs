@@ -27,6 +27,7 @@ public static class FinanceSeeder
             new(3, "损益项字段数据迁移 (2026-05-27)", MigrateV3),
             new(4, "指标分区标记收敛为根级 (2026-06-12)", MigrateV4),
             new(5, "删除 FIN科目/科目余额/辅助余额 的 F组织ID 列 (2026-06-16)", MigrateV5),
+            new(6, "批次6: 删损益项2废弃列+重灌72项种子 (2026-06-17)", MigrateV6),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -1016,7 +1017,7 @@ public static class FinanceSeeder
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600470)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600470, N'5601010102', N'客服', N'期间费用', N'借', 4, 600454, 1, N'department', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600471)
-        INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600471, N'5601010103', N'操作', N'期间费用', N'借', 4, 600454, 1, N'department', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
+        INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600471, N'5601010103', N'操作', N'期间费用', N'借', 4, 600454, 1, N'department,business_direction', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600472)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600472, N'5601010104', N'司机', N'期间费用', N'借', 4, 600454, 1, N'department', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600473)
@@ -1871,7 +1872,7 @@ public static class FinanceSeeder
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700415)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700415, N'5601010102', N'客服', N'期间费用', N'借', 4, 700399, 1, N'department', NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700416)
-        INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700416, N'5601010103', N'操作', N'期间费用', N'借', 4, 700399, 1, N'department', NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
+        INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700416, N'5601010103', N'操作', N'期间费用', N'借', 4, 700399, 1, N'department,business_direction', NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700417)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700417, N'5601010104', N'司机', N'期间费用', N'借', 4, 700399, 1, N'department', NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700418)
@@ -1909,333 +1910,8 @@ public static class FinanceSeeder
         
         ");
 
-        // FIN阿米巴损益项
-        ExecSql(ctx, @"
-        SET IDENTITY_INSERT [FIN阿米巴损益项] ON;
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 414)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (414, 3, N'出港', NULL, 1, 0, NULL, N'2026-05-24 18:49:54.920', N'2026-05-24 18:49:54.920', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 415)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (415, 3, N'出港指标', NULL, 20, 414, NULL, N'2026-05-24 18:49:54.923', N'2026-05-25 00:00:34.459', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 416)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (416, 3, N'发件票量', NULL, 20, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.796', NULL, NULL, N'票', N'none', NULL, 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 417)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (417, 3, N'发件重量', NULL, 30, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.826', NULL, NULL, N'kg', N'none', NULL, 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 418)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (418, 3, N'均重', NULL, 40, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.860', N'formula', NULL, N'kg/票', N'none', NULL, 0, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 419)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (419, 3, N'揽件员人数', NULL, 50, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.901', NULL, NULL, N'人', N'none', NULL, 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 420)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (420, 3, N'揽件效能', NULL, 60, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.932', N'formula', NULL, N'件/人/日', N'none', NULL, 0, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 421)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (421, 3, N'出港客服人数', NULL, 70, 415, NULL, N'2026-05-24 18:49:54.926', N'2026-05-25 00:14:31.962', NULL, NULL, N'人', N'none', NULL, 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 422)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (422, 3, N'出港收入', NULL, 30, 414, NULL, N'2026-05-24 18:49:54.930', N'2026-05-25 00:00:34.519', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 423)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (423, 3, N'出港发件收入', NULL, 10, 422, NULL, N'2026-05-24 18:49:54.930', N'2026-05-24 23:49:26.348', N'voucher', NULL, N'元', N'auto', NULL, 0, N'寄件业务收入', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 425)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (425, 3, N'其他出港收入', NULL, 20, 422, NULL, N'2026-05-24 18:49:54.930', N'2026-05-24 23:49:26.403', N'voucher', NULL, N'元', N'auto', NULL, 0, N'抖音、个人寄件、散件、裹裹件收入等', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 426)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (426, 3, N'出港成本', NULL, 40, 414, NULL, N'2026-05-24 18:49:54.933', N'2026-05-25 00:00:34.558', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 427)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (427, 3, N'申通系统', NULL, 1, 426, NULL, N'2026-05-24 18:49:54.933', N'2026-05-24 18:49:54.933', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 428)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (428, 3, N'面单&派费成本', NULL, 1, 427, N'[{""code"": ""54010101""}, {""code"": ""54010106""}, {""code"": ""54010107""}, {""code"": ""54010108""}, {""code"": ""54010109""}]', N'2026-05-24 18:49:54.936', N'2026-05-24 18:49:54.936', N'voucher', NULL, N'元', N'auto', NULL, 0, N'1.61每单预付+派费调整+大货派费+乡镇补贴', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 429)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (429, 3, N'中转费', NULL, 2, 427, N'[{""code"": ""54010301""}, {""code"": ""54010302""}]', N'2026-05-24 18:49:54.936', N'2026-05-24 18:49:54.936', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 430)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (430, 3, N'操作费', NULL, 3, 427, N'[{""code"": ""54010305""}]', N'2026-05-24 18:49:54.936', N'2026-05-24 18:49:54.936', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 431)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (431, 3, N'全网出港费', NULL, 4, 427, N'[{""code"": ""54010304""}]', N'2026-05-24 18:49:54.936', N'2026-05-24 18:49:54.936', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 432)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (432, 3, N'政策返还', NULL, 5, 427, NULL, N'2026-05-24 18:49:54.940', N'2026-05-24 18:49:54.940', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 433)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (433, 3, N'返利', NULL, 1, 432, N'[{""code"": ""54010102""}, {""code"": ""54010104""}]', N'2026-05-24 18:49:54.943', N'2026-05-24 18:49:54.943', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 434)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (434, 3, N'业务量罚款', NULL, 2, 432, N'[{""code"": ""54010103""}, {""code"": ""54010401""}]', N'2026-05-24 18:49:54.943', N'2026-05-24 18:49:54.943', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 435)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (435, 3, N'一口价结算', NULL, 6, 427, N'[{""code"": ""54010105""}]', N'2026-05-24 18:49:54.946', N'2026-05-24 18:49:54.946', N'voucher', NULL, N'元', N'auto', NULL, 0, N'一口价运费+一口价考核', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 437)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (437, 3, N'出港质量罚款', NULL, 2, 426, NULL, N'2026-05-24 18:49:54.946', N'2026-05-24 18:49:54.946', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 438)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (438, 3, N'出港质量类罚款', NULL, 1, 437, N'[{""code"": ""54010713""}, {""code"": ""54010711""}, {""code"": ""54010703""}, {""code"": ""54010702""}, {""code"": ""54010704""}, {""code"": ""54010705""}, {""code"": ""54010706""}, {""code"": ""54010707""}, {""code"": ""54010708""}, {""code"": ""54010709""}, {""code"": ""54010710""}, {""code"": ""54010701""}]', N'2026-05-24 18:49:54.950', N'2026-05-24 18:49:54.950', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 439)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (439, 3, N'三件私了', NULL, 2, 437, N'[{""code"": ""540106""}]', N'2026-05-24 18:49:54.950', N'2026-05-24 18:49:54.950', N'voucher', NULL, N'元', N'auto', NULL, 0, N'向客户理赔产生的支出', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 440)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (440, 3, N'理赔追回', NULL, 3, 437, N'[{""code"": ""540106""}]', N'2026-05-24 18:49:54.950', N'2026-05-24 18:49:54.950', N'voucher', NULL, N'元', N'auto', NULL, 0, N'客服人员向责任中心或网点追回的理赔收入', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 441)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (441, 3, N'增值业务成本', NULL, 3, 426, N'[{""code"": ""54010501""}, {""code"": ""54010507""}, {""code"": ""54010508""}]', N'2026-05-24 18:49:54.953', N'2026-05-24 18:49:54.953', N'voucher', NULL, N'元', N'auto', NULL, 0, N'申鲜尊享项目收费', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 442)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (442, 3, N'揽件员工资', NULL, 4, 426, NULL, N'2026-05-24 18:49:54.953', N'2026-05-24 18:49:54.953', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 443)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (443, 3, N'集包费', NULL, 5, 426, N'[{""code"": ""54010502""}]', N'2026-05-24 18:49:54.953', N'2026-05-24 18:49:54.953', N'voucher', NULL, N'元', N'auto', NULL, 0, N'网点付集包工厂费用', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 444)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (444, 3, N'出港操作装卸', NULL, 6, 426, NULL, N'2026-05-24 18:49:54.953', N'2026-05-24 18:49:54.953', NULL, NULL, N'元', N'manual', NULL, 1, N'网点操作工及中心交货卸车工成本', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 445)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (445, 3, N'出港运输成本', NULL, 7, 426, NULL, N'2026-05-24 18:49:54.953', N'2026-05-24 18:49:54.953', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 446)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (446, 3, N'出港司机工资', NULL, 1, 445, NULL, N'2026-05-24 18:49:54.956', N'2026-05-24 18:49:54.956', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 447)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (447, 3, N'出港油费过路费', NULL, 2, 445, NULL, N'2026-05-24 18:49:54.956', N'2026-05-24 18:49:54.956', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 448)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (448, 3, N'出港维保其他', NULL, 3, 445, NULL, N'2026-05-24 18:49:54.956', N'2026-05-24 18:49:54.956', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 449)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (449, 3, N'出港车辆折旧', NULL, 4, 445, NULL, N'2026-05-24 18:49:54.956', N'2026-05-24 18:49:54.956', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 450)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (450, 3, N'出港物料成本', NULL, 8, 426, N'[{""code"": ""540102""}]', N'2026-05-24 18:49:54.960', N'2026-05-24 18:49:54.960', N'voucher', NULL, N'元', N'auto', NULL, 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 451)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (451, 3, N'其他出港成本', NULL, 9, 426, NULL, N'2026-05-24 18:49:54.960', N'2026-05-24 18:49:54.960', NULL, NULL, N'元', N'manual', NULL, 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 452)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (452, 3, N'出港边际利润', N'${出港收入} - ${出港成本}', 50, 414, NULL, N'2026-05-24 18:49:54.960', N'2026-05-25 00:00:34.592', NULL, NULL, N'元', NULL, NULL, 0, NULL, NULL, N'formula', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 453)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (453, 3, N'进港', NULL, 2, 0, NULL, N'2026-05-24 18:49:54.963', N'2026-05-24 18:49:54.963', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 454)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (454, 3, N'进港指标', NULL, 1, 453, NULL, N'2026-05-24 18:49:54.963', N'2026-05-24 18:49:54.963', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 455)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (455, 3, N'派件票量', NULL, 1, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'票', N'none', N'网点管家-有偿流量流向报表', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 456)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (456, 3, N'派件重量', NULL, 2, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'KG', N'none', N'网点管家-有偿流量流向报表', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 457)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (457, 3, N'入库率', NULL, 3, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'%', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 458)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (458, 3, N'驿站单票成本', NULL, 4, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', N'formula', NULL, N'票/元', N'none', NULL, 0, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 459)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (459, 3, N'派件员人数', NULL, 5, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'人', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 460)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (460, 3, N'派件效能', NULL, 6, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', N'formula', NULL, N'件/人/日', N'none', NULL, 0, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 461)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (461, 3, N'进港客服人数', NULL, 7, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'人', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 462)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (462, 3, N'操作&装卸人数', NULL, 8, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'人', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 463)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (463, 3, N'与中心距离', NULL, 9, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'KM', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 464)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (464, 3, N'车型', NULL, 10, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'米/方', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 465)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (465, 3, N'场地面积', NULL, 11, 454, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, N'平米', N'none', N'网点自行统计', 1, NULL, NULL, N'indicator', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 466)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (466, 3, N'进港收入', NULL, 2, 453, NULL, N'2026-05-24 18:49:54.970', N'2026-05-24 18:49:54.970', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 467)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (467, 3, N'派费收入', NULL, 1, 466, N'[{""code"": ""50010301""}, {""code"": ""50010302""}, {""code"": ""50010303""}, {""code"": ""50010304""}, {""code"": ""50010305""}, {""code"": ""50010306""}, {""code"": ""50010307""}]', N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'基础派费+补贴派费+特价业务派费+周期性派费+大货计重派费+乡镇补贴+错签+补签', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 468)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (468, 3, N'政策互惠', NULL, 2, 466, N'[{""code"": ""50010401""}, {""code"": ""50010402""}]', N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 469)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (469, 3, N'共配派费', NULL, 3, 466, NULL, N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 470)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (470, 3, N'考核派费', NULL, 4, 466, N'[{""code"": ""50010701""}, {""code"": ""50010702""}]', N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'考核派费+综合KPI，填列所属期考核派费，次月账单中查询', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 471)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (471, 3, N'星计划收费', NULL, 5, 466, NULL, N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 472)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (472, 3, N'操作收入', NULL, 6, 466, N'[{""code"": ""50010501""}]', N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'退件操作费+时效件投诉+同行封装投诉+偷逃大货举报奖励+异形件投诉+子母件等', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 473)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (473, 3, N'增值业务收入', NULL, 7, 466, N'[{""code"": ""50010801""}, {""code"": ""50010807""}]', N'2026-05-24 18:49:54.973', N'2026-05-24 18:49:54.973', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'到收代付手续费+保价业务+申鲜尊享+按需派送补贴+按需派送奖励+申咚咚激励金+派件手续费', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 474)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (474, 3, N'进港成本', NULL, 3, 453, NULL, N'2026-05-24 18:49:54.976', N'2026-05-24 18:49:54.976', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 475)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (475, 3, N'进港操作费', NULL, 1, 474, N'[{""code"": ""50010802""}]', N'2026-05-24 18:49:54.980', N'2026-05-24 18:49:54.980', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'进港操作费+0.18元/包的操作费', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 476)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (476, 3, N'环保袋费用', NULL, 2, 474, N'[{""code"": ""50010805""}]', N'2026-05-24 18:49:54.980', N'2026-05-24 18:49:54.980', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, N'环保袋使用、超时、遗失费用', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 477)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (477, 3, N'承包区派费', NULL, 3, 474, NULL, N'2026-05-24 18:49:54.980', N'2026-05-24 18:49:54.980', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 478)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (478, 3, N'派件员工资', NULL, 4, 474, NULL, N'2026-05-24 18:49:54.980', N'2026-05-24 18:49:54.980', NULL, NULL, N'元', N'manual', N'网点自行统计+网点管家-调账', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 479)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (479, 3, N'驿站成本', NULL, 5, 474, NULL, N'2026-05-24 18:49:54.980', N'2026-05-24 18:49:54.980', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 480)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (480, 3, N'支付驿站费用', NULL, 1, 479, NULL, N'2026-05-24 18:49:54.983', N'2026-05-24 18:49:54.983', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, N'直接支付给各种驿站、丰巢、代收点的费用', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 481)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (481, 3, N'运输成本（网点-驿站）', NULL, 2, 479, NULL, N'2026-05-24 18:49:54.983', N'2026-05-24 18:49:54.983', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, N'从网点送货到各种驿站、丰巢、代售点的运输费用', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 482)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (482, 3, N'进港操作装卸', NULL, 6, 474, NULL, N'2026-05-24 18:49:54.986', N'2026-05-24 18:49:54.986', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 483)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (483, 3, N'进港质量罚款', NULL, 7, 474, NULL, N'2026-05-24 18:49:54.986', N'2026-05-24 18:49:54.986', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 484)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (484, 3, N'进港质量类罚款', NULL, 1, 483, N'[{""code"": ""50010717""}, {""code"": ""50010714""}, {""code"": ""50010705""}, {""code"": ""50010704""}, {""code"": ""50010706""}, {""code"": ""50010708""}, {""code"": ""50010703""}, {""code"": ""50010713""}, {""code"": ""50010715""}, {""code"": ""50010710""}, {""code"": ""50010709""}, {""code"": ""50010707""}, {""code"": ""50010711""}, {""code"": ""50010712""}, {""code"": ""50010716""}]', N'2026-05-24 18:49:54.990', N'2026-05-24 18:49:54.990', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 485)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (485, 3, N'客服三件理赔', NULL, 2, 483, N'[{""code"": ""500106""}]', N'2026-05-24 18:49:54.990', N'2026-05-24 18:49:54.990', N'voucher', NULL, N'元', N'auto', N'网点管家-网点账单', 0, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 486)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (486, 3, N'进港运输成本', NULL, 8, 474, NULL, N'2026-05-24 18:49:54.990', N'2026-05-24 18:49:54.990', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, N'group', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 487)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (487, 3, N'进港司机工资', NULL, 1, 486, NULL, N'2026-05-24 18:49:54.993', N'2026-05-24 18:49:54.993', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 488)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (488, 3, N'进港油费过路费', NULL, 2, 486, NULL, N'2026-05-24 18:49:54.993', N'2026-05-24 18:49:54.993', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 489)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (489, 3, N'进港维保其他', NULL, 3, 486, NULL, N'2026-05-24 18:49:54.993', N'2026-05-24 18:49:54.993', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 490)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (490, 3, N'进港车辆折旧', NULL, 4, 486, NULL, N'2026-05-24 18:49:54.993', N'2026-05-24 18:49:54.993', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 491)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (491, 3, N'进港物料成本', NULL, 9, 474, NULL, N'2026-05-24 18:49:54.996', N'2026-05-24 18:49:54.996', NULL, NULL, N'元', N'manual', N'网点自行统计', 1, NULL, NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 492)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (492, 3, N'其他派件成本', NULL, 10, 474, NULL, N'2026-05-24 18:49:54.996', N'2026-05-24 18:49:54.996', NULL, NULL, N'元', N'manual', N'网点自行统计+网点管家-调账', 1, N'代派、三件私了等', NULL, N'data', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 493)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (493, 3, N'进港边际毛利', N'${进港收入} - ${进港成本}', 4, 453, NULL, N'2026-05-24 18:49:55.000', N'2026-05-24 18:49:55.000', NULL, NULL, N'元', NULL, NULL, 0, NULL, NULL, N'formula', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 494)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (494, 3, N'经营净利润', N'${出港边际利润} + ${进港边际毛利}', 99, 0, NULL, N'2026-05-24 18:49:55.000', N'2026-05-24 18:49:55.000', NULL, NULL, N'元', NULL, NULL, 0, NULL, NULL, N'formula', NULL);
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 495)
-        
-        INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F创建时间], [F更新时间], [F数据源], [F摘要关键词JSON], [F单位], [F单票均模式], [F数据来源说明], [F是否手工填报], [F计算逻辑], [F辅助核算过滤Json], [F节点角色], [F计费过滤Json]) VALUES (495, 3, N'出港计价件量', NULL, 10, 415, NULL, N'2026-05-24 19:51:30.659', N'2026-05-25 00:14:31.767', N'billing', NULL, N'票', NULL, NULL, 0, NULL, NULL, N'data', N'{""outlets"":[],""businessObjects"":[],""aggregation"":""waybill_count"",""scope"":""priced""}');
-        
-        SET IDENTITY_INSERT [FIN阿米巴损益项] OFF;
-        
-        ");
+        // FIN阿米巴损益项（批次6: 72项种子, 与 MigrateV6 共用 ReseedAmoebaTemplate3 守卫重灌）
+        ReseedAmoebaTemplate3(ctx);
 
         // 唯一索引: UQ_FIN凭证_VoucherNo
         ExecSql(ctx, @"
@@ -2339,5 +2015,109 @@ public static class FinanceSeeder
         SeederHelper.DropColumnSafe(ctx, "FIN科目", "F组织ID");
         SeederHelper.DropColumnSafe(ctx, "FIN科目余额", "F组织ID");
         SeederHelper.DropColumnSafe(ctx, "FIN辅助核算余额", "F组织ID");
+    }
+
+    private static void MigrateV6(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+        // 批次6: 删 2 个废弃列(已从实体/Config 移除); DropColumnSafe 幂等(IF EXISTS), 全新库列本不存在即跳过
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F辅助核算过滤Json");
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F指标方向范围");
+        // 存量库重灌损益项种子: V1 内种子对已迁移库不会重跑, 故在此守卫重灌
+        ReseedAmoebaTemplate3(ctx);
+    }
+
+    /// <summary>
+    /// 批次6 阿米巴损益项种子(模板3, 72项) —— 一次性守卫重灌(IF NOT EXISTS FID=600)。
+    /// V1(全新库) 与 MigrateV6(存量库) 共用; 只灌一次, 不覆盖运行期对模板3的编辑。
+    /// 由 docs/superpowers/specs/2026-06-17-阿米巴损益项种子-build.py 生成, 勿手改。
+    /// </summary>
+    private static void ReseedAmoebaTemplate3(STOTOPDbContext ctx)
+    {
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [FIN阿米巴损益项] ON;
+
+        -- 批次6: 一次性守卫重灌(§7.7) —— FID 600 缺失即清模板3并灌新 72 项
+        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益项] WHERE [FID] = 600)
+        BEGIN
+            -- 仅清种子两段(旧414-495 + 新600-671), 不动用户运行期自定义项(其他FID)
+            DELETE FROM [FIN阿米巴损益项] WHERE [F模板ID] = 3 AND ([FID] BETWEEN 414 AND 495 OR [FID] BETWEEN 600 AND 671);
+
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (600, 3, N'出港', N'group', NULL, 10, 0, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (601, 3, N'出港指标', N'group', NULL, 10, 600, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (602, 3, N'发件票量', N'indicator', NULL, 10, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'票', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (603, 3, N'发件重量', N'indicator', NULL, 20, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'kg', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (604, 3, N'均重', N'indicator', NULL, 30, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'kg/票', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (605, 3, N'计价件量', N'indicator', NULL, 40, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'票', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (606, 3, N'揽件员人数', N'indicator', NULL, 50, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'人', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (607, 3, N'揽件效能', N'indicator', NULL, 60, 601, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'件/人/日', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (608, 3, N'出港收入', N'group', NULL, 20, 600, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (609, 3, N'客户发件收入', N'group', NULL, 10, 608, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (610, 3, N'月结收入', N'data', NULL, 10, 609, N'[{""code"": ""50010102"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (611, 3, N'现付收入', N'data', NULL, 20, 609, N'[{""code"": ""50010101"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (612, 3, N'到付收入', N'data', NULL, 30, 609, N'[{""code"": ""50010103"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (613, 3, N'总部平台单', N'data', NULL, 40, 609, N'[{""code"": ""50010104"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (614, 3, N'政策返利', N'data', NULL, 20, 608, N'[{""code"": ""500105"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (615, 3, N'出港成本', N'group', NULL, 30, 600, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (616, 3, N'面单&派费', N'group', NULL, 10, 615, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (617, 3, N'面单', N'data', NULL, 10, 616, N'[{""code"": ""540101"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (618, 3, N'出港派费', N'data', NULL, 20, 616, N'[{""code"": ""540102"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (619, 3, N'中转费', N'group', NULL, 20, 615, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (620, 3, N'中转费', N'data', NULL, 10, 619, N'[{""code"": ""54010301"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (621, 3, N'全网出港费', N'data', NULL, 20, 619, N'[{""code"": ""54010304"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (622, 3, N'其他中转', N'data', NULL, 30, 619, N'[{""code"": ""54010302"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}, {""code"": ""54010303"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}, {""code"": ""54010305"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (623, 3, N'操作费', N'group', NULL, 30, 615, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (624, 3, N'集包费', N'data', NULL, 10, 623, N'[{""code"": ""54010401"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}, {""code"": ""54010402"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'send', N'科目余额', N'件量分摊(send);发件量为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (625, 3, N'操作费', N'data', NULL, 20, 623, N'[{""code"": ""54010403"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}, {""code"": ""54010404"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}, {""code"": ""54010405"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'send', N'科目余额', N'件量分摊(send);发件量为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (626, 3, N'运输费', N'data', NULL, 40, 615, N'[{""code"": ""540109"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (627, 3, N'物料费', N'data', NULL, 50, 615, N'[{""code"": ""540108"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (628, 3, N'增值服务费', N'data', NULL, 60, 615, N'[{""code"": ""540105"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (629, 3, N'考核罚款', N'data', NULL, 70, 615, N'[{""code"": ""540106"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (630, 3, N'客服理赔', N'data', NULL, 80, 615, N'[{""code"": ""540107"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (631, 3, N'揽件员工资', N'data', NULL, 90, 615, N'[{""code"": ""5601010101"", ""filters"": [{""auxType"": ""department"", ""codes"": [""YWY_OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (632, 3, N'出港操作工资', N'data', NULL, 100, 615, N'[{""code"": ""5601010103"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""OUT""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'send', N'科目余额', N'件量分摊(send);发件量为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (633, 3, N'出港边际利润', N'formula', N'${出港收入} - ${出港成本}', 40, 600, NULL, NULL, N'formula', NULL, 0, N'profit', 0, N'元', N'none', NULL, NULL, NULL, NULL, N'${出港收入} - ${出港成本}', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (634, 3, N'进港', N'group', NULL, 20, 0, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (635, 3, N'进港指标', N'group', NULL, 10, 634, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (636, 3, N'派件票量', N'indicator', NULL, 10, 635, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'票', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (637, 3, N'派件重量', N'indicator', NULL, 20, 635, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'kg', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (638, 3, N'入库率', N'indicator', NULL, 30, 635, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'%', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (639, 3, N'派件员人数', N'indicator', NULL, 40, 635, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'人', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (640, 3, N'派件效能', N'indicator', NULL, 50, 635, NULL, NULL, N'manual', NULL, 1, N'indicator', 0, N'件/人/日', N'none', NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (641, 3, N'进港收入', N'group', NULL, 20, 634, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (642, 3, N'派费收入', N'group', NULL, 10, 641, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (643, 3, N'基础派费', N'data', NULL, 10, 642, N'[{""code"": ""50010201"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (644, 3, N'补贴派费', N'data', NULL, 20, 642, N'[{""code"": ""50010202"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (645, 3, N'考核派费', N'data', NULL, 30, 642, N'[{""code"": ""50010209"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (646, 3, N'其他派费', N'data', NULL, 40, 642, N'[{""code"": ""50010203"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010204"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010205"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010206"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010207"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010208"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010210"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}, {""code"": ""50010211"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (647, 3, N'考核激励', N'data', NULL, 20, 641, N'[{""code"": ""500106"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (648, 3, N'客服受款', N'data', NULL, 30, 641, N'[{""code"": ""500107"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (649, 3, N'其他收入(进港操作收入)', N'data', NULL, 40, 641, N'[{""code"": ""500103"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'revenue', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (650, 3, N'进港成本', N'group', NULL, 30, 634, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (651, 3, N'操作成本', N'data', NULL, 10, 650, N'[{""code"": ""540104"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (652, 3, N'派件成本', N'group', NULL, 20, 650, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (653, 3, N'承包区派费', N'data', NULL, 10, 652, N'[{""code"": ""54010211"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (654, 3, N'驿站费用', N'data', NULL, 20, 652, N'[{""code"": ""54010212"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (655, 3, N'运输成本', N'data', NULL, 30, 650, N'[{""code"": ""540109"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (656, 3, N'考核成本', N'data', NULL, 40, 650, N'[{""code"": ""540106"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (657, 3, N'赔付成本', N'data', NULL, 50, 650, N'[{""code"": ""540107"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (658, 3, N'物料成本', N'data', NULL, 60, 650, N'[{""code"": ""540108"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (659, 3, N'客服成本', N'data', NULL, 70, 650, N'[{""code"": ""5601010102"", ""filters"": [{""auxType"": ""department"", ""codes"": [""KF""]}]}, {""code"": ""560121"", ""filters"": [{""auxType"": ""department"", ""codes"": [""KF""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (660, 3, N'派件员工资', N'data', NULL, 80, 650, N'[{""code"": ""5601010101"", ""filters"": [{""auxType"": ""department"", ""codes"": [""YWY_IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, NULL, NULL, N'科目余额', N'直接归段', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (661, 3, N'进港操作工资', N'data', NULL, 90, 650, N'[{""code"": ""5601010103"", ""filters"": [{""auxType"": ""business_direction"", ""codes"": [""IN""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'deliver', N'科目余额', N'件量分摊(deliver);派件量为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (662, 3, N'进港边际利润', N'formula', N'${进港收入} - ${进港成本}', 40, 634, NULL, NULL, N'formula', NULL, 0, N'profit', 0, N'元', N'none', NULL, NULL, NULL, NULL, N'${进港收入} - ${进港成本}', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (663, 3, N'公共分摊', N'group', NULL, 30, 0, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (664, 3, N'房租/水电/折旧/摊销', N'group', NULL, 10, 663, NULL, NULL, NULL, NULL, 0, N'section', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (665, 3, N'房租', N'data', NULL, 10, 664, N'[{""code"": ""560104""}, {""code"": ""560204""}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (666, 3, N'水电', N'data', NULL, 20, 664, N'[{""code"": ""560105""}, {""code"": ""560205""}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (667, 3, N'折旧', N'data', NULL, 30, 664, N'[{""code"": ""560102""}, {""code"": ""560202""}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (668, 3, N'摊销', N'data', NULL, 40, 664, N'[{""code"": ""560103""}, {""code"": ""560203""}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (669, 3, N'管理费用', N'data', NULL, 20, 663, N'[{""code"": ""560206""}, {""code"": ""560207""}, {""code"": ""560208""}, {""code"": ""56020901""}, {""code"": ""56020902""}, {""code"": ""560210""}, {""code"": ""560211""}, {""code"": ""560212""}, {""code"": ""560213""}, {""code"": ""560214""}, {""code"": ""560215""}, {""code"": ""560216""}, {""code"": ""560217""}, {""code"": ""560218""}, {""code"": ""560219""}, {""code"": ""560220""}, {""code"": ""560221""}, {""code"": ""560222""}, {""code"": ""560223""}, {""code"": ""560299""}, {""code"": ""5601010105"", ""filters"": [{""auxType"": ""department"", ""codes"": [""YWGL""]}]}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (670, 3, N'财务费用', N'data', NULL, 30, 663, N'[{""code"": ""5603""}]', NULL, N'system', N'voucher', 0, N'cost', 0, N'元', N'auto', NULL, N'volume', N'total', N'科目余额', N'件量分摊(total);为单票基数', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+            INSERT INTO [FIN阿米巴损益项] ([FID], [F模板ID], [F项目名称], [F节点角色], [F计算公式], [F排序], [F父ID], [F关联科目JSON], [F计费过滤Json], [F值来源], [F系统数据源], [F是否手工填报], [F项目类别], [F是否指标分区], [F单位], [F单票均模式], [F小数位数], [F分摊方式], [F分摊基数], [F数据来源说明], [F计算逻辑], [F创建时间], [F更新时间]) VALUES (671, 3, N'经营净利润', N'formula', N'${出港边际利润} + ${进港边际利润} - ${公共分摊}', 40, 0, NULL, NULL, N'formula', NULL, 0, N'profit', 0, N'元', N'none', NULL, NULL, NULL, NULL, N'${出港边际利润} + ${进港边际利润} - ${公共分摊}', N'2026-06-17 00:00:00.000', N'2026-06-17 00:00:00.000');
+        END
+
+        SET IDENTITY_INSERT [FIN阿米巴损益项] OFF;
+        ");
     }
 }

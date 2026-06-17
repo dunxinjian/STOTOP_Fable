@@ -190,7 +190,6 @@ public class AmoebaService : IAmoebaService
                         FRelatedAccountsJson = item.FRelatedAccountsJson,
                         FDataSource = item.FDataSource,
                         FSummaryKeywordsJson = item.FSummaryKeywordsJson,
-                        FAuxiliaryFilterJson = item.FAuxiliaryFilterJson,
                         FBillingFilterJson = item.FBillingFilterJson,
                         FUnit = item.FUnit,
                         FDataSourceRemark = item.FDataSourceRemark,
@@ -205,7 +204,6 @@ public class AmoebaService : IAmoebaService
                         F值来源 = item.F值来源,
                         F系统数据源 = item.F系统数据源,
                         F是否指标分区 = item.F是否指标分区,
-                        F指标方向范围 = item.F指标方向范围,
                     };
                     await _itemRepository.AddAsync(newItem);
                     idMap[item.FID] = newItem.FID;
@@ -287,7 +285,6 @@ public class AmoebaService : IAmoebaService
             F值来源 = request.ValueSource,
             F系统数据源 = request.SystemDataSource,
             F是否指标分区 = request.IsIndicatorSection,
-            F指标方向范围 = request.IndicatorDirectionScope,
             FCreatedTime = DateTime.Now,
             FUpdatedTime = DateTime.Now
         };
@@ -371,7 +368,6 @@ public class AmoebaService : IAmoebaService
         {
             item.F是否指标分区 = request.IsIndicatorSection.Value;
         }
-        item.F指标方向范围 = request.IndicatorDirectionScope;
         // 自动数据源强制关闭手工填报标记
         var autoDataSources = new[] { "billing", "voucher", "depreciation", "estimate", "allocation" };
         if (!string.IsNullOrEmpty(item.FDataSource) && autoDataSources.Contains(item.FDataSource))
@@ -710,7 +706,6 @@ public class AmoebaService : IAmoebaService
                 ValueSource = item.F值来源,
                 SystemDataSource = item.F系统数据源,
                 IsIndicatorSection = item.F是否指标分区,
-                IndicatorDirectionScope = item.F指标方向范围,
             };
             
             node.Children = lookup[item.FID].Select(BuildNode).OrderBy(c => c.Sort).ToList();
@@ -746,7 +741,6 @@ public class AmoebaService : IAmoebaService
             ValueSource = item.F值来源,
             SystemDataSource = item.F系统数据源,
             IsIndicatorSection = item.F是否指标分区,
-            IndicatorDirectionScope = item.F指标方向范围,
         };
     }
 
@@ -793,7 +787,6 @@ public class AmoebaService : IAmoebaService
             FRelatedAccountsJson = source.FRelatedAccountsJson,
             FDataSource = source.FDataSource,
             FSummaryKeywordsJson = source.FSummaryKeywordsJson,
-            FAuxiliaryFilterJson = source.FAuxiliaryFilterJson,
             FBillingFilterJson = source.FBillingFilterJson,
             FUnit = source.FUnit,
             FDataSourceRemark = source.FDataSourceRemark,
@@ -805,7 +798,6 @@ public class AmoebaService : IAmoebaService
             F值来源 = source.F值来源,
             F系统数据源 = source.F系统数据源,
             F是否指标分区 = source.F是否指标分区,
-            F指标方向范围 = source.F指标方向范围,
             FCreatedTime = now,
             FUpdatedTime = now,
         };

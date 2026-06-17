@@ -20,7 +20,6 @@ public class FinAmoebaPLItemConfiguration : IEntityTypeConfiguration<FinAmoebaPL
         builder.Property(e => e.FRelatedAccountsJson).HasColumnName("F关联科目JSON");
         builder.Property(e => e.FDataSource).HasColumnName("F数据源").HasMaxLength(20);
         builder.Property(e => e.FSummaryKeywordsJson).HasColumnName("F摘要关键词JSON").HasMaxLength(500);
-        builder.Property(e => e.FAuxiliaryFilterJson).HasColumnName("F辅助核算过滤Json");
         builder.Property(e => e.FBillingFilterJson).HasColumnName("F计费过滤Json");
         builder.Property(e => e.FCreatedTime).HasColumnName("F创建时间");
         builder.Property(e => e.FUpdatedTime).HasColumnName("F更新时间");
@@ -33,7 +32,6 @@ public class FinAmoebaPLItemConfiguration : IEntityTypeConfiguration<FinAmoebaPL
         builder.Property(e => e.F是否指标分区).HasColumnName("F是否指标分区").HasDefaultValue(false);
         builder.Property(e => e.F值来源).HasColumnName("F值来源").HasMaxLength(20);
         builder.Property(e => e.F系统数据源).HasColumnName("F系统数据源").HasMaxLength(20);
-        builder.Property(e => e.F指标方向范围).HasColumnName("F指标方向范围").HasMaxLength(200);
         builder.Property(e => e.F小数位数).HasColumnName("F小数位数");
         builder.Property(e => e.F分摊方式).HasColumnName("F分摊方式").HasMaxLength(20);
         builder.Property(e => e.F分摊基数).HasColumnName("F分摊基数").HasMaxLength(20);
