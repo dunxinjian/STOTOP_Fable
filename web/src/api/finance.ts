@@ -1364,16 +1364,6 @@ export function deleteAmoebaMappingRule(id: number): Promise<any> {
   return del(`/finance/amoeba/mapping-rules/${id}`)
 }
 
-// ===== 阿米巴分摊比例 =====
-export function getAmoebaAllocations(): Promise<any> {
-  return get('/finance/amoeba/allocations')
-}
-export function saveAmoebaAllocation(data: any): Promise<any> {
-  return post('/finance/amoeba/allocations', data)
-}
-export function deleteAmoebaAllocation(id: number): Promise<any> {
-  return del(`/finance/amoeba/allocations/${id}`)
-}
 
 // ===== 阿米巴手工分类 =====
 export function getAmoebaUnclassified(params: {

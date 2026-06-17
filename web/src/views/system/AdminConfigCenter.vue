@@ -54,7 +54,6 @@ import {
   FileProtectOutlined,
   ProfileOutlined,
   SortAscendingOutlined,
-  PieChartOutlined,
   FieldTimeOutlined,
   TagsOutlined,
   CalendarOutlined,
@@ -111,7 +110,6 @@ const configGroups: ConfigGroup[] = [
       { name: '发票管理', route: '/finance/invoice-manage', description: '发票登记与匹配', icon: markRaw(FileProtectOutlined) },
       { name: '阿米巴报表模板配置', route: '/finance/amoeba/templates', description: '阿米巴损益报表模板', icon: markRaw(ProfileOutlined) },
       { name: '待分类管理', route: '/finance/amoeba/classify', description: '阿米巴科目分类映射', icon: markRaw(SortAscendingOutlined) },
-      { name: '分摊配置', route: '/finance/amoeba/allocation', description: '阿米巴费用分摊规则', icon: markRaw(PieChartOutlined) },
     ],
   },
   {

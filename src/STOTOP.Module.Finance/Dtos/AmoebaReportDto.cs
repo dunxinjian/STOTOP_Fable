@@ -217,26 +217,6 @@ public class CreateMappingRuleRequest
     public string? Remark { get; set; }
 }
 
-// 分摊比例 DTO
-public class AmoebaAllocationDto
-{
-    public long Id { get; set; }
-    public long UnitId { get; set; }
-    public string BrandCode { get; set; } = "";
-    public int AllocationType { get; set; }
-    public decimal? OutboundRatio { get; set; }
-    public decimal? InboundRatio { get; set; }
-}
-
-public class SaveAllocationRequest
-{
-    public long UnitId { get; set; }
-    public string BrandCode { get; set; } = "";
-    public int AllocationType { get; set; }
-    public decimal? OutboundRatio { get; set; }
-    public decimal? InboundRatio { get; set; }
-}
-
 // ===== 损益项明细钻取 =====
 public class AmoebaPLItemDetailRequest
 {

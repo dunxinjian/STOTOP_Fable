@@ -90,11 +90,6 @@ public class AmoebaPLService
             .Where(m => m.FOrgId == orgId)
             .ToListAsync();
 
-        // 4. 加载分摊配置
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
         // 5. 加载经营单元（从辅助核算项目 business_unit 类型获取）
         var units = await _dbContext.Set<FinAuxiliaryItem>()
             .Where(u => u.FOrgId == orgId && u.FAuxType == "business_unit" && u.FEnableStatus == 1)
@@ -125,8 +120,8 @@ public class AmoebaPLService
             point.MappedUnitId = MapToUnit(point, mappingRules);
         }
 
-        // 9. 应用分摊
-        var allocatedPoints = ApplyAllocation(allDataPoints, allocations);
+        // [批次5-S6] 旧固定比例分摊(FinAmoebaAllocation)已废弃删除；数据点直接进入视图(件量分摊在多期路径)
+        var allocatedPoints = allDataPoints;
 
         // 10. 按方向筛选（按归并桶比较，兼容模板 Tab 自定义命名）
         if (!string.IsNullOrEmpty(request.Direction))
@@ -1583,11 +1578,6 @@ public class AmoebaPLService
             .Where(m => m.FOrgId == orgId)
             .ToListAsync();
 
-        // 4. 加载分摊配置
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
         // 5. 加载经营单元
         var units = await _dbContext.Set<FinAuxiliaryItem>()
             .Where(u => u.FOrgId == orgId && u.FAuxType == "business_unit" && u.FEnableStatus == 1)
@@ -1616,8 +1606,8 @@ public class AmoebaPLService
             point.MappedUnitId = MapToUnit(point, mappingRules);
         }
 
-        // 9. 应用分摊
-        var allocatedPoints = ApplyAllocation(allDataPoints, allocations);
+        // [批次5-S6] 旧固定比例分摊(FinAmoebaAllocation)已废弃删除；数据点直接进入视图(件量分摊在多期路径)
+        var allocatedPoints = allDataPoints;
 
         // 10. 按方向筛选（按归并桶比较，兼容模板 Tab 自定义命名）
         if (!string.IsNullOrEmpty(request.Direction))
@@ -2691,55 +2681,6 @@ public class AmoebaPLService
 
     #endregion
 
-    #region 分摊计算
-
-    private List<DataPoint> ApplyAllocation(List<DataPoint> dataPoints, List<FinAmoebaAllocation> allocations)
-    {
-        if (!allocations.Any())
-            return dataPoints;
-
-        var result = new List<DataPoint>();
-
-        foreach (var point in dataPoints)
-        {
-            if (point.MappedUnitId == null || string.IsNullOrEmpty(point.BrandCode))
-            {
-                result.Add(point);
-                continue;
-            }
-
-            var allocation = allocations.FirstOrDefault(a =>
-                a.FUnitId == point.MappedUnitId.Value &&
-                a.FBrandCode == point.BrandCode);
-
-            if (allocation == null)
-            {
-                result.Add(point);
-                continue;
-            }
-
-            // 固定比例分摊（按归并桶判断方向，兼容模板 Tab 自定义命名）
-            if (allocation.FAllocationType == 1)
-            {
-                var bucket = MapDirectionToBucket(point.Direction);
-                if (bucket == "出港" && allocation.FOutboundRatio.HasValue)
-                {
-                    point.Amount *= allocation.FOutboundRatio.Value;
-                }
-                else if (bucket == "进港" && allocation.FInboundRatio.HasValue)
-                {
-                    point.Amount *= allocation.FInboundRatio.Value;
-                }
-            }
-
-            result.Add(point);
-        }
-
-        return result;
-    }
-
-    #endregion
-
     #region 汇总格式化
 
     /// <summary>
@@ -3781,76 +3722,6 @@ public class AmoebaPLService
 
     #endregion
 
-    #region 分摊比例 CRUD
-
-    public async Task<List<AmoebaAllocationDto>> GetAllocationsAsync(long orgId)
-    {
-        var allocations = await _dbContext.Set<FinAmoebaAllocation>()
-            .Where(a => a.FOrgId == orgId)
-            .ToListAsync();
-
-        return allocations.Select(a => new AmoebaAllocationDto
-        {
-            Id = a.FID,
-            UnitId = a.FUnitId,
-            BrandCode = a.FBrandCode,
-            AllocationType = a.FAllocationType,
-            OutboundRatio = a.FOutboundRatio,
-            InboundRatio = a.FInboundRatio
-        }).ToList();
-    }
-
-    public async Task<AmoebaAllocationDto> SaveAllocationAsync(SaveAllocationRequest request, long orgId)
-    {
-        var existing = await _dbContext.Set<FinAmoebaAllocation>()
-            .FirstOrDefaultAsync(a => a.FUnitId == request.UnitId && a.FBrandCode == request.BrandCode && a.FOrgId == orgId);
-
-        if (existing != null)
-        {
-            existing.FAllocationType = request.AllocationType;
-            existing.FOutboundRatio = request.OutboundRatio;
-            existing.FInboundRatio = request.InboundRatio;
-        }
-        else
-        {
-            existing = new FinAmoebaAllocation
-            {
-                FUnitId = request.UnitId,
-                FBrandCode = request.BrandCode,
-                FAllocationType = request.AllocationType,
-                FOutboundRatio = request.OutboundRatio,
-                FInboundRatio = request.InboundRatio,
-                FOrgId = orgId
-            };
-            _dbContext.Set<FinAmoebaAllocation>().Add(existing);
-        }
-
-        await _dbContext.SaveChangesAsync();
-
-        return new AmoebaAllocationDto
-        {
-            Id = existing.FID,
-            UnitId = existing.FUnitId,
-            BrandCode = existing.FBrandCode,
-            AllocationType = existing.FAllocationType,
-            OutboundRatio = existing.FOutboundRatio,
-            InboundRatio = existing.FInboundRatio
-        };
-    }
-
-    public async Task<bool> DeleteAllocationAsync(long id, long orgId)
-    {
-        var entity = await _dbContext.Set<FinAmoebaAllocation>()
-            .FirstOrDefaultAsync(a => a.FID == id && a.FOrgId == orgId);
-
-        if (entity == null) return false;
-
-        _dbContext.Set<FinAmoebaAllocation>().Remove(entity);
-        await _dbContext.SaveChangesAsync();
-        return true;
-    }
-
-    #endregion
 
     #region 辅助方法
 

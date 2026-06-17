@@ -346,12 +346,6 @@ export const layoutRoute: RouteRecordRaw = {
       meta: { title: '待分类管理', icon: 'SortAscendingOutlined', module: 'finance' },
     },
     {
-      path: 'finance/amoeba/allocation',
-      name: 'AmoebaAllocation',
-      component: () => import('@/views/finance/AmoebaAllocation.vue'),
-      meta: { title: '分摊配置', icon: 'PieChartOutlined', module: 'finance' },
-    },
-    {
       path: 'finance/reports/profit',
       name: 'ProfitStatement',
       component: () => import('@/views/finance/ProfitStatement.vue'),

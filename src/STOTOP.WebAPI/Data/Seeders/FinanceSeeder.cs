@@ -29,6 +29,7 @@ public static class FinanceSeeder
             new(5, "删除 FIN科目/科目余额/辅助余额 的 F组织ID 列 (2026-06-16)", MigrateV5),
             new(6, "批次6: 删损益项2废弃列+重灌72项种子 (2026-06-17)", MigrateV6),
             new(7, "批次5-S3: 手工数据加 F期间键 + 回填 'M:'+期间 (2026-06-17)", MigrateV7),
+            new(8, "批次5-S6: 删废弃 FIN阿米巴分摊比例 表 (2026-06-17)", MigrateV8),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2046,6 +2047,20 @@ public static class FinanceSeeder
 
         ExecSql(ctx, @"
         UPDATE [FIN阿米巴手工数据] SET [F期间键] = N'M:' + [F期间] WHERE [F期间键] IS NULL;
+        ");
+    }
+
+    /// <summary>
+    /// 批次5-S6: 删废弃的 FIN阿米巴分摊比例 表(旧固定比例分摊，已被件量分摊 F分摊方式/F分摊基数 取代)。
+    /// 实体/Config/CRUD/前端已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
+    /// </summary>
+    private static void MigrateV8(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'FIN阿米巴分摊比例')
+        DROP TABLE [FIN阿米巴分摊比例];
         ");
     }
 
