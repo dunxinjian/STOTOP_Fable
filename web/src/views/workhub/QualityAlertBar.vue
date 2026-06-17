@@ -1,77 +1,35 @@
 <script setup lang="ts">
 /**
- * QualityAlertBar.vue — 质量预警紧凑告警条
+ * QualityAlertBar.vue — 中栏全宽紧急条
  *
- * 仅当有待处理异常时显示，无异常时完全隐藏。
- * 点击"查看全部"跳转到 /quality/exceptions。
- *
- * 口径区分：本组件为「中栏顶部全员可见的紧急告警条」，数据源 getQualityDashboardStats
- * （pending/overdue/todayNew）；与右栏 QualitySummaryCard「管理角色质量概览卡」
- * （数据源 getWorkHubQualitySummary）语义不同，二者并存、视觉统一挂 --biz-quality。
+ * 仅当任一质量域存在超时项时显示（真正紧急），数据来自共享 useQualitySummary。
+ * 点击「查看」跳转异常列表。
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { WarningOutlined } from '@ant-design/icons-vue'
-import { getQualityDashboardStats } from '@/api/quality'
-
-interface QualityStats {
-  totalExceptions: number
-  pendingCount: number
-  overdueCount: number
-  todayNewCount: number
-}
+import { useQualitySummary } from '@/composables/useQualitySummary'
 
 const router = useRouter()
-const stats = ref<QualityStats | null>(null)
-
-const hasAlert = computed(() => {
-  return stats.value && stats.value.pendingCount > 0
-})
-
-async function fetchStats() {
-  try {
-    const res = (await getQualityDashboardStats()) as any
-    stats.value = res ?? null
-  } catch (err) {
-    console.error('[QualityAlertBar] 获取质量统计失败:', err)
-  }
-}
+const { exception, dataQuality, hasOverdue } = useQualitySummary()
 
 function goToExceptions() {
   router.push('/quality/exceptions')
 }
-
-let timer: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => {
-  fetchStats()
-  // 每 5 分钟轮询一次
-  timer = setInterval(fetchStats, 5 * 60 * 1000)
-})
-
-onUnmounted(() => {
-  if (timer) {
-    clearInterval(timer)
-    timer = null
-  }
-})
 </script>
 
 <template>
-  <div v-if="hasAlert" class="quality-alert-bar">
+  <div v-if="hasOverdue" class="quality-alert-bar">
     <div class="alert-left">
       <WarningOutlined class="alert-icon" />
       <span class="alert-title">质量预警</span>
     </div>
     <div class="alert-center">
-      待处理 <span class="alert-num">{{ stats!.pendingCount }}</span>
-      <span class="alert-dot">·</span>
-      已超时 <span class="alert-num">{{ stats!.overdueCount }}</span>
-      <span class="alert-dot">·</span>
-      今日新增 <span class="alert-num">{{ stats!.todayNewCount }}</span>
+      <span v-if="exception.overdue > 0">异常 <span class="alert-num">{{ exception.overdue }}</span> 项已超时</span>
+      <span v-if="exception.overdue > 0 && dataQuality.overdue > 0" class="alert-dot">·</span>
+      <span v-if="dataQuality.overdue > 0">运单数据 <span class="alert-num">{{ dataQuality.overdue }}</span> 项已超时</span>
     </div>
     <div class="alert-right" @click="goToExceptions">
-      查看全部 →
+      查看 →
     </div>
   </div>
 </template>
