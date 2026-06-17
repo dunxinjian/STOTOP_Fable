@@ -179,9 +179,10 @@ public class AmoebaPLService
         var orgId = GetCurrentOrgId();
         var accountSetId = request.AccountSetId;
 
-        // 0. 入参校验：期间格式（畸形输入会让后续 int.Parse 直接 500）与模板存在性/账套归属
-        if (!IsValidPeriod(request.MainPeriod))
-            throw new ArgumentException($"期间格式应为 YYYYMM，当前值：{request.MainPeriod}");
+        // 0. 入参校验：粒度 + 期间格式（畸形输入会让后续 Parse 直接 500）与模板存在性/账套归属
+        var granularity = NormalizeGranularity(request.Granularity);   // 非法粒度即抛；null/空→month
+        if (!IsValidPeriod(request.MainPeriod, granularity))
+            throw new ArgumentException($"期间格式与粒度({granularity})不符，当前值：{request.MainPeriod}");
 
         // 1. 加载模板实体
         var template = await _dbContext.Set<FinAmoebaPLTemplate>()
@@ -234,14 +235,14 @@ public class AmoebaPLService
                 .ToList();
         }
 
-        // 4. 推算期间列表：[当期, 环比期, 同比期(可选)]
+        // 4. 推算期间列表：[当期, 环比期, 同比期(可选)]（按粒度）
         var periods = new List<string> { request.MainPeriod };
-        var momPeriod = CalcPreviousPeriod(request.MainPeriod);
+        var momPeriod = CalcPreviousPeriod(request.MainPeriod, granularity);
         periods.Add(momPeriod);
         string? yoyPeriod = null;
         if (request.IncludeYoy)
         {
-            yoyPeriod = CalcYoyPeriod(request.MainPeriod);
+            yoyPeriod = CalcYoyPeriod(request.MainPeriod, granularity);
             if (yoyPeriod != null) periods.Add(yoyPeriod);   // 日/周粒度无同比，CalcYoyPeriod 返回 null
         }
 
@@ -258,20 +259,12 @@ public class AmoebaPLService
         // [批次5-S2] 子报表的同期全口径基线(scope 过滤前全集)，供公共费分摊取全额/全口径件量；全口径请求为 null
         var periodFullScopePoints = new List<List<DataPoint>?>();
         bool isSubReport = request.Scope?.IsSubReport == true;
-        var periodRanges = periods.Select(p => PeriodToDateRange(p)).ToList();
+        // [批次5-S3] 各期的期间键(粒度前缀+期间)：manual 加载/去重与估算取数按此键
+        var periodKeys = periods.Select(p => BuildPeriodKey(p, granularity)).ToList();
         for (int i = 0; i < periods.Count; i++)
         {
-            var (startDate, endDate) = periodRanges[i];
-            var billing = await AggregateBillingRevenue(startDate, endDate, orgId, plItems, mappingRules, null, null);
-            var voucher = await AggregateVoucherData(startDate, endDate, orgId, accountSetId);
-            var depreciation = await AggregateDepreciation(startDate, endDate, orgId, accountSetId);
-            // 暂估数据聚合：与凭证数据一同走 MatchDataPointsToPLItems 独占匹配
-            var estimate = await AggregateEstimateData(request.TemplateId, orgId, periods[i]);
-            var all = new List<DataPoint>();
-            all.AddRange(billing);
-            all.AddRange(voucher);
-            all.AddRange(depreciation);
-            all.AddRange(estimate);
+            // [批次5-S3] 按粒度选源(C1 互斥)：台账月/季/年=billing+voucher+depreciation；估算日/周=billing+estimate
+            var all = await BuildPeriodDataPoints(periods[i], granularity, orgId, accountSetId, request.TemplateId, plItems, mappingRules);
             // [批次5-S2] scope 过滤前留存全口径基线：聚合无 SQL 级 scope，ApplyScopeFilter 返回新列表不动 all，
             // 故 all 即免费的全口径基线(纠正设计 §4.5 关于额外 DB 聚合的悲观假设)
             periodFullScopePoints.Add(isSubReport ? all : null);
@@ -280,14 +273,14 @@ public class AmoebaPLService
             periodResults.Add(all);
         }
 
-        // 6. 加载手工填报数据（覆盖所有相关期间）
-        // 仅取 manual 类型：estimate 数据 FPLItemId 可为 null，且会在 (FPeriod,FPLItemId) ToDictionary 时
+        // 6. 加载手工填报数据（覆盖所有相关期间，按期间键 [批次5-S3]）
+        // 仅取 manual 类型：estimate 数据 FPLItemId 可为 null，且会在 (FPeriodKey,FPLItemId) ToDictionary 时
         // 因重复键抛 ArgumentException 导致 500；estimate 数据已由 AggregateEstimateData 单独走独占匹配。
         var manualData = await _dbContext.Set<FinAmoebaManualData>()
             .Where(m => m.FTemplateId == request.TemplateId
                         && m.FOrgId == orgId
                         && m.FDataType == "manual"
-                        && periods.Contains(m.FPeriod))
+                        && periodKeys.Contains(m.FPeriodKey))
             .ToListAsync();
 
         // 7. 对每个期间执行独占匹配，得到 PLItemId -> Amount 字典
@@ -328,10 +321,10 @@ public class AmoebaPLService
             }
         }
 
-        // 手工填报快查：(period, plItemId) -> ManualData
+        // 手工填报快查：(periodKey, plItemId) -> ManualData [批次5-S3]
         // 防御：理论上 (FTemplateId,FPLItemId,FOrgId,FPeriod) 已建索引应唯一，但若历史数据有重复则保留首条，避免 500
         var manualLookup = manualData
-            .GroupBy(m => (m.FPeriod, m.FPLItemId))
+            .GroupBy(m => (m.FPeriodKey ?? "", m.FPLItemId))   // 期间键归一非空，键型保持 (string, long?)
             .ToDictionary(g => g.Key, g => g.First());
 
         // 8. 当期总票数：供"单票&均"自动计算使用。
@@ -347,7 +340,7 @@ public class AmoebaPLService
             ?? ticketCandidates.FirstOrDefault();
         if (ticketItem != null)
         {
-            if (manualLookup.TryGetValue((request.MainPeriod, (long?)ticketItem.FID), out var ticketManual))
+            if (manualLookup.TryGetValue((periodKeys[0], (long?)ticketItem.FID), out var ticketManual))
                 currentTickets = (int)ticketManual.FAmount;
             else if (perPeriodAmounts.Count > 0 && perPeriodAmounts[0].TryGetValue(ticketItem.FID, out var ticketMatched))
                 currentTickets = (int)ticketMatched;
@@ -397,13 +390,14 @@ public class AmoebaPLService
                 for (int p = 0; p < periods.Count; p++)
                 {
                     var period = periods[p];
+                    var periodKey = periodKeys[p];   // [批次5-S3] manual 查询按期间键
                     decimal amount = 0m;
                     decimal? perUnit = null;
-        
+
                     if (child.FNodeRole == "group")
                     {
                         // group: SUM_CHILDREN（只累加 data 和 group 子项，排除 formula/indicator）
-                        amount = SumChildrenForGroup(child, plItems, perPeriodAmounts[p], manualLookup, period);
+                        amount = SumChildrenForGroup(child, plItems, perPeriodAmounts[p], manualLookup, periodKey);
                     }
                     else if (child.FNodeRole == "formula")
                     {
@@ -413,7 +407,7 @@ public class AmoebaPLService
                     else if (child.FNodeRole == "indicator")
                     {
                         // indicator: 手工填报优先；非手工（系统数据源）读取独占匹配结果；带公式的由公式求值阶段回填
-                        if (child.FIsManualEntry && manualLookup.TryGetValue((period, (long?)child.FID), out var mdInd))
+                        if (child.FIsManualEntry && manualLookup.TryGetValue((periodKey, (long?)child.FID), out var mdInd))
                         {
                             amount = mdInd.FAmount;
                             if (child.FPerUnitMode == "manual") perUnit = mdInd.FPerUnitValue;
@@ -425,7 +419,7 @@ public class AmoebaPLService
                     }
                     else if (child.FIsManualEntry)
                     {
-                        if (manualLookup.TryGetValue((period, (long?)child.FID), out var md))
+                        if (manualLookup.TryGetValue((periodKey, (long?)child.FID), out var md))
                         {
                             amount = md.FAmount;
                             if (child.FPerUnitMode == "manual")
@@ -503,9 +497,10 @@ public class AmoebaPLService
                 for (int p = 0; p < periods.Count; p++)
                 {
                     var period = periods[p];
+                    var periodKey = periodKeys[p];   // [批次5-S3] manual 查询按期间键
                     decimal amount = 0m;
                     decimal? perUnit = null;
-                    if (child.FIsManualEntry && manualLookup.TryGetValue((period, (long?)child.FID), out var mdInd))
+                    if (child.FIsManualEntry && manualLookup.TryGetValue((periodKey, (long?)child.FID), out var mdInd))
                     {
                         amount = mdInd.FAmount;
                         if (child.FPerUnitMode == "manual") perUnit = mdInd.FPerUnitValue;
@@ -629,6 +624,17 @@ public class AmoebaPLService
     /// <summary>台账粒度(月/季/年走凭证+折旧实时聚合) vs 估算粒度(日/周走估算)。设计 §5.1 裁决C1。</summary>
     internal static bool IsLedgerGranularity(string? granularity) =>
         NormalizeGranularity(granularity) is "month" or "quarter" or "year";
+
+    /// <summary>
+    /// 按粒度选数据源（设计 §5.1 裁决C1 互斥选源）：
+    /// billing 两类粒度共享(按日期可裁)；台账粒度(月/季/年)用 voucher+depreciation(本期发生额/折旧)、
+    /// 不注入 estimate；估算粒度(日/周)用 estimate(opreport)、无 voucher(按月过账)/无 depreciation(按月计提)。
+    /// </summary>
+    internal static (bool Billing, bool Voucher, bool Depreciation, bool Estimate) SelectSources(string? granularity)
+    {
+        bool ledger = IsLedgerGranularity(granularity);
+        return (Billing: true, Voucher: ledger, Depreciation: ledger, Estimate: !ledger);
+    }
 
     /// <summary>期间键 = 粒度前缀 + 期间（设计 §5.3）：D:/W:/M:/Q:/Y:。存量(全月)迁移回填 'M:'+期间。</summary>
     internal static string BuildPeriodKey(string period, string granularity = "month")
@@ -935,7 +941,7 @@ public class AmoebaPLService
     private decimal SumChildrenForGroup(FinAmoebaPLItem groupItem, List<FinAmoebaPLItem> all,
         Dictionary<long, decimal> matchedAmounts,
         Dictionary<(string, long?), FinAmoebaManualData> manualLookup,
-        string period)
+        string periodKey)   // [批次5-S3] manualLookup 按期间键
     {
         var directChildren = all.Where(i => i.FParentId == groupItem.FID).ToList();
         if (directChildren.Count == 0) return 0m;
@@ -950,11 +956,11 @@ public class AmoebaPLService
             if (child.FNodeRole == "group")
             {
                 // 递归求子 group 的 SUM_CHILDREN
-                sum += SumChildrenForGroup(child, all, matchedAmounts, manualLookup, period);
+                sum += SumChildrenForGroup(child, all, matchedAmounts, manualLookup, periodKey);
             }
             else if (child.FIsManualEntry)
             {
-                if (manualLookup.TryGetValue((period, (long?)child.FID), out var md))
+                if (manualLookup.TryGetValue((periodKey, (long?)child.FID), out var md))
                     sum += md.FAmount;
             }
             else
@@ -2309,20 +2315,45 @@ public class AmoebaPLService
     }
 
     /// <summary>
+    /// [批次5-S3] 按粒度构建一期的数据点集合（设计 §5.1 裁决C1 互斥选源）。
+    /// billing 两类粒度共享(按日期可裁)；台账(月/季/年)叠加 voucher+depreciation、不取 estimate；
+    /// 估算(日/周)叠加 estimate(opreport，按期间键取)、不取 voucher(按月过账)/depreciation(按月计提)。
+    /// 两源产出同形 DataPoint(带 outlet/business_direction/project)，下游 Match/scope/分摊完全复用。
+    /// </summary>
+    private async Task<List<DataPoint>> BuildPeriodDataPoints(
+        string period, string granularity, long orgId, long accountSetId, long templateId,
+        List<FinAmoebaPLItem> plItems, List<FinAmoebaMappingRule> mappingRules)
+    {
+        var (startDate, endDate) = PeriodToDateRange(period, granularity);
+        var src = SelectSources(granularity);
+        var all = new List<DataPoint>();
+        if (src.Billing)
+            all.AddRange(await AggregateBillingRevenue(startDate, endDate, orgId, plItems, mappingRules, null, null));
+        if (src.Voucher)
+            all.AddRange(await AggregateVoucherData(startDate, endDate, orgId, accountSetId));
+        if (src.Depreciation)
+            all.AddRange(await AggregateDepreciation(startDate, endDate, orgId, accountSetId));
+        if (src.Estimate)
+            all.AddRange(await AggregateEstimateData(templateId, orgId, BuildPeriodKey(period, granularity)));
+        return all;
+    }
+
+    /// <summary>
     /// 暂估数据聚合：将 FinAmoebaManualData 中 FDataType=estimate 的记录转为 DataPoint。
     /// 暂估数据不绑定 PLItem，通过科目编码 + 辅助核算与凭证数据共享独占匹配管道。
+    /// [批次5-S3] 按期间键(FPeriodKey)过滤——支持日/周等多粒度估值；月报已不取估值(C1 互斥)。
     /// </summary>
     private async Task<List<DataPoint>> AggregateEstimateData(
-        long templateId, long orgId, string period)
+        long templateId, long orgId, string periodKey)
     {
-        if (templateId <= 0 || orgId <= 0 || string.IsNullOrEmpty(period))
+        if (templateId <= 0 || orgId <= 0 || string.IsNullOrEmpty(periodKey))
             return new List<DataPoint>();
 
         var estimates = await _dbContext.Set<FinAmoebaManualData>()
             .Where(m => m.FTemplateId == templateId
                      && m.FOrgId == orgId
                      && m.FDataType == "estimate"
-                     && m.FPeriod == period)
+                     && m.FPeriodKey == periodKey)
             .ToListAsync();
 
         var dataPoints = new List<DataPoint>();

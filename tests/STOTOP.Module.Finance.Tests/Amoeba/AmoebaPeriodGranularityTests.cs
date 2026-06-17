@@ -90,4 +90,51 @@ public class AmoebaPeriodGranularityTests
     {
         Assert.Equal(expected, AmoebaPLService.BuildPeriodKey(period, granularity));
     }
+
+    [Theory]
+    [InlineData(null, "month")]
+    [InlineData("", "month")]
+    [InlineData("  ", "month")]
+    [InlineData("MONTH", "month")]
+    [InlineData("Day", "day")]
+    public void NormalizeGranularity_defaults_and_lowercases(string? input, string expected)
+    {
+        Assert.Equal(expected, AmoebaPLService.NormalizeGranularity(input));
+    }
+
+    [Fact]
+    public void NormalizeGranularity_throws_on_unknown()
+    {
+        Assert.Throws<ArgumentException>(() => AmoebaPLService.NormalizeGranularity("fortnight"));
+    }
+
+    [Theory]
+    [InlineData("month", true)]
+    [InlineData("quarter", true)]
+    [InlineData("year", true)]
+    [InlineData("day", false)]
+    [InlineData("week", false)]
+    public void IsLedgerGranularity_true_for_month_quarter_year(string g, bool expected)
+    {
+        Assert.Equal(expected, AmoebaPLService.IsLedgerGranularity(g));
+    }
+
+    // C1 互斥选源（设计 §5.1）：billing 两类粒度共享；台账粒度用 voucher+depreciation 不注入 estimate；
+    // 估算粒度用 estimate 不注入 voucher/depreciation。
+    [Theory]
+    [InlineData("month", true, true, true, false)]
+    [InlineData("quarter", true, true, true, false)]
+    [InlineData("year", true, true, true, false)]
+    [InlineData("day", true, false, false, true)]
+    [InlineData("week", true, false, false, true)]
+    [InlineData(null, true, true, true, false)]   // 默认 month
+    public void SelectSources_applies_C1_mutual_exclusion(
+        string? granularity, bool billing, bool voucher, bool depreciation, bool estimate)
+    {
+        var src = AmoebaPLService.SelectSources(granularity);
+        Assert.Equal(billing, src.Billing);
+        Assert.Equal(voucher, src.Voucher);
+        Assert.Equal(depreciation, src.Depreciation);
+        Assert.Equal(estimate, src.Estimate);
+    }
 }

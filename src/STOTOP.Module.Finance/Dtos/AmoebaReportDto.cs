@@ -362,9 +362,10 @@ public class AmoebaMultiPeriodRequest
     public long TemplateId { get; set; }
     public long OrgId { get; set; }
     public long AccountSetId { get; set; }
-    public string MainPeriod { get; set; } = "";     // "202603" — 主期间(YYYYMM)
-    public bool IncludeYoy { get; set; }              // 是否包含同比
-    public AmoebaReportScope? Scope { get; set; }     // [方案B 批次4] L1 请求级作用域过滤;null=全口径。周期粒度 Granularity 待批次4c
+    public string MainPeriod { get; set; } = "";     // 主期间；格式随 Granularity：day=YYYYMMDD/week=YYYY-Www/month=YYYYMM/quarter=YYYYQn/year=YYYY
+    public bool IncludeYoy { get; set; }              // 是否包含同比（日/周无同比，自动忽略）
+    public AmoebaReportScope? Scope { get; set; }     // [方案B 批次4] L1 请求级作用域过滤;null=全口径
+    public string? Granularity { get; set; }          // [批次5-S3] 周期粒度 day/week/month/quarter/year；null/空=month（前端不传则全兼容）
 }
 
 /// <summary>
