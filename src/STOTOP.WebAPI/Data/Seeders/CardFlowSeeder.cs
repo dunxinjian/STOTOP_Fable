@@ -65,6 +65,7 @@ public static class CardFlowSeeder
             new(43, "网点质控：接入 STG申通_出仓考核汇总（含全角括号列，建表 + 规则3123 + 流程2323 + 首节点5123）(2026-06-18)", MigrateV43),
             new(44, "网点质控：接入 STG申通_小件员履约指标（双行表头/员工级，建表 + 规则3124 + 流程2324 + 首节点5124）(2026-06-18)", MigrateV44),
             new(45, "网点质控：接入 STG申通_末端派送网点汇总（单行表头55列，建表 + 规则3125 + 流程2325 + 首节点5125）(2026-06-18)", MigrateV45),
+            new(46, "网点质控：接入 STG申通_积压监控汇总（单行表头64列含括号/连字符列，建表 + 规则3126 + 流程2326 + 首节点5126）(2026-06-18)", MigrateV46),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -4344,6 +4345,161 @@ END
             SET IDENTITY_INSERT [CF流程节点] ON;
             INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
             VALUES (5125, 2325, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3125);
+            SET IDENTITY_INSERT [CF流程节点] OFF;
+        END
+        ");
+    }
+
+    private static void MigrateV46(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ═══ 1. 创建 STG申通_积压监控汇总 暂存表（系统列 + 64 业务列 + 标准字段） ═══
+        // 单行表头，64 列，网点×日期粒度（1 行/网点/日期），sheet 积压异常监控。
+        // 含括号列（遗失率（ppm)、超3天积压量（疑似遗失）、虚签投诉率(上一周) 等），dbColumn 去括号 → F遗失率ppm 等；
+        // 另含连字符列（积压8-15天量、t-1虚签投诉量 等），dbColumn 去 '-' → F积压815天量 / Ft1虚签投诉量。excelColumn 保留原文。
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'STG申通_积压监控汇总')
+        CREATE TABLE [STG申通_积压监控汇总] (
+            [FID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+            [F批次ID] BIGINT NOT NULL,
+            [F原始行号] INT NULL,
+            [FOrgId] BIGINT NULL,
+            [F账套ID] BIGINT NULL,
+            [FDataScopeId] NVARCHAR(64) NULL,
+            [FSourceWorkItemId] BIGINT NULL,
+            [FIsRevoked] BIT NOT NULL DEFAULT 0,
+            [F处理状态] INT NOT NULL DEFAULT 0,
+            [F错误信息] NVARCHAR(MAX) NULL,
+            [F关联凭证ID] BIGINT NULL,
+            [F创建时间] DATETIME NOT NULL DEFAULT GETDATE(),
+            -- 业务字段（来自 rule 3126 columnMapping，64 列；括号/连字符列已去除非法字符）
+            [F统计日期] NVARCHAR(200) NULL,
+            [F南北中部] NVARCHAR(200) NULL,
+            [F大区] NVARCHAR(200) NULL,
+            [F省区] NVARCHAR(200) NULL,
+            [F省份] NVARCHAR(200) NULL,
+            [F片区名称] NVARCHAR(200) NULL,
+            [F片区管家] NVARCHAR(200) NULL,
+            [F网点编码] NVARCHAR(200) NULL,
+            [F网点名称] NVARCHAR(200) NULL,
+            [F网点星级] NVARCHAR(200) NULL,
+            [F代派网点编码] NVARCHAR(200) NULL,
+            [F代派网点名称] NVARCHAR(200) NULL,
+            [F异常状态] NVARCHAR(200) NULL,
+            [F网点状态] NVARCHAR(200) NULL,
+            [F拦截状态] NVARCHAR(200) NULL,
+            [F日均出港量] NVARCHAR(200) NULL,
+            [F日均进港量] NVARCHAR(200) NULL,
+            [F积压倍数] NVARCHAR(200) NULL,
+            [F15日累计积压量] NVARCHAR(200) NULL,
+            [F14日累计积压量] NVARCHAR(200) NULL,
+            [F积压实时数据] NVARCHAR(200) NULL,
+            [F常态签收率] NVARCHAR(200) NULL,
+            [F近7天签收率] NVARCHAR(200) NULL,
+            [F当天签收率] NVARCHAR(200) NULL,
+            [F进港量] NVARCHAR(200) NULL,
+            [F当天签收量] NVARCHAR(200) NULL,
+            [F清件进度] NVARCHAR(200) NULL,
+            [F清件能力] NVARCHAR(200) NULL,
+            [F近3天日均签收量] NVARCHAR(200) NULL,
+            [F超3天积压量疑似遗失] NVARCHAR(200) NULL,
+            [F超3天积压实时数量] NVARCHAR(200) NULL,
+            [F超3天积压占比] NVARCHAR(200) NULL,
+            [F超5天积压量智能遗失] NVARCHAR(200) NULL,
+            [F超5天积压实时数量] NVARCHAR(200) NULL,
+            [F超5天积压占比] NVARCHAR(200) NULL,
+            [F超7天积压量超长单] NVARCHAR(200) NULL,
+            [F超7天积压实时数量] NVARCHAR(200) NULL,
+            [F超7天积压占比] NVARCHAR(200) NULL,
+            [F积压1天量] NVARCHAR(200) NULL,
+            [F积压2天量] NVARCHAR(200) NULL,
+            [F积压3天量] NVARCHAR(200) NULL,
+            [F积压4天量] NVARCHAR(200) NULL,
+            [F积压5天量] NVARCHAR(200) NULL,
+            [F积压6天量] NVARCHAR(200) NULL,
+            [F积压6天实时数据] NVARCHAR(200) NULL,
+            [F积压7天量] NVARCHAR(200) NULL,
+            [F积压815天量] NVARCHAR(200) NULL,
+            [F积压1630天量] NVARCHAR(200) NULL,
+            [F积压3160天量] NVARCHAR(200) NULL,
+            [F遗失率ppm] NVARCHAR(200) NULL,
+            [F遗失量] NVARCHAR(200) NULL,
+            [F进港投诉量] NVARCHAR(200) NULL,
+            [F进港投诉率] NVARCHAR(200) NULL,
+            [F虚签投诉率上一周] NVARCHAR(200) NULL,
+            [F7日虚签投诉量] NVARCHAR(200) NULL,
+            [Ft1虚签投诉量] NVARCHAR(200) NULL,
+            [Ft2虚签投诉量] NVARCHAR(200) NULL,
+            [Ft3虚签投诉量] NVARCHAR(200) NULL,
+            [Ft4虚签投诉量] NVARCHAR(200) NULL,
+            [Ft5虚签投诉量] NVARCHAR(200) NULL,
+            [Ft6虚签投诉量] NVARCHAR(200) NULL,
+            [Ft7虚签投诉量] NVARCHAR(200) NULL,
+            [F剔除前累计积压量] NVARCHAR(200) NULL,
+            [F人工剔除量] NVARCHAR(200) NULL,
+            -- 标准字段
+            [F其他列数据] NVARCHAR(MAX) NULL,
+            [F业务主键] NVARCHAR(500) NULL,
+            [F流水号] NVARCHAR(200) NULL,
+            [F归属网点编号] NVARCHAR(50) NULL
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_积压监控汇总_F批次ID' AND object_id = OBJECT_ID(N'STG申通_积压监控汇总'))
+        CREATE INDEX [IX_STG申通_积压监控汇总_F批次ID] ON [STG申通_积压监控汇总]([F批次ID]);
+
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_STG申通_积压监控汇总_数据作用域' AND object_id = OBJECT_ID(N'STG申通_积压监控汇总'))
+        CREATE INDEX [IX_STG申通_积压监控汇总_数据作用域] ON [STG申通_积压监控汇总]([FDataScopeId]) WHERE [FDataScopeId] IS NOT NULL;
+
+        -- 跨批次去重唯一索引（网点编码 + 统计日期 + 组织，仅未撤销 + 网点编码非空）
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_STG申通_积压监控汇总_网点日期_未撤销' AND object_id = OBJECT_ID(N'STG申通_积压监控汇总'))
+        CREATE UNIQUE INDEX [UX_STG申通_积压监控汇总_网点日期_未撤销]
+            ON [STG申通_积压监控汇总]([F网点编码],[F统计日期],[FOrgId])
+            WHERE [FIsRevoked] = 0 AND [F网点编码] IS NOT NULL AND [F网点编码] != '';
+        ");
+
+        // ═══ 2. CfPluginRule: ExcelInput 规则 3126（积压监控汇总导入，全列映射） ═══
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [CF自动插件_规则] ON;
+
+        IF NOT EXISTS (SELECT 1 FROM [CF自动插件_规则] WHERE [FID] = 3126)
+        INSERT INTO [CF自动插件_规则] ([FID], [F组织ID], [F类型编码], [F规则名称], [F规则配置JSON], [F状态], [F说明], [F并发戳], [F创建时间])
+        VALUES (3126, 192, N'excelInput', N'申通积压监控汇总导入规则',
+        N'{""targetTable"":""STG申通_积压监控汇总"",""outputMode"":""stg"",""headerRow"":1,""sheetName"":""积压异常监控"",""columnIdentifier"":""网点编码,积压倍数,遗失率（ppm),进港投诉率"",""fullColumnIdentifier"":""统计日期,南北中部,大区,省区,省份,片区名称,片区管家,网点编码,网点名称,网点星级,代派网点编码,代派网点名称,异常状态,网点状态,拦截状态,日均出港量,日均进港量,积压倍数,15日累计积压量,14日累计积压量,积压实时数据,常态签收率,近7天签收率,当天签收率,进港量,当天签收量,清件进度,清件能力,近3天日均签收量,超3天积压量（疑似遗失）,超3天积压实时数量,超3天积压占比,超5天积压量（智能遗失）,超5天积压实时数量,超5天积压占比,超7天积压量（超长单）,超7天积压实时数量,超7天积压占比,积压1天量,积压2天量,积压3天量,积压4天量,积压5天量,积压6天量,积压6天实时数据,积压7天量,积压8-15天量,积压16-30天量,积压31-60天量,遗失率（ppm),遗失量,进港投诉量,进港投诉率,虚签投诉率(上一周),7日虚签投诉量,t-1虚签投诉量,t-2虚签投诉量,t-3虚签投诉量,t-4虚签投诉量,t-5虚签投诉量,t-6虚签投诉量,t-7虚签投诉量,剔除前累计积压量,人工剔除量"",""columnMapping"":[{""excelColumn"":""统计日期"",""dbColumn"":""F统计日期""},{""excelColumn"":""南北中部"",""dbColumn"":""F南北中部""},{""excelColumn"":""大区"",""dbColumn"":""F大区""},{""excelColumn"":""省区"",""dbColumn"":""F省区""},{""excelColumn"":""省份"",""dbColumn"":""F省份""},{""excelColumn"":""片区名称"",""dbColumn"":""F片区名称""},{""excelColumn"":""片区管家"",""dbColumn"":""F片区管家""},{""excelColumn"":""网点编码"",""dbColumn"":""F网点编码""},{""excelColumn"":""网点名称"",""dbColumn"":""F网点名称""},{""excelColumn"":""网点星级"",""dbColumn"":""F网点星级""},{""excelColumn"":""代派网点编码"",""dbColumn"":""F代派网点编码""},{""excelColumn"":""代派网点名称"",""dbColumn"":""F代派网点名称""},{""excelColumn"":""异常状态"",""dbColumn"":""F异常状态""},{""excelColumn"":""网点状态"",""dbColumn"":""F网点状态""},{""excelColumn"":""拦截状态"",""dbColumn"":""F拦截状态""},{""excelColumn"":""日均出港量"",""dbColumn"":""F日均出港量""},{""excelColumn"":""日均进港量"",""dbColumn"":""F日均进港量""},{""excelColumn"":""积压倍数"",""dbColumn"":""F积压倍数""},{""excelColumn"":""15日累计积压量"",""dbColumn"":""F15日累计积压量""},{""excelColumn"":""14日累计积压量"",""dbColumn"":""F14日累计积压量""},{""excelColumn"":""积压实时数据"",""dbColumn"":""F积压实时数据""},{""excelColumn"":""常态签收率"",""dbColumn"":""F常态签收率""},{""excelColumn"":""近7天签收率"",""dbColumn"":""F近7天签收率""},{""excelColumn"":""当天签收率"",""dbColumn"":""F当天签收率""},{""excelColumn"":""进港量"",""dbColumn"":""F进港量""},{""excelColumn"":""当天签收量"",""dbColumn"":""F当天签收量""},{""excelColumn"":""清件进度"",""dbColumn"":""F清件进度""},{""excelColumn"":""清件能力"",""dbColumn"":""F清件能力""},{""excelColumn"":""近3天日均签收量"",""dbColumn"":""F近3天日均签收量""},{""excelColumn"":""超3天积压量（疑似遗失）"",""dbColumn"":""F超3天积压量疑似遗失""},{""excelColumn"":""超3天积压实时数量"",""dbColumn"":""F超3天积压实时数量""},{""excelColumn"":""超3天积压占比"",""dbColumn"":""F超3天积压占比""},{""excelColumn"":""超5天积压量（智能遗失）"",""dbColumn"":""F超5天积压量智能遗失""},{""excelColumn"":""超5天积压实时数量"",""dbColumn"":""F超5天积压实时数量""},{""excelColumn"":""超5天积压占比"",""dbColumn"":""F超5天积压占比""},{""excelColumn"":""超7天积压量（超长单）"",""dbColumn"":""F超7天积压量超长单""},{""excelColumn"":""超7天积压实时数量"",""dbColumn"":""F超7天积压实时数量""},{""excelColumn"":""超7天积压占比"",""dbColumn"":""F超7天积压占比""},{""excelColumn"":""积压1天量"",""dbColumn"":""F积压1天量""},{""excelColumn"":""积压2天量"",""dbColumn"":""F积压2天量""},{""excelColumn"":""积压3天量"",""dbColumn"":""F积压3天量""},{""excelColumn"":""积压4天量"",""dbColumn"":""F积压4天量""},{""excelColumn"":""积压5天量"",""dbColumn"":""F积压5天量""},{""excelColumn"":""积压6天量"",""dbColumn"":""F积压6天量""},{""excelColumn"":""积压6天实时数据"",""dbColumn"":""F积压6天实时数据""},{""excelColumn"":""积压7天量"",""dbColumn"":""F积压7天量""},{""excelColumn"":""积压8-15天量"",""dbColumn"":""F积压815天量""},{""excelColumn"":""积压16-30天量"",""dbColumn"":""F积压1630天量""},{""excelColumn"":""积压31-60天量"",""dbColumn"":""F积压3160天量""},{""excelColumn"":""遗失率（ppm)"",""dbColumn"":""F遗失率ppm""},{""excelColumn"":""遗失量"",""dbColumn"":""F遗失量""},{""excelColumn"":""进港投诉量"",""dbColumn"":""F进港投诉量""},{""excelColumn"":""进港投诉率"",""dbColumn"":""F进港投诉率""},{""excelColumn"":""虚签投诉率(上一周)"",""dbColumn"":""F虚签投诉率上一周""},{""excelColumn"":""7日虚签投诉量"",""dbColumn"":""F7日虚签投诉量""},{""excelColumn"":""t-1虚签投诉量"",""dbColumn"":""Ft1虚签投诉量""},{""excelColumn"":""t-2虚签投诉量"",""dbColumn"":""Ft2虚签投诉量""},{""excelColumn"":""t-3虚签投诉量"",""dbColumn"":""Ft3虚签投诉量""},{""excelColumn"":""t-4虚签投诉量"",""dbColumn"":""Ft4虚签投诉量""},{""excelColumn"":""t-5虚签投诉量"",""dbColumn"":""Ft5虚签投诉量""},{""excelColumn"":""t-6虚签投诉量"",""dbColumn"":""Ft6虚签投诉量""},{""excelColumn"":""t-7虚签投诉量"",""dbColumn"":""Ft7虚签投诉量""},{""excelColumn"":""剔除前累计积压量"",""dbColumn"":""F剔除前累计积压量""},{""excelColumn"":""人工剔除量"",""dbColumn"":""F人工剔除量""}],""keyFields"":[""网点编码"",""统计日期""],""totalRowDetection"":{""enabled"":true,""containsKeywords"":[""合计"",""总计""],""emptyFields"":[]},""crossBatchDedupEnabled"":true,""crossBatchDedupFields"":[""F网点编码"",""F统计日期""],""batchSplit"":{""enabled"":false}}',
+        1, N'申通积压异常监控汇总 Excel导入配置（单行表头64列，含括号/连字符列 dbColumn 去除非法字符，sheet 积压异常监控）', REPLACE(NEWID(),'-',''), GETDATE());
+
+        SET IDENTITY_INSERT [CF自动插件_规则] OFF;
+        ");
+
+        // ═══ 3. CfFlowDefinition: 流程 2326（QC_ST_BACKLOG_MONITOR） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF卡片流程] WHERE [FID] = 2326)
+        BEGIN
+            SET IDENTITY_INSERT [CF卡片流程] ON;
+            INSERT INTO [CF卡片流程] ([FID], [F乐观锁], [F创建人ID], [F创建时间], [F可发起角色JSON], [F描述], [F更新时间], [F标题模板], [F流程名称], [F流程组ID], [F流程编码], [F状态], [F组织ID], [F编号模板], [F触发配置JSON], [F账套ID], [F匹配规则])
+            VALUES (2326, NULL, 1, GETDATE(), NULL, N'网点质控：申通积压异常监控汇总 导入暂存', GETDATE(), NULL, N'申通积压监控汇总导入', NULL, N'QC_ST_BACKLOG_MONITOR', N'published', 192, NULL, N'{""type"":""fileUpload""}', NULL, N'{""fileNamePattern"":""积压异常监控*""}');
+            SET IDENTITY_INSERT [CF卡片流程] OFF;
+        END
+        ");
+
+        // ═══ 4. CfFlowVersion: 版本 2326（当前版本，published） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程版本] WHERE [FID] = 2326)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程版本] ON;
+            INSERT INTO [CF流程版本] ([FID], [F创建人ID], [F创建时间], [F卡片SchemaJSON], [F发布时间], [F明细SchemaJSON], [F是否当前版本], [F流程定义ID], [F流程设置JSON], [F版本号], [F状态])
+            VALUES (2326, 1, GETDATE(), NULL, GETDATE(), NULL, 1, 2326, NULL, 1, N'published');
+            SET IDENTITY_INSERT [CF流程版本] OFF;
+        END
+        ");
+
+        // ═══ 5. CfStageDefinition: 首节点 5126（ExcelInput 批次级自动节点，插件注册=1，规则=3126） ═══
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM [CF流程节点] WHERE [FID] = 5126)
+        BEGIN
+            SET IDENTITY_INSERT [CF流程节点] ON;
+            INSERT INTO [CF流程节点] ([FID], [F流程版本ID], [F排序号], [F节点名称], [F类型], [F处理粒度], [F审批模式], [F插件注册ID], [F插件规则ID])
+            VALUES (5126, 2326, 1, N'Excel导入解析', N'auto', N'batch', N'single', 1, 3126);
             SET IDENTITY_INSERT [CF流程节点] OFF;
         END
         ");
