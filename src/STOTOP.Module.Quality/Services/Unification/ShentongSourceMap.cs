@@ -59,6 +59,9 @@ public static class ShentongSourceMap
     /// <summary>STG申通_小件员履约指标 表名常量（C1 员工日指标源）。</summary>
     public const string CourierFulfillTable = "STG申通_小件员履约指标";
 
+    /// <summary>STG申通_积压监控汇总 表名常量（C2 网点日指标源，积压与遗失子集）。</summary>
+    public const string BacklogMonitorTable = "STG申通_积压监控汇总";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -94,5 +97,22 @@ public static class ShentongSourceMap
                 WaybillColumn: null,
                 PlatformColumn: null,
                 ProblemCodePrefix: "CRFL"),
+
+            // C2：积压监控汇总 → 网点日质量指标（网点级，1 行/网点/日期）。本源<b>有网点编码</b>。
+            // 网点指标由多个 NetworkMetric 源各填子集、按 网点×日 合并 upsert；本源只填「积压与遗失」子集
+            // （积压倍数/超N天积压量/遗失率ppm/遗失量/进港投诉/虚签投诉等），其它源字段（出仓/滞留/签收等）留 null 待 C3 填。
+            [BacklogMonitorTable] = new ShentongSourceDescriptor(
+                StgTableName: BacklogMonitorTable,
+                QualityDomain: "积压与遗失",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F网点编码",   // 本源有网点编码列
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null,            // 网点级，无员工维度
+                EmployeeNameColumn: null,
+                ProblemTypeColumn: null,           // 指标类无问题类型列
+                DateColumn: "F统计日期",
+                WaybillColumn: null,
+                PlatformColumn: null,
+                ProblemCodePrefix: "BKLG"),
         };
 }

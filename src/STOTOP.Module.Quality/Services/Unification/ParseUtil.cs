@@ -8,8 +8,18 @@ namespace STOTOP.Module.Quality.Services.Unification;
 /// </summary>
 public static class ParseUtil
 {
-    /// <summary>尝试解析日期；失败返回 null。</summary>
-    public static DateTime? TryDate(string? s) => DateTime.TryParse(s, out var d) ? d : null;
+    /// <summary>
+    /// 尝试解析日期；失败返回 null。
+    /// 先走通用 <see cref="DateTime.TryParse(string?, out DateTime)"/>（覆盖 2026-06-15 / 2026/6/15 等带分隔格式），
+    /// 再退化按紧凑 yyyyMMdd（如申通积压监控的「20260615」，通用 TryParse 解不出）精确解析。
+    /// </summary>
+    public static DateTime? TryDate(string? s)
+    {
+        if (DateTime.TryParse(s, out var d)) return d;
+        if (DateTime.TryParseExact((s ?? "").Trim(), "yyyyMMdd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var d2)) return d2;
+        return null;
+    }
 
     /// <summary>尝试解析小数（去尾部空白与百分号）；失败返回 null。注意：百分号场景仅去符号、不除以 100。</summary>
     public static decimal? TryDecimal(string? s) =>

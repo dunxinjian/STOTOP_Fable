@@ -41,7 +41,9 @@ public class QualityUnificationService : IQualityUnificationService
             {
                 UnifyTargetKind.Event => await UnifyLogisticsCompletenessAsync(orgId, desc, ct),
                 UnifyTargetKind.EmployeeMetric => await UnifyCourierFulfillAsync(orgId, desc, ct),
-                // NetworkMetric 留 C2；本任务 All 不含网点指标源，default 不会触发。
+                // NetworkMetric：C2 落地积压监控子集。多个 NetworkMetric 源各填子集、按 网点×日 合并 upsert。
+                // 目前 ShentongSourceMap 里仅积压监控一条，故直接路由；C3 增源时按源表名细分（或在描述符上加路由键）。
+                UnifyTargetKind.NetworkMetric => await UnifyBacklogMonitorAsync(orgId, desc, ct),
                 _ => throw new NotSupportedException($"未支持的归一目标种类 {desc.TargetKind}（源 {desc.StgTableName}）"),
             };
             events += r.EventsUpserted;
@@ -295,6 +297,139 @@ public class QualityUnificationService : IQualityUnificationService
         string? F签收文本不规范,
         string? F引导代收,
         string? F回访真实率);
+
+    /// <summary>
+    /// 网点指标类路径（<b>多源合并 upsert 模板</b>）：STG申通_积压监控汇总 → QL申通_网点日质量指标。
+    /// 网点级粒度（1 行/网点/日期），本源<b>有网点编码</b>。
+    ///
+    /// 关键不变量——网点日指标由多个 NetworkMetric 源各填子集、按 网点×日 合并：
+    /// 同一 (网点×日) 行会被多个源先后 upsert，每个源<b>只刷新自己负责的字段子集</b>，
+    /// <b>绝不把本源不负责的字段清成 null/整行覆盖</b>。本源负责「积压与遗失」子集
+    /// （日均出/进港量、积压倍数、超3/5/7天积压量、遗失率ppm/遗失量、进港投诉量/率、虚签投诉率、7日虚签投诉量）；
+    /// 出仓/滞留/签收/拦截/渗透等字段留给其它 C3 源填，本源一律不碰（保持既有值）。
+    ///
+    /// 网点编码（唯一键一部分）：优先用主数据匹配码 <see cref="NetworkMatch.Code"/>；未匹配则回退源 F网点编码 原文，
+    /// 保证唯一键稳定且不丢行。日期解析失败的行跳过（计 skip，日志可见）。
+    /// 唯一键 (FOrgId,F承运商,F业务日期,F网点编码)，按键 upsert，重复跑不增行（幂等）。
+    /// </summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyBacklogMonitorAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        // 只投影需要的列（避免读全实体碰 STG 表允许 NULL、实体声明非空 long 的系统列，如 F账套ID NULL → SqlNullValueException）。
+        var rows = await _db.Set<StgShentongBacklogMonitor>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new BacklogRow(
+                r.FID, r.F批次ID, r.F网点编码, r.F网点名称, r.F统计日期, r.F片区名称, r.F省区,
+                r.F日均出港量, r.F日均进港量, r.F积压倍数,
+                r.F超3天积压量疑似遗失, r.F超5天积压量智能遗失, r.F超7天积压量超长单,
+                r.F遗失率ppm, r.F遗失量,
+                r.F进港投诉量, r.F进港投诉率, r.F虚签投诉率上一周, r.F7日虚签投诉量))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+
+        foreach (var row in rows)
+        {
+            // ── 网点匹配（本源有编码，按编码解析；无名称传 null）──
+            var net = await _matcher.ResolveNetworkAsync(row.F网点编码, null, orgId, ct);
+            // 网点编码（唯一键一部分）：匹配到用匹配码；未匹配回退源编码原文，避免丢行。
+            var netCode = net.Status == 1 ? net.Code : (row.F网点编码 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            // ── 业务日期（本源 F统计日期 为 yyyyMMdd/带分隔均可，ParseUtil.TryDate 已兼容）──
+            var bizDate = ParseUtil.TryDate(row.F统计日期);
+            if (bizDate == null || string.IsNullOrEmpty(netCode))
+            {
+                // 日期解析失败 或 无网点编码（连回退原文都空）→ 跳过（无法构成唯一键）。
+                skipped++;
+                continue;
+            }
+
+            // ── 合并 upsert（唯一键：FOrgId × 承运商 × 业务日期 × 网点编码）──
+            var existing = await _db.Set<QlShentongNetworkDailyMetric>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m =>
+                    m.FOrgId == orgId &&
+                    m.F承运商 == "申通" &&
+                    m.F业务日期 == bizDate &&
+                    m.F网点编码 == netCode, ct);
+
+            var metric = existing ?? new QlShentongNetworkDailyMetric();
+
+            // 键 + 公共维度（多源都可写；名称/片区/省区取本源原文，仅在有值时刷新，避免别源已填被清空）。
+            metric.FOrgId = orgId;
+            metric.F承运商 = "申通";
+            metric.F业务日期 = bizDate.Value;
+            metric.F统计年月 = ParseUtil.Ym(bizDate);
+            metric.F网点编码 = netCode!;
+            if (!string.IsNullOrWhiteSpace(row.F网点名称)) metric.F网点名称 = row.F网点名称;
+            if (!string.IsNullOrWhiteSpace(row.F片区名称)) metric.F片区 = row.F片区名称;
+            if (!string.IsNullOrWhiteSpace(row.F省区)) metric.F省区 = row.F省区;
+
+            // ── 本源负责子集：积压与遗失（逐列以两实体真实名对齐）──
+            // 积压
+            metric.F日均出港量 = ParseUtil.TryInt(row.F日均出港量);
+            metric.F日均进港量 = ParseUtil.TryInt(row.F日均进港量);
+            metric.F积压倍数 = ParseUtil.TryDecimal(row.F积压倍数);
+            metric.F超3天积压量 = ParseUtil.TryInt(row.F超3天积压量疑似遗失);
+            metric.F超5天积压量 = ParseUtil.TryInt(row.F超5天积压量智能遗失);
+            metric.F超7天积压量 = ParseUtil.TryInt(row.F超7天积压量超长单);
+            // 遗失
+            metric.F遗失率ppm = ParseUtil.TryDecimal(row.F遗失率ppm);
+            metric.F遗失量 = ParseUtil.TryInt(row.F遗失量);
+            // 进港投诉 / 虚签
+            metric.F进港投诉量 = ParseUtil.TryInt(row.F进港投诉量);
+            metric.F进港投诉率 = ParseUtil.TryDecimal(row.F进港投诉率);
+            metric.F虚签投诉率 = ParseUtil.TryDecimal(row.F虚签投诉率上一周);
+            metric.F7日虚签投诉量 = ParseUtil.TryInt(row.F7日虚签投诉量);
+
+            // 关键不变量：出仓/滞留/签收/拦截/渗透等「非本源字段」一律不写——既有值保持不变（不整行覆盖）。
+
+            metric.F来源批次ID = row.F批次ID;
+
+            if (existing == null)
+            {
+                metric.F创建时间 = DateTime.Now;
+                _db.Set<QlShentongNetworkDailyMetric>().Add(metric);
+            }
+
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new UnifyResult(
+            EventsUpserted: 0,
+            EmployeeMetricUpserts: 0,
+            NetworkMetricUpserts: netUpserts,
+            NetworkUnmatched: networkUnmatched,
+            EmployeeUnmatched: 0);
+    }
+
+    /// <summary>
+    /// 积压监控源行的内存投影（只含归一需要的列），避免读全实体碰 NULL 系统列。
+    /// </summary>
+    private sealed record BacklogRow(
+        long FID,
+        long F批次ID,
+        string? F网点编码,
+        string? F网点名称,
+        string? F统计日期,
+        string? F片区名称,
+        string? F省区,
+        string? F日均出港量,
+        string? F日均进港量,
+        string? F积压倍数,
+        string? F超3天积压量疑似遗失,
+        string? F超5天积压量智能遗失,
+        string? F超7天积压量超长单,
+        string? F遗失率ppm,
+        string? F遗失量,
+        string? F进港投诉量,
+        string? F进港投诉率,
+        string? F虚签投诉率上一周,
+        string? F7日虚签投诉量);
 
     /// <summary>
     /// 按唯一键 (orgId,申通,域,原文) 查问题字典；缺失则创建一条默认条目并保存（让字典从数据自动长出）。
