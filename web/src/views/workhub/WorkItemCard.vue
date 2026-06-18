@@ -4,7 +4,7 @@
     :class="[
       `source-${item.source}`,
       `priority-bar-${item.priority}`,
-      { clickable: !!item.detailRoute || hub.isMultiSelectMode.value },
+      'clickable',
       { 'work-item-card--multi-selected': hub.isMultiSelectMode.value && hub.selectedItemIds.value.has(item.id) },
     ]"
     @click.self="handleCardClick"
@@ -494,9 +494,8 @@ function handleCardClick() {
     hub.toggleSelectItem(props.item.id)
     return
   }
-  if (props.item.detailRoute) {
-    router.push(props.item.detailRoute)
-  }
+  // 普通模式：选中项由父组件（WorkHubCenter 的 @click.capture）派发到右栏 WorkHubDetail 预览，
+  // 跳转完整页面改由右栏「查看完整页面」按钮触发，卡片点击不再直接路由跳转。
 }
 
 function handleAction(action: WorkItemAction) {
