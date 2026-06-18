@@ -893,8 +893,8 @@ function confirmSplit() {
   position: relative;
   display: flex;
   height: 24px;
-  background: #fafafa;
-  border: 1px solid #d9d9d9;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: ew-resize;
   user-select: none;
@@ -904,7 +904,7 @@ function confirmSplit() {
 .ruler-seg {
   position: relative;
   border-right: 2px solid var(--color-primary);
-  background: linear-gradient(to bottom, #f0f7ff 0%, var(--color-primary-light) 100%);
+  background: var(--bg-muted);
   min-width: 0;
 
   &:last-child {
@@ -912,15 +912,15 @@ function confirmSplit() {
   }
 
   &.infinity {
-    background: linear-gradient(to right, var(--color-primary-light) 0%, #f5f5f5 70%, #fafafa 100%);
+    background: var(--bg-muted);
   }
 
   &:hover {
-    background: linear-gradient(to bottom, var(--color-primary-light) 0%, #bae0ff 100%);
+    background: var(--color-primary-light);
   }
 
   &.infinity:hover {
-    background: linear-gradient(to right, #bae0ff 0%, var(--color-primary-light) 70%, #fafafa 100%);
+    background: var(--color-primary-light);
   }
 }
 
@@ -1033,7 +1033,7 @@ function confirmSplit() {
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-danger);
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 3px;
@@ -1088,7 +1088,7 @@ function confirmSplit() {
   }
   .ruler-cursor-bubble {
     background: rgba(0, 0, 0, 0.75);
-    color: #fff;
+    color: var(--text-on-accent);
     font-weight: 400;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     &::after {
@@ -1117,9 +1117,9 @@ function confirmSplit() {
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: #fafafa;
+  background: var(--bg-muted);
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
@@ -1128,7 +1128,7 @@ function confirmSplit() {
 
   &:hover {
     border-color: var(--color-primary);
-    background: #f0f9ff;
+    background: var(--bg-muted);
 
     .segment-edit-hint {
       opacity: 1;
@@ -1177,7 +1177,7 @@ function confirmSplit() {
   line-height: 12px;
   text-align: center;
   font-size: 11px;
-  color: #fff;
+  color: var(--text-on-accent);
   background: rgba(255, 77, 79, 0.55);
   border-radius: 50%;
   cursor: pointer;
@@ -1226,15 +1226,15 @@ function confirmSplit() {
   &.right {
     background: var(--color-success-light);
     color: var(--color-success);
-    border: 1px solid #b7eb8f;
+    border: 1px solid var(--color-success);
   }
 }
 
 .split-readonly {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.65);
-  background: #f5f5f5;
-  border: 1px solid #d9d9d9;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 2px 8px;
   flex: 1;
