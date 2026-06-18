@@ -98,4 +98,41 @@ public class FlowDefinitionOrgIsolationTests
         var cloned = db.Set<CfFlowDefinition>().IgnoreQueryFilters().Single(x => x.FFlowCode == "FROMTPL1");
         Assert.Equal(192, cloned.FOrgId); // 克隆落当前组织
     }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task SaveAsTemplate_PersistsGlobalOrgZero_DespiteOrgFill()
+    {
+        using var db = TestDbContextFactory.Create(nameof(SaveAsTemplate_PersistsGlobalOrgZero_DespiteOrgFill), 192);
+        var src = new CfFlowDefinition { FFlowName = "报销", FFlowCode = "EXP_SRC", FStatus = "published" }; // FOrgId filled to 192 by FillOrgId
+        db.Set<CfFlowDefinition>().Add(src);
+        await db.SaveChangesAsync();
+        db.Set<CfFlowVersion>().Add(new CfFlowVersion { FFlowDefinitionId = src.FID, FVersionNumber = 1, FStatus = "published", FIsCurrentVersion = true });
+        await db.SaveChangesAsync();
+
+        var svc = new STOTOP.Module.CardFlow.Services.FlowDefinitionService(
+            db, Microsoft.Extensions.Logging.Abstractions.NullLogger<STOTOP.Module.CardFlow.Services.FlowDefinitionService>.Instance);
+        await svc.SaveAsTemplateAsync(src.FID, operatorId: 1);
+
+        var tpl = db.Set<CfFlowDefinition>().IgnoreQueryFilters().Single(x => x.FFlowCode == "EXP_SRC" && x.FIsTemplate);
+        Assert.Equal(0, tpl.FOrgId);                 // 模板真正落全局 0（抑制生效）
+        Assert.True(tpl.FIsTemplate);
+        Assert.Equal("published", tpl.FStatus);
+    }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task Clone_NonTemplate_GetsCurrentOrg()
+    {
+        using var db = TestDbContextFactory.Create(nameof(Clone_NonTemplate_GetsCurrentOrg), 192);
+        var src = new CfFlowDefinition { FFlowName = "源", FFlowCode = "SRC_ORG", FStatus = "published" };
+        db.Set<CfFlowDefinition>().Add(src);
+        await db.SaveChangesAsync();
+
+        var svc = new STOTOP.Module.CardFlow.Services.FlowDefinitionService(
+            db, Microsoft.Extensions.Logging.Abstractions.NullLogger<STOTOP.Module.CardFlow.Services.FlowDefinitionService>.Instance);
+        await svc.CloneFlowDefinitionAsync(src.FID,
+            new STOTOP.Module.CardFlow.Dtos.CloneFlowDefinitionRequest { FlowName = "克隆", FlowCode = "CLONE_ORG", OrgId = 999 }, 1);
+
+        var cloned = db.Set<CfFlowDefinition>().IgnoreQueryFilters().Single(x => x.FFlowCode == "CLONE_ORG");
+        Assert.Equal(192, cloned.FOrgId); // 普通克隆经 FillOrgId 落当前组织，请求体 999 无效
+    }
 }

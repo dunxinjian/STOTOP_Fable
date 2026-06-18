@@ -1123,27 +1123,17 @@ public class FlowDefinitionService : IFlowDefinitionService
         }
         else
         {
-            // 不存在 → 使用 CloneFlowDefinitionAsync 复制为 FOrgId=0
-            var request = new CloneFlowDefinitionRequest
-            {
-                FlowName = source.FFlowName,
-                FlowCode = source.FFlowCode,
-                Description = source.FDescription,
-                OrgId = 0  // 模板的 OrgId = 0
-            };
-            var result = await CloneFlowDefinitionAsync(sourceDefinitionId, request, operatorId);
+            // 新建全局模板：在抑制作用域内以 FOrgId=0 创建（CloneInternalAsync 内部处理）
+            var newTemplate = await CloneInternalAsync(
+                source, source.FFlowName, source.FFlowCode, source.FDescription,
+                asGlobalTemplate: true, operatorId);
 
-            // 将状态改为 published（模板应直接可用）
-            var templateDef = await _dbContext.Set<CfFlowDefinition>()
-                .IgnoreQueryFilters()
-                .FirstAsync(x => x.FID == result.Id);
-            templateDef.FStatus = "published";
-            templateDef.FIsTemplate = true;
+            newTemplate.FStatus = "published";
+            newTemplate.FIsTemplate = true;
 
-            // 同时将版本设为 published + IsCurrentVersion
             var templateVersion = await _dbContext.Set<CfFlowVersion>()
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(x => x.FFlowDefinitionId == result.Id);
+                .FirstOrDefaultAsync(x => x.FFlowDefinitionId == newTemplate.FID);
             if (templateVersion != null)
             {
                 templateVersion.FStatus = "published";
@@ -1152,9 +1142,8 @@ public class FlowDefinitionService : IFlowDefinitionService
             }
             await _dbContext.SaveChangesAsync();
 
-            result.Status = "published";
-            _logger.LogInformation("Created new template {TemplateId} from source {SourceId} by operator {OperatorId}", result.Id, sourceDefinitionId, operatorId);
-            return result;
+            _logger.LogInformation("Created new template {TemplateId} from source {SourceId} by operator {OperatorId}", newTemplate.FID, sourceDefinitionId, operatorId);
+            return MapToDto(newTemplate);
         }
     }
 
