@@ -116,8 +116,49 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
 
         return ApiResult<List<NetworkTrendPointDto>>.Success(result);
     }
-    public Task<ApiResult<List<DomainStatItem>>> GetDomainDistributionAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
-    public Task<ApiResult<List<DomainStatItem>>> GetFeeByDomainAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
+    public async Task<ApiResult<List<DomainStatItem>>> GetDomainDistributionAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode)
+    {
+        var toEnd = to.Date.AddDays(1);
+        var q = _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == carrier
+                        && e.F业务日期 >= from.Date && e.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(networkCode))
+            q = q.Where(e => e.F网点编码 == networkCode);
+
+        var data = await q
+            .GroupBy(e => e.F质量域)
+            .Select(g => new { Domain = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var result = data
+            .OrderByDescending(d => d.Count)
+            .Select(d => new DomainStatItem { Domain = d.Domain, Count = d.Count })
+            .ToList();
+
+        return ApiResult<List<DomainStatItem>>.Success(result);
+    }
+
+    public async Task<ApiResult<List<DomainStatItem>>> GetFeeByDomainAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode)
+    {
+        var toEnd = to.Date.AddDays(1);
+        var q = _db.Set<QlShentongNetworkDailyMetric>()
+            .Where(m => m.FOrgId == orgId && m.F承运商 == carrier
+                        && m.F业务日期 >= from.Date && m.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(networkCode))
+            q = q.Where(m => m.F网点编码 == networkCode);
+
+        var rows = await q.ToListAsync();
+        var result = new List<DomainStatItem>
+        {
+            new() { Domain = "出仓", Fee = PeriodSum(rows.Select(r => r.F出仓预估考核金额)) },
+            new() { Domain = "滞留", Fee = PeriodSum(rows.Select(r => r.F滞留预估考核金额)) },
+            new() { Domain = "派送", Fee = PeriodSum(rows.Select(r => r.F派送预估考核金额)) },
+            new() { Domain = "签收", Fee = PeriodSum(rows.Select(r => r.F签收率考核金额)) },
+        };
+        result = result.Where(x => x.Fee != 0m).OrderByDescending(x => x.Fee).ToList();
+
+        return ApiResult<List<DomainStatItem>>.Success(result);
+    }
     public Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN) => throw new NotImplementedException();
     public Task<ApiResult<EmployeeMetricsPageDto>> GetEmployeeMetricsAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, int page, int size) => throw new NotImplementedException();
     public Task<ApiResult<List<EmployeeEventItemDto>>> GetEmployeeTimelineAsync(long orgId, string carrier, string empNo, DateTime from, DateTime to) => throw new NotImplementedException();
