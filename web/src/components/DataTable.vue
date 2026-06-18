@@ -128,14 +128,14 @@ function onChange(pag: any) {
   background: var(--bg-card) !important;
 }
 
-// 列头精修：去灰底融入数据行（不再是独立灰带，消除被误读为"缝"的灰色空白），
-// 仅靠中性字 + 底线区分（Notion/Linear 式无底色表头，连贯）。
+// 列头精修：白底融入数据行（无独立灰带），且去掉底分隔线——
+// 白表头+白首行时那条 1px 边线会被读成一条"缝"，故仅靠中性字 + 字间距区分，彻底无缝。
 :deep(.ant-table-thead > tr > th) {
   background: var(--bg-card);
   color: var(--text-2);
   font-weight: 500;
   letter-spacing: 0.02em;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
 }
 
 // 分页更紧凑：收上下留白
