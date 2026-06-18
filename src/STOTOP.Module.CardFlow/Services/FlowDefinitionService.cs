@@ -923,40 +923,64 @@ public class FlowDefinitionService : IFlowDefinitionService
         CloneFlowDefinitionRequest request,
         long operatorId)
     {
-        // 1. 使用 IgnoreQueryFilters 读取源流程（支持跨组织/模板FOrgId=0）
+        // 源读取隔离：先按当前组织过滤读；读不到再回退全局模板(FOrgId=0)。不可读他组织私有流程。
+        // request.OrgId 忽略——克隆一律落当前组织，目标组织由服务端 CurrentOrgId(FillOrgId) 决定。
         var sourceDefinition = await _dbContext.Set<CfFlowDefinition>()
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(x => x.FID == sourceDefinitionId)
+                .FirstOrDefaultAsync(x => x.FID == sourceDefinitionId)
+            ?? await _dbContext.Set<CfFlowDefinition>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.FID == sourceDefinitionId && x.FOrgId == 0)
             ?? throw new InvalidOperationException("源流程定义不存在");
 
-        // 2. 创建新流程定义
+        var newDefinition = await CloneInternalAsync(
+            sourceDefinition, request.FlowName, request.FlowCode, request.Description,
+            asGlobalTemplate: false, operatorId);
+
+        _logger.LogInformation("Cloned flow definition {SourceId} -> {NewId} by operator {OperatorId}",
+            sourceDefinitionId, newDefinition.FID, operatorId);
+        return MapToDto(newDefinition);
+    }
+
+    /// <summary>克隆主体：建定义 + 复制当前发布版本/节点/路由/动态策略。
+    /// asGlobalTemplate=true 时把定义建为全局(FOrgId=0)并抑制自动组织填充；否则落当前组织(FillOrgId)。</summary>
+    private async Task<CfFlowDefinition> CloneInternalAsync(
+        CfFlowDefinition sourceDefinition, string flowName, string flowCode, string? description,
+        bool asGlobalTemplate, long operatorId)
+    {
         var newDefinition = new CfFlowDefinition
         {
-            FFlowName = request.FlowName,
-            FFlowCode = request.FlowCode,
-            FDescription = request.Description ?? sourceDefinition.FDescription,
+            FFlowName = flowName,
+            FFlowCode = flowCode,
+            FDescription = description ?? sourceDefinition.FDescription,
             FStatus = "draft",
             FNumberTemplate = sourceDefinition.FNumberTemplate,
             FTitleTemplate = sourceDefinition.FTitleTemplate,
             FAllowedRolesJson = sourceDefinition.FAllowedRolesJson,
-            FFlowGroupId = null, // 克隆时不复制流程组关联
+            FFlowGroupId = null,
             FTriggerConfigJson = sourceDefinition.FTriggerConfigJson,
             FAccountSetId = sourceDefinition.FAccountSetId,
-            FOrgId = request.OrgId ?? 0,
+            FOrgId = 0, // 非模板由 FillOrgId 填当前组织；模板在抑制作用域内保持 0
             FCreatorId = operatorId,
             FCreatedTime = DateTime.Now
         };
 
         _dbContext.Set<CfFlowDefinition>().Add(newDefinition);
-        await _dbContext.SaveChangesAsync();
+        if (asGlobalTemplate)
+        {
+            using (_dbContext.SuppressOrgIdFill())
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            await _dbContext.SaveChangesAsync();
+        }
 
-        // 3. 查找源流程的当前发布版本
         var sourceVersion = await _dbContext.Set<CfFlowVersion>()
-            .FirstOrDefaultAsync(x => x.FFlowDefinitionId == sourceDefinitionId && x.FIsCurrentVersion);
-
+            .FirstOrDefaultAsync(x => x.FFlowDefinitionId == sourceDefinition.FID && x.FIsCurrentVersion);
         if (sourceVersion != null)
         {
-            // 4. 克隆版本
             var newVersion = new CfFlowVersion
             {
                 FFlowDefinitionId = newDefinition.FID,
@@ -972,16 +996,14 @@ public class FlowDefinitionService : IFlowDefinitionService
             _dbContext.Set<CfFlowVersion>().Add(newVersion);
             await _dbContext.SaveChangesAsync();
 
-            // 5. 克隆所有节点
             var sourceStages = await _dbContext.Set<CfStageDefinition>()
                 .Where(s => s.FFlowVersionId == sourceVersion.FID)
                 .OrderBy(s => s.FSortOrder)
                 .ToListAsync();
-
             var usedStageKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var src in sourceStages)
             {
-                var newStage = new CfStageDefinition
+                _dbContext.Set<CfStageDefinition>().Add(new CfStageDefinition
                 {
                     FFlowVersionId = newVersion.FID,
                     FStageKey = EnsureStageKey(src.FStageKey, src.FSortOrder, src.FStageName, usedStageKeys),
@@ -1000,8 +1022,7 @@ public class FlowDefinitionService : IFlowDefinitionService
                     FCcConfigJson = src.FCcConfigJson,
                     FTimeoutHours = src.FTimeoutHours,
                     FPriorityTemplate = src.FPriorityTemplate
-                };
-                _dbContext.Set<CfStageDefinition>().Add(newStage);
+                });
             }
             await _dbContext.SaveChangesAsync();
             await CloneRouteRulesAsync(sourceVersion.FID, newVersion.FID);
@@ -1009,9 +1030,7 @@ public class FlowDefinitionService : IFlowDefinitionService
             await _dbContext.SaveChangesAsync();
         }
 
-        _logger.LogInformation("Cloned flow definition {SourceId} -> {NewId} by operator {OperatorId}", sourceDefinitionId, newDefinition.FID, operatorId);
-
-        return MapToDto(newDefinition);
+        return newDefinition;
     }
 
     public async Task<List<FlowDefinitionDto>> GetTemplatesAsync()
