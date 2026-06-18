@@ -18,14 +18,14 @@ public class DetectionService : IDetectionService
         // 1. 查询启用的规则
         // 2. 对每条规则执行条件检测
         // 3. 检测到异常时自动创建异常单
-        await Task.CompletedTask;
+        await global::System.Threading.Tasks.Task.CompletedTask;
         return ApiResult<int>.Success(0, "检测完成");
     }
 
     public async Task<ApiResult<bool>> DetectByRuleAsync(long orgId, long ruleId)
     {
         // TODO: 实现单条规则检测逻辑
-        await Task.CompletedTask;
+        await global::System.Threading.Tasks.Task.CompletedTask;
         return ApiResult<bool>.Success(true);
     }
 }

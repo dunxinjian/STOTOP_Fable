@@ -354,6 +354,7 @@ builder.Services.AddScoped<IWorkHubNotifier, WorkHubNotifier>();
 
 // Jobs
 builder.Services.AddScoped<QualityOverdueCheckJob>();
+builder.Services.AddScoped<ShentongUnificationJob>();
 
 // 钉钉群机器人 Webhook 推送（AlertBotJob / DailyReportBotJob / WeeklyReportBotJob / BotPushController 依赖）
 builder.Services.AddSingleton<DingTalkBotService>();
@@ -629,6 +630,13 @@ RecurringJob.AddOrUpdate<QualityOverdueCheckJob>(
     job => job.ExecuteAsync(),
     Cron.Hourly);
 app.Logger.LogInformation("已注册质量问题超时标记定时任务");
+
+// 申通统一质控归一（每日 06:00 执行）：枚举有申通数据的组织逐个归一全 29 源（单组织异常隔离）。
+RecurringJob.AddOrUpdate<ShentongUnificationJob>(
+    "shentong-unify",
+    job => job.ExecuteAsync(),
+    "0 6 * * *"); // 每天 06:00
+app.Logger.LogInformation("已注册申通统一质控归一定时任务（Cron: 0 6 * * *）");
 
 // CardFlow 节点超时检查 - 每小时
 RecurringJob.AddOrUpdate<STOTOP.Module.CardFlow.Jobs.CardFlowTimeoutJob>(

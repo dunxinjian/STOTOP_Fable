@@ -15,21 +15,21 @@ public class DispatchService : IDispatchService
     public async Task<ApiResult<long>> DispatchToOAAsync(long orgId, long exceptionId, long assigneeId)
     {
         // TODO: 调用OA模块创建审批流程
-        await Task.CompletedTask;
+        await global::System.Threading.Tasks.Task.CompletedTask;
         return ApiResult<long>.Success(0, "OA流程派发待实现");
     }
 
     public async Task<ApiResult<long>> DispatchToTaskAsync(long orgId, long exceptionId, long assigneeId)
     {
         // TODO: 调用任务模块创建工作任务
-        await Task.CompletedTask;
+        await global::System.Threading.Tasks.Task.CompletedTask;
         return ApiResult<long>.Success(0, "工作任务派发待实现");
     }
 
     public async Task<ApiResult<bool>> DispatchAsAlertAsync(long orgId, long exceptionId, long assigneeId)
     {
         // TODO: 发送消息预警通知
-        await Task.CompletedTask;
+        await global::System.Threading.Tasks.Task.CompletedTask;
         return ApiResult<bool>.Success(true, "消息预警待实现");
     }
 }

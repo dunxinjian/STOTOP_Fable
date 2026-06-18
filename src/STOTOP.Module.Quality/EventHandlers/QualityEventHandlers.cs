@@ -22,7 +22,7 @@ public class ExceptionCreatedEventHandler : IEventHandler<ExceptionCreatedEvent>
         _logger = logger;
     }
 
-    public async Task HandleAsync(ExceptionCreatedEvent @event, CancellationToken cancellationToken = default)
+    public async global::System.Threading.Tasks.Task HandleAsync(ExceptionCreatedEvent @event, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -64,7 +64,7 @@ public class ExceptionDispatchedEventHandler : IEventHandler<ExceptionDispatched
         _logger = logger;
     }
 
-    public async Task HandleAsync(ExceptionDispatchedEvent @event, CancellationToken cancellationToken = default)
+    public async global::System.Threading.Tasks.Task HandleAsync(ExceptionDispatchedEvent @event, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -106,7 +106,7 @@ public class ExceptionClosedEventHandler : IEventHandler<ExceptionClosedEvent>
         _logger = logger;
     }
 
-    public async Task HandleAsync(ExceptionClosedEvent @event, CancellationToken cancellationToken = default)
+    public async global::System.Threading.Tasks.Task HandleAsync(ExceptionClosedEvent @event, CancellationToken cancellationToken = default)
     {
         try
         {
