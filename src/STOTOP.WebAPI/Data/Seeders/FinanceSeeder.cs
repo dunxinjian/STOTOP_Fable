@@ -30,6 +30,7 @@ public static class FinanceSeeder
             new(6, "批次6: 删损益项2废弃列+重灌72项种子 (2026-06-17)", MigrateV6),
             new(7, "批次5-S3: 手工数据加 F期间键 + 回填 'M:'+期间 (2026-06-17)", MigrateV7),
             new(8, "批次5-S6: 删废弃 FIN阿米巴分摊比例 表 (2026-06-17)", MigrateV8),
+            new(9, "品牌版科目覆盖：删两账套旧科目重建(保留各账套真实1002/1012) (2026-06-18)", MigrateV9),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -74,10 +75,170 @@ public static class FinanceSeeder
         
         ");
 
-        // FIN科目（2026-06-15 重构：太仓美申全新科目表，两账套各保留1002/1012）
+        // FIN科目（品牌版，2026-06-18）
+        InsertBrandAccounts(ctx);
+
+        // FIN阿米巴损益模板
+        ExecSql(ctx, @"
+        SET IDENTITY_INSERT [FIN阿米巴损益模板] ON;
+        
+        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益模板] WHERE [FID] = 3)
+        
+        INSERT INTO [FIN阿米巴损益模板] ([FID], [F名称], [F描述], [F是否默认], [F创建时间], [F更新时间], [F账套ID]) VALUES (3, N'太仓经营损益模板', NULL, 1, N'2026-05-12 00:44:25.870', N'2026-05-24 15:53:24.332', 2);
+        
+        SET IDENTITY_INSERT [FIN阿米巴损益模板] OFF;
+        
+        ");
+
+        // FIN阿米巴损益项（批次6: 72项种子, 与 MigrateV6 共用 ReseedAmoebaTemplate3 守卫重灌）
+        ReseedAmoebaTemplate3(ctx);
+
+        // 唯一索引: UQ_FIN凭证_VoucherNo
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_FIN凭证_VoucherNo' AND object_id = OBJECT_ID('FIN凭证'))
+        BEGIN
+        CREATE UNIQUE INDEX [UQ_FIN凭证_VoucherNo] ON [FIN凭证] ([F凭证字], [F期间ID], [F账套ID], [F凭证号]);
+        END
+        ");
+
+    }
+
+    private static void MigrateV2(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // [FIN阿米巴损益模板]: 清除 FTabsJson（先删默认约束再删列）
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益模板", "FTabsJson");
+
+        // [FIN阿米巴损益项]: 清除 F项目类型, F显示级别, F业务方向（先删默认约束再删列）
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F项目类型");
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F显示级别");
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F业务方向");
+    }
+
+    private static void MigrateV3(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // 数据迁移：基于 FNodeRole + FDataSource 推导新字段值
+
+        // F值来源映射
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴损益项] SET [F值来源] = CASE 
+          WHEN [F数据源] IN ('voucher','billing','estimate','depreciation') THEN 'system'
+          WHEN [F数据源] = 'formula' THEN 'formula'
+          WHEN [F数据源] = 'manual' THEN 'manual'
+          ELSE NULL
+        END
+        WHERE [F值来源] IS NULL;
+        ");
+
+        // F系统数据源映射
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴损益项] SET [F系统数据源] = [F数据源]
+        WHERE [F数据源] IN ('voucher','billing','estimate','depreciation')
+          AND [F系统数据源] IS NULL;
+        ");
+
+        // F项目类别映射 Step 1: 直接映射的类型
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'section'   WHERE [F节点角色] = 'group'     AND [F项目类别] IS NULL;
+        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'indicator'  WHERE [F节点角色] = 'indicator' AND [F项目类别] IS NULL;
+        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'profit'     WHERE [F节点角色] = 'formula'   AND [F项目类别] IS NULL;
+        ");
+
+        // F项目类别映射 Step 1.5: 标记 indicator section
+        // 指标分区按设计为"全局唯一、根级"——仅根级（F父ID=0）group 可标记；
+        // Tab 内嵌套的指标组（如出港指标/进港指标）是普通分组，不得标记
+        ExecSql(ctx, @"
+        UPDATE p SET p.[F是否指标分区] = 1
+        FROM [FIN阿米巴损益项] p
+        WHERE p.[F节点角色] = 'group'
+          AND p.[F父ID] = 0
+          AND EXISTS (SELECT 1 FROM [FIN阿米巴损益项] c WHERE c.[F父ID] = p.[FID] AND c.[F节点角色] = 'indicator')
+          AND p.[F是否指标分区] = 0;
+        ");
+
+        // F项目类别映射 Step 2: data 类型需根据父节点名称判断 revenue/cost
+        ExecSql(ctx, @"
+        UPDATE t SET t.[F项目类别] = CASE
+          WHEN p.[F项目名称] LIKE '%收入%' THEN 'revenue'
+          ELSE 'cost'
+        END
+        FROM [FIN阿米巴损益项] t
+        INNER JOIN [FIN阿米巴损益项] p ON t.[F父ID] = p.[FID]
+        WHERE t.[F节点角色] = 'data' AND t.[F项目类别] IS NULL;
+        ");
+    }
+
+    private static void MigrateV4(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // 修复 V3 Step 1.5 的过度标记：指标分区按设计为"全局唯一、根级"，
+        // V3 把所有含 indicator 子项的 group（如 Tab 内嵌套的出港指标/进港指标）都标记成了
+        // 指标分区，导致多期报表只分离其中一个、另一个残留主 Tab，且前端因"已存在指标分区"
+        // 无法再创建真正的根级运营指标分区。非根级标记一律回归普通分组。
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴损益项]
+        SET [F是否指标分区] = 0
+        WHERE [F是否指标分区] = 1 AND [F父ID] <> 0;
+        ");
+    }
+
+    private static void MigrateV5(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // F组织ID 已从模型移除（账套作用域）。删除既存库的物理列；
+        // DropColumnSafe 先删依赖索引/DEFAULT 约束再删列，且 IF EXISTS 列幂等（全新库列本就不存在即跳过）。
+        SeederHelper.DropColumnSafe(ctx, "FIN科目", "F组织ID");
+        SeederHelper.DropColumnSafe(ctx, "FIN科目余额", "F组织ID");
+        SeederHelper.DropColumnSafe(ctx, "FIN辅助核算余额", "F组织ID");
+    }
+
+    private static void MigrateV6(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+        // 批次6: 删 2 个废弃列(已从实体/Config 移除); DropColumnSafe 幂等(IF EXISTS), 全新库列本不存在即跳过
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F辅助核算过滤Json");
+        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F指标方向范围");
+        // 存量库重灌损益项种子: V1 内种子对已迁移库不会重跑, 故在此守卫重灌
+        ReseedAmoebaTemplate3(ctx);
+    }
+
+    /// <summary>
+    /// 批次5-S3: FIN阿米巴手工数据 加 F期间键(粒度前缀+期间)，回填存量(全月度)为 'M:'+F期间。
+    /// 列幂等补加(IF NOT EXISTS)——dev 下 SchemaAutoSync 可能已在本步前加好，prod(AutoSync 暂存)则由本步加。
+    /// 唯一索引保持 F期间 不变(各粒度期间串本就唯一)，不在此动索引(避免管线在回填前用全 NULL 期间键建索引撞 NULL 重复)。
+    /// 加列与回填分两个 batch：UPDATE 引用的列须由前一 batch 先建好(SQL Server 延迟名称解析)。
+    /// </summary>
+    private static void MigrateV7(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        ExecSql(ctx, @"
+        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = N'FIN阿米巴手工数据' AND COLUMN_NAME = N'F期间键')
+        ALTER TABLE [FIN阿米巴手工数据] ADD [F期间键] nvarchar(20) NULL;
+        ");
+
+        ExecSql(ctx, @"
+        UPDATE [FIN阿米巴手工数据] SET [F期间键] = N'M:' + [F期间] WHERE [F期间键] IS NULL;
+        ");
+    }
+
+    /// <summary>
+    /// 批次5-S6: 删废弃的 FIN阿米巴分摊比例 表(旧固定比例分摊，已被件量分摊 F分摊方式/F分摊基数 取代)。
+    /// 实体/Config/CRUD/前端/baseline 菜单已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
+    /// 顺带删存量库残留的"分摊配置"孤儿菜单行(指向已删路由/组件；baseline upsert 不删缺失行，故此处清)。
+    /// </summary>
+    private static void InsertBrandAccounts(STOTOPDbContext ctx)
+    {
+        // 品牌版科目(2026-06-18 落库)：两账套品牌版业务科目 + 各账套真实1002/1012；FID 600/700xxx
         ExecSql(ctx, @"
         SET IDENTITY_INSERT [FIN科目] ON;
-        -- 账套1 组织ID=0 共482科目(含现有1002/1012=75)
+        -- 账套1 共482科目(含现有1002/1012=75)
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600001)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600001, N'1001', N'库存现金', N'流动资产', N'借', 1, 0, 1, NULL, NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600002)
@@ -1042,7 +1203,7 @@ public static class FinanceSeeder
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600481, N'5602010403', N'工伤补助', N'期间费用', N'借', 4, 600466, 1, N'department', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 600482)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (600482, N'5602010499', N'其他福利', N'期间费用', N'借', 4, 600466, 1, N'department', NULL, NULL, 1, 1, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
-        -- 账套2 组织ID=0 共427科目(含现有1002/1012=20)
+        -- 账套2 共427科目(含现有1002/1012=20)
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700001)
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700001, N'1001', N'库存现金', N'流动资产', N'借', 1, 0, 1, NULL, NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID] = 700002)
@@ -1899,162 +2060,8 @@ public static class FinanceSeeder
         INSERT INTO [FIN科目] ([FID], [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID], [F是否末级], [F辅助核算], [F外币], [F计算单位], [F启用状态], [F账套ID], [F创建时间], [F更新时间], [F启用年度], [F启用期间]) VALUES (700427, N'5602010499', N'其他福利', N'期间费用', N'借', 4, 700411, 1, N'department', NULL, NULL, 1, 2, N'2026-06-15 00:00:00.000', N'2026-06-15 00:00:00.000', 0, 0);
         SET IDENTITY_INSERT [FIN科目] OFF;
         ");
-
-        // FIN阿米巴损益模板
-        ExecSql(ctx, @"
-        SET IDENTITY_INSERT [FIN阿米巴损益模板] ON;
-        
-        IF NOT EXISTS (SELECT 1 FROM [FIN阿米巴损益模板] WHERE [FID] = 3)
-        
-        INSERT INTO [FIN阿米巴损益模板] ([FID], [F名称], [F描述], [F是否默认], [F创建时间], [F更新时间], [F账套ID]) VALUES (3, N'太仓经营损益模板', NULL, 1, N'2026-05-12 00:44:25.870', N'2026-05-24 15:53:24.332', 2);
-        
-        SET IDENTITY_INSERT [FIN阿米巴损益模板] OFF;
-        
-        ");
-
-        // FIN阿米巴损益项（批次6: 72项种子, 与 MigrateV6 共用 ReseedAmoebaTemplate3 守卫重灌）
-        ReseedAmoebaTemplate3(ctx);
-
-        // 唯一索引: UQ_FIN凭证_VoucherNo
-        ExecSql(ctx, @"
-        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_FIN凭证_VoucherNo' AND object_id = OBJECT_ID('FIN凭证'))
-        BEGIN
-        CREATE UNIQUE INDEX [UQ_FIN凭证_VoucherNo] ON [FIN凭证] ([F凭证字], [F期间ID], [F账套ID], [F凭证号]);
-        END
-        ");
-
     }
 
-    private static void MigrateV2(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-
-        // [FIN阿米巴损益模板]: 清除 FTabsJson（先删默认约束再删列）
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益模板", "FTabsJson");
-
-        // [FIN阿米巴损益项]: 清除 F项目类型, F显示级别, F业务方向（先删默认约束再删列）
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F项目类型");
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F显示级别");
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F业务方向");
-    }
-
-    private static void MigrateV3(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-
-        // 数据迁移：基于 FNodeRole + FDataSource 推导新字段值
-
-        // F值来源映射
-        ExecSql(ctx, @"
-        UPDATE [FIN阿米巴损益项] SET [F值来源] = CASE 
-          WHEN [F数据源] IN ('voucher','billing','estimate','depreciation') THEN 'system'
-          WHEN [F数据源] = 'formula' THEN 'formula'
-          WHEN [F数据源] = 'manual' THEN 'manual'
-          ELSE NULL
-        END
-        WHERE [F值来源] IS NULL;
-        ");
-
-        // F系统数据源映射
-        ExecSql(ctx, @"
-        UPDATE [FIN阿米巴损益项] SET [F系统数据源] = [F数据源]
-        WHERE [F数据源] IN ('voucher','billing','estimate','depreciation')
-          AND [F系统数据源] IS NULL;
-        ");
-
-        // F项目类别映射 Step 1: 直接映射的类型
-        ExecSql(ctx, @"
-        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'section'   WHERE [F节点角色] = 'group'     AND [F项目类别] IS NULL;
-        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'indicator'  WHERE [F节点角色] = 'indicator' AND [F项目类别] IS NULL;
-        UPDATE [FIN阿米巴损益项] SET [F项目类别] = 'profit'     WHERE [F节点角色] = 'formula'   AND [F项目类别] IS NULL;
-        ");
-
-        // F项目类别映射 Step 1.5: 标记 indicator section
-        // 指标分区按设计为"全局唯一、根级"——仅根级（F父ID=0）group 可标记；
-        // Tab 内嵌套的指标组（如出港指标/进港指标）是普通分组，不得标记
-        ExecSql(ctx, @"
-        UPDATE p SET p.[F是否指标分区] = 1
-        FROM [FIN阿米巴损益项] p
-        WHERE p.[F节点角色] = 'group'
-          AND p.[F父ID] = 0
-          AND EXISTS (SELECT 1 FROM [FIN阿米巴损益项] c WHERE c.[F父ID] = p.[FID] AND c.[F节点角色] = 'indicator')
-          AND p.[F是否指标分区] = 0;
-        ");
-
-        // F项目类别映射 Step 2: data 类型需根据父节点名称判断 revenue/cost
-        ExecSql(ctx, @"
-        UPDATE t SET t.[F项目类别] = CASE
-          WHEN p.[F项目名称] LIKE '%收入%' THEN 'revenue'
-          ELSE 'cost'
-        END
-        FROM [FIN阿米巴损益项] t
-        INNER JOIN [FIN阿米巴损益项] p ON t.[F父ID] = p.[FID]
-        WHERE t.[F节点角色] = 'data' AND t.[F项目类别] IS NULL;
-        ");
-    }
-
-    private static void MigrateV4(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-
-        // 修复 V3 Step 1.5 的过度标记：指标分区按设计为"全局唯一、根级"，
-        // V3 把所有含 indicator 子项的 group（如 Tab 内嵌套的出港指标/进港指标）都标记成了
-        // 指标分区，导致多期报表只分离其中一个、另一个残留主 Tab，且前端因"已存在指标分区"
-        // 无法再创建真正的根级运营指标分区。非根级标记一律回归普通分组。
-        ExecSql(ctx, @"
-        UPDATE [FIN阿米巴损益项]
-        SET [F是否指标分区] = 0
-        WHERE [F是否指标分区] = 1 AND [F父ID] <> 0;
-        ");
-    }
-
-    private static void MigrateV5(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-
-        // F组织ID 已从模型移除（账套作用域）。删除既存库的物理列；
-        // DropColumnSafe 先删依赖索引/DEFAULT 约束再删列，且 IF EXISTS 列幂等（全新库列本就不存在即跳过）。
-        SeederHelper.DropColumnSafe(ctx, "FIN科目", "F组织ID");
-        SeederHelper.DropColumnSafe(ctx, "FIN科目余额", "F组织ID");
-        SeederHelper.DropColumnSafe(ctx, "FIN辅助核算余额", "F组织ID");
-    }
-
-    private static void MigrateV6(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-        // 批次6: 删 2 个废弃列(已从实体/Config 移除); DropColumnSafe 幂等(IF EXISTS), 全新库列本不存在即跳过
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F辅助核算过滤Json");
-        SeederHelper.DropColumnSafe(ctx, "FIN阿米巴损益项", "F指标方向范围");
-        // 存量库重灌损益项种子: V1 内种子对已迁移库不会重跑, 故在此守卫重灌
-        ReseedAmoebaTemplate3(ctx);
-    }
-
-    /// <summary>
-    /// 批次5-S3: FIN阿米巴手工数据 加 F期间键(粒度前缀+期间)，回填存量(全月度)为 'M:'+F期间。
-    /// 列幂等补加(IF NOT EXISTS)——dev 下 SchemaAutoSync 可能已在本步前加好，prod(AutoSync 暂存)则由本步加。
-    /// 唯一索引保持 F期间 不变(各粒度期间串本就唯一)，不在此动索引(避免管线在回填前用全 NULL 期间键建索引撞 NULL 重复)。
-    /// 加列与回填分两个 batch：UPDATE 引用的列须由前一 batch 先建好(SQL Server 延迟名称解析)。
-    /// </summary>
-    private static void MigrateV7(STOTOPDbContext ctx)
-    {
-        if (!SeederHelper.IsSqlServer(ctx)) return;
-
-        ExecSql(ctx, @"
-        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_NAME = N'FIN阿米巴手工数据' AND COLUMN_NAME = N'F期间键')
-        ALTER TABLE [FIN阿米巴手工数据] ADD [F期间键] nvarchar(20) NULL;
-        ");
-
-        ExecSql(ctx, @"
-        UPDATE [FIN阿米巴手工数据] SET [F期间键] = N'M:' + [F期间] WHERE [F期间键] IS NULL;
-        ");
-    }
-
-    /// <summary>
-    /// 批次5-S6: 删废弃的 FIN阿米巴分摊比例 表(旧固定比例分摊，已被件量分摊 F分摊方式/F分摊基数 取代)。
-    /// 实体/Config/CRUD/前端/baseline 菜单已删；幂等 DROP(IF EXISTS)，全新库该表本不存在即跳过。
-    /// 顺带删存量库残留的"分摊配置"孤儿菜单行(指向已删路由/组件；baseline upsert 不删缺失行，故此处清)。
-    /// </summary>
     private static void MigrateV8(STOTOPDbContext ctx)
     {
         if (!SeederHelper.IsSqlServer(ctx)) return;
@@ -2067,6 +2074,15 @@ public static class FinanceSeeder
         ExecSql(ctx, @"
         DELETE FROM [SYS功能权限] WHERE [F编码] = N'finance:amoeba:allocation';
         ");
+    }
+
+    private static void MigrateV9(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+        // 存量库：删两账套旧科目(0凭证、无外键引用)后重灌品牌版(含各账套真实1002/1012)。
+        // V1(全新库) 不重跑，故存量库在此守卫覆盖；幂等：MigrationRunner 按版本只执行一次。
+        ExecSql(ctx, @"DELETE FROM [FIN科目] WHERE [F账套ID] IN (1,2);");
+        InsertBrandAccounts(ctx);
     }
 
     /// <summary>
