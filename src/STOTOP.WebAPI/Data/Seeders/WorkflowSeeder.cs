@@ -38,7 +38,7 @@ BEGIN
     (0, 'express.recalc', N'发起重算', 'ReloadOutlined', 'express', '/express/billing/recalc', 'apply', 'express.billing', 60, N'对选定账单发起费用重新计算'),
     (0, 'express.dispute', N'提交账单异议', 'ExclamationCircleOutlined', 'express', '/express/billing/dispute', 'apply', NULL, 65, N'对计费结果提交异议申诉'),
     (0, 'task.create', N'新建任务', 'PlusCircleOutlined', 'task', '/workhub?action=create-task', 'create', NULL, 30, N'创建一个新的工作任务'),
-    (0, 'cardflow.start', N'发起卡片流程', 'AuditOutlined', 'cardflow', '/cardflow/upload', 'apply', NULL, 40, N'通过CardFlow发起业务流程');
+    (0, 'cardflow.start', N'发起卡片流程', 'FileTextOutlined', 'cardflow', '/cardflow/upload', 'apply', NULL, 40, N'通过CardFlow发起业务流程');
 END
 ");
     }
