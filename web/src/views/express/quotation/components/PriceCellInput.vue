@@ -168,7 +168,7 @@ function handleKeydown(e: KeyboardEvent) {
   transition: background-color 0.15s;
 
   &:hover:not(.is-editing):not(.is-disabled) {
-    background-color: var(--color-primary-light);
+    background-color: var(--bg-muted);
   }
 
   &.is-disabled {
@@ -177,7 +177,7 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   &.has-override:not(.is-editing) {
-    background-color: #f0f5ff;
+    background-color: var(--color-primary-light);
   }
 }
 
@@ -197,7 +197,7 @@ function handleKeydown(e: KeyboardEvent) {
 .cell-display {
   font-size: 13px;
   line-height: 22px;
-  color: #333;
+  color: var(--text-1);
   user-select: none;
   white-space: nowrap;
 }
@@ -205,13 +205,13 @@ function handleKeydown(e: KeyboardEvent) {
 .cell-input {
   width: 100%;
   height: 24px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border-strong);
   border-radius: 2px;
   outline: none;
   text-align: center;
   font-size: 13px;
   padding: 0 4px;
-  background: #fff;
+  background: var(--bg-card);
   transition: border-color 0.2s;
 
   &:focus {
@@ -222,7 +222,7 @@ function handleKeydown(e: KeyboardEvent) {
   &.has-error {
     border-color: var(--color-danger);
     &:focus {
-      box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.15);
+      box-shadow: 0 0 0 1px var(--color-danger-border);
     }
   }
 }
