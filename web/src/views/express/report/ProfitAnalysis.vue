@@ -2,7 +2,7 @@
   <div class="page-container">
     <PageHeader title="毛利分析">
       <template #left>
-        <a-radio-group v-model:value="activeView" button-style="solid" size="small" @change="handleViewChange">
+        <a-radio-group v-model:value="activeView" button-style="solid" size="middle" @change="handleViewChange">
           <a-radio-button value="client">业务对象</a-radio-button>
           <a-radio-button value="shop">报价</a-radio-button>
           <a-radio-button value="intermediary">中间人</a-radio-button>
@@ -856,16 +856,6 @@ onBeforeUnmount(() => {
     font-weight: 600;
     font-size: 13px;
     padding: 8px 12px;
-  }
-}
-
-/* 分段控件样式 */
-:deep(.ant-radio-group-solid) {
-  .ant-radio-button-wrapper {
-    font-size: 13px;
-    height: 32px;
-    line-height: 30px;
-    padding: 0 14px;
   }
 }
 
