@@ -30,4 +30,8 @@ public static class QualityPermissions
     // 预警配置
     public const string AlertView = "quality:alert:view";
     public const string AlertManage = "quality:alert:manage";
+
+    // 承运商质控（Plan 3 看板 + 主数据认领）
+    public const string CarrierQualityView = "quality:carrier:view";
+    public const string CarrierMasterDataClaim = "quality:carrier:claim";
 }
