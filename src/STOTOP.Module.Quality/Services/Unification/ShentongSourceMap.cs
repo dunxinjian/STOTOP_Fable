@@ -92,6 +92,19 @@ public static class ShentongSourceMap
     /// <summary>STG申通_签收未达标明细 表名常量（C3 批次1，派送签收时效，整源即未达标）。</summary>
     public const string SignSubstandardTable = "STG申通_签收未达标明细";
 
+    // ── C3 批次2：4 个事件源（全走通用事件路径 UnifyGenericEventAsync，仅加描述符）──
+    /// <summary>STG申通_积压明细 表名常量（C3 批次2，积压与遗失，整源即积压问题件，用问题类型列）。</summary>
+    public const string BacklogTable = "STG申通_积压明细";
+
+    /// <summary>STG申通_疑似遗失明细 表名常量（C3 批次2，积压与遗失，整源即疑似遗失，用问题类型列）。</summary>
+    public const string SuspectedLossTable = "STG申通_疑似遗失明细";
+
+    /// <summary>STG申通_进港投诉明细 表名常量（C3 批次2，投诉与赔付，整源即投诉，用投诉类型列）。</summary>
+    public const string InboundComplaintTable = "STG申通_进港投诉明细";
+
+    /// <summary>STG申通_应拦截明细 表名常量（C3 批次2，拦截渗透，仅拦截失败入事件，带预计考核金额）。</summary>
+    public const string InterceptDetailTable = "STG申通_应拦截明细";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -275,5 +288,99 @@ public static class ShentongSourceMap
                 // 整源入（OnlyFilter* 留 null）；抽样确认 F当日签收标识=否、F是否已签收=否 全量，无正常行 → 不过滤。
                 ProblemTypeConstant: "签收未达标",
                 KeySnapshotColumns: new[] { "F应签日期", "F运单号", "F应签网点", "F业务员", "F当日签收标识", "F是否已签收", "F是否未签收有问题件", "F签收时间", "F派件网点", "F签收网点" }),
+
+            // ─────────────────────────────────────────────────────────────────────
+            // C3 批次2：4 个事件源（全走通用事件路径，仅加描述符；列名/过滤口径已逐源抽样实体确认）。
+            // ─────────────────────────────────────────────────────────────────────
+
+            // ① 积压明细 → 质量事件（域=积压与遗失）。网点仅有名称 F所属网点名称（也有编码列 F所属网点编码，统一按名称匹配，编码入快照）；
+            //    员工=F扫描员（最后扫描操作人；本源另有 F业务员 列但抽样全空，扫描员为可靠责任人，故取扫描员脏名，无工号列）。
+            //    问题类型用列 F问题件一级类型（空单元格 → 「(未分类)」；本样例 5 行均有值：信息有误/拒收，无空）。
+            //    【一期口径抉择 — 整源入，不过滤】依据：该导出每行即「末端时效积压问题件」，本身即问题，恒带 F问题件一/二级类型。
+            //      候选剔除列 F是否积压剔除标识 抽样 5/5 全为「否」（无被剔除/正常行混入），F退回件标识/F是否实时签收 亦全「否」，
+            //      无清晰单列把「正常/非问题」行分出来 → 整源入、用问题类型列，宁可全量勿漏，噪声二期检测规则再收。
+            [BacklogTable] = new ShentongSourceDescriptor(
+                StgTableName: BacklogTable,
+                QualityDomain: "积压与遗失",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 统一按名称匹配；编码列入快照
+                NetworkNameColumn: "F所属网点名称",
+                EmployeeNoColumn: null,              // 仅脏名，无工号列（F扫描员编码 为申通工号但口径不一致，按姓名启发式匹配）
+                EmployeeNameColumn: "F扫描员",       // 业务员抽样全空 → 取扫描员（最后扫描责任人）
+                ProblemTypeColumn: "F问题件一级类型", // 列优先（该源有问题类型列）；空单元格落「(未分类)」
+                DateColumn: "F业务日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "BKLD",
+                // 一期不过滤（OnlyFilter* 留 null，整源入）；常量仅在列为 null 时兜底（本源列存在，不触发）。
+                ProblemTypeConstant: "积压问题件",
+                KeySnapshotColumns: new[] { "F业务日期", "F运单号", "F所属网点名称", "F所属网点编码", "F扫描员", "F扫描员编码", "F问题件一级类型", "F问题件二级类型", "F最后扫描时间", "F最后扫描类型", "F是否积压剔除标识", "F超过3天标识" }),
+
+            // ② 疑似遗失明细 → 质量事件（域=积压与遗失）。整源即「疑似遗失」（3日轨迹中断触发），无过滤。
+            //    网点取 F扫描站点（轨迹中断触发的扫描操作站点＝质量归属网点，抽样命中种子网点；另有 F订单网点=源单网点，口径不同，纳入快照不作匹配维度）；
+            //    员工=F扫描操作人（脏名，抽样有值；F业务员 抽样空）。
+            //    问题类型用列 F问题件类型（空 → 「(未分类)」；本样例 1 行值「拒收/客户拒收」），列为 null 时回退常量「疑似遗失」（本源列存在，不触发）。
+            //    日期列 F3日轨迹中断触发时间 是 datetime 文本（如「2026-06-14 13:17:38.0」）；ParseUtil.TryDate 走 DateTime.TryParse 解析（保留时分秒，F统计年月 取 yyyyMM 正确）。
+            [SuspectedLossTable] = new ShentongSourceDescriptor(
+                StgTableName: SuspectedLossTable,
+                QualityDomain: "积压与遗失",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 本源无网点编码列，仅有站点/网点名称
+                NetworkNameColumn: "F扫描站点",      // 轨迹中断触发的扫描站点＝质量归属网点（订单网点入快照，不作匹配维度）
+                EmployeeNoColumn: null,              // 仅脏名，无工号列
+                EmployeeNameColumn: "F扫描操作人",   // 业务员抽样空 → 取扫描操作人
+                ProblemTypeColumn: "F问题件类型",    // 列优先（该源有问题类型列）；空单元格落「(未分类)」
+                DateColumn: "F3日轨迹中断触发时间",  // datetime 文本，TryDate 解析（保留时分秒，年月取 yyyyMM）
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列（有 F订单来源 但非平台口径）
+                ProblemCodePrefix: "SLOS",
+                // 整源入（OnlyFilter* 留 null）：导出本身=网点疑似遗失明细全集，无「正常」行混入 → 不过滤。
+                ProblemTypeConstant: "疑似遗失",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F3日轨迹中断触发时间", "F运单号", "F扫描站点", "F订单网点", "F揽收网点", "F扫描操作人", "F问题件类型", "F3日轨迹中断触发类型", "F是否找回", "F最后扫描时间", "F实际金额" }),
+
+            // ③ 进港投诉明细 → 质量事件（域=投诉与赔付）。整源即「进港投诉」，无过滤。
+            //    网点仅有名称 F所属网点名称（也有编码列，统一按名称匹配，编码入快照）；员工=F小件员编码(工号)+F小件员名称（抽样工号为 32028xxxxx 真工号、名称脏名俱全）。
+            //    问题类型用列 F投诉类型（空单元格 → 「(未分类)」；本样例 9 行有 1 行空，落「(未分类)」）。
+            [InboundComplaintTable] = new ShentongSourceDescriptor(
+                StgTableName: InboundComplaintTable,
+                QualityDomain: "投诉与赔付",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 统一按名称匹配；编码列入快照
+                NetworkNameColumn: "F所属网点名称",
+                EmployeeNoColumn: "F小件员编码",     // 本源有真工号列（抽样 3202885246 等）
+                EmployeeNameColumn: "F小件员名称",
+                ProblemTypeColumn: "F投诉类型",      // 列优先；空单元格落「(未分类)」（本样例有 1 行空）
+                DateColumn: "F统计日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "INBC",
+                // 整源入（OnlyFilter* 留 null）：导出本身=进港投诉明细全集 → 不过滤。
+                ProblemTypeConstant: "进港投诉",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F投诉类型", "F所属网点名称", "F所属网点编码", "F小件员编码", "F小件员名称", "F工单内容", "F工单创建时间", "F签收时间", "F进港出港" }),
+
+            // ④ 应拦截明细 → 质量事件（域=拦截渗透）。网点仅有名称 F所属网点（另有 F应拦截网点，纳入快照，统一按所属网点名称匹配）；员工=F派件小件员（脏名，无工号列）。
+            //    问题类型用列 F拦截类型（空单元格 → 「(未分类)」；本样例 退回/改地址/空，空落「(未分类)」）。
+            //    金额列 F预计考核金额（实体真名，非「预估」）→ AmountColumn → F考核金额（ParseUtil.TryDecimal，本样例值 0/3）。
+            //    【一期口径抉择 — 仅拦截失败入事件，过滤 F是否拦截成功=否】依据：该导出=应拦截运单全集（抽样 是=52/否=10），
+            //      F是否拦截成功 是清晰单列二值标识（是/否），语义明确——拦截失败（否）才是被考核的问题件。
+            //      强证据：抽样 F是否拦截成功=否 的 10 行 F预计考核金额 全为 3.0（成功行多为 0），即「未成功＝有考核金额＝问题」一一对应 → 过滤生效后事件即考核问题件，金额落 3。
+            [InterceptDetailTable] = new ShentongSourceDescriptor(
+                StgTableName: InterceptDetailTable,
+                QualityDomain: "拦截渗透",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 本源无网点编码列，仅有名称
+                NetworkNameColumn: "F所属网点",
+                EmployeeNoColumn: null,              // 仅脏名，无工号列
+                EmployeeNameColumn: "F派件小件员",
+                ProblemTypeColumn: "F拦截类型",      // 列优先；空单元格落「(未分类)」
+                DateColumn: "F统计日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "ITCP",
+                OnlyFilterColumn: "F是否拦截成功",   // 仅拦截失败入事件
+                OnlyFilterEquals: "否",              // 抽样确认：未成功=「否」（是/否标识），未成功行金额全为 3 ＝考核问题件
+                ProblemTypeConstant: "拦截不成功",   // 仅在列为 null 时兜底（本源列存在，不触发）
+                AmountColumn: "F预计考核金额",       // → F考核金额（TryDecimal；本样例失败行均 3）
+                KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F拦截类型", "F拦截来源", "F所属网点", "F应拦截网点", "F派件小件员", "F是否拦截成功", "F是否转出", "F是否及时转出", "F预计考核金额", "F到件时间" }),
         };
 }
