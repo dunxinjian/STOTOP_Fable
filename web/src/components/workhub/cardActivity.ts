@@ -21,9 +21,21 @@ export interface PendingStage {
   assignees: string[]
 }
 
-// 操作日志中属于"审批决策"的动作类型——决策统一由审批节点出，故在操作日志里过滤掉以去重。
-// 若后端新增其它决策类动作，加到此集合即可。
-export const DECISION_ACTION_TYPES = new Set(['approve', 'reject'])
+// 操作日志中作为「操作事件」展示的业务动作白名单。
+// 审批决策（approve/reject/returnToStage 等）由审批节点呈现，不计入此处以去重；
+// 引擎内部/系统事件（complete/timeout/auto-*/dynamic-* 等）不在白名单，一律不展示，避免裸英文噪音混入。
+const OP_ACTION_TYPES = new Set([
+  'create',
+  'submit',
+  'withdraw',
+  'resubmit',
+  'void',
+  'resume',
+  'countersign',
+  'transfer',
+  'cc',
+  'urge',
+])
 
 // 注：approve/reject 仅供 actionText() 被直接调用时使用；buildActivityEvents 内部已过滤它们（决策来自审批节点）。
 const ACTION_TEXT: Record<string, string> = {
@@ -39,7 +51,6 @@ const ACTION_TEXT: Record<string, string> = {
   transfer: '转交',
   cc: '抄送',
   urge: '催办',
-  autoComplete: '自动完成',
 }
 
 export function actionText(action: string): string {
@@ -80,9 +91,9 @@ export function buildActivityEvents(
 ): ActivityEvent[] {
   const events: ActivityEvent[] = []
 
-  // 1. 操作事件（排除 approve/reject，避免与节点决策重复）
+  // 1. 操作事件（仅展示白名单内的业务操作；决策与系统事件不计入）
   for (const log of logs) {
-    if (DECISION_ACTION_TYPES.has(log.actionType)) continue
+    if (!OP_ACTION_TYPES.has(log.actionType)) continue
     events.push({
       time: log.operationTime,
       kind: 'op',
