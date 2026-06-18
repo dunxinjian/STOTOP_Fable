@@ -105,6 +105,25 @@ public static class ShentongSourceMap
     /// <summary>STG申通_应拦截明细 表名常量（C3 批次2，拦截渗透，仅拦截失败入事件，带预计考核金额）。</summary>
     public const string InterceptDetailTable = "STG申通_应拦截明细";
 
+    // ── C3 批次3：6 个事件源（最后一批事件，全走通用事件路径 UnifyGenericEventAsync，仅加描述符）──
+    /// <summary>STG申通_投诉账单明细 表名常量（C3 批次3，投诉与赔付，<b>无员工维度→状态9</b>，带金额 F金额，整源入）。</summary>
+    public const string ComplaintBillTable = "STG申通_投诉账单明细";
+
+    /// <summary>STG申通_虚签投诉明细 表名常量（C3 批次3，虚假签收履约，带金额 F预估考核金额，整源入）。</summary>
+    public const string FakeSignComplaintTable = "STG申通_虚签投诉明细";
+
+    /// <summary>STG申通_虚假签收明细 表名常量（C3 批次3，虚假签收履约，整源入）。</summary>
+    public const string FakeSignTable = "STG申通_虚假签收明细";
+
+    /// <summary>STG申通_照片质检明细 表名常量（C3 批次3，虚假签收履约，<b>仅不合格(F是否质检合格=否)入事件</b>）。</summary>
+    public const string PhotoQcTable = "STG申通_照片质检明细";
+
+    /// <summary>STG申通_履约率明细 表名常量（C3 批次3，虚假签收履约，整源即履约失败，问题类型用 F履约状态 列）。</summary>
+    public const string FulfillRateTable = "STG申通_履约率明细";
+
+    /// <summary>STG申通_送货上门明细 表名常量（C3 批次3，虚假签收履约，<b>仅履约失败(F履约情况=履约失败)入事件</b>）。</summary>
+    public const string HomeDeliveryTable = "STG申通_送货上门明细";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -382,5 +401,135 @@ public static class ShentongSourceMap
                 ProblemTypeConstant: "拦截不成功",   // 仅在列为 null 时兜底（本源列存在，不触发）
                 AmountColumn: "F预计考核金额",       // → F考核金额（TryDecimal；本样例失败行均 3）
                 KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F拦截类型", "F拦截来源", "F所属网点", "F应拦截网点", "F派件小件员", "F是否拦截成功", "F是否转出", "F是否及时转出", "F预计考核金额", "F到件时间" }),
+
+            // ─────────────────────────────────────────────────────────────────────
+            // C3 批次3：6 个事件源（最后一批事件，全走通用事件路径，仅加描述符；列名/过滤/金额已逐源抽样实体确认）。
+            // ─────────────────────────────────────────────────────────────────────
+
+            // ① 投诉账单明细 → 质量事件（域=投诉与赔付）。【无员工维度 → 两员工列设 null → 通用路径自动置 F员工匹配状态=9（不适用）】。
+            //    网点用受款方（F受款方网点编号 真编码 + F受款方网点名称），即「账单受款/被投诉方」——抽样均为外部网点（转运中心/外省公司，无 320288），
+            //    本网点（太仓 org=192）是收到账单方，故事件网点按受款方解析，<b>不会命中本地种子网点（状态0）</b>，集成测试不断言网点匹配。
+            //    （另有 F投诉网点 列与受款方多数同义，纳入快照；系统列 F归属网点编号 抽样全 NULL，导入未填，不作匹配维度。）
+            //    问题类型用列 F账单二级类型（抽样：协商赔付/应赔款金额，无空）。金额列 F金额（抽样 3/50/68/7.89… 纯数值，TryDecimal）→ F考核金额。
+            //    日期列 F账单生成时间（datetime 文本，TryDate）。整源入：导出本身=收到的投诉账单全集，无过滤。
+            [ComplaintBillTable] = new ShentongSourceDescriptor(
+                StgTableName: ComplaintBillTable,
+                QualityDomain: "投诉与赔付",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: "F受款方网点编号",   // 受款方真编码（按编码解析；抽样均外部网点，不命中本地种子）
+                NetworkNameColumn: "F受款方网点名称",
+                EmployeeNoColumn: null,              // 无员工维度 → 通用路径置状态9（工号/ID/姓名全空、不计未匹配）
+                EmployeeNameColumn: null,            // 无员工维度
+                ProblemTypeColumn: "F账单二级类型",   // 列优先（抽样：协商赔付/应赔款金额）；空单元格落「(未分类)」
+                DateColumn: "F账单生成时间",          // datetime 文本，TryDate
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "CPBL",
+                // 整源入（OnlyFilter* 留 null）：导出=收到的投诉账单全集 → 不过滤。
+                ProblemTypeConstant: "投诉账单",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                AmountColumn: "F金额",               // → F考核金额（TryDecimal；抽样 3/50/68/7.89…）
+                KeySnapshotColumns: new[] { "F账单生成时间", "F运单号", "F账单一级类型", "F账单二级类型", "F金额", "F理赔来源", "F投诉网点", "F被投诉方1", "F受款方网点编号", "F受款方网点名称", "F受款方应受款金额", "F处理结果" }),
+
+            // ② 虚签投诉明细 → 质量事件（域=虚假签收履约）。网点用被投诉方（F被投诉网点编号 真编码=320288 + 名称），即责任网点（本地种子命中，状态1）；
+            //    员工=F派件业务员id(工号) + F派件业务员名称。问题类型用列 F投诉类型（抽样：签收未收到/虚假签收/要求送货上门/追究遗失，无空）。
+            //    金额列 F预估考核金额（抽样全 50，TryDecimal）→ F考核金额。日期列 F投诉日期（TryDate）。整源入：导出=虚签投诉全集，无过滤。
+            [FakeSignComplaintTable] = new ShentongSourceDescriptor(
+                StgTableName: FakeSignComplaintTable,
+                QualityDomain: "虚假签收履约",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: "F被投诉网点编号",   // 被投诉=责任网点真编码（抽样全 320288，命中本地种子）
+                NetworkNameColumn: "F被投诉网点名称",
+                EmployeeNoColumn: "F派件业务员id",     // 派件业务员工号
+                EmployeeNameColumn: "F派件业务员名称",
+                ProblemTypeColumn: "F投诉类型",        // 列优先（抽样：签收未收到/虚假签收/要求送货上门/追究遗失）
+                DateColumn: "F投诉日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "FSCP",
+                // 整源入（OnlyFilter* 留 null）：导出=虚签投诉明细全集 → 不过滤。
+                ProblemTypeConstant: "虚签投诉",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                AmountColumn: "F预估考核金额",        // → F考核金额（TryDecimal；抽样全 50）
+                KeySnapshotColumns: new[] { "F投诉日期", "F运单号", "F投诉类型", "F投诉理由", "F工单号", "F被投诉网点编号", "F被投诉网点名称", "F派件业务员id", "F派件业务员名称", "F预估考核金额", "F签收类型", "F签收时间" }),
+
+            // ③ 虚假签收明细 → 质量事件（域=虚假签收履约）。结构同虚签投诉（同一批投诉的另一导出视角）：网点=被投诉方真编码（320288，命中种子）；
+            //    员工=F派件业务员id + F派件业务员名称。问题类型用列 F投诉类型（无则常量「虚假签收」；本源列存在，用列）。日期 F投诉日期。<b>无金额列</b>。整源入。
+            [FakeSignTable] = new ShentongSourceDescriptor(
+                StgTableName: FakeSignTable,
+                QualityDomain: "虚假签收履约",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: "F被投诉网点编号",   // 被投诉=责任网点真编码（抽样全 320288，命中本地种子）
+                NetworkNameColumn: "F被投诉网点名称",
+                EmployeeNoColumn: "F派件业务员id",
+                EmployeeNameColumn: "F派件业务员名称",
+                ProblemTypeColumn: "F投诉类型",        // 列优先（抽样：签收未收到/虚假签收/要求送货上门/追究遗失）
+                DateColumn: "F投诉日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "FSGN",
+                // 整源入（OnlyFilter* 留 null）：导出=虚假签收明细全集 → 不过滤；无金额列。
+                ProblemTypeConstant: "虚假签收",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F投诉日期", "F运单号", "F投诉类型", "F投诉理由", "F工单号", "F被投诉网点编号", "F被投诉网点名称", "F派件业务员id", "F派件业务员名称", "F签收类型", "F签收时间" }),
+
+            // ④ 照片质检明细 → 质量事件（域=虚假签收履约）。网点=F网点名称（+ F网点编码 入快照，统一按名称匹配）；员工=F小件员编码(工号) + F小件员名称。
+            //    问题类型用列 F不合格类型（抽样不合格子集：无明显环境信息/没有包裹/有人脸…；过滤后非空）。日期用 <b>F投诉时间</b>（附录写的 F分区是错的——F分区是片区码非日期；本源无纯日期列，用投诉时间 datetime 文本，TryDate）。运单列是 F单号（非 F运单号）。
+            //    【仅不合格过滤】F是否质检合格 = 否（抽样三值：- 929 / 是 891 / 否 31，「否」=不合格=被考核 → 31 行，且 31 行网点全为 江苏太仓市城区公司 命中种子）。
+            [PhotoQcTable] = new ShentongSourceDescriptor(
+                StgTableName: PhotoQcTable,
+                QualityDomain: "虚假签收履约",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 统一按名称匹配；编码列入快照
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: "F小件员编码",      // 真工号
+                EmployeeNameColumn: "F小件员名称",
+                ProblemTypeColumn: "F不合格类型",     // 列优先（不合格子集有值）；空单元格落「(未分类)」
+                DateColumn: "F投诉时间",              // 用投诉时间（附录 F分区是错的；F分区=片区码非日期）；datetime 文本 TryDate
+                WaybillColumn: "F单号",               // 本源运单列是「单号」（非「运单号」）
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "PHQC",
+                OnlyFilterColumn: "F是否质检合格",     // 仅不合格入事件
+                OnlyFilterEquals: "否",               // 抽样确认：质检不合格=「否」（三值 -/是/否，否=31 行=被考核，且全为太仓网点）
+                ProblemTypeConstant: "照片质检不合格", // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F单号", "F业务类型", "F是否质检合格", "F不合格类型", "F签收人", "F小件员编码", "F小件员名称", "F网点编码", "F网点名称", "F投诉类型", "F投诉内容", "F投诉时间" }),
+
+            // ⑤ 履约率明细 → 质量事件（域=虚假签收履约）。【无网点列：源无订单网点列，系统列 F归属网点编号 抽样全 NULL（导入未填）→ 网点不匹配（状态0），集成测试不断言网点匹配】。
+            //    员工=F小件员工号(真工号，抽样 32028xxxx) + F小件员名称。问题类型用列 F履约状态（更细；抽样全「履约失败」）。日期列 F日期（TryDate）。
+            //    【整源入，不过滤】抽样 F履约状态 distinct 仅「履约失败」一值（8/8）——导出本身=客户声音履约失败全集，无「成功/正常」行混入，无清晰单列分正常/失败 → 整源入（用 F履约状态 当问题类型，不另设过滤，避免 expectedEvents==stgRows 的「过滤未生效」假象）。
+            [FulfillRateTable] = new ShentongSourceDescriptor(
+                StgTableName: FulfillRateTable,
+                QualityDomain: "虚假签收履约",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: "F归属网点编号",    // 源唯一网点列（系统列，抽样全 NULL→不匹配，状态0）；保留以备导入侧补填后自动命中
+                NetworkNameColumn: null,             // 源无网点名称列
+                EmployeeNoColumn: "F小件员工号",       // 真工号
+                EmployeeNameColumn: "F小件员名称",
+                ProblemTypeColumn: "F履约状态",        // 列优先（抽样全「履约失败」，更细于常量）；空单元格落「(未分类)」
+                DateColumn: "F日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "FFRT",
+                // 整源入（OnlyFilter* 留 null）：抽样 F履约状态 仅「履约失败」一值，导出=履约失败全集，无正常行 → 不过滤（设过滤会全选中＝过滤无效）。
+                ProblemTypeConstant: "履约失败",     // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F日期", "F运单号", "F履约要求", "F履约状态", "F是否虚假上门", "F小件员工号", "F小件员名称", "F签收时间", "F首次签收类型", "F签收人", "F服务要求" }),
+
+            // ⑥ 送货上门明细 → 质量事件（域=虚假签收履约）。网点=F承包区名称（抽样全 江苏太仓市城区公司，命中种子）+ F承包区编号 入快照；员工=F业务员工号(真工号) + F派送小件员名称。
+            //    问题类型用列 F工单判罚类型（抽样本样例全 NULL → 落「(未分类)」；判罚/违规列只在被判罚行有值，本样例未判罚故空，如实落未分类，宁可入勿漏）；列为 null 时兜底常量「送货上门违规」（本源列存在，不触发）。日期列 F统计日期。
+            //    【仅履约失败过滤】F履约情况 = 履约失败（抽样二值：履约失败 7 / 已履约 6，清晰单列二值判定，履约失败=被考核问题件 → 7 行）。
+            [HomeDeliveryTable] = new ShentongSourceDescriptor(
+                StgTableName: HomeDeliveryTable,
+                QualityDomain: "虚假签收履约",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,             // 统一按名称匹配（承包区名称＝网点名）；承包区编号入快照
+                NetworkNameColumn: "F承包区名称",
+                EmployeeNoColumn: "F业务员工号",       // 真工号
+                EmployeeNameColumn: "F派送小件员名称",
+                ProblemTypeColumn: "F工单判罚类型",    // 列优先（被判罚行有值；本样例未判罚全空 → 落「(未分类)」）
+                DateColumn: "F统计日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: null,                // 本源无电商平台列
+                ProblemCodePrefix: "HMDV",
+                OnlyFilterColumn: "F履约情况",         // 仅履约失败入事件
+                OnlyFilterEquals: "履约失败",          // 抽样确认：二值 履约失败 7 / 已履约 6，履约失败=被考核问题件
+                ProblemTypeConstant: "送货上门违规",   // 仅在列为 null 时兜底（本源列存在，不触发）
+                KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F运单状态", "F承包区编号", "F承包区名称", "F业务员工号", "F派送小件员名称", "F回执情况", "F履约情况", "F违规行为二级内容", "F工单判罚类型", "F签收日期" }),
         };
 }
