@@ -18,6 +18,7 @@ import {
   TrophyOutlined,
   CloseOutlined,
   CaretRightOutlined,
+  FilterOutlined,
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { useWorkHub } from '@/composables/useWorkHub'
@@ -49,6 +50,13 @@ const notificationsLoading = ref(false)
 
 // ===== 待办 Tab 状态 =====
 const dateRangeValue = ref<[Dayjs, Dayjs] | undefined>(undefined)
+
+// 高级筛选展开/收起（默认收起，只显示来源 chip 行）
+const showFilters = ref(false)
+// 已应用高级筛选（优先级/时间）→ 收起态在「筛选」按钮上显示提示圆点
+const hasAdvancedFilters = computed(
+  () => !!hub.filters.value.priority || !!hub.filters.value.dateRange
+)
 
 // ===== 来源配置 =====
 const statsItems = computed(() => [
@@ -491,21 +499,35 @@ onUnmounted(() => {
         </template>
 
         <div class="tab-content scrollable">
-          <!-- 来源筛选（带计数的统计 chip，多选） -->
-          <div class="stats-bar">
+          <!-- 来源筛选（带计数的统计 chip，多选）+ 高级筛选开关 -->
+          <div class="filter-head">
+            <div class="stats-bar">
+              <button
+                v-for="stat in statsItems"
+                :key="stat.key"
+                type="button"
+                class="stat-item"
+                :class="{ active: isSourceActive(stat.key) }"
+                :aria-pressed="isSourceActive(stat.key)"
+                :style="{ '--stat-color': stat.color }"
+                @click="toggleSourceFilter(stat.key)"
+              >
+                <component :is="stat.icon" class="stat-icon" />
+                <span class="stat-label">{{ stat.label }}</span>
+                <span class="stat-count" v-if="stat.count > 0">{{ stat.count }}</span>
+              </button>
+            </div>
             <button
-              v-for="stat in statsItems"
-              :key="stat.key"
+              v-if="!hub.isMultiSelectMode.value"
               type="button"
-              class="stat-item"
-              :class="{ active: isSourceActive(stat.key) }"
-              :aria-pressed="isSourceActive(stat.key)"
-              :style="{ '--stat-color': stat.color }"
-              @click="toggleSourceFilter(stat.key)"
+              class="filter-toggle"
+              :class="{ active: showFilters || hasAdvancedFilters }"
+              :aria-expanded="showFilters"
+              @click="showFilters = !showFilters"
             >
-              <component :is="stat.icon" class="stat-icon" />
-              <span class="stat-label">{{ stat.label }}</span>
-              <span class="stat-count" v-if="stat.count > 0">{{ stat.count }}</span>
+              <FilterOutlined />
+              <span>筛选</span>
+              <span v-if="hasAdvancedFilters" class="filter-dot" />
             </button>
           </div>
 
@@ -535,8 +557,8 @@ onUnmounted(() => {
             </span>
           </div>
 
-          <!-- 筛选器栏（非多选模式下可见） -->
-          <div class="filter-bar" v-if="!hub.isMultiSelectMode.value">
+          <!-- 筛选器栏（仅展开「筛选」且非多选模式下可见） -->
+          <div class="filter-bar" v-if="!hub.isMultiSelectMode.value && showFilters">
             <div class="filter-row">
               <div class="filter-group">
                 <span class="filter-label">优先级：</span>
@@ -870,22 +892,64 @@ onUnmounted(() => {
 }
 
 // ===== 统计栏 =====
-.stats-bar {
+.filter-head {
   display: flex;
+  align-items: flex-start;
   gap: var(--space-sm8);
-  margin-bottom: var(--space-md12);
+  margin-bottom: var(--space-sm8);
+}
+
+.stats-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
+.filter-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--text-2);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  appearance: none;
+
+  &:hover {
+    border-color: var(--color-primary-border);
+    color: var(--text-1);
+  }
+
+  &.active {
+    color: var(--color-primary);
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-light);
+  }
+}
+
+.filter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
 .stat-item {
-  flex: 1;
-  min-width: 96px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 9px 12px;
-  border-radius: var(--radius-lg);
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
@@ -918,7 +982,6 @@ onUnmounted(() => {
 .stat-label {
   font-size: 12px;
   color: $text-regular;
-  flex: 1;
 }
 
 .stat-count {

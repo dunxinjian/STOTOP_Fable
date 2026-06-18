@@ -42,8 +42,8 @@
         <span class="card-time">{{ relativeTime }}</span>
       </div>
 
-      <!-- 关联链接行 - 仅 relatedLinks 非空时渲染 -->
-      <div class="related-links-row" v-if="item.relatedLinks && item.relatedLinks.length > 0">
+      <!-- 关联链接行 - 仅 OA/数据导入富卡渲染（默认卡的链接已并入下方合并行） -->
+      <div class="related-links-row" v-if="item.relatedLinks && item.relatedLinks.length > 0 && (item.source === 'oa' || (isDataImport && diSubType))">
         <template v-for="(link, idx) in visibleLinks" :key="link.route">
           <a-popover
             v-if="link.summary"
@@ -303,19 +303,25 @@
         </template>
       </template>
 
-      <!-- ===== 默认渲染（非 datacenter 或无 subType） ===== -->
+      <!-- ===== 默认渲染（非 datacenter 或无 subType）：链接·摘要 + 操作合并为一行 ===== -->
       <template v-else>
-        <!-- 摘要行 -->
-        <div class="card-summary">{{ item.summary }}</div>
-
-        <!-- 底部行：截止日期 + 操作按钮 -->
-        <div class="card-footer">
-          <div class="card-meta">
-            <span v-if="item.deadline" class="deadline" :class="{ overdue: isOverdue }">
-              <ClockCircleOutlined class="deadline-icon" />
-              {{ formattedDeadline }}
-            </span>
-          </div>
+        <div class="card-line-row">
+          <span class="card-line" :title="item.summary">
+            <template v-for="link in visibleLinks" :key="link.route">
+              <span
+                class="related-link"
+                :class="{ disabled: !hasPermission(link) }"
+                @click.stop="handleLinkClick(link)"
+              >
+                <component :is="getIconComponent(link.icon)" class="link-icon" />{{ link.label }}
+              </span>
+              <span class="link-separator">·</span>
+            </template>{{ item.summary }}
+          </span>
+          <span v-if="item.deadline" class="deadline" :class="{ overdue: isOverdue }">
+            <ClockCircleOutlined class="deadline-icon" />
+            {{ formattedDeadline }}
+          </span>
           <div class="card-actions" @click.stop>
             <a-button
               v-for="(action, idx) in primaryActions"
@@ -640,7 +646,7 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
 
 // ===== 来源图标 =====
 .source-icon-wrap {
-  width: 48px;
+  width: 40px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -650,16 +656,16 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
 }
 
 .source-icon {
-  font-size: 19px;
+  font-size: 17px;
 }
 
 // ===== 卡片内容 =====
 .card-content {
   flex: 1;
-  padding: var(--space-md12) var(--space-lg16) var(--space-md12) var(--space-md12);
+  padding: var(--space-sm8) var(--space-md12) var(--space-sm8) var(--space-sm8);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm8);
+  gap: 5px;
   min-width: 0;
 }
 
@@ -716,7 +722,25 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+// ===== 默认卡合并行（链接·摘要 + 操作） =====
+.card-line-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm8);
+  min-width: 0;
+}
+
+.card-line {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm2);
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 // ===== 底部行 =====
@@ -724,7 +748,7 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
   display: flex;
   align-items: center;
   gap: var(--space-sm8);
-  margin-top: var(--space-xs4);
+  margin-top: var(--space-2xs2);
 }
 
 .card-meta {
@@ -760,7 +784,7 @@ const hiddenLinkCount = computed(() => Math.max(0, (props.item.relatedLinks?.len
   flex-shrink: 0;
 
   :deep(.ant-btn-sm) {
-    height: 28px;
+    height: 26px;
     font-size: 12px;
     padding: 0 12px;
     border-radius: var(--radius-md);
