@@ -89,7 +89,7 @@
                         placeholder="首重价"
                         style="width: 80px"
                       />
-                      <span style="color:#999;font-size:12px">+</span>
+                      <span style="color:var(--text-3);font-size:12px">+</span>
                       <a-input-number
                         :value="(editForm.splitRightContinuePrice as any)"
                         @update:value="editForm.splitRightContinuePrice = ($event as any)"
@@ -317,9 +317,9 @@ function handleMerge(index: number) {
   flex-direction: column;
   align-items: center;
   padding: 6px 16px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: #fafafa;
+  background: var(--bg-muted);
   cursor: pointer;
   min-width: 80px;
   transition: all 0.2s;
@@ -363,7 +363,7 @@ function handleMerge(index: number) {
   line-height: 14px;
   text-align: center;
   font-size: 12px;
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--color-danger);
   border-radius: 50%;
   cursor: pointer;
@@ -403,8 +403,8 @@ function handleMerge(index: number) {
 .split-price-readonly {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.65);
-  background: #f5f5f5;
-  border: 1px solid #d9d9d9;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 1px 8px;
   flex: 1;
@@ -441,7 +441,7 @@ function handleMerge(index: number) {
   &.right {
     background: var(--color-success-light);
     color: var(--color-success);
-    border: 1px solid #b7eb8f;
+    border: 1px solid var(--color-success);
   }
 }
 </style>
