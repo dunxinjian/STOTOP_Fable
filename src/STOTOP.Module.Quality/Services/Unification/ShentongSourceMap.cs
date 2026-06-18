@@ -143,6 +143,19 @@ public static class ShentongSourceMap
     /// <summary>STG申通_交货滞留汇总 表名常量（C3 批次4，子集：滞留率/考核滞留量/滞留预估考核金额；有网点编码 F揽收所属网点编码）。</summary>
     public const string HandoverSummaryTable = "STG申通_交货滞留汇总";
 
+    // ── C3 批次5：4 个网点指标源（NetworkMetric，最后一批源，各填互不相交字段子集，按 网点×日 合并 upsert，typed 方法）──
+    /// <summary>STG申通_末端派送网点汇总 表名常量（C3 批次5，签收域子集：一/二阶段/当天及时签收率 + 派送预估考核金额/有偿派费/预计返款；无网点编码列仅名称 F应签所属网点）。</summary>
+    public const string DeliveryNetSummaryTable = "STG申通_末端派送网点汇总";
+
+    /// <summary>STG申通_签收率考核汇总 表名常量（C3 批次5，签收域子集：<b>仅 F签收率考核金额</b>，与末端派送汇总互不相交；有网点编码 F网点编号）。</summary>
+    public const string SignRateAssessTable = "STG申通_签收率考核汇总";
+
+    /// <summary>STG申通_拦截汇总 表名常量（C3 批次5，拦截子集：应拦截量/拦截成功率/及时转出率；无网点编码列仅名称 F所属网点）。</summary>
+    public const string InterceptSummaryTable = "STG申通_拦截汇总";
+
+    /// <summary>STG申通_渗透建站考核 表名常量（C3 批次5，渗透子集：自建渗透率/渗透率目标/建站待完成/喵柜激活格口数；有网点编码 F网点编号；日期列 F统计周期 为「YYYY-第MM月」非标准日期，typed 方法取月首日）。</summary>
+    public const string PenetrationTable = "STG申通_渗透建站考核";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -636,5 +649,77 @@ public static class ShentongSourceMap
                 DateColumn: "F统计日期",
                 WaybillColumn: null, PlatformColumn: null,
                 ProblemCodePrefix: "HDSM"),
+
+            // ─────────────────────────────────────────────────────────────────────
+            // C3 批次5：4 个网点指标源（NetworkMetric，最后一批源；typed 方法逐源填互不相交字段子集，按 网点×日 合并 upsert）。
+            // 走 DispatchNetworkMetricAsync 按表名 switch 到各自 UnifyXxxAsync；typed 方法直接投影 STG 实体，
+            // 故下方描述符的列名字段仅作文档（实际列名以各 typed 方法内的实体投影为准）。
+            // 4 源字段子集互不相交（核实无抢占同一 QL 字段，见各 typed 方法注释）；
+            // 关键：签收域两源（末端派送汇总 / 签收率考核汇总）字段子集严格不相交——
+            //   末端派送汇总 填 一/二阶段/当天及时签收率 + 派送预估考核金额/有偿派费/预计返款；
+            //   签收率考核汇总 只填 F签收率考核金额。落到同一 (网点×日) 行时互不清空。
+            // ─────────────────────────────────────────────────────────────────────
+
+            // ① 末端派送网点汇总 → 签收域子集：一/二阶段/当天及时签收率 + 派送预估考核金额(←F预计考核金额)/有偿派费金额/预计返款金额。
+            //    无网点编码列，仅 F应签所属网点（按名称匹配，未匹配回退名称原文）。日期列 F统计日期（yyyyMMdd，TryDate 兼容）。
+            //    率源以小数分数落（如 0.8903＝89.03%），TryDecimal 原样解析（无尾缀×1）。
+            [DeliveryNetSummaryTable] = new ShentongSourceDescriptor(
+                StgTableName: DeliveryNetSummaryTable,
+                QualityDomain: "派送签收时效",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: null,             // 无网点编码列，仅名称
+                NetworkNameColumn: "F应签所属网点",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "DLNS"),
+
+            // ② 签收率考核汇总 → 签收域子集：<b>仅 F签收率考核金额</b>（← F总金额=总考核金额，与末端派送汇总互不相交）。
+            //    有网点编码 F网点编号（名称 F网点名称 兜底）。日期列 F日期（yyyyMMdd，TryDate 兼容）。
+            //    草案的 F48h签收率 该源无对应列（退化表头分时段明细未逐列建模）→ 留 null。
+            [SignRateAssessTable] = new ShentongSourceDescriptor(
+                StgTableName: SignRateAssessTable,
+                QualityDomain: "派送签收时效",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F网点编号",
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "SRAS"),
+
+            // ③ 拦截汇总 → 拦截子集：应拦截量(I)/拦截成功率(D)/及时转出率(D)。
+            //    无网点编码列，仅 F所属网点（按名称匹配，未匹配回退名称原文）。日期列 F统计日期（2026-06-15 带分隔，TryDate 兼容）。
+            //    率源带 %（如 83.87%），TryDecimal 去符号不除100。
+            [InterceptSummaryTable] = new ShentongSourceDescriptor(
+                StgTableName: InterceptSummaryTable,
+                QualityDomain: "拦截渗透",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: null,             // 无网点编码列，仅名称
+                NetworkNameColumn: "F所属网点",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "ITSM"),
+
+            // ④ 渗透建站考核 → 渗透子集：自建渗透率(D←F已认证自建渗透率)/渗透率目标(D←F自建渗透率当月目标)/建站待完成(I)/喵柜激活格口数(I)。
+            //    有网点编码 F网点编号（名称 F网点名称 兜底）。
+            //    日期列 F统计周期 为「YYYY-第MM月」（如「2026-第06月」），<b>非标准日期，TryDate 解析不出</b>→
+            //    typed 方法内用专用周期解析取<b>月首日</b>（2026-第06月 → 2026-06-01），口径＝该月网点级月度汇总落月首日。
+            //    率源带 %（如 11.61%/15.00%），TryDecimal 去符号不除100。
+            [PenetrationTable] = new ShentongSourceDescriptor(
+                StgTableName: PenetrationTable,
+                QualityDomain: "拦截渗透",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F网点编号",
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计周期",              // 「YYYY-第MM月」，typed 方法取月首日
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "PNTR"),
         };
 }

@@ -325,8 +325,8 @@ public class QualityUnificationService : IQualityUnificationService
     }
 
     /// <summary>
-    /// 网点指标类「其它源」分发空壳（C3 地基占位）。积压监控走 C2 typed，其它 NM 源（出仓/滞留/签收/拦截/渗透等）
-    /// 批次4再逐源填子集合并 upsert。此处按表名 switch，暂统一抛 NotSupportedException（路由已就位，等实现）。
+    /// 网点指标类「其它源」分发（积压监控走 C2 typed，其余 NM 源按表名 switch 到各自 typed 子集合并 upsert）。
+    /// C3 批次4 已填 6 源、批次5 再填 4 源（末端派送/签收率/拦截/渗透），至此 NM 源全覆盖。
     /// </summary>
     private global::System.Threading.Tasks.Task<UnifyResult> DispatchNetworkMetricAsync(
         long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
@@ -340,8 +340,15 @@ public class QualityUnificationService : IQualityUnificationService
             ShentongSourceMap.PickupAssessTable => UnifyPickupAssessAsync(orgId, desc, ct),
             ShentongSourceMap.OutboundAssessTable => UnifyOutboundAssessAsync(orgId, desc, ct),
             ShentongSourceMap.HandoverSummaryTable => UnifyHandoverSummaryAsync(orgId, desc, ct),
+
+            // ── C3 批次5：4 个网点指标源（最后一批源），同范式逐源 typed 子集合并 upsert ──
+            ShentongSourceMap.DeliveryNetSummaryTable => UnifyDeliveryNetSummaryAsync(orgId, desc, ct),
+            ShentongSourceMap.SignRateAssessTable => UnifySignRateAssessAsync(orgId, desc, ct),
+            ShentongSourceMap.InterceptSummaryTable => UnifyInterceptSummaryAsync(orgId, desc, ct),
+            ShentongSourceMap.PenetrationTable => UnifyPenetrationAsync(orgId, desc, ct),
+
             _ => throw new NotSupportedException(
-                $"网点指标源「{desc.StgTableName}」尚未实现（C3 批次4填）"),
+                $"网点指标源「{desc.StgTableName}」尚未实现"),
         };
     }
 
@@ -601,6 +608,244 @@ public class QualityUnificationService : IQualityUnificationService
         await _db.SaveChangesAsync(ct);
         return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // C3 批次5：4 个网点指标源 typed 方法（最后一批源）。同批次4 范式：
+    //   投影读 STG → 网点匹配 → 业务日期 .Date 截断 → 同批字典去重 + 合并 upsert（只刷本源子集）。
+    // 4 源字段子集互不相交：
+    //   末端派送汇总 → 一/二阶段/当天及时签收率 + 派送预估考核金额/有偿派费金额/预计返款金额；
+    //   签收率考核汇总 → 仅 F签收率考核金额（与末端派送汇总互不相交）；
+    //   拦截汇总 → 应拦截量/拦截成功率/及时转出率；
+    //   渗透建站考核 → 自建渗透率/渗透率目标/建站待完成/喵柜激活格口数。
+    // 关键不变量（签收域两源不抢字段）：末端派送汇总与签收率考核汇总同属「派送签收」域、会落到同一 (网点×日) 行时，
+    //   各只刷自己的字段子集（前者不碰 F签收率考核金额，后者不碰签收率/派费/返款），互不清空。
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>① 末端派送网点汇总 → 网点日指标（签收域子集：一/二阶段/当天及时签收率 + 派送预估考核金额/有偿派费金额/预计返款金额）。
+    /// 本源<b>无网点编码列，仅有名称 F应签所属网点</b>（按名称匹配，未匹配回退名称原文）。
+    /// 注：草案「派送预估考核金额」在 STG 真名为 <c>F预计考核金额</c>，映射到 QL <c>F派送预估考核金额</c>。
+    /// 率源以小数分数落（如 0.8903＝89.03%），TryDecimal 原样解析（无尾缀×1）。
+    /// 关键：<b>不碰 F签收率考核金额</b>（属签收率考核汇总源子集），避免抢字段。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyDeliveryNetSummaryAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongDeliveryNetSummary>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new DeliveryNetSummaryRow(
+                r.FID, r.F批次ID, r.F应签所属网点, r.F统计日期,
+                r.F一阶段及时签收率, r.F二阶段及时签收率, r.F当天及时签收率,
+                r.F预计考核金额, r.F有偿派费金额, r.F预计返款金额))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            // 本源无网点编码列，仅有名称 → 按名称匹配；匹配到用 net.Code，未匹配回退源名称原文。
+            var net = await _matcher.ResolveNetworkAsync(null, row.F应签所属网点, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F应签所属网点 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F应签所属网点, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：签收时效（三阶段及时签收率 + 派送预估考核/派费/返款）。
+            metric.F一阶段及时签收率 = ParseUtil.TryDecimal(row.F一阶段及时签收率);
+            metric.F二阶段及时签收率 = ParseUtil.TryDecimal(row.F二阶段及时签收率);
+            metric.F当天及时签收率 = ParseUtil.TryDecimal(row.F当天及时签收率);
+            metric.F派送预估考核金额 = ParseUtil.TryDecimal(row.F预计考核金额);
+            metric.F有偿派费金额 = ParseUtil.TryDecimal(row.F有偿派费金额);
+            metric.F预计返款金额 = ParseUtil.TryDecimal(row.F预计返款金额);
+            // 关键：F签收率考核金额 / F48h签收率 属签收率考核汇总源，本源一律不碰（保持既有值，不抢字段）。
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>② 签收率考核汇总 → 网点日指标（签收域子集：<b>仅 F签收率考核金额</b> ← F总金额=总考核金额）。
+    /// 本源<b>有网点编码</b>（F网点编号，名称 F网点名称 兜底）。日期列 F日期（yyyyMMdd，TryDate 兼容）。
+    /// 草案 F48h签收率 该源无对应列（退化表头分时段明细未逐列建模）→ 留 null。
+    /// 关键：<b>只刷 F签收率考核金额、不碰签收率/派费/返款</b>（属末端派送汇总源子集），避免抢字段。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifySignRateAssessAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongSignRateAssess>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new SignRateAssessRow(
+                r.FID, r.F批次ID, r.F网点编号, r.F网点名称, r.F日期, r.F所属省区, r.F总金额))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(row.F网点编号, row.F网点名称, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F网点编号 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F网点名称, area: null, province: row.F所属省区, batchId: row.F批次ID);
+
+            // 本源负责子集：仅 F签收率考核金额（← 总考核金额，金额 TryDecimal）。
+            metric.F签收率考核金额 = ParseUtil.TryDecimal(row.F总金额);
+            // 关键：签收率/派费/返款/48h 属末端派送汇总源（及该源无 48h 列），本源一律不碰（保持既有值，不抢字段）。
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>③ 拦截汇总 → 网点日指标（拦截子集：应拦截量(I)/拦截成功率(D)/及时转出率(D)）。
+    /// 本源<b>无网点编码列，仅有名称 F所属网点</b>（按名称匹配，未匹配回退名称原文）。
+    /// 率源带 %（如 83.87%），TryDecimal 去符号不除100。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyInterceptSummaryAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongInterceptSummary>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new InterceptSummaryRow(
+                r.FID, r.F批次ID, r.F所属网点, r.F统计日期,
+                r.F应拦截量, r.F拦截成功率, r.F及时转出率))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(null, row.F所属网点, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F所属网点 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F所属网点, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：拦截（应拦截量整数，拦截成功率/及时转出率带 % 由 TryDecimal 去符号）。
+            metric.F应拦截量 = ParseUtil.TryInt(row.F应拦截量);
+            metric.F拦截成功率 = ParseUtil.TryDecimal(row.F拦截成功率);
+            metric.F及时转出率 = ParseUtil.TryDecimal(row.F及时转出率);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>④ 渗透建站考核 → 网点日指标（渗透子集：自建渗透率(←F已认证自建渗透率)/渗透率目标(←F自建渗透率当月目标)/建站待完成(I)/喵柜激活格口数(I)）。
+    /// 本源<b>有网点编码</b>（F网点编号，名称 F网点名称 兜底）。
+    /// 日期列 F统计周期 为「YYYY-第MM月」（如「2026-第06月」），<b>非标准日期 TryDate 解析不出</b>→ 用 <see cref="TryPeriodMonthFirstDay"/> 取<b>月首日</b>（2026-第06月 → 2026-06-01）。
+    /// 率源带 %（如 11.61%/15.00%），TryDecimal 去符号不除100。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyPenetrationAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongPenetration>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new PenetrationRow(
+                r.FID, r.F批次ID, r.F网点编号, r.F网点名称, r.F统计周期,
+                r.F已认证自建渗透率, r.F自建渗透率当月目标, r.F建站待完成, r.F喵柜激活格口数))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(row.F网点编号, row.F网点名称, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F网点编号 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            // 日期列是周期文本「YYYY-第MM月」→ 取月首日；解析不出则跳过（无法构成稳定 (网点×日) 键）。
+            var bizDate = TryPeriodMonthFirstDay(row.F统计周期);
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F网点名称, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：渗透/建站/喵柜（率带 % 由 TryDecimal 去符号；量整数）。
+            metric.F自建渗透率 = ParseUtil.TryDecimal(row.F已认证自建渗透率);
+            metric.F渗透率目标 = ParseUtil.TryDecimal(row.F自建渗透率当月目标);
+            metric.F建站待完成 = ParseUtil.TryInt(row.F建站待完成);
+            metric.F喵柜激活格口数 = ParseUtil.TryInt(row.F喵柜激活格口数);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>
+    /// 解析渗透源的统计周期文本「YYYY-第MM月」（如「2026-第06月」）为该月首日（2026-06-01）。
+    /// 先尝试通用 <see cref="ParseUtil.TryDate"/>（万一某批次给的是标准日期/yyyy-MM），不行再正则抽「YYYY ... MM 月」取月首日；
+    /// 全失败返回 null（该行 skip）。月度网点汇总落月首日，便于与日粒度行区分且键稳定。
+    /// </summary>
+    private static DateTime? TryPeriodMonthFirstDay(string? s)
+    {
+        var t = (s ?? "").Trim();
+        if (string.IsNullOrEmpty(t)) return null;
+
+        // 1) 标准日期/yyyy-MM 兜底（DateTime.TryParse 能解 "2026-06"/"2026-06-01" 等）。
+        var direct = ParseUtil.TryDate(t);
+        if (direct != null) return new global::System.DateTime(direct.Value.Year, direct.Value.Month, 1);
+
+        // 2) 「YYYY-第MM月」：抽 4 位年 + 1~2 位月（容忍「第」「月」等中文修饰与各种分隔）。
+        // 注：STOTOP.Module.System 模块命名空间遮蔽 BCL System，须 global:: 显式定位 BCL 类型。
+        var m = global::System.Text.RegularExpressions.Regex.Match(t, @"(\d{4}).*?(\d{1,2})");
+        if (m.Success
+            && int.TryParse(m.Groups[1].Value, out var year)
+            && int.TryParse(m.Groups[2].Value, out var month)
+            && month is >= 1 and <= 12)
+        {
+            return new global::System.DateTime(year, month, 1);
+        }
+        return null;
+    }
+
+    // ── 批次5 各源行内存投影（只含归一需要列，避免读全实体碰 NULL 系统列）──
+    private sealed record DeliveryNetSummaryRow(
+        long FID, long F批次ID, string? F应签所属网点, string? F统计日期,
+        string? F一阶段及时签收率, string? F二阶段及时签收率, string? F当天及时签收率,
+        string? F预计考核金额, string? F有偿派费金额, string? F预计返款金额);
+
+    private sealed record SignRateAssessRow(
+        long FID, long F批次ID, string? F网点编号, string? F网点名称, string? F日期, string? F所属省区, string? F总金额);
+
+    private sealed record InterceptSummaryRow(
+        long FID, long F批次ID, string? F所属网点, string? F统计日期,
+        string? F应拦截量, string? F拦截成功率, string? F及时转出率);
+
+    private sealed record PenetrationRow(
+        long FID, long F批次ID, string? F网点编号, string? F网点名称, string? F统计周期,
+        string? F已认证自建渗透率, string? F自建渗透率当月目标, string? F建站待完成, string? F喵柜激活格口数);
 
     // ── 批次4 共用 helper：网点日指标合并 upsert 的同批去重查/建、键+公共维度写入、收尾 Add ──
 
