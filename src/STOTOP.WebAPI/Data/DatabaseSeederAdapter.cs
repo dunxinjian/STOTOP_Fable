@@ -182,6 +182,7 @@ public class DatabaseMigrator : IDatabaseSeeder
             ("KSF", ctx2 => KsfSeeder.Migrate(ctx2)),
             ("PPV", ctx2 => PpvSeeder.Migrate(ctx2)),
             ("Salary", ctx2 => SalarySeeder.Migrate(ctx2)),
+            ("CarrierQuality", ctx2 => CarrierQualitySeeder.Migrate(ctx2)),
         };
 
         IServiceScope? replacementScope = null;
