@@ -117,6 +117,10 @@ public class FlowDefinitionOrgIsolationTests
         Assert.Equal(0, tpl.FOrgId);                 // 模板真正落全局 0（抑制生效）
         Assert.True(tpl.FIsTemplate);
         Assert.Equal("published", tpl.FStatus);
+
+        var tplVersion = db.Set<CfFlowVersion>().IgnoreQueryFilters().Single(v => v.FFlowDefinitionId == tpl.FID);
+        Assert.True(tplVersion.FIsCurrentVersion);      // 模板版本须为当前版本，否则从模板克隆会得到空流程
+        Assert.Equal("published", tplVersion.FStatus);
     }
 
     [Fact]

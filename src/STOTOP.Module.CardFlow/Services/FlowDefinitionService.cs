@@ -1133,6 +1133,7 @@ public class FlowDefinitionService : IFlowDefinitionService
 
             var templateVersion = await _dbContext.Set<CfFlowVersion>()
                 .IgnoreQueryFilters()
+                .AsTracking()
                 .FirstOrDefaultAsync(x => x.FFlowDefinitionId == newTemplate.FID);
             if (templateVersion != null)
             {
