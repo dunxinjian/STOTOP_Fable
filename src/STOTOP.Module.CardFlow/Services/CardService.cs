@@ -97,7 +97,6 @@ public class CardService : ICardService
                 SourceType = c.FSourceType,
                 SourceId = c.FSourceId,
                 ReturnUrl = c.FReturnUrl,
-                InitialDataJson = c.FInitialDataJson,
                 SourceTitle = c.FSourceTitle
             })
             .ToListAsync();
@@ -438,9 +437,10 @@ public class CardService : ICardService
                 ["routeRuleId"] = snapshot.FSelectedRouteRuleId,
                 ["edgeKey"] = snapshot.FSelectedEdgeKey,
                 ["toStageDefinitionId"] = snapshot.FToStageDefinitionId,
-                ["toStageKey"] = snapshot.FToStageKey,
-                ["decisionSnapshot"] = ParseJsonValue(snapshot.FDecisionSnapshotJson),
-                ["candidateResults"] = ParseJsonValue(snapshot.FCandidateResultsJson)
+                ["toStageKey"] = snapshot.FToStageKey
+                // 决策快照值映射（decisionSnapshot）与候选结果（candidateResults，含可能内嵌值的自由文本 explanation）
+                // 不下发：写入期仅按字段名启发式打码，漏掉 schema 声明的敏感字段（如金额），而 AuditTrail 对任意通过访问门者可见。
+                // 前端 CardTimeline 不渲染二者，仅用路由结构元数据（edgeKey 等）。详见脱敏链重构 spec §9.2。
             };
 
             trail.Add(new CardFlowRuntimeAuditDto
@@ -912,7 +912,6 @@ public class CardService : ICardService
                 SourceType = c.FSourceType,
                 SourceId = c.FSourceId,
                 ReturnUrl = c.FReturnUrl,
-                InitialDataJson = c.FInitialDataJson,
                 SourceTitle = c.FSourceTitle
             })
             .Take(50)

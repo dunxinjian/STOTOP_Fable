@@ -333,11 +333,12 @@ export interface CardListDto {
   sourceType?: string | null
   sourceId?: number | null
   returnUrl?: string | null
-  initialDataJson?: string | null
   sourceTitle?: string | null
 }
 
 export interface CardDetailDto extends CardListDto {
+  // 预填业务载荷仅在详情下发（后端已脱敏）；列表不携带。见脱敏链重构 spec §9.1。
+  initialDataJson?: string | null
   flowDefinitionId: number
   flowVersionId: number
   initiatorId: number

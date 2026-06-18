@@ -162,12 +162,13 @@ public class CardListDto
     public string? SourceType { get; set; }
     public long? SourceId { get; set; }
     public string? ReturnUrl { get; set; }
-    public string? InitialDataJson { get; set; }
     public string? SourceTitle { get; set; }
 }
 
 public class CardDetailDto : CardListDto
 {
+    // 预填业务载荷仅在详情下发（经 CardRedactionService 脱敏）；列表不携带，避免无卡片级访问门的明文泄露。详见脱敏链重构 spec §9.1。
+    public string? InitialDataJson { get; set; }
     public long FlowDefinitionId { get; set; }
     public long FlowVersionId { get; set; }
     public long InitiatorId { get; set; }
