@@ -98,56 +98,10 @@
             {{ approvalModeLabel }}
           </a-tag>
         </div>
-
-        <!-- 底部操作按钮 -->
-        <div class="card-footer">
-          <div class="card-meta"></div>
-          <div class="card-actions" @click.stop>
-            <a-button
-              v-for="(action, idx) in primaryActions"
-              :key="action.key"
-              size="small"
-              :type="idx === 0 ? 'primary' : 'default'"
-              @click="handleAction(action)"
-            >
-              {{ action.label }}
-            </a-button>
-            <a-dropdown v-if="secondaryActions.length" :trigger="['click']" placement="bottomRight">
-              <a-button size="small" class="more-actions-btn" @click.stop>
-                <EllipsisOutlined />
-              </a-button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item
-                    v-for="action in secondaryActions"
-                    :key="action.key"
-                    @click="handleAction(action)"
-                  >
-                    {{ action.label }}
-                  </a-menu-item>
-                  <a-menu-divider />
-                  <a-menu-item key="__defer" @click="handleDefer">
-                    <ClockCircleOutlined /> 稍后处理
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-            <a-button
-              v-if="item.metadata?.canWithdraw"
-              size="small"
-              type="link"
-              danger
-              @click="handleWithdraw"
-            >
-              <template #icon><RollbackOutlined /></template>
-              撤回
-            </a-button>
-          </div>
-        </div>
       </template>
 
       <!-- ===== 数据导入增强渲染 ===== -->
-      <template v-if="isDataImport && diSubType">
+      <template v-else-if="isDataImport && diSubType">
         <!-- batch_completed：批次完成 -->
         <template v-if="diSubType === 'batch_completed'">
           <div class="di-stats">
@@ -323,37 +277,6 @@
             <ClockCircleOutlined class="deadline-icon" />
             {{ formattedDeadline }}
           </span>
-          <div class="card-actions" @click.stop>
-            <a-button
-              v-for="(action, idx) in primaryActions"
-              :key="action.key"
-              size="small"
-              :type="idx === 0 ? 'primary' : 'default'"
-              @click="handleAction(action)"
-            >
-              {{ action.label }}
-            </a-button>
-            <a-dropdown v-if="secondaryActions.length" :trigger="['click']" placement="bottomRight">
-              <a-button size="small" class="more-actions-btn" @click.stop>
-                <EllipsisOutlined />
-              </a-button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item
-                    v-for="action in secondaryActions"
-                    :key="action.key"
-                    @click="handleAction(action)"
-                  >
-                    {{ action.label }}
-                  </a-menu-item>
-                  <a-menu-divider />
-                  <a-menu-item key="__defer" @click="handleDefer">
-                    <ClockCircleOutlined /> 稍后处理
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </div>
         </div>
       </template>
     </div>
@@ -363,7 +286,6 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { Modal, message } from 'ant-design-vue'
 import {
   ClockCircleOutlined,
   AuditOutlined,
@@ -376,7 +298,6 @@ import {
   SettingOutlined,
   DatabaseOutlined,
   ExclamationCircleOutlined,
-  RollbackOutlined,
   EllipsisOutlined,
   LinkOutlined,
 } from '@ant-design/icons-vue'
@@ -384,7 +305,6 @@ import dayjs from 'dayjs'
 import relativeTimePlugin from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 import type { WorkItem, WorkItemAction, RelatedLink } from '@/api/workhub'
-import { executeWorkItemAction } from '@/api/workhub'
 import { useWorkHub } from '@/composables/useWorkHub'
 
 const hub = useWorkHub()
@@ -396,9 +316,8 @@ const props = defineProps<{
   item: WorkItem
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   action: [itemId: string, actionKey: string]
-  refresh: []
 }>()
 
 const router = useRouter()
@@ -570,25 +489,6 @@ function handleLinkClick(link: RelatedLink) {
 // 简化实现：所有关联链接统一使用 LinkOutlined 图标
 function getIconComponent(_iconName?: string) {
   return LinkOutlined
-}
-
-function handleWithdraw() {
-  Modal.confirm({
-    title: '确认撤回',
-    content: '撤回后流程将终止，确认继续？',
-    okText: '确认',
-    cancelText: '取消',
-    okButtonProps: { danger: true },
-    async onOk() {
-      try {
-        await executeWorkItemAction(props.item.id, 'withdraw')
-        message.success('撤回成功')
-        emit('refresh')
-      } catch {
-        message.error('撤回失败，请稍后重试')
-      }
-    },
-  })
 }
 
 // 关联链接最多展示 3 条，超出折叠为「+N」
