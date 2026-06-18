@@ -14,6 +14,7 @@ public class STOTOPDbContext : DbContext
     private static readonly object _lock = new();
 
     private readonly IOrgContextAccessor? _orgContextAccessor;
+    private bool _suppressOrgIdFill;
 
     /// <summary>
     /// 供全局查询过滤器引用，EF Core 每次查询时会重新求值
@@ -168,8 +169,28 @@ public class STOTOPDbContext : DbContext
         return base.SaveChanges();
     }
 
+    /// <summary>在返回的作用域内，SaveChanges 不对 FOrgId==0 的新 IOrgScoped 实体自动填充当前组织。
+    /// 仅用于「有意创建全局(FOrgId=0)记录」这类受控内部场景（如保存为全局模板）。</summary>
+    public IDisposable SuppressOrgIdFill()
+    {
+        _suppressOrgIdFill = true;
+        return new SuppressOrgIdFillScope(() => _suppressOrgIdFill = false);
+    }
+
+    private sealed class SuppressOrgIdFillScope : IDisposable
+    {
+        private readonly Action _onDispose;
+        public SuppressOrgIdFillScope(Action onDispose) => _onDispose = onDispose;
+        public void Dispose() => _onDispose();
+    }
+
     private void FillOrgIdForNewEntities()
     {
+        if (_suppressOrgIdFill)
+        {
+            return;
+        }
+
         var currentOrgId = _orgContextAccessor?.CurrentOrgId;
         if (currentOrgId.HasValue)
         {
