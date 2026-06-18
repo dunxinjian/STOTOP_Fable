@@ -70,6 +70,7 @@ public static class CardFlowSeeder
             new(48, "网点质控：接入 STG申通_拦截汇总（单行表头10列，建表 + 规则3128 + 流程2328 + 首节点5128）(2026-06-18)", MigrateV48),
             new(49, "网点质控：接入 STG申通_揽收考核汇总（单行表头19列含末尾空格列，建表 + 规则3129 + 流程2329 + 首节点5129）(2026-06-18)", MigrateV49),
             new(50, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17，原 V23，因 master 的派件量 V23 占用而改 50)", MigrateV50),
+            new(51, "派件量补丁：存量库补建 STG申通派件日明细+规则3006+流程2330（V23在存量库被网点质控占用未执行，复用幂等 MigrateV23）(2026-06-19)", MigrateV23),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
