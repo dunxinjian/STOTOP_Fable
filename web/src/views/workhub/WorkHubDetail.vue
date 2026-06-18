@@ -94,6 +94,7 @@ const actionLoading = ref<Record<string, boolean>>({})
 // ===== 来源配置 =====
 const sourceConfig: Record<string, { label: string; color: string; icon: any }> = {
   oa: { label: 'OA审批', color: 'var(--biz-approval)', icon: AuditOutlined },
+  cardflow: { label: 'CardFlow审批', color: 'var(--biz-approval)', icon: AuditOutlined },
   quality: { label: '质量异常', color: '#fa541c', icon: WarningOutlined },
   task: { label: '任务', color: '#52c41a', icon: CheckSquareOutlined },
   datacenter: { label: 'CardFlow', color: 'var(--biz-waybill)', icon: ImportOutlined },
