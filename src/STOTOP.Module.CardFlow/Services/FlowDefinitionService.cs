@@ -1018,7 +1018,7 @@ public class FlowDefinitionService : IFlowDefinitionService
     {
         var templates = await _dbContext.Set<CfFlowDefinition>()
             .IgnoreQueryFilters()
-            .Where(x => x.FIsTemplate && x.FStatus == "published")
+            .Where(x => x.FIsTemplate && x.FStatus == "published" && x.FOrgId == 0)
             .OrderBy(x => x.FFlowName)
             .Select(x => new FlowDefinitionDto
             {

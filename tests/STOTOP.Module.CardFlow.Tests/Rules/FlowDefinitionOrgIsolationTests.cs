@@ -24,4 +24,22 @@ public class FlowDefinitionOrgIsolationTests
         var normal = db.Set<CfFlowDefinition>().IgnoreQueryFilters().Single(x => x.FFlowCode == "NORMAL_A");
         Assert.Equal(192, normal.FOrgId);
     }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task GetTemplatesAsync_ReturnsOnlyGlobalTemplates()
+    {
+        using var db = TestDbContextFactory.Create(nameof(GetTemplatesAsync_ReturnsOnlyGlobalTemplates), null);
+        db.Set<CfFlowDefinition>().AddRange(
+            new CfFlowDefinition { FFlowName = "全局模板", FFlowCode = "G1", FOrgId = 0, FIsTemplate = true, FStatus = "published" },
+            new CfFlowDefinition { FFlowName = "组织伪模板", FFlowCode = "O1", FOrgId = 192, FIsTemplate = true, FStatus = "published" },
+            new CfFlowDefinition { FFlowName = "全局非模板", FFlowCode = "G2", FOrgId = 0, FIsTemplate = false, FStatus = "published" });
+        await db.SaveChangesAsync();
+
+        var svc = new STOTOP.Module.CardFlow.Services.FlowDefinitionService(
+            db, Microsoft.Extensions.Logging.Abstractions.NullLogger<STOTOP.Module.CardFlow.Services.FlowDefinitionService>.Instance);
+        var templates = await svc.GetTemplatesAsync();
+
+        Assert.Single(templates);
+        Assert.Equal("G1", templates[0].FlowCode);
+    }
 }
