@@ -1,88 +1,67 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="用户管理" description="管理系统用户账号">
-      <template #actions>
-        <a-input
+      <template #left>
+        <a-input-search
           v-model:value="searchForm.keyword"
-          placeholder="请输入姓名/账号/手机号"
-          allowClear
+          placeholder="姓名/账号/手机号"
+          allow-clear
+          size="middle"
           style="width: 240px"
-          @pressEnter="handleSearch"
+          @search="handleSearch"
         />
-        <a-button type="primary" @click="handleSearch">
-          <template #icon><SearchOutlined /></template>查询
-        </a-button>
-        <a-button @click="handleReset">
+        <a-button size="middle" @click="handleReset">
           <template #icon><ReloadOutlined /></template>重置
         </a-button>
-        <a-divider type="vertical" style="height: 24px; margin: 0 8px;" />
-        <a-button type="primary" class="btn-primary-brand" @click="handleAdd">
+      </template>
+      <template #right>
+        <a-button type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新增用户
         </a-button>
       </template>
     </PageHeader>
 
-    <div class="table-card">
-      <a-table
-        :columns="columns"
-        :dataSource="tableData"
-        :loading="loading"
-        rowKey="id"
-        :bordered="false"
-        :scroll="{ y: 'calc(100vh - 260px)' }"
-        :pagination="{
-          current: pagination.pageIndex,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          showSizeChanger: true,
-          showTotal: (t: number) => `共 ${t} 条`,
-          pageSizeOptions: ['10', '20', '50', '100'],
-          onChange: handlePageChange,
-          onShowSizeChange: (_c: number, s: number) => handleSizeChange(s),
-        }"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">{{ index + 1 }}</template>
-          <template v-if="column.dataIndex === 'dingTalkBindStatus'">
-            <span v-if="record.dingTalkBindStatus === 1" class="status-badge badge-active">
-              <span class="badge-dot"></span>已绑
-            </span>
-            <span v-else class="status-badge badge-inactive">
-              <span class="badge-dot"></span>未绑
-            </span>
-          </template>
-          <template v-if="column.dataIndex === 'status'">
-            <span class="status-badge" :class="record.status === 1 ? 'badge-active' : 'badge-inactive'">
-              <span class="badge-dot"></span>
-              {{ record.status === 1 ? '启用' : '停用' }}
-            </span>
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <div class="action-links">
-              <a-typography-link @click="handleEdit(record)">
-                <EditOutlined />编辑
-              </a-typography-link>
-              <a-typography-link @click="handleResetPassword(record)" class="link-warning">
-                <KeyOutlined />重置密码
-              </a-typography-link>
-              <a-popconfirm
-                title="确定删除该用户吗？"
-                okText="确定"
-                cancelText="取消"
-                @confirm="handleDelete(record)"
-              >
-                <a-typography-link class="link-danger">
-                  <DeleteOutlined />删除
-                </a-typography-link>
-              </a-popconfirm>
-            </div>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="columns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1000 }"
+      row-key="id"
+      empty-text="暂无用户数据"
+      @change="fetchUserList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'dingTalkBindStatus'">
+          <StatusTag :type="record.dingTalkBindStatus === 1 ? 'success' : 'default'" dot>
+            {{ record.dingTalkBindStatus === 1 ? '已绑' : '未绑' }}
+          </StatusTag>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无用户数据" />
+        <template v-if="column.dataIndex === 'status'">
+          <StatusTag :type="record.status === 1 ? 'success' : 'default'" dot>
+            {{ record.status === 1 ? '启用' : '停用' }}
+          </StatusTag>
         </template>
-      </a-table>
-    </div>
+        <template v-if="column.dataIndex === 'action'">
+          <a-button type="link" size="small" @click="handleEdit(record)">
+            <EditOutlined />编辑
+          </a-button>
+          <a-button type="link" size="small" @click="handleResetPassword(record)">
+            <KeyOutlined />重置密码
+          </a-button>
+          <a-popconfirm
+            title="确定删除该用户吗？"
+            ok-text="确定"
+            cancel-text="取消"
+            @confirm="handleDelete(record)"
+          >
+            <a-button type="link" size="small" danger>
+              <DeleteOutlined />删除
+            </a-button>
+          </a-popconfirm>
+        </template>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -178,7 +157,7 @@
             <template v-if="column.dataIndex === 'jobNumber'">{{ record.jobNumber || '-' }}</template>
             <template v-if="column.dataIndex === 'isPrimaryOrg'">
               <a-tag v-if="record.isPrimaryOrg === 1" class="status-tag tag-primary">是</a-tag>
-              <span v-else style="color: #8E8EA0;">-</span>
+              <span v-else style="color: var(--text-3);">-</span>
             </template>
             <template v-if="column.dataIndex === 'action'">
               <a-typography-link @click="handleEditOrgAssign(record)">编辑</a-typography-link>
@@ -191,7 +170,7 @@
         </a-table>
       </div>
       <div v-else class="org-section-placeholder">
-        <span style="color: #8E8EA0; font-size: 13px;">保存用户基本信息后，可在编辑模式下管理组织任职</span>
+        <span style="color: var(--text-3); font-size: 13px;">保存用户基本信息后，可在编辑模式下管理组织任职</span>
       </div>
 
       <template #footer>
@@ -302,9 +281,10 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getUserList,
   createUser,
@@ -322,7 +302,6 @@ import {
 import type { UserOrganizationDto } from '@/types/organization'
 
 const columns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '姓名', dataIndex: 'name', key: 'name', width: 100 },
   { title: '账号', dataIndex: 'account', key: 'account', width: 160 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120 },
@@ -348,7 +327,7 @@ const searchForm = reactive({ keyword: '' })
 // 表格数据
 const loading = ref(false)
 const tableData = ref<UserItem[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 
 // 部门树数据
 const deptTreeData = ref<any[]>([])
@@ -424,9 +403,9 @@ async function fetchUserList() {
   loading.value = true
   try {
     const res = await getUserList({
-      pageIndex: pagination.pageIndex, pageSize: pagination.pageSize, keyword: searchForm.keyword,
+      pageIndex: pagination.value.pageIndex, pageSize: pagination.value.pageSize, keyword: searchForm.keyword,
     }) as any
-    if (res) { tableData.value = res?.items || []; pagination.total = res?.total || 0 }
+    if (res) { tableData.value = res?.items || []; pagination.value.total = res?.total || 0 }
   } finally { loading.value = false }
 }
 
@@ -437,10 +416,8 @@ async function fetchDeptTree() {
   } catch (error) { console.error('获取部门树失败:', error) }
 }
 
-function handleSearch() { pagination.pageIndex = 1; fetchUserList() }
-function handleReset() { searchForm.keyword = ''; pagination.pageIndex = 1; fetchUserList() }
-function handleSizeChange(val: number) { pagination.pageSize = val; fetchUserList() }
-function handlePageChange(val: number) { pagination.pageIndex = val; fetchUserList() }
+function handleSearch() { pagination.value.pageIndex = 1; fetchUserList() }
+function handleReset() { searchForm.keyword = ''; pagination.value.pageIndex = 1; fetchUserList() }
 
 function handleAdd() {
   dialogType.value = 'add'; currentUserId.value = null; resetForm(); dialogVisible.value = true
@@ -604,156 +581,6 @@ onMounted(() => { fetchUserList(); fetchDeptTree(); fetchRoleOptions() })
 
 <style scoped lang="scss">
 @use '@/styles/variables.scss' as *;
-
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-// ===== 主操作按钮 — 品牌色 =====
-.btn-primary-brand {
-  background: $color-primary !important;
-  border-color: $color-primary !important;
-  border-radius: 8px !important;
-  color: #fff !important;
-  font-weight: 500;
-  transition: $transition-smooth;
-
-  &:hover {
-    background: $color-primary-hover !important;
-    border-color: $color-primary-hover !important;
-    box-shadow: 0 4px 12px var(--color-primary-border);
-  }
-}
-
-// ===== 表格卡片容器 =====
-.table-card {
-  flex: 1;
-  min-height: 0;
-  background: $bg-card;
-  border-radius: 0;
-  box-shadow: $shadow-card;
-  overflow: hidden;
-  transition: $transition-smooth;
-
-  &:hover {
-    box-shadow: $shadow-card-hover;
-  }
-
-  // 表头背景
-  :deep(.ant-table-thead > tr > th) {
-    background: $bg-page !important;
-    border-bottom: 1px solid $border-color !important;
-    font-weight: 600;
-    color: $text-primary;
-    font-size: $font-size-sm;
-    letter-spacing: 0.02em;
-  }
-
-  // 移除表格外边框
-  :deep(.ant-table) {
-    border: none !important;
-  }
-
-  :deep(.ant-table-container) {
-    border: none !important;
-    border-right: none !important;
-
-    &::before, &::after {
-      display: none;
-    }
-  }
-
-  // 行 hover
-  :deep(.ant-table-tbody > tr:hover > td) {
-    background: var(--color-primary-light) !important;
-  }
-
-  // 行分割线
-  :deep(.ant-table-tbody > tr > td) {
-    border-bottom: 1px solid $border-color-lighter !important;
-  }
-
-  // 分页区分割线
-  :deep(.ant-pagination) {
-    padding: 12px 16px;
-    margin: 0 !important;
-    border-top: 1px solid $border-color;
-  }
-
-  :deep(.ant-table-wrapper) {
-    padding: 0;
-  }
-}
-
-// ===== 操作链接 =====
-.action-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-
-  :deep(.ant-typography) {
-    font-size: $font-size-sm;
-    color: $text-primary;
-    transition: $transition-fast;
-    white-space: nowrap;
-
-    &:hover {
-      color: $color-accent;
-    }
-  }
-
-  :deep(.link-success.ant-typography) {
-    color: $color-success !important;
-  }
-
-  :deep(.link-warning.ant-typography) {
-    color: $color-warning !important;
-  }
-
-  :deep(.link-danger.ant-typography) {
-    color: $color-danger !important;
-  }
-}
-
-// ===== 状态徽章 =====
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: $font-size-sm;
-  font-weight: 500;
-
-  .badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  &.badge-active {
-    background: rgba(82, 196, 26, 0.1);
-    color: $color-success;
-
-    .badge-dot {
-      background: $color-success;
-    }
-  }
-
-  &.badge-inactive {
-    background: rgba(255, 77, 79, 0.08);
-    color: $color-danger;
-
-    .badge-dot {
-      background: $color-danger;
-    }
-  }
-}
 
 // ===== 状态 Tag =====
 .status-tag {
