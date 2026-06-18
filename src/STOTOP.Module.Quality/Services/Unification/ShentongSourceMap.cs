@@ -33,6 +33,12 @@ public enum UnifyTargetKind
 /// <param name="WaybillColumn">运单号列名（无则 null）。</param>
 /// <param name="PlatformColumn">电商平台列名（无则 null）。</param>
 /// <param name="ProblemCodePrefix">字典自建时问题类型编码前缀（如 "LOGI"）。</param>
+/// <param name="OnlyFilterColumn">「仅X」过滤列名（事件类用，无则 null）。与 <see cref="OnlyFilterEquals"/> 配对：
+///   WHERE 该列 = <see cref="OnlyFilterEquals"/>。二者任一为 null 则不过滤、整源入事件。</param>
+/// <param name="OnlyFilterEquals">「仅X」过滤值（与 <see cref="OnlyFilterColumn"/> 配对）。</param>
+/// <param name="ProblemTypeConstant">问题类型常量（与 <see cref="ProblemTypeColumn"/> 二选一：列优先，列为 null 用常量）。</param>
+/// <param name="AmountColumn">金额列名（→ 事件 F考核金额，TryDecimal；null 不填）。</param>
+/// <param name="KeySnapshotColumns">写入 F关键字段JSON 的列集（null/空则取该源全部声明的关键业务列）。</param>
 public record ShentongSourceDescriptor(
     string StgTableName,
     string QualityDomain,
@@ -45,7 +51,12 @@ public record ShentongSourceDescriptor(
     string? DateColumn,
     string? WaybillColumn,
     string? PlatformColumn,
-    string ProblemCodePrefix);
+    string ProblemCodePrefix,
+    string? OnlyFilterColumn = null,
+    string? OnlyFilterEquals = null,
+    string? ProblemTypeConstant = null,
+    string? AmountColumn = null,
+    string[]? KeySnapshotColumns = null);
 
 /// <summary>
 /// 申通各 STG 源 → 归一目标的静态映射表。扩展点：C1/C2/C3 增量加条目。
@@ -55,6 +66,9 @@ public static class ShentongSourceMap
 {
     /// <summary>STG申通_物流完整性明细 表名常量。</summary>
     public const string LogisticsCompletenessTable = "STG申通_物流完整性明细";
+
+    /// <summary>STG申通_物流及时准确明细 表名常量（C3 通用事件源 worked example）。</summary>
+    public const string LogisticsTimelinessTable = "STG申通_物流及时准确明细";
 
     /// <summary>STG申通_小件员履约指标 表名常量（C1 员工日指标源）。</summary>
     public const string CourierFulfillTable = "STG申通_小件员履约指标";
@@ -114,5 +128,26 @@ public static class ShentongSourceMap
                 WaybillColumn: null,
                 PlatformColumn: null,
                 ProblemCodePrefix: "BKLG"),
+
+            // C3 worked example：物流及时准确明细 → 质量事件（通用事件路径，第一个非 typed 事件源）。
+            // 三个源文件（到件晚于签收/派件晚于签收/揽收上传不及时）同结构，靠「F问题类型」列区分事件类型。
+            // 网点仅有名称（无编码列），员工取派件员（编号+名称），问题类型来自列 F问题类型，无金额列、无「仅X」过滤（整源入事件）。
+            // 走通用路径 UnifyGenericEventAsync：列名全部来自本描述符，行用 StgRawReader（raw-SQL 按列名读）取。
+            [LogisticsTimelinessTable] = new ShentongSourceDescriptor(
+                StgTableName: LogisticsTimelinessTable,
+                QualityDomain: "物流信息",
+                TargetKind: UnifyTargetKind.Event,
+                NetworkCodeColumn: null,            // 本源无网点编码列，仅有名称
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: "F派件员编号",
+                EmployeeNameColumn: "F派件员名称",
+                ProblemTypeColumn: "F问题类型",
+                DateColumn: "F统计日期",
+                WaybillColumn: "F运单号",
+                PlatformColumn: "F订单平台",
+                ProblemCodePrefix: "LOGT",
+                // 无「仅X」过滤（OnlyFilter* 留 null）、无问题类型常量（用列）、无金额列。
+                // 关键字段快照列：日期/运单/网点/问题类型/扫描时间/派件员，便于审计回溯。
+                KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F网点名称", "F所属网点名称", "F问题类型", "F扫描时间", "F扫描员", "F扫描员编号", "F订单平台", "F派件员编号", "F派件员名称" }),
         };
 }

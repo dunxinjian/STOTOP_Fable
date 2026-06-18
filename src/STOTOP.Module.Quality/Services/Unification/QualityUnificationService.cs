@@ -31,19 +31,38 @@ public class QualityUnificationService : IQualityUnificationService
 
     public async global::System.Threading.Tasks.Task<UnifyResult> UnifyShentongAsync(long orgId, CancellationToken ct = default)
     {
-        // 泛化分发：遍历源映射，按 TargetKind 分派到对应路径，累计五项计数。
-        // 加源 = 向 ShentongSourceMap.All 追加一条 + （新种类时）在此补一个 switch 分支。
+        // 泛化分发：遍历源映射，按「目标种类 + 表名」分派到对应路径，累计五项计数。
+        //
+        // 路由分层（C3 地基）：
+        //  - 3 个已实现的 typed 源按<b>表名精确派发</b>到各自专用方法（保留各源特有的列结构/合并语义）：
+        //      物流完整性 → C0 typed、小件员履约 → C1 typed、积压监控 → C2 typed。
+        //  - 其它<b>事件类</b>源 → 通用事件路径 UnifyGenericEventAsync（列名来自描述符，行用 StgRawReader raw-SQL 读）。
+        //  - 其它<b>网点指标</b>源 → DispatchNetworkMetricAsync（本批仅空壳，NM 源批次4再填）。
+        //  - EmployeeMetric 维持 C1（目前仅小件员履约一条）。
+        // 加事件源 = 向 ShentongSourceMap.All 追加一条描述符即可，无需改本方法（通用路径自动接手）。
         int events = 0, empUpserts = 0, netUpserts = 0, netUnmatched = 0, empUnmatched = 0;
 
         foreach (var desc in ShentongSourceMap.All.Values)
         {
             var r = desc.TargetKind switch
             {
-                UnifyTargetKind.Event => await UnifyLogisticsCompletenessAsync(orgId, desc, ct),
+                // ── 事件类：3 个 typed 源按表名精确派发，其余走通用事件路径 ──
+                UnifyTargetKind.Event => desc.StgTableName switch
+                {
+                    ShentongSourceMap.LogisticsCompletenessTable => await UnifyLogisticsCompletenessAsync(orgId, desc, ct),
+                    _ => await UnifyGenericEventAsync(orgId, desc, ct),
+                },
+
+                // ── 员工指标类：维持 C1（小件员履约 typed）──
                 UnifyTargetKind.EmployeeMetric => await UnifyCourierFulfillAsync(orgId, desc, ct),
-                // NetworkMetric：C2 落地积压监控子集。多个 NetworkMetric 源各填子集、按 网点×日 合并 upsert。
-                // 目前 ShentongSourceMap 里仅积压监控一条，故直接路由；C3 增源时按源表名细分（或在描述符上加路由键）。
-                UnifyTargetKind.NetworkMetric => await UnifyBacklogMonitorAsync(orgId, desc, ct),
+
+                // ── 网点指标类：积压监控 typed，其余 → 空壳分发（批次4填）──
+                UnifyTargetKind.NetworkMetric => desc.StgTableName switch
+                {
+                    ShentongSourceMap.BacklogMonitorTable => await UnifyBacklogMonitorAsync(orgId, desc, ct),
+                    _ => await DispatchNetworkMetricAsync(orgId, desc, ct),
+                },
+
                 _ => throw new NotSupportedException($"未支持的归一目标种类 {desc.TargetKind}（源 {desc.StgTableName}）"),
             };
             events += r.EventsUpserted;
@@ -156,6 +175,193 @@ public class QualityUnificationService : IQualityUnificationService
             NetworkMetricUpserts: 0,
             NetworkUnmatched: networkUnmatched,
             EmployeeUnmatched: employeeUnmatched);
+    }
+
+    /// <summary>
+    /// 通用事件路径（C3 地基）：任意「事件类」STG 源 → QL申通_承运商质量事件。
+    /// 逻辑<b>镜像 C0 <see cref="UnifyLogisticsCompletenessAsync"/></b>，差别只在于：列名全部来自 <paramref name="desc"/>，
+    /// 行用 <see cref="StgRawReader"/> raw-SQL 按列名读（而非 C0 的静态 EF 投影）。
+    /// 故所有口径（员工 Status 1/2 绑工号/Status 3 不绑只留姓名/Status 9 不适用全空；
+    /// 计数 EventsUpserted/NetworkUnmatched/EmployeeUnmatched 含义；按唯一键 upsert 幂等）与 C0 完全一致。
+    /// </summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyGenericEventAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var reader = new StgRawReader(_db);
+
+        // ── 组装需读列：系统列 FID/F批次ID + 描述符声明的各业务列 + 关键字段快照列，去重去 null ──
+        var needCols = new List<string?>
+        {
+            "FID", "F批次ID",
+            desc.NetworkCodeColumn, desc.NetworkNameColumn,
+            desc.EmployeeNoColumn, desc.EmployeeNameColumn,
+            desc.ProblemTypeColumn, desc.DateColumn,
+            desc.WaybillColumn, desc.PlatformColumn,
+            desc.AmountColumn, desc.OnlyFilterColumn,
+        };
+        // 关键字段快照列：描述符显式给了就用它，否则取本源全部声明的关键业务列（与 needCols 同源，下面统一去重）。
+        var snapshotCols = (desc.KeySnapshotColumns != null && desc.KeySnapshotColumns.Length > 0)
+            ? desc.KeySnapshotColumns
+            : new[]
+            {
+                desc.DateColumn, desc.WaybillColumn, desc.NetworkCodeColumn, desc.NetworkNameColumn,
+                desc.ProblemTypeColumn, desc.PlatformColumn, desc.EmployeeNoColumn, desc.EmployeeNameColumn,
+            }.Where(c => c != null).Select(c => c!).ToArray();
+        needCols.AddRange(snapshotCols);
+
+        var readCols = needCols.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c!).Distinct().ToList();
+
+        // ── raw-SQL 读行（带「仅X」过滤：两列任一为 null 则不过滤、整源入事件）──
+        var rows = await reader.ReadAsync(
+            desc.StgTableName, readCols, orgId,
+            desc.OnlyFilterColumn, desc.OnlyFilterEquals, ct);
+
+        int events = 0, networkUnmatched = 0, employeeUnmatched = 0;
+
+        // 本次运行内的字典缓存：同一原文只查/建一次。
+        var dictCache = new Dictionary<string, QlShentongProblemDict>();
+
+        foreach (var row in rows)
+        {
+            var fid = ToLong(Get(row, "FID"));
+            var batchId = ToLong(Get(row, "F批次ID"));
+
+            // ── 主数据匹配：网点（编码/名称按描述符列取，可能其一为 null）──
+            var netCodeRaw = desc.NetworkCodeColumn != null ? Get(row, desc.NetworkCodeColumn) : null;
+            var netNameRaw = desc.NetworkNameColumn != null ? Get(row, desc.NetworkNameColumn) : null;
+            var net = await _matcher.ResolveNetworkAsync(netCodeRaw, netNameRaw, orgId, ct);
+
+            // ── 员工匹配：无员工维度（两列都 null）→ Status 9 不适用；否则按编号/姓名解析 ──
+            EmployeeMatch emp;
+            string? empNameRaw = null;
+            if (desc.EmployeeNoColumn == null && desc.EmployeeNameColumn == null)
+            {
+                emp = new EmployeeMatch(null, null, null, 9);
+            }
+            else
+            {
+                var empNo = desc.EmployeeNoColumn != null ? Get(row, desc.EmployeeNoColumn) : null;
+                empNameRaw = desc.EmployeeNameColumn != null ? Get(row, desc.EmployeeNameColumn) : null;
+                emp = await _matcher.ResolveEmployeeAsync(empNo, empNameRaw, net.Code, orgId, ct);
+            }
+
+            // ── 问题类型原文：列优先（列非 null 取列），否则用常量；Trim ──
+            var problemRaw = (desc.ProblemTypeColumn != null
+                ? Get(row, desc.ProblemTypeColumn)
+                : desc.ProblemTypeConstant ?? "").Trim();
+            var dict = await GetOrCreateProblemDictAsync(orgId, desc, problemRaw, dictCache, ct);
+
+            // ── upsert 质量事件（唯一键：FOrgId × 承运商 × 来源STG表 × 来源行ID）──
+            var existing = await _db.Set<QlShentongQualityEvent>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e =>
+                    e.FOrgId == orgId &&
+                    e.F承运商 == "申通" &&
+                    e.F来源STG表 == desc.StgTableName &&
+                    e.F来源行ID == fid, ct);
+
+            var ev = existing ?? new QlShentongQualityEvent();
+
+            ev.FOrgId = orgId;
+            ev.F承运商 = "申通";
+            ev.F业务日期 = desc.DateColumn != null ? ParseUtil.TryDate(Get(row, desc.DateColumn)) : null;
+            ev.F统计年月 = ParseUtil.Ym(ev.F业务日期);
+            ev.F运单号 = desc.WaybillColumn != null ? Get(row, desc.WaybillColumn) : null;
+
+            // 网点：编码取匹配结果，名称保留原文，状态回填
+            ev.F网点编码 = net.Code;
+            ev.F网点名称 = netNameRaw;
+            ev.F网点匹配状态 = net.Status;
+
+            // 员工：Status 1/2 绑工号+ID；Status 3（启发式候选）不绑，仅留姓名原文；Status 9（不适用）全空。
+            if (emp.Status is 1 or 2)
+            {
+                ev.F员工工号 = emp.EmployeeNo;
+                ev.F员工ID = emp.EmployeeId;
+            }
+            else
+            {
+                ev.F员工工号 = null;
+                ev.F员工ID = null;
+            }
+            ev.F员工姓名原文 = empNameRaw;   // Status 9 时 empNameRaw 本就为 null
+            ev.F员工匹配状态 = emp.Status;
+
+            ev.F电商平台 = desc.PlatformColumn != null ? Get(row, desc.PlatformColumn) : null;
+            ev.F质量域 = desc.QualityDomain;
+
+            ev.F问题类型编码 = dict.F问题类型编码;
+            ev.F问题类型名称 = dict.F问题类型名称;
+            ev.F严重度 = dict.F默认严重度;
+            ev.F是否考核件 = dict.F是否考核;
+
+            // 金额：有金额列才填（TryDecimal 容错，解析失败 → null）。
+            ev.F考核金额 = desc.AmountColumn != null ? ParseUtil.TryDecimal(Get(row, desc.AmountColumn)) : null;
+
+            ev.F来源STG表 = desc.StgTableName;
+            ev.F来源行ID = fid;
+            ev.F来源批次ID = batchId;
+            ev.F关键字段JSON = BuildGenericKeySnapshot(row, snapshotCols);
+
+            if (existing == null)
+            {
+                ev.F创建时间 = DateTime.Now;
+                _db.Set<QlShentongQualityEvent>().Add(ev);
+            }
+
+            events++;
+            if (net.Status == 0) networkUnmatched++;
+            if (emp.Status is 0 or 3) employeeUnmatched++;   // 与 C0 一致：状态 9 不计未匹配，0/3 计
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new UnifyResult(
+            EventsUpserted: events,
+            EmployeeMetricUpserts: 0,
+            NetworkMetricUpserts: 0,
+            NetworkUnmatched: networkUnmatched,
+            EmployeeUnmatched: employeeUnmatched);
+    }
+
+    /// <summary>
+    /// 网点指标类「其它源」分发空壳（C3 地基占位）。积压监控走 C2 typed，其它 NM 源（出仓/滞留/签收/拦截/渗透等）
+    /// 批次4再逐源填子集合并 upsert。此处按表名 switch，暂统一抛 NotSupportedException（路由已就位，等实现）。
+    /// </summary>
+    private global::System.Threading.Tasks.Task<UnifyResult> DispatchNetworkMetricAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        return desc.StgTableName switch
+        {
+            // 批次4在此追加各 NM 源的 typed 子集合并方法。
+            _ => throw new NotSupportedException(
+                $"网点指标源「{desc.StgTableName}」尚未实现（C3 批次4填）"),
+        };
+    }
+
+    /// <summary>从行字典按列名取字符串值（NULL/缺列 → null；非字符串列 ToString）。</summary>
+    private static string? Get(Dictionary<string, object?> row, string col)
+    {
+        if (!row.TryGetValue(col, out var v) || v == null) return null;
+        return v as string ?? v.ToString();
+    }
+
+    /// <summary>把行里的 long/int/字符串值安全转 long（FID/F批次ID 列）。</summary>
+    private static long ToLong(object? v)
+    {
+        if (v == null) return 0;
+        if (v is long l) return l;
+        if (v is int i) return i;
+        return long.TryParse(v.ToString(), out var r) ? r : 0;
+    }
+
+    /// <summary>通用关键列快照 JSON（按描述符选定列；列缺失/NULL 取 null）。</summary>
+    private static string BuildGenericKeySnapshot(Dictionary<string, object?> row, string[] cols)
+    {
+        var snap = new Dictionary<string, string?>();
+        foreach (var c in cols)
+            snap[c] = Get(row, c);
+        return JsonSerializer.Serialize(snap);
     }
 
     /// <summary>
