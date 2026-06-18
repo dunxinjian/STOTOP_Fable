@@ -86,52 +86,39 @@
 
       <!-- 内容区 -->
       <div class="view-content">
-        <!-- 业务对象视角 -->
+        <!-- 多视角动态表（client/shop/intermediary/salesman/weightSegment/region 合一；趋势图独立） -->
         <a-table
-          v-if="activeView === 'client'"
-          :columns="clientColumns"
-          :data-source="displayedClientData"
-          :loading="clientLoading"
-          :pagination="{ pageSize: 50, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }"
-          row-key="clientId"
+          v-if="activeView !== 'trend' && currentView"
+          :columns="currentView.columns"
+          :data-source="currentView.data"
+          :loading="currentView.loading"
+          :pagination="currentView.pagination"
+          :row-key="currentView.rowKey"
           size="small"
-          :scroll="{ x: 1100, y: 'calc(100vh - 280px)' }"
+          :scroll="currentView.scroll"
+          :expanded-row-keys="currentView.hasExpand ? expandedRegionKeys : undefined"
+          @expand="currentView.hasExpand ? handleRegionExpand : undefined"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'clientType'">
+            <template v-if="column.format === 'weight'">{{ (record[column.dataIndex] ?? 0).toFixed(2) }}</template>
+            <template v-else-if="column.format === 'money'">¥{{ (record[column.dataIndex] ?? 0).toFixed(2) }}</template>
+            <template v-else-if="column.format === 'profit'">
+              <span :class="(record[column.dataIndex] ?? 0) >= 0 ? 'val-positive' : 'val-negative'">¥{{ (record[column.dataIndex] ?? 0).toFixed(2) }}</span>
+            </template>
+            <template v-else-if="column.format === 'rate'">
+              <span :class="profitRateClass(record[column.dataIndex])">{{ formatRate(record[column.dataIndex]) }}</span>
+            </template>
+            <template v-else-if="column.format === 'tagClient'">
               <a-tag :color="record.clientType === 1 ? 'blue' : record.clientType === 2 ? 'green' : 'default'" size="small">
                 {{ clientTypeLabel(record.clientType) }}
               </a-tag>
             </template>
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCharge'">
-              ¥{{ record.totalCharge.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCost'">
-              ¥{{ record.totalCost.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'profit'">
-              <span :class="record.profit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.profit.toFixed(2) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'profitRate'">
-              <span :class="profitRateClass(record.profitRate)">
-                {{ formatRate(record.profitRate) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'avgPrice'">
-              ¥{{ record.avgPrice.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'avgProfit'">
-              <span :class="record.avgProfit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.avgProfit.toFixed(2) }}
-              </span>
+            <template v-else-if="column.format === 'tagIntermediary'">
+              <a-tag size="small">{{ record.clientType === 2 ? '业务代理' : record.clientType === 5 ? '承包区' : '其他' }}</a-tag>
             </template>
           </template>
-          <template #summary>
+
+          <template v-if="currentView.hasSummary" #summary>
             <a-table-summary fixed>
               <a-table-summary-row class="summary-row">
                 <a-table-summary-cell :index="0">合计</a-table-summary-cell>
@@ -153,190 +140,8 @@
               </a-table-summary-row>
             </a-table-summary>
           </template>
-        </a-table>
 
-        <!-- 报价视角（按报价编号聚合；运单数据无店铺字段） -->
-        <a-table
-          v-if="activeView === 'shop'"
-          :columns="shopColumns"
-          :data-source="shopData"
-          :loading="shopLoading"
-          :pagination="{ pageSize: 50, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }"
-          :row-key="shopRowKey"
-          size="small"
-          :scroll="{ x: 1000, y: 'calc(100vh - 280px)' }"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCharge'">
-              ¥{{ record.totalCharge.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCost'">
-              ¥{{ record.totalCost.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'profit'">
-              <span :class="record.profit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.profit.toFixed(2) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'profitRate'">
-              <span :class="profitRateClass(record.profitRate)">
-                {{ formatRate(record.profitRate) }}
-              </span>
-            </template>
-          </template>
-        </a-table>
-
-        <!-- 中间人视角 -->
-        <a-table
-          v-if="activeView === 'intermediary'"
-          :columns="intermediaryColumns"
-          :data-source="intermediaryData"
-          :loading="intermediaryLoading"
-          :pagination="{ pageSize: 50, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }"
-          row-key="clientId"
-          size="small"
-          :scroll="{ x: 1100, y: 'calc(100vh - 280px)' }"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'clientType'">
-              <a-tag size="small">{{ record.clientType === 2 ? '业务代理' : record.clientType === 5 ? '承包区' : '其他' }}</a-tag>
-            </template>
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'downstreamRevenue'">
-              ¥{{ record.downstreamRevenue.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'upstreamCost'">
-              ¥{{ record.upstreamCost.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'profit'">
-              <span :class="record.profit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.profit.toFixed(2) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'profitRate'">
-              <span :class="profitRateClass(record.profitRate)">
-                {{ formatRate(record.profitRate) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'avgProfit'">
-              <span :class="record.avgProfit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.avgProfit.toFixed(2) }}
-              </span>
-            </template>
-          </template>
-        </a-table>
-
-        <!-- 业务员视角 -->
-        <a-table
-          v-if="activeView === 'salesman'"
-          :columns="salesmanColumns"
-          :data-source="salesmanData"
-          :loading="salesmanLoading"
-          :pagination="{ pageSize: 50, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }"
-          row-key="salesmanId"
-          size="small"
-          :scroll="{ x: 800, y: 'calc(100vh - 280px)' }"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'commissionIncome'">
-              ¥{{ record.commissionIncome.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'avgCommission'">
-              ¥{{ record.avgCommission.toFixed(2) }}
-            </template>
-          </template>
-        </a-table>
-
-        <!-- 重量段视角 -->
-        <a-table
-          v-if="activeView === 'weightSegment'"
-          :columns="weightSegmentColumns"
-          :data-source="weightSegmentData"
-          :loading="weightSegmentLoading"
-          :pagination="false"
-          row-key="weightSegment"
-          size="small"
-          :scroll="{ x: 900, y: 'calc(100vh - 280px)' }"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCharge'">
-              ¥{{ record.totalCharge.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCost'">
-              ¥{{ record.totalCost.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'profit'">
-              <span :class="record.profit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.profit.toFixed(2) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'profitRate'">
-              <span :class="profitRateClass(record.profitRate)">
-                {{ formatRate(record.profitRate) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'avgProfit'">
-              <span :class="record.avgProfit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.avgProfit.toFixed(2) }}
-              </span>
-            </template>
-          </template>
-        </a-table>
-
-        <!-- 流量流向视角 -->
-        <a-table
-          v-if="activeView === 'region'"
-          :columns="regionColumns"
-          :data-source="regionData"
-          :loading="regionLoading"
-          :pagination="false"
-          row-key="region"
-          size="small"
-          :scroll="{ x: 1000, y: 'calc(100vh - 280px)' }"
-          :expanded-row-keys="expandedRegionKeys"
-          @expand="handleRegionExpand"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'totalWeight'">
-              {{ record.totalWeight.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCharge'">
-              ¥{{ record.totalCharge.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'totalCost'">
-              ¥{{ record.totalCost.toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'profit'">
-              <span :class="record.profit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.profit.toFixed(2) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'profitRate'">
-              <span :class="profitRateClass(record.profitRate)">
-                {{ formatRate(record.profitRate) }}
-              </span>
-            </template>
-            <template v-if="column.dataIndex === 'avgWeight'">
-              {{ (record.avgWeight ?? 0).toFixed(2) }}
-            </template>
-            <template v-if="column.dataIndex === 'avgProfit'">
-              <span :class="record.avgProfit >= 0 ? 'val-positive' : 'val-negative'">
-                ¥{{ record.avgProfit.toFixed(2) }}
-              </span>
-            </template>
-          </template>
-          <template #expandedRowRender="{ record }">
+          <template v-if="currentView.hasExpand" #expandedRowRender="{ record }">
             <a-table
               :columns="provinceColumns"
               :data-source="provinceMap[record.region] || []"
@@ -345,30 +150,14 @@
               row-key="provinceId"
               size="small"
             >
-              <template #bodyCell="{ column: pCol, record: pRow }">
-                <template v-if="pCol.dataIndex === 'totalWeight'">
-                  {{ pRow.totalWeight.toFixed(2) }}
+              <template #bodyCell="{ column, record: pRow }">
+                <template v-if="column.format === 'weight'">{{ (pRow[column.dataIndex] ?? 0).toFixed(2) }}</template>
+                <template v-else-if="column.format === 'money'">¥{{ (pRow[column.dataIndex] ?? 0).toFixed(2) }}</template>
+                <template v-else-if="column.format === 'profit'">
+                  <span :class="(pRow[column.dataIndex] ?? 0) >= 0 ? 'val-positive' : 'val-negative'">¥{{ (pRow[column.dataIndex] ?? 0).toFixed(2) }}</span>
                 </template>
-                <template v-if="pCol.dataIndex === 'totalCharge'">
-                  ¥{{ pRow.totalCharge.toFixed(2) }}
-                </template>
-                <template v-if="pCol.dataIndex === 'totalCost'">
-                  ¥{{ pRow.totalCost.toFixed(2) }}
-                </template>
-                <template v-if="pCol.dataIndex === 'profit'">
-                  <span :class="pRow.profit >= 0 ? 'val-positive' : 'val-negative'">
-                    ¥{{ pRow.profit.toFixed(2) }}
-                  </span>
-                </template>
-                <template v-if="pCol.dataIndex === 'profitRate'">
-                  <span :class="profitRateClass(pRow.profitRate)">
-                    {{ formatRate(pRow.profitRate) }}
-                  </span>
-                </template>
-                <template v-if="pCol.dataIndex === 'avgProfit'">
-                  <span :class="pRow.avgProfit >= 0 ? 'val-positive' : 'val-negative'">
-                    ¥{{ pRow.avgProfit.toFixed(2) }}
-                  </span>
+                <template v-else-if="column.format === 'rate'">
+                  <span :class="profitRateClass(pRow[column.dataIndex])">{{ formatRate(pRow[column.dataIndex]) }}</span>
                 </template>
               </template>
             </a-table>
@@ -499,15 +288,15 @@ const clientLoading = ref(false)
 const clientData = ref<ProfitByClientDto[]>([])
 const clientColumns = [
   { title: '业务对象', dataIndex: 'clientName', width: 160, ellipsis: true, fixed: 'left' as const },
-  { title: '类型', dataIndex: 'clientType', width: 70, align: 'center' as const },
+  { title: '类型', dataIndex: 'clientType', width: 70, align: 'center' as const, format: 'tagClient' },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const, sorter: numSorter('waybillCount') },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight') },
-  { title: '应收金额', dataIndex: 'totalCharge', width: 100, align: 'right' as const, sorter: numSorter('totalCharge') },
-  { title: '总成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, sorter: numSorter('totalCost') },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate') },
-  { title: '单票均价', dataIndex: 'avgPrice', width: 90, align: 'right' as const, sorter: numSorter('avgPrice') },
-  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, sorter: numSorter('avgProfit') },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight'), format: 'weight' },
+  { title: '应收金额', dataIndex: 'totalCharge', width: 100, align: 'right' as const, sorter: numSorter('totalCharge'), format: 'money' },
+  { title: '总成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, sorter: numSorter('totalCost'), format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate'), format: 'rate' },
+  { title: '单票均价', dataIndex: 'avgPrice', width: 90, align: 'right' as const, sorter: numSorter('avgPrice'), format: 'money' },
+  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, sorter: numSorter('avgProfit'), format: 'profit' },
 ]
 const clientSummary = computed(() => {
   const d = clientData.value
@@ -566,11 +355,11 @@ const shopColumns = [
   { title: '报价编号', dataIndex: 'shopName', width: 160, ellipsis: true, fixed: 'left' as const },
   { title: '归属客户', dataIndex: 'clientName', width: 120, ellipsis: true },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const, sorter: numSorter('waybillCount') },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight') },
-  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const, sorter: numSorter('totalCharge') },
-  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, sorter: numSorter('totalCost') },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate') },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight'), format: 'weight' },
+  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const, sorter: numSorter('totalCharge'), format: 'money' },
+  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, sorter: numSorter('totalCost'), format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate'), format: 'rate' },
 ]
 // 报价编号可能跨客户重复或为空（回退客户名），组合 key 避免行渲染错乱
 const shopRowKey = (record: ProfitByShopDto) => `${record.clientName}|${record.shopName}`
@@ -595,15 +384,15 @@ const intermediaryLoading = ref(false)
 const intermediaryData = ref<ProfitByIntermediaryDto[]>([])
 const intermediaryColumns = [
   { title: '中间人', dataIndex: 'clientName', width: 130, ellipsis: true, fixed: 'left' as const },
-  { title: '角色', dataIndex: 'clientType', width: 70, align: 'center' as const },
+  { title: '角色', dataIndex: 'clientType', width: 70, align: 'center' as const, format: 'tagIntermediary' },
   { title: '层级', dataIndex: 'chainLevel', width: 60, align: 'center' as const },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const, sorter: numSorter('waybillCount') },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight') },
-  { title: '向下收入', dataIndex: 'downstreamRevenue', width: 100, align: 'right' as const, sorter: numSorter('downstreamRevenue') },
-  { title: '向上成本', dataIndex: 'upstreamCost', width: 100, align: 'right' as const, sorter: numSorter('upstreamCost') },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate') },
-  { title: '单票均利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, sorter: numSorter('avgProfit') },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight'), format: 'weight' },
+  { title: '向下收入', dataIndex: 'downstreamRevenue', width: 100, align: 'right' as const, sorter: numSorter('downstreamRevenue'), format: 'money' },
+  { title: '向上成本', dataIndex: 'upstreamCost', width: 100, align: 'right' as const, sorter: numSorter('upstreamCost'), format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, sorter: numSorter('profit'), defaultSortOrder: 'descend' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, sorter: numSorter('profitRate'), format: 'rate' },
+  { title: '单票均利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, sorter: numSorter('avgProfit'), format: 'profit' },
 ]
 const intermediarySummary = computed(() => {
   const d = intermediaryData.value
@@ -629,9 +418,9 @@ const salesmanColumns = [
   { title: '业务员', dataIndex: 'salesmanName', width: 130, ellipsis: true, fixed: 'left' as const },
   { title: '网点', dataIndex: 'networkPointId', width: 80, align: 'center' as const },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const, sorter: numSorter('waybillCount') },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight') },
-  { title: '提成收入', dataIndex: 'commissionIncome', width: 100, align: 'right' as const, sorter: numSorter('commissionIncome'), defaultSortOrder: 'descend' as const },
-  { title: '单票均提成', dataIndex: 'avgCommission', width: 100, align: 'right' as const, sorter: numSorter('avgCommission') },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, sorter: numSorter('totalWeight'), format: 'weight' },
+  { title: '提成收入', dataIndex: 'commissionIncome', width: 100, align: 'right' as const, sorter: numSorter('commissionIncome'), defaultSortOrder: 'descend' as const, format: 'money' },
+  { title: '单票均提成', dataIndex: 'avgCommission', width: 100, align: 'right' as const, sorter: numSorter('avgCommission'), format: 'money' },
 ]
 const salesmanSummary = computed(() => {
   const d = salesmanData.value
@@ -654,12 +443,12 @@ const weightSegmentData = ref<ProfitByWeightSegmentDto[]>([])
 const weightSegmentColumns = [
   { title: '重量段', dataIndex: 'weightSegment', width: 120, fixed: 'left' as const },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const },
-  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const },
-  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const },
-  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, format: 'weight' },
+  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const, format: 'money' },
+  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, format: 'rate' },
+  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, format: 'profit' },
 ]
 const weightSegmentSummary = computed(() => {
   const d = weightSegmentData.value
@@ -688,23 +477,23 @@ const provinceLoadingMap = reactive<Record<string, boolean>>({})
 const regionColumns = [
   { title: '区域', dataIndex: 'region', width: 120, fixed: 'left' as const },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const },
-  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const },
-  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const },
-  { title: '均重(kg)', dataIndex: 'avgWeight', width: 80, align: 'right' as const },
-  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, format: 'weight' },
+  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const, format: 'money' },
+  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, format: 'rate' },
+  { title: '均重(kg)', dataIndex: 'avgWeight', width: 80, align: 'right' as const, format: 'weight' },
+  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, format: 'profit' },
 ]
 const provinceColumns = [
   { title: '省份', dataIndex: 'provinceName', width: 120 },
   { title: '运单数', dataIndex: 'waybillCount', width: 80, align: 'right' as const },
-  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const },
-  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const },
-  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const },
-  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const },
-  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const },
-  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const },
+  { title: '总重量(kg)', dataIndex: 'totalWeight', width: 100, align: 'right' as const, format: 'weight' },
+  { title: '应收', dataIndex: 'totalCharge', width: 100, align: 'right' as const, format: 'money' },
+  { title: '成本', dataIndex: 'totalCost', width: 100, align: 'right' as const, format: 'money' },
+  { title: '毛利', dataIndex: 'profit', width: 100, align: 'right' as const, format: 'profit' },
+  { title: '毛利率', dataIndex: 'profitRate', width: 80, align: 'right' as const, format: 'rate' },
+  { title: '单票毛利', dataIndex: 'avgProfit', width: 90, align: 'right' as const, format: 'profit' },
 ]
 const regionSummary = computed(() => {
   const d = regionData.value
@@ -833,6 +622,35 @@ const recordCountMap: Record<string, () => number> = {
   region: () => regionData.value.length,
 }
 const activeRecordCount = computed(() => recordCountMap[activeView.value]?.() ?? 0)
+
+// ==================== 视角配置（6 表合一驱动） ====================
+const PAGE50 = { pageSize: 50, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }
+const TBL_Y = 'calc(100vh - 280px)'
+
+const VIEW_CONFIGS: Record<string, {
+  columns: any[]; rowKey: any; pagination: any; scroll: Record<string, any>
+  hasSummary?: boolean; hasExpand?: boolean
+}> = {
+  client:        { columns: clientColumns,        rowKey: 'clientId',      pagination: PAGE50, scroll: { x: 1100, y: TBL_Y }, hasSummary: true },
+  shop:          { columns: shopColumns,          rowKey: shopRowKey,      pagination: PAGE50, scroll: { x: 1000, y: TBL_Y } },
+  intermediary:  { columns: intermediaryColumns,  rowKey: 'clientId',      pagination: PAGE50, scroll: { x: 1100, y: TBL_Y } },
+  salesman:      { columns: salesmanColumns,      rowKey: 'salesmanId',    pagination: PAGE50, scroll: { x: 800,  y: TBL_Y } },
+  weightSegment: { columns: weightSegmentColumns, rowKey: 'weightSegment', pagination: false,  scroll: { x: 900,  y: TBL_Y } },
+  region:        { columns: regionColumns,        rowKey: 'region',        pagination: false,  scroll: { x: 1000, y: TBL_Y }, hasExpand: true },
+}
+const dataMap: Record<string, any> = {
+  client: displayedClientData, shop: shopData, intermediary: intermediaryData,
+  salesman: salesmanData, weightSegment: weightSegmentData, region: regionData,
+}
+const loadingMap: Record<string, any> = {
+  client: clientLoading, shop: shopLoading, intermediary: intermediaryLoading,
+  salesman: salesmanLoading, weightSegment: weightSegmentLoading, region: regionLoading,
+}
+const currentView = computed(() => {
+  const cfg = VIEW_CONFIGS[activeView.value]
+  if (!cfg) return null
+  return { ...cfg, data: dataMap[activeView.value].value, loading: loadingMap[activeView.value].value }
+})
 
 // ==================== 视图切换 & 搜索 ====================
 const viewFetchMap: Record<string, () => void> = {
