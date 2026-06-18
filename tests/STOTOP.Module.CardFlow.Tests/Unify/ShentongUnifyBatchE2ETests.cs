@@ -360,7 +360,7 @@ public class ShentongUnifyBatchE2ETests
     /// <summary>种网点 320288 + 进港投诉 2 真工号业务员 + 履约别名命中业务员/别名（履约别名首跑即生效，验证员工日指标）。</summary>
     private async Task SeedMasterDataAsync(STOTOPDbContext db, SeedFlags seeded)
     {
-        // 网点（编码 320288 + 全称）
+        // 网点（编码 320288 + 全称）——320288 是真实网点编码，保守用「不存在才种」+ seeded 门控清理，避免误删真实主数据。
         if (!await db.Set<ExpNetworkPoint>().IgnoreQueryFilters().AnyAsync(np => np.FCode == NetCode && np.FOrgId == OrgId))
         {
             db.Set<ExpNetworkPoint>().Add(new ExpNetworkPoint
@@ -370,17 +370,17 @@ public class ShentongUnifyBatchE2ETests
             seeded.Network = true;
         }
 
-        // 进港投诉真工号业务员（工号命中 → 状态1）
+        // 进港投诉真工号业务员（工号命中 → 状态1）——真实工号，保守用「不存在才种」+ seeded 门控清理，绝不 force-correct/无条件删（会误删真实主数据）。
         seeded.InboundEmp1 = await EnsureSalesmanAsync(db, InboundEmpNo1, "张闯华");
         seeded.InboundEmp2 = await EnsureSalesmanAsync(db, InboundEmpNo2, "屈梦幻");
 
-        // 小件员履约：别名命中用业务员 + 别名（首跑即让该 1 名员工经别名命中状态2 → 建员工日指标行）
-        seeded.CourierSalesman = await EnsureSalesmanAsync(db, CourierEmpNo, "吴健");
-        if (!await db.Set<ExpSalesmanAlias>().IgnoreQueryFilters().AnyAsync(a => a.FName == CourierDirtyName && a.FOrgId == OrgId))
-        {
-            db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias { FName = CourierDirtyName, FEmployeeNo = CourierEmpNo, FOrgId = OrgId });
-            seeded.CourierAliasRow = true;
-        }
+        // 小件员履约：合成工号业务员 + 脏名别名（首跑即让该 1 名员工经别名命中状态2 → 建员工日指标行）。
+        // 合成工号 force-correct（删任何既有再插）；脏名别名 force-correct（删任何 (脏名+org) 既有再插，使本测试映射权威，
+        // 不被残留/顺序污染——根治「城区吴健304 残留映射到别的工号」跨类隔离假阴性）。
+        await ForceCorrectSalesmanAsync(db, CourierEmpNo, "吴健");
+        seeded.CourierSalesman = true;
+        await ForceCorrectAliasAsync(db, CourierDirtyName, CourierEmpNo);
+        seeded.CourierAliasRow = true;
 
         await db.SaveChangesAsync();
     }
@@ -388,16 +388,15 @@ public class ShentongUnifyBatchE2ETests
     /// <summary>⑥ 回填：补物流完整性脏签收员名 → 测试工号的别名 + 该工号业务员（首跑后才补，制造「补别名→重跑回填」）。</summary>
     private async Task SeedAliasForRematchAsync(STOTOPDbContext db, SeedFlags seeded)
     {
-        seeded.AliasSalesman = await EnsureSalesmanAsync(db, AliasEmpNo, "申亚楠");
-        if (!await db.Set<ExpSalesmanAlias>().IgnoreQueryFilters().AnyAsync(a => a.FName == LogiDirtyName && a.FOrgId == OrgId))
-        {
-            db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias { FName = LogiDirtyName, FEmployeeNo = AliasEmpNo, FOrgId = OrgId });
-            seeded.AliasRow = true;
-        }
+        // 合成工号 + 脏名别名，同样 force-correct（合成工号/脏名均测试专属，删任何既有再插，范围安全）。
+        await ForceCorrectSalesmanAsync(db, AliasEmpNo, "申亚楠");
+        seeded.AliasSalesman = true;
+        await ForceCorrectAliasAsync(db, LogiDirtyName, AliasEmpNo);
+        seeded.AliasRow = true;
         await db.SaveChangesAsync();
     }
 
-    /// <summary>种业务员（工号主键，关联网点 320288）。返回是否本测试新种（供清理）。</summary>
+    /// <summary>种业务员（工号主键，关联网点 320288）。返回是否本测试新种（供清理）。仅用于<b>真实工号</b>（不存在才种，避免误删真实主数据）。</summary>
     private static async Task<bool> EnsureSalesmanAsync(STOTOPDbContext db, string empNo, string name)
     {
         if (await db.Set<ExpSalesman>().IgnoreQueryFilters().AnyAsync(s => s.FEmployeeNo == empNo))
@@ -411,6 +410,29 @@ public class ShentongUnifyBatchE2ETests
             FStatus = 1,
         });
         return true;
+    }
+
+    /// <summary>force-correct 合成工号业务员（删任何既有同工号再插）。仅用于<b>测试合成工号</b>（ETEST_*，库中不存在/不与真工号冲突）。</summary>
+    private static async Task ForceCorrectSalesmanAsync(STOTOPDbContext db, string empNo, string name)
+    {
+        var existing = await db.Set<ExpSalesman>().IgnoreQueryFilters().Where(s => s.FEmployeeNo == empNo).ToListAsync();
+        if (existing.Count > 0) db.Set<ExpSalesman>().RemoveRange(existing);
+        db.Set<ExpSalesman>().Add(new ExpSalesman
+        {
+            FEmployeeNo = empNo,
+            FNetworkPointCode = NetCode,
+            FEmployeeId = 0,
+            FName = name,
+            FStatus = 1,
+        });
+    }
+
+    /// <summary>force-correct 脏名别名（删任何既有 (脏名+org) 再插本测试期望映射）。使本测试对其脏名→工号映射权威，不受残留/顺序影响。</summary>
+    private static async Task ForceCorrectAliasAsync(STOTOPDbContext db, string dirtyName, string empNo)
+    {
+        var existing = await db.Set<ExpSalesmanAlias>().IgnoreQueryFilters().Where(a => a.FName == dirtyName && a.FOrgId == OrgId).ToListAsync();
+        if (existing.Count > 0) db.Set<ExpSalesmanAlias>().RemoveRange(existing);
+        db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias { FName = dirtyName, FEmployeeNo = empNo, FOrgId = OrgId });
     }
 
     private async Task ImportAndExpect(
@@ -492,17 +514,23 @@ public class ShentongUnifyBatchE2ETests
         catch { /* ignore */ }
     }
 
-    /// <summary>删本测试种子：别名/业务员/网点（仅删本测试新种的，避免误删既有主数据）。</summary>
+    /// <summary>
+    /// 删本测试种子。脏名别名 + 合成工号（ETEST_*）<b>无条件删</b>本测试用到的具体值（arrange 已 force-correct 由本测试写入，
+    /// 删除范围安全，不再用 seeded 门控——否则上轮残留致 seeded=false 时跳过清理，反复污染别的类）。
+    /// 真实工号业务员（进港投诉）+ 真实网点编码 仍用 seeded 门控，仅删本测试新种的，绝不误删真实主数据。
+    /// </summary>
     private async Task CleanupSeedAsync(string conn, SeedFlags seeded)
     {
-        if (seeded.AliasRow)
-            await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称]=@n AND [F组织ID]=@org", ("@n", LogiDirtyName), ("@org", OrgId));
-        if (seeded.CourierAliasRow)
-            await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称]=@n AND [F组织ID]=@org", ("@n", CourierDirtyName), ("@org", OrgId));
+        // 脏名别名（测试专属脏名）：无条件删。
+        await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称]=@n AND [F组织ID]=@org", ("@n", LogiDirtyName), ("@org", OrgId));
+        await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称]=@n AND [F组织ID]=@org", ("@n", CourierDirtyName), ("@org", OrgId));
+        // 合成工号业务员（ETEST_*，库中不存在/不与真工号冲突）：无条件删。
+        await DeleteSalesmanAsync(conn, AliasEmpNo);
+        await DeleteSalesmanAsync(conn, CourierEmpNo);
+        // 真实工号业务员：仅删本测试新种的（不存在才种过），避免误删真实主数据。
         if (seeded.InboundEmp1) await DeleteSalesmanAsync(conn, InboundEmpNo1);
         if (seeded.InboundEmp2) await DeleteSalesmanAsync(conn, InboundEmpNo2);
-        if (seeded.AliasSalesman) await DeleteSalesmanAsync(conn, AliasEmpNo);
-        if (seeded.CourierSalesman) await DeleteSalesmanAsync(conn, CourierEmpNo);
+        // 网点（真实编码 320288）：仅删本测试新种的。
         if (seeded.Network)
             await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号]=@code AND [F组织ID]=@org", ("@code", NetCode), ("@org", OrgId));
     }

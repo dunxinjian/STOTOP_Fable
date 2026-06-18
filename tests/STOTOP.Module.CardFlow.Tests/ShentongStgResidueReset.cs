@@ -44,6 +44,27 @@ public static class ShentongStgResidueReset
     };
 
     /// <summary>
+    /// 测试合成的「业务员脏名别名」具体名单（org=192）。仅这些<b>测试专属脏名</b>会被跨轮重置——
+    /// 用「具体名单」而非「by org 全表」，避免误删真实业务员名称映射主数据。
+    /// 来源：UnifyCourierFulfillTests（城区吴健304 / 操作部吴健999）、ShentongUnifyBatchE2ETests（城区吴健304 / 物流完整性脏签收员名）。
+    /// </summary>
+    private static readonly string[] TestSyntheticAliasNames =
+    {
+        "城区吴健304",
+        "操作部吴健999",
+        "城区029申亚楠17638932823",
+    };
+
+    /// <summary>
+    /// 测试合成的「业务员工号」具体名单。3209999 是 UnifyCourierFulfillTests 合成工号；ETEST_ 前缀是 D1 合成工号。
+    /// 用 ETEST[_]% 前缀 + 具体值，绝不泛删真实工号（如 3202885246/3202880036）。
+    /// </summary>
+    private static readonly string[] TestSyntheticEmpNos =
+    {
+        "3209999",
+    };
+
+    /// <summary>
     /// 清空 org=192 的全部 [STG申通_*]（<see cref="ShentongSourceMap.All"/> 枚举）+ 4 张 [QL申通_*] 残留行。
     /// 每张表 DELETE 前 <c>IF OBJECT_ID IS NOT NULL</c> 守卫；连接不可达时静默吞掉（与 IsAvailable 跳过语义一致）。
     /// </summary>
@@ -71,11 +92,49 @@ public static class ShentongStgResidueReset
                 cmd.Parameters.AddWithValue("@org", TestOrgId);
                 await cmd.ExecuteNonQueryAsync();
             }
+
+            // ── EXP 测试合成别名/业务员跨轮重置（具体名单，绝不泛删 org 全表，避免误删真实主数据）──
+            // 根治「Express 别名种子残留」跨类隔离假阴性：上轮被中断留下 城区吴健304→某工号 别名残留时，
+            // 下轮 UnifyCourierFulfillTests 旧逻辑会被污染。此处跨轮把测试脏名别名 + 合成工号清回干净基线。
+            await CleanTestSyntheticExpAsync(c);
         }
         catch
         {
             // 连接不可达 / 库未就绪：与「无可用连接则 Skip」一致，不让基线重置阻断测试运行。
             // 真正需要清的测试若库可达，CleanAsync 会成功；不可达时该测试本就会 Skip。
+        }
+    }
+
+    /// <summary>
+    /// 跨轮清掉测试合成的 EXP 别名/业务员（具体名单 + ETEST_ 合成工号前缀），不触碰真实主数据。
+    /// 用已打开的连接执行；表存在性用 OBJECT_ID 守卫。
+    /// </summary>
+    private static async Task CleanTestSyntheticExpAsync(SqlConnection c)
+    {
+        // 别名表：按「具体测试脏名」+ org，再按「ETEST_ 合成工号」清。
+        {
+            await using var cmd = c.CreateCommand();
+            var nameParams = string.Join(",", TestSyntheticAliasNames.Select((_, i) => "@an" + i));
+            cmd.CommandText =
+                "IF OBJECT_ID(N'[EXP快递业务员名称映射]', N'U') IS NOT NULL " +
+                "DELETE FROM [EXP快递业务员名称映射] WHERE [F组织ID] = @org " +
+                $"AND ([F名称] IN ({nameParams}) OR [F员工编号] LIKE N'ETEST[_]%');";
+            cmd.Parameters.AddWithValue("@org", TestOrgId);
+            for (int i = 0; i < TestSyntheticAliasNames.Length; i++)
+                cmd.Parameters.AddWithValue("@an" + i, TestSyntheticAliasNames[i]);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        // 业务员表：按「ETEST_ 合成工号前缀」+「具体合成工号名单」清（无 FOrgId 列，工号本身即测试专属）。
+        {
+            await using var cmd = c.CreateCommand();
+            var noParams = string.Join(",", TestSyntheticEmpNos.Select((_, i) => "@en" + i));
+            cmd.CommandText =
+                "IF OBJECT_ID(N'[EXP业务员]', N'U') IS NOT NULL " +
+                $"DELETE FROM [EXP业务员] WHERE [F工号] LIKE N'ETEST[_]%' OR [F工号] IN ({noParams});";
+            for (int i = 0; i < TestSyntheticEmpNos.Length; i++)
+                cmd.Parameters.AddWithValue("@en" + i, TestSyntheticEmpNos[i]);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }
