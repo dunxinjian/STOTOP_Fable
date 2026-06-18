@@ -2079,10 +2079,17 @@ public static class FinanceSeeder
     private static void MigrateV9(STOTOPDbContext ctx)
     {
         if (!SeederHelper.IsSqlServer(ctx)) return;
-        // 存量库：删两账套旧科目(0凭证、无外键引用)后重灌品牌版(含各账套真实1002/1012)。
-        // V1(全新库) 不重跑，故存量库在此守卫覆盖；幂等：MigrationRunner 按版本只执行一次。
+        // 存量库：删两账套旧科目后重灌品牌版(含各账套真实1002/1012)。账套1/2 凭证/分录/科目余额/辅助核算余额/凭证模板分录全 0 行。
+        // FK 处理：引用 FIN科目 的 5 个 FK 中唯 FK_FIN资产类别_折旧科目ID 有数据——FIN资产类别 6 行 F对应折旧科目ID 指向账套1 旧 1602(累计折旧)。
+        // 故须：①先把这些引用置 NULL 解除约束 → ②删旧科目 → ③重建品牌版 → ④重指品牌版账套1 新 1602。本方法在 MigrationRunner 单事务内执行，失败整体回滚。
+        // V1(全新库)不重跑，故存量库在此守卫覆盖；幂等：MigrationRunner 按版本号只执行一次。
+        ExecSql(ctx, @"UPDATE [FIN资产类别] SET [F对应折旧科目ID] = NULL
+            WHERE [F对应折旧科目ID] IN (SELECT [FID] FROM [FIN科目] WHERE [F账套ID] IN (1,2));");
         ExecSql(ctx, @"DELETE FROM [FIN科目] WHERE [F账套ID] IN (1,2);");
         InsertBrandAccounts(ctx);
+        ExecSql(ctx, @"UPDATE [FIN资产类别] SET [F对应折旧科目ID] =
+                (SELECT [FID] FROM [FIN科目] WHERE [F账套ID] = 1 AND [F编码] = N'1602')
+            WHERE [F对应折旧科目ID] IS NULL;");
     }
 
     /// <summary>
