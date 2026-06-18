@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Models;
 using STOTOP.Infrastructure.Data;
 using STOTOP.Module.Quality.Entities;
+using STOTOP.Module.Quality.Services.Unification;
 using STOTOP.Module.System.Filters;
 
 namespace STOTOP.Module.Quality.Controllers;
 
 /// <summary>
-/// 统一质控——主数据认领。
-/// 当前提供"待认领员工"查询，供前端把脏名归一到主数据/建别名。
-/// （run / rematch 端点 Phase C 再加。）
+/// 统一质控——主数据认领 + 归一触发。
+/// 提供"待认领员工"查询（前端把脏名归一到主数据/建别名）、手动归一(run)、重跑回填(rematch)。
 /// </summary>
 [Authorize]
 [ApiController]
@@ -19,10 +19,12 @@ namespace STOTOP.Module.Quality.Controllers;
 public class UnificationController : ControllerBase
 {
     private readonly STOTOPDbContext _db;
+    private readonly IQualityUnificationService _unifyService;
 
-    public UnificationController(STOTOPDbContext db)
+    public UnificationController(STOTOPDbContext db, IQualityUnificationService unifyService)
     {
         _db = db;
+        _unifyService = unifyService;
     }
 
     private long GetOrgId() => (long)(HttpContext.Items["CurrentOrgId"] ?? 0L);
@@ -53,6 +55,31 @@ public class UnificationController : ControllerBase
             .ToListAsync();
 
         return ApiResult<List<PendingEmployeeDto>>.Success(items);
+    }
+
+    /// <summary>
+    /// 手动归一：对当前组织整批归一全申通源（事件 + 员工日指标 + 网点日指标），按唯一键 upsert（幂等）。
+    /// </summary>
+    [HttpPost("run")]
+    [RequirePermission(QualityPermissions.ExceptionManage)]
+    public async Task<ApiResult<UnifyResult>> Run(CancellationToken ct)
+    {
+        var orgId = GetOrgId();
+        var result = await _unifyService.UnifyShentongAsync(orgId, ct);
+        return ApiResult<UnifyResult>.Success(result);
+    }
+
+    /// <summary>
+    /// 重跑回填：仅重解析当前组织「未匹配」的历史质量事件主数据（不重建事件）。
+    /// 用户在「待认领」补别名后调用，使历史未匹配事件命中并回填网点编码/员工工号。
+    /// </summary>
+    [HttpPost("rematch")]
+    [RequirePermission(QualityPermissions.ExceptionManage)]
+    public async Task<ApiResult<RematchResult>> Rematch(CancellationToken ct)
+    {
+        var orgId = GetOrgId();
+        var result = await _unifyService.RematchUnresolvedAsync(orgId, ct);
+        return ApiResult<RematchResult>.Success(result);
     }
 }
 

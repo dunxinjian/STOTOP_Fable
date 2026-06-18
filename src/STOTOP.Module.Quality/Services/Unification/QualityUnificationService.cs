@@ -76,6 +76,136 @@ public class QualityUnificationService : IQualityUnificationService
     }
 
     /// <summary>
+    /// 重跑回填：<b>仅重解析「未匹配」历史质量事件的主数据，不重建事件、不重导</b>（C4）。
+    ///
+    /// 取 (FOrgId==orgId &amp;&amp; F承运商=="申通") 且 (F网点匹配状态==0 或 F员工匹配状态∈{0,3}) 的事件实体（可写，不投影），逐条重解析：
+    ///   - 网点未匹配(0)：用事件存的 <see cref="QlShentongQualityEvent.F网点名称"/> 原文重 <see cref="IMasterDataMatcher.ResolveNetworkAsync"/>(null, 名称)；
+    ///     现命中(Status==1)→回填 F网点编码、F网点匹配状态（网点编码用于下游员工启发式上下文）。
+    ///   - 员工未匹配/启发式(0/3)：用 F员工姓名原文（+ 若 F员工工号 非空也带上）重 <see cref="IMasterDataMatcher.ResolveEmployeeAsync"/>(工号, 姓名, 新网点编码)；
+    ///     现 Status∈{1,2}（工号/别名确定绑定）→回填 F员工工号/F员工ID/F员工匹配状态；
+    ///     仍 0/3（含启发式候选）→ <b>不动</b>，保持只留姓名原文口径（与归一一致，启发式候选不绑）。
+    /// 只对真正变化的行计数；EF 变更跟踪只 update 变化列。一次 SaveChanges。幂等：补别名后第一次回填，之后无变化。
+    /// </summary>
+    public async global::System.Threading.Tasks.Task<RematchResult> RematchUnresolvedAsync(long orgId, CancellationToken ct = default)
+    {
+        // 取可写实体（非投影）：候选 = 网点未匹配(0) 或 员工未匹配/启发式(0/3)。
+        var candidates = await _db.Set<QlShentongQualityEvent>()
+            .IgnoreQueryFilters()
+            .Where(e => e.FOrgId == orgId
+                        && e.F承运商 == "申通"
+                        && (e.F网点匹配状态 == 0 || e.F员工匹配状态 == 0 || e.F员工匹配状态 == 3))
+            .ToListAsync(ct);
+
+        int networkRebound = 0, employeeRebound = 0;
+
+        foreach (var ev in candidates)
+        {
+            // ── 网点重解析（仅当前未匹配）：用事件存的网点名称原文重匹配 ──
+            // 注意：事件当前网点编码（可能是历史回退原文）不作匹配入参，统一靠名称重解析，避免脏码干扰。
+            var netCode = ev.F网点编码;
+            if (ev.F网点匹配状态 == 0)
+            {
+                var net = await _matcher.ResolveNetworkAsync(null, ev.F网点名称, orgId, ct);
+                if (net.Status == 1)
+                {
+                    ev.F网点编码 = net.Code;
+                    ev.F网点匹配状态 = 1;
+                    netCode = net.Code;   // 供下游员工启发式上下文使用新网点编码
+                    networkRebound++;
+                }
+            }
+
+            // ── 员工重解析（仅当前未匹配/启发式 0/3，且本事件有员工维度——状态9 不适用不在候选内）──
+            if (ev.F员工匹配状态 is 0 or 3)
+            {
+                // 用姓名原文（+ 已有工号若非空）重解析；网点编码取上面可能刚回填的新值。
+                var emp = await _matcher.ResolveEmployeeAsync(ev.F员工工号, ev.F员工姓名原文, netCode, orgId, ct);
+                if (emp.Status is 1 or 2)
+                {
+                    ev.F员工工号 = emp.EmployeeNo;
+                    ev.F员工ID = emp.EmployeeId;
+                    ev.F员工匹配状态 = emp.Status;
+                    employeeRebound++;
+                }
+                // 仍 0/3（含启发式候选）→ 不动：保持只留姓名原文口径（与归一一致，启发式候选不绑工号）。
+            }
+        }
+
+        if (networkRebound > 0 || employeeRebound > 0)
+            await _db.SaveChangesAsync(ct);
+
+        return new RematchResult(networkRebound, employeeRebound, candidates.Count);
+    }
+
+    /// <summary>
+    /// 枚举「有申通数据可归一」的组织ID（去重）：质量事件表 ∪ 各申通 STG 源表的 distinct FOrgId。
+    /// 表名全部来自静态 <see cref="ShentongSourceMap.All"/>（非用户输入，列名固定 FOrgId），仍按
+    /// INFORMATION_SCHEMA 守卫「表存在 + 含 FOrgId 列」后才纳入 UNION——避免某 STG 表尚未建（首次导入前）时整查询报错。
+    /// </summary>
+    public async global::System.Threading.Tasks.Task<IReadOnlyList<long>> ListShentongOrgIdsAsync(CancellationToken ct = default)
+    {
+        // 候选表：事件表 + 全部申通 STG 源表（去重）。表名取自静态源映射，安全。
+        var tables = new List<string> { "QL申通_承运商质量事件" };
+        tables.AddRange(ShentongSourceMap.All.Values.Select(d => d.StgTableName));
+        var distinctTables = tables.Distinct().ToList();
+
+        var conn = _db.Database.GetDbConnection();
+        bool openedHere = false;
+        if (conn.State != global::System.Data.ConnectionState.Open)
+        {
+            await conn.OpenAsync(ct);
+            openedHere = true;
+        }
+
+        try
+        {
+            // ── 守卫：仅保留「存在且含 FOrgId 列」的表（按 INFORMATION_SCHEMA.COLUMNS）──
+            var existing = new List<string>();
+            await using (var probe = conn.CreateCommand())
+            {
+                var inList = string.Join(",", distinctTables.Select((_, i) => $"@t{i}"));
+                probe.CommandText =
+                    $"SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
+                    $"WHERE COLUMN_NAME = N'FOrgId' AND TABLE_NAME IN ({inList})";
+                for (int i = 0; i < distinctTables.Count; i++)
+                {
+                    var p = probe.CreateParameter();
+                    p.ParameterName = $"@t{i}";
+                    p.Value = distinctTables[i];
+                    probe.Parameters.Add(p);
+                }
+                await using var rd = await probe.ExecuteReaderAsync(ct);
+                while (await rd.ReadAsync(ct))
+                    existing.Add(rd.GetString(0));
+            }
+
+            if (existing.Count == 0)
+                return global::System.Array.Empty<long>();
+
+            // ── UNION 各存在表的 distinct FOrgId（表名来自静态白名单，已按存在性过滤）──
+            var unionSql = string.Join(" UNION ", existing.Select(t => $"SELECT DISTINCT [FOrgId] FROM [{t}]"));
+            var orgIds = new List<long>();
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = unionSql;
+                await using var rd = await cmd.ExecuteReaderAsync(ct);
+                while (await rd.ReadAsync(ct))
+                {
+                    if (!rd.IsDBNull(0))
+                        orgIds.Add(global::System.Convert.ToInt64(rd.GetValue(0)));
+                }
+            }
+
+            return orgIds.Where(id => id > 0).Distinct().OrderBy(id => id).ToList();
+        }
+        finally
+        {
+            if (openedHere && conn.State == global::System.Data.ConnectionState.Open)
+                await conn.CloseAsync();
+        }
+    }
+
+    /// <summary>
     /// 事件类 worked example：STG申通_物流完整性明细 → QL申通_承运商质量事件。
     /// </summary>
     private async global::System.Threading.Tasks.Task<UnifyResult> UnifyLogisticsCompletenessAsync(
