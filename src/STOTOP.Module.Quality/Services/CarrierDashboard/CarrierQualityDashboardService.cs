@@ -50,8 +50,72 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
     // ───────────────────────── 视图方法（Phase 1-3 实现）─────────────────────────
     // 占位：先抛 NotImplementedException，使接口可编译、DI 可注册；逐 Phase 替换为真实现。
 
-    public Task<ApiResult<NetworkKpiDto>> GetNetworkKpiAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
-    public Task<ApiResult<List<NetworkTrendPointDto>>> GetNetworkTrendAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
+    public async Task<ApiResult<NetworkKpiDto>> GetNetworkKpiAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode)
+    {
+        var toEnd = to.Date.AddDays(1); // 半开右界，含 to 当天
+        var q = _db.Set<QlShentongNetworkDailyMetric>()
+            .Where(m => m.FOrgId == orgId && m.F承运商 == carrier
+                        && m.F业务日期 >= from.Date && m.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(networkCode))
+            q = q.Where(m => m.F网点编码 == networkCode);
+
+        var rows = await q.ToListAsync(); // 跨期合成在内存做（避免 EF 翻译末日/加权）
+        var dto = new NetworkKpiDto();
+        if (rows.Count > 0)
+        {
+            var lastDay = rows.Max(r => r.F业务日期).Date;
+            var lastRows = rows.Where(r => r.F业务日期.Date == lastDay).ToList();
+            // 率值=末日快照，多网点件量加权（权重 F日均出港量）
+            decimal? Snap(Func<QlShentongNetworkDailyMetric, decimal?> sel)
+                => WeightedAverage(lastRows.Select(r => (sel(r), (decimal?)r.F日均出港量)));
+
+            dto.SignRateToday = Snap(r => r.F当天及时签收率);
+            dto.SignRate48h = Snap(r => r.F48h签收率);
+            dto.OutboundOnTimeRate = Snap(r => r.F一频次出仓及时率);
+            dto.RetentionRate = Snap(r => r.F滞留率);
+            dto.BacklogMultiple = Snap(r => r.F积压倍数);
+            dto.LossRatePpm = Snap(r => r.F遗失率ppm);
+            dto.FakeSignRate = Snap(r => r.F虚签投诉率);
+            // 金额=期间累计
+            dto.TotalAssessFee = PeriodSum(rows.Select(r => r.F考核金额合计));
+        }
+
+        // 问题件数=期间事件计数
+        var evq = _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == carrier
+                        && e.F业务日期 >= from.Date && e.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(networkCode))
+            evq = evq.Where(e => e.F网点编码 == networkCode);
+        dto.ProblemEventCount = await evq.CountAsync();
+
+        return ApiResult<NetworkKpiDto>.Success(dto);
+    }
+
+    public async Task<ApiResult<List<NetworkTrendPointDto>>> GetNetworkTrendAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode)
+    {
+        var toEnd = to.Date.AddDays(1);
+        var q = _db.Set<QlShentongNetworkDailyMetric>()
+            .Where(m => m.FOrgId == orgId && m.F承运商 == carrier
+                        && m.F业务日期 >= from.Date && m.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(networkCode))
+            q = q.Where(m => m.F网点编码 == networkCode);
+
+        var rows = await q.ToListAsync();
+        var result = rows
+            .GroupBy(r => r.F业务日期.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new NetworkTrendPointDto
+            {
+                Date = g.Key.ToString("yyyy-MM-dd"),
+                SignRateToday = WeightedAverage(g.Select(r => (r.F当天及时签收率, (decimal?)r.F日均出港量))),
+                OutboundOnTimeRate = WeightedAverage(g.Select(r => (r.F一频次出仓及时率, (decimal?)r.F日均出港量))),
+                RetentionRate = WeightedAverage(g.Select(r => (r.F滞留率, (decimal?)r.F日均出港量))),
+                FakeSignRate = WeightedAverage(g.Select(r => (r.F虚签投诉率, (decimal?)r.F日均出港量))),
+            })
+            .ToList();
+
+        return ApiResult<List<NetworkTrendPointDto>>.Success(result);
+    }
     public Task<ApiResult<List<DomainStatItem>>> GetDomainDistributionAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
     public Task<ApiResult<List<DomainStatItem>>> GetFeeByDomainAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode) => throw new NotImplementedException();
     public Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN) => throw new NotImplementedException();
