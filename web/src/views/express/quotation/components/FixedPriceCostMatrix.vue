@@ -266,7 +266,7 @@
       @ok="handlePasteFill"
       @cancel="pasteText = ''; pasteResult = null"
     >
-      <p style="color: #666; font-size: 12px; margin-bottom: 8px">
+      <p style="color: var(--text-2); font-size: 12px; margin-bottom: 8px">
         从 Excel 复制矩阵数据（含列头行），粘贴到下方文本框中。第一列为省份名，后续列按顺序对应当前矩阵的重量段。
       </p>
       <a-textarea
@@ -840,14 +840,14 @@ defineExpose({ openOverride })
   // 宽度由行内 style 动态设为 scrollX，使价格矩阵严格与标尺对齐
   min-width: 0;
   // 面板感：背景、圆角、阴影，让价格矩阵成为页面主视觉焦点
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.06);
   // 注意：不能使用 overflow: hidden，否则会形成新的 sticky 容器并裁剪粘性表头。
   // 圆角通过内部 .ant-table 子元素继承 + 列头/底行的圆角裁切策略保持视觉效果。
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--border);
 }
 
 // 右侧 aside（包裹父组件注入的内容，如关联店铺；与矩阵卡片保持一致的面板视觉语言）
@@ -857,15 +857,15 @@ defineExpose({ openOverride })
   max-width: 420px;
   margin-left: 12px;        // 与矩阵之间预留间隙
   align-self: stretch;      // 与矩阵同高，但内部可独立滚动
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--border);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 14px 16px;
   font-size: 13px;
-  color: #595959;
+  color: var(--text-2);
   overflow: auto;           // 店铺过多时面板内部纵向滚动，不抻顶级页面
 }
 
@@ -891,7 +891,7 @@ defineExpose({ openOverride })
   // sticky 表头：垂直滚动到达列头时，表头吸附在滚动容器顶部
   :deep(.ant-table-sticky-holder) {
     z-index: 11;
-    background: #f5f7fa;
+    background: var(--bg-muted);
   }
 
   :deep(.ant-table-cell) {
@@ -919,25 +919,25 @@ defineExpose({ openOverride })
   }
 
   :deep(.region-cell) {
-    background-color: #fafafa;
+    background-color: var(--bg-muted);
     font-weight: 500;
-    border-right: 1px solid #e8e8e8;
+    border-right: 1px solid var(--border);
   }
 
   :deep(.region-even td) {
-    background-color: #fff;
+    background-color: var(--bg-card);
   }
 
   :deep(.region-odd td) {
-    background-color: #f7f9fc;
+    background-color: var(--bg-page);
   }
 
   :deep(.region-even td.region-cell) {
-    background-color: #fafafa;
+    background-color: var(--bg-muted);
   }
 
   :deep(.region-odd td.region-cell) {
-    background-color: #f0f4f8;
+    background-color: var(--bg-muted);
   }
 
   // 列头强化：加深背景 + 加重文字，提升列识别度
@@ -947,24 +947,24 @@ defineExpose({ openOverride })
     font-size: 12px;
     line-height: 1.4;
     padding: 12px 4px !important;
-    background: #f5f7fa !important;
-    color: #262626 !important;
+    background: var(--bg-muted) !important;
+    color: var(--text-1) !important;
     font-weight: 600 !important;
-    border-bottom: 2px solid #e0e4ea !important;
+    border-bottom: 2px solid var(--border-strong) !important;
   }
 
   :deep(.ant-table-tbody > tr:last-child > td) {
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid var(--border);
   }
 
   // 行 hover 高亮，增强可交互感
   :deep(.ant-table-tbody > tr:hover > td) {
-    background: #f0f7ff !important;
+    background: var(--bg-muted) !important;
   }
 
   // 价格列头（seg_*）背景略微区分，强调主要数据列
   :deep(.ant-table-thead > tr > th[class*="seg_"]) {
-    background: #eef3fa !important;
+    background: var(--color-primary-light) !important;
   }
 
   // 表格外边框去除（由 .matrix-left 提供外框）
@@ -1051,7 +1051,7 @@ defineExpose({ openOverride })
   justify-content: center;
   font-size: 11px;
   color: var(--color-primary);
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--color-primary);
   border-radius: 50%;
   cursor: pointer;
@@ -1066,7 +1066,7 @@ defineExpose({ openOverride })
   }
 
   &:hover {
-    color: #fff;
+    color: var(--text-on-accent);
     background: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary-border);
@@ -1085,7 +1085,7 @@ defineExpose({ openOverride })
 .seg-header-rounding {
   font-size: 11px;
   font-weight: 400;
-  color: #8c8c8c;
+  color: var(--text-3);
   line-height: 1.2;
   margin-top: 2px;
   white-space: nowrap;
@@ -1105,7 +1105,7 @@ defineExpose({ openOverride })
   font-size: 14px;
   font-weight: 700;
   color: var(--color-primary);
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--color-primary);
   border-radius: 50%;
   cursor: pointer;
@@ -1117,7 +1117,7 @@ defineExpose({ openOverride })
   box-sizing: border-box;
 
   &:hover {
-    color: #fff;
+    color: var(--text-on-accent);
     background: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary-border);
@@ -1152,7 +1152,7 @@ defineExpose({ openOverride })
 .seg-header-title {
   font-size: 13px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1164,7 +1164,7 @@ defineExpose({ openOverride })
 .seg-header-subtitle {
   font-size: 11px;
   font-weight: 400;
-  color: #595959;
+  color: var(--text-2);
   line-height: 1.2;
   margin-top: 1px;
   white-space: nowrap;
@@ -1186,7 +1186,7 @@ defineExpose({ openOverride })
 .region-text {
   font-size: 12px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-1);
 }
 
 .compact-toolbar {
@@ -1197,9 +1197,9 @@ defineExpose({ openOverride })
   // 升级为独立白色卡片，与下方矩阵卡片视觉呈现一致的双卡布局
   padding: 10px 14px;
   margin-bottom: 8px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--border);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.06);
@@ -1238,7 +1238,7 @@ defineExpose({ openOverride })
 
 .group-label {
   font-size: 13px;
-  color: #666;
+  color: var(--text-2);
   white-space: nowrap;
 }
 
