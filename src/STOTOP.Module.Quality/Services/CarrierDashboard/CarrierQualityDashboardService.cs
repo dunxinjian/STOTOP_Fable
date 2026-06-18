@@ -219,6 +219,18 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
                 .ToList();
         }
 
+        // 同一工号跨网点可能出现多行（数据噪声/调动），按工号合并：值求和、网点取值最高的子行，避免榜单重复工号
+        items = items
+            .GroupBy(x => x.EmpNo)
+            .Select(g => new EmployeeRankItemDto
+            {
+                EmpNo = g.Key,
+                EmpName = g.Select(x => x.EmpName).FirstOrDefault(n => !string.IsNullOrEmpty(n)),
+                NetworkCode = g.OrderByDescending(x => x.Value).First().NetworkCode,
+                Value = g.Sum(x => x.Value)
+            })
+            .ToList();
+
         var dto = new EmployeeRankDto
         {
             Dimension = dimension,
@@ -242,12 +254,12 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
 
         var rows = await mq.ToListAsync(); // 按工号期间 SUM 在内存聚合
         var grouped = rows
-            .GroupBy(m => new { m.F员工工号, m.F员工姓名原文, m.F网点编码 })
+            .GroupBy(m => m.F员工工号) // 按工号聚合（工号×期），保证工号唯一（前端 row-key=empNo）；跨网点汇总，网点取首个
             .Select(g => new EmployeeMetricRowDto
             {
-                EmpNo = g.Key.F员工工号,
-                EmpName = g.Key.F员工姓名原文,
-                NetworkCode = g.Key.F网点编码,
+                EmpNo = g.Key,
+                EmpName = g.Select(m => m.F员工姓名原文).FirstOrDefault(n => !string.IsNullOrEmpty(n)),
+                NetworkCode = g.Select(m => m.F网点编码).FirstOrDefault(),
                 派件量 = g.Sum(m => m.F派件量 ?? 0),
                 当日派签量 = g.Sum(m => m.F当日派签量 ?? 0),
                 应上门量 = g.Sum(m => m.F应上门量 ?? 0),
@@ -329,6 +341,8 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
             .Select(g => g.Key)
             .ToHashSet();
 
+        // 注：MultiDomainOnly 经内存集合 Contains→翻译为 SQL IN。一期单组织申通数据量有限（多域命中运单数远低于 SQL Server 2100 参数上限）。
+        // 二期多承运商/多网点放量后，若单期多域命中运单 >2100，需改为 EXISTS 子查询或内存分页（见 design spec 二期边界）。
         if (query.MultiDomainOnly)
             baseQ = baseQ.Where(e => e.F运单号 != null && multiWaybills.Contains(e.F运单号));
         if (query.PendingOnly)
