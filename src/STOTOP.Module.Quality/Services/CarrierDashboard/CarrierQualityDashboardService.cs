@@ -303,6 +303,75 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
 
         return ApiResult<List<EmployeeEventItemDto>>.Success(items);
     }
-    public Task<ApiResult<EventPageDto>> GetEventsAsync(long orgId, EventQuery query) => throw new NotImplementedException();
-    public Task<ApiResult<int>> GetPendingCountAsync(long orgId, string carrier) => throw new NotImplementedException();
+    public async Task<ApiResult<EventPageDto>> GetEventsAsync(long orgId, EventQuery query)
+    {
+        var toEnd = query.To.Date.AddDays(1);
+        var page = query.Page <= 0 ? 1 : query.Page;
+        var size = query.Size <= 0 ? 50 : query.Size;
+
+        var baseQ = _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == query.Carrier
+                        && e.F业务日期 >= query.From.Date && e.F业务日期 < toEnd);
+        if (!string.IsNullOrEmpty(query.NetworkCode)) baseQ = baseQ.Where(e => e.F网点编码 == query.NetworkCode);
+        if (!string.IsNullOrEmpty(query.EmpNo)) baseQ = baseQ.Where(e => e.F员工工号 == query.EmpNo);
+        if (!string.IsNullOrEmpty(query.Domain)) baseQ = baseQ.Where(e => e.F质量域 == query.Domain);
+        if (!string.IsNullOrEmpty(query.Platform)) baseQ = baseQ.Where(e => e.F电商平台 == query.Platform);
+        if (query.Severity.HasValue) baseQ = baseQ.Where(e => e.F严重度 == query.Severity.Value);
+
+        // 多域命中：同一运单 ≥2 个 distinct 质量域。先拉 (运单,域) 去重对再内存分组（避开 EF 对 Distinct().Count() 的翻译坑）
+        var pairs = await baseQ.Where(e => e.F运单号 != null && e.F运单号 != "")
+            .Select(e => new { e.F运单号, e.F质量域 })
+            .Distinct()
+            .ToListAsync();
+        var multiWaybills = pairs
+            .GroupBy(p => p.F运单号!)
+            .Where(g => g.Select(x => x.F质量域).Distinct().Count() >= 2)
+            .Select(g => g.Key)
+            .ToHashSet();
+
+        if (query.MultiDomainOnly)
+            baseQ = baseQ.Where(e => e.F运单号 != null && multiWaybills.Contains(e.F运单号));
+        if (query.PendingOnly)
+            baseQ = baseQ.Where(e => e.F员工匹配状态 == 0 || e.F员工匹配状态 == 3);
+
+        var total = await baseQ.CountAsync();
+        var pageRows = await baseQ
+            .OrderByDescending(e => e.F业务日期).ThenByDescending(e => e.FID)
+            .Skip((page - 1) * size).Take(size)
+            .Select(e => new QualityEventRowDto
+            {
+                Id = e.FID,
+                Date = e.F业务日期,
+                Waybill = e.F运单号,
+                NetworkCode = e.F网点编码,
+                NetworkName = e.F网点名称,
+                EmpNo = e.F员工工号,
+                EmpNameRaw = e.F员工姓名原文,
+                Domain = e.F质量域,
+                ProblemName = e.F问题类型名称,
+                Severity = e.F严重度,
+                IsAssessed = e.F是否考核件,
+                Fee = e.F考核金额,
+                Platform = e.F电商平台,
+                IsPending = e.F员工匹配状态 == 0 || e.F员工匹配状态 == 3,
+            })
+            .ToListAsync();
+
+        foreach (var r in pageRows)
+            r.IsMultiDomain = r.Waybill != null && multiWaybills.Contains(r.Waybill);
+
+        return ApiResult<EventPageDto>.Success(new EventPageDto { Items = pageRows, Total = total });
+    }
+
+    public async Task<ApiResult<int>> GetPendingCountAsync(long orgId, string carrier)
+    {
+        var count = await _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == carrier
+                        && (e.F员工匹配状态 == 0 || e.F员工匹配状态 == 3)
+                        && e.F员工姓名原文 != null && e.F员工姓名原文 != "")
+            .Select(e => new { e.F员工姓名原文, e.F网点编码 })
+            .Distinct()
+            .CountAsync();
+        return ApiResult<int>.Success(count);
+    }
 }
