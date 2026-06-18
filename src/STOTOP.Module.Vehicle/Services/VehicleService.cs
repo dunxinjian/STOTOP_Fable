@@ -68,7 +68,6 @@ public class VehicleService : IVehicleService
     {
         var vehicle = await _vehicleRepository.Query()
             .Include(v => v.Assignments)
-            .ThenInclude(a => a.Vehicle)
             .Include(v => v.Maintenances)
             .FirstOrDefaultAsync(v => v.FID == id);
 
