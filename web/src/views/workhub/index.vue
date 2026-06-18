@@ -44,7 +44,15 @@ function handleSelectItem(item: SelectedItem) {
 watch(
   () => hub.selectedItemId.value,
   (newId) => {
-    if (!newId) return
+    if (!newId) {
+      // selectedItemId 被置空：若当前右栏是工作项（被稍后处理/执行/移除而离开列表），关闭右栏。
+      // 注意：选中通知项也会把 selectedItemId 置空，但右栏应保留该通知，故仅清工作项。
+      if (selectedItem.value?.type === 'workitem') {
+        selectedItem.value = null
+        detailExpanded.value = false
+      }
+      return
+    }
     // 如果当前选中项已为该 ID，跳过
     if (selectedItem.value?.type === 'workitem' && selectedItem.value.id === newId) return
     const target = hub.items.value.find((i) => i.id === newId)
