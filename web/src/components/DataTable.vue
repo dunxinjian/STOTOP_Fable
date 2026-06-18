@@ -128,8 +128,10 @@ function onChange(pag: any) {
   background: var(--bg-card) !important;
 }
 
-// 列头精修：中性字色 + 收字重 + 字间距 + 清晰底线（紧贴数据行、不留间隔，靠样式区分而非空白）
+// 列头精修：去灰底融入数据行（不再是独立灰带，消除被误读为"缝"的灰色空白），
+// 仅靠中性字 + 底线区分（Notion/Linear 式无底色表头，连贯）。
 :deep(.ant-table-thead > tr > th) {
+  background: var(--bg-card);
   color: var(--text-2);
   font-weight: 500;
   letter-spacing: 0.02em;
