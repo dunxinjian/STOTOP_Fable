@@ -33,6 +33,7 @@ import 'dayjs/locale/zh-cn'
 import { executeWorkItemAction } from '@/api/workhub'
 import type { WorkItem, WorkItemAction } from '@/api/workhub'
 import { useWorkHub } from '@/composables/useWorkHub'
+import CardActivityTimeline from '@/components/workhub/CardActivityTimeline.vue'
 
 dayjs.extend(relativeTimePlugin)
 dayjs.locale('zh-cn')
@@ -124,6 +125,13 @@ const panelTitle = computed(() => {
 const workItem = computed<WorkItem | null>(() => {
   if (props.selectedItem?.type === 'workitem') return props.selectedItem.data as WorkItem
   return null
+})
+
+const cardId = computed<number | null>(() => {
+  if (workItem.value?.source !== 'cardflow') return null
+  const raw = (workItem.value.metadata as any)?.cardId
+  const n = Number(raw)
+  return Number.isFinite(n) && n > 0 ? n : null
 })
 
 const workItemSourceConfig = computed(() => {
@@ -345,7 +353,7 @@ function goToDetailRoute() {
             </div>
 
             <!-- 元数据 -->
-            <div v-if="metadataEntries.length > 0" class="wi-metadata">
+            <div v-if="metadataEntries.length > 0 && !cardId" class="wi-metadata">
               <div class="wi-metadata__title">详细信息</div>
               <div class="wi-metadata__grid">
                 <div
@@ -358,6 +366,9 @@ function goToDetailRoute() {
                 </div>
               </div>
             </div>
+
+            <!-- CardFlow 活动时间轴（审批进度 × 操作日志合并） -->
+            <CardActivityTimeline v-if="cardId" :card-id="cardId" />
 
             <!-- 查看完整页面链接 -->
             <div v-if="workItem.detailRoute" class="wi-link-row">
