@@ -165,3 +165,34 @@ InMemory 单测（新建 `CardRedactionServiceTests`）：
 7. 验证：schema 外键采样核查 + 列表路径确认 + 全量单测/E2E + WebAPI 编译。
 
 > 转入 writing-plans 后逐项细化为可执行步骤。
+
+---
+
+## 9. 后续收口（2026-06-18，详情端点已落地后补）
+
+主重构只覆盖了 `GetByIdAsync` 的整卡 DataJson / 明细 / 组件 work-view（第 5 节「本轮覆盖读路径」）。复核发现两处同类 PII 泄露面遗留在范围外，本节收口。**两处均已与用户确认取「最简移除」口径**（前端全量 grep 证据支撑）。
+
+### 9.1 列表端点 `InitialDataJson`（泄露面 #1）
+
+- **现状**：`CardListDto` 含 `InitialDataJson`，被 `GetCardsAsync`（[CardService.cs:100](../../../src/STOTOP.Module.CardFlow/Services/CardService.cs:100)）、`GetInitiatedCardsAsync`、`GetAvailablePrerequisitesAsync`（[:915](../../../src/STOTOP.Module.CardFlow/Services/CardService.cs:915)）三个列表投影**明文下发**；列表无卡片级访问门 → 任意通过的查看者可读他人卡片预填业务载荷明文。
+- **证据**：前端全量搜索 `initialDataJson` 仅命中「构造请求」（`PathPreviewPanel.vue`）与「读 query string」（`CardFillForm.vue`），**无任何响应消费方**（列表/详情均不读）。
+- **决策（D6）**：从 `CardListDto` **移除** `InitialDataJson`，**下沉**到 `CardDetailDto`。最简最安全、零 UX 回归。否决「列表逐卡脱敏」（N 卡 × schema 解析 + N+ 查询，开销大且无消费方）。
+- **改动**：
+  - `Responses.cs`：`InitialDataJson` 从 `CardListDto` 移到 `CardDetailDto`。
+  - `CardService.GetCardsAsync` / `GetAvailablePrerequisitesAsync`：两处列表投影删除 `InitialDataJson` 赋值。
+  - `GetByIdAsync`（[:149](../../../src/STOTOP.Module.CardFlow/Services/CardService.cs:149)/[:258](../../../src/STOTOP.Module.CardFlow/Services/CardService.cs:258)）不动——赋给 `CardDetailDto` 自身属性，仍是脱敏后 `RedactedInitialDataJson`。
+  - 前端 `cardflow.ts`：`CardListDto` 删 `initialDataJson?`；`CardDetailDto` 显式补 `initialDataJson?: string | null`（不再继承）。
+
+### 9.2 详情 `AuditTrail` 决策快照（泄露面 #2）
+
+- **现状**：`LoadRuntimeAuditTrailAsync` 的 routeDecision 项 metadata 含 `decisionSnapshot`（`FDecisionSnapshotJson`，含 `fields` 值映射，写入期仅按字段名启发式打码 bank/phone…，**漏掉 schema 声明的 `Sensitive` 字段如金额**）与 `candidateResults`（`FCandidateResultsJson`，含 `Explanation`/`TypeErrors` 自由文本，可能内嵌「金额 50000 > 阈值」这类值）。
+- **证据**：前端唯一消费方 `CardTimeline.vue` 只读 `edgeKey`/`selectedRouteEdgeKey`/`policyKey`/`handlerNames`，**不渲染** `decisionSnapshot`/`candidateResults`。
+- **决策（D7）**：从 routeDecision 审计项 metadata **移除** `decisionSnapshot` + `candidateResults`，保留路由结构元数据键。否决「字段访问表逐键打码」——`Explanation` 自由文本内嵌值无法可靠打码，移除是唯一彻底口径，且前端不渲染、零 UX 回归。
+- **改动**：`CardService.LoadRuntimeAuditTrailAsync` routeDecision 分支删 `["decisionSnapshot"]`/`["candidateResults"]` 两行。动态插入分支已走 `SanitizeDynamicInsertContext` 白名单，不动。
+- **范围边界（指出，本轮不做）**：`LoadPresentationSnapshotsAsync`（[:362-363](../../../src/STOTOP.Module.CardFlow/Services/CardService.cs:362)）亦把这两载荷塞进 `CurrentStageWorkView` presentation snapshot，但该路径仅当前 active 处理人可见（对该节点本就有权），暴露面与 AuditTrail 不同，留待后续评估。
+
+### 9.3 测试（`dotnet test tests/STOTOP.Module.CardFlow.Tests --arch x64`，必须 x64 宿主）
+
+- **#2 主测**（新增 `Approval/CardDetailAuditTrailRedactionTests.cs`）：仿 `CardDetailWorkViewContractTests` 造卡片 + 带敏感值的 `CfRouteDecisionSnapshot`，调 `GetByIdAsync`，断言 routeDecision 审计项 metadata 含 `edgeKey`/`fromStageKey`、不含 `decisionSnapshot`/`candidateResults`，且整条 `AuditTrail` 序列化后不出现原始敏感值。
+- **#1 守护测**：详情 `result.InitialDataJson` 仍被脱敏返回（防下沉误丢详情行为）；列表无 `InitialDataJson` 由类型删除编译期保证。
+- 回归：既有单测全绿 + 前端 `vite build` 兜底。
