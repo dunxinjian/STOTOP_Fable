@@ -167,28 +167,28 @@ function showConflictConfirm(conflicts: ShopConflictItem[], onConfirm: () => Pro
     title: '店铺关联冲突提示',
     width: 640,
     content: h('div', { style: 'margin-top:8px' }, [
-      h('p', { style: 'margin-bottom:8px;color:#666' }, '以下店铺已关联其他报价，继续添加可能导致冲突：'),
+      h('p', { style: 'margin-bottom:8px;color:var(--text-2)' }, '以下店铺已关联其他报价，继续添加可能导致冲突：'),
       h('table', {
         style: 'width:100%;border-collapse:collapse;font-size:13px',
       }, [
         h('thead', null, [
           h('tr', null, [
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '店铺名'),
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '业务对象类型'),
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '编号'),
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '品牌'),
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '报价名'),
-            h('th', { style: 'border:1px solid #e8e8e8;padding:6px 8px;background:#fafafa;text-align:left' }, '生效日期'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '店铺名'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '业务对象类型'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '编号'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '品牌'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '报价名'),
+            h('th', { style: 'border:1px solid var(--border);padding:6px 8px;background:var(--bg-muted);text-align:left' }, '生效日期'),
           ]),
         ]),
         h('tbody', null, conflicts.map(c =>
           h('tr', null, [
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.shopName),
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.clientTypeName),
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.clientId),
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.brandCode),
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.quotationName),
-            h('td', { style: 'border:1px solid #e8e8e8;padding:6px 8px' }, c.effectiveDate ?? '-'),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.shopName),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.clientTypeName),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.clientId),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.brandCode),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.quotationName),
+            h('td', { style: 'border:1px solid var(--border);padding:6px 8px' }, c.effectiveDate ?? '-'),
           ])
         )),
       ]),
