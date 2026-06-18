@@ -115,16 +115,16 @@ public class UnifyCourierFulfillTests
         QualityUnifySeeder.EnsureTables(db);
 
         long batchId = 0;
-        bool seededNetwork = false, seededSalesman = false, seededAlias = false;
         try
         {
             // 预清：删除可能残留的本 org 员工日指标（保证可复现）
             await CleanupMetricAsync(conn);
 
-            // 种子主数据：网点（名称匹配目标）+ 业务员（工号3209999/网点320288）+ 别名（脏名→工号）
-            seededNetwork = await EnsureNetworkAsync(db);
-            seededSalesman = await EnsureSalesmanAsync(db);
-            seededAlias = await EnsureAliasAsync(db);
+            // 种子主数据（force-correct：删任何既有同键再插，不受残留/顺序影响）：
+            // 网点（名称匹配目标）+ 业务员（工号3209999/网点320288）+ 别名（脏名→工号，权威映射）
+            await EnsureNetworkAsync(db);
+            await EnsureSalesmanAsync(db);
+            await EnsureAliasAsync(db);
 
             // ── 导入 STG（59 行，规则 3124 / 流程 2324 / 首节点 5124，headerRow=2 由规则配置）──
             (batchId, var importResult) = await ImportOnceAsync(db, conn, path, 2324, 5124, 3124);
@@ -190,10 +190,11 @@ public class UnifyCourierFulfillTests
         {
             await CleanupMetricAsync(conn);
             await CleanupBatchAsync(conn, StgTable, batchId);
-            // 种子清理：用列名映射的真实表名（EXP快递业务员名称映射 / EXP业务员 / EXP快递网点）
-            if (seededAlias) await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName), ("@org", OrgId));
-            if (seededSalesman) await ExecAsync(conn, "DELETE FROM [EXP业务员] WHERE [F工号] = @no", ("@no", EmpNo));
-            if (seededNetwork) await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号] = @code AND [F组织ID] = @org", ("@code", NetCode), ("@org", OrgId));
+            // 种子清理：无条件删本测试用到的具体脏名/合成工号（arrange 已 force-correct 由本测试写入，删除范围安全）。
+            // 不再用 seeded* 门控——否则上一轮残留（别名已存在→seeded=false）会被跳过清理，反复污染（本次根治点）。
+            await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName), ("@org", OrgId));
+            await ExecAsync(conn, "DELETE FROM [EXP业务员] WHERE [F工号] = @no", ("@no", EmpNo));
+            await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号] = @code AND [F组织ID] = @org", ("@code", NetCode), ("@org", OrgId));
         }
     }
 
@@ -226,7 +227,6 @@ public class UnifyCourierFulfillTests
         QualityUnifySeeder.EnsureTables(db);
 
         long batchId = 0;
-        bool seededNetwork = false, seededSalesman = false, seededAlias = false, seededAlias2 = false;
         try
         {
             await CleanupMetricAsync(conn);
@@ -234,10 +234,11 @@ public class UnifyCourierFulfillTests
             await ExecAsync(conn, $"DELETE FROM [{StgTable}] WHERE [FOrgId] = @org AND [F所属小件员] IN (@n1, @n2)",
                 ("@org", OrgId), ("@n1", DirtyName), ("@n2", DirtyName2));
 
-            seededNetwork = await EnsureNetworkAsync(db);
-            seededSalesman = await EnsureSalesmanAsync(db);
-            seededAlias = await EnsureAliasAsync(db);             // 城区吴健304 → 3209999
-            seededAlias2 = await EnsureAlias2Async(db);           // 操作部吴健999 → 3209999
+            // force-correct 种子（删任何既有同键再插，不受残留/顺序影响）
+            await EnsureNetworkAsync(db);
+            await EnsureSalesmanAsync(db);
+            await EnsureAliasAsync(db);             // 城区吴健304 → 3209999
+            await EnsureAlias2Async(db);            // 操作部吴健999 → 3209999
 
             // 建一个空批次（仅为批次日 → 业务日期；员工路径无日期列，业务日期取批次创建日）
             var batch = new CfBatch
@@ -286,19 +287,22 @@ public class UnifyCourierFulfillTests
             await CleanupBatchAsync(conn, StgTable, batchId);
             await ExecAsync(conn, $"DELETE FROM [{StgTable}] WHERE [FOrgId] = @org AND [F所属小件员] IN (@n1, @n2)",
                 ("@org", OrgId), ("@n1", DirtyName), ("@n2", DirtyName2));
-            if (seededAlias2) await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName2), ("@org", OrgId));
-            if (seededAlias) await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName), ("@org", OrgId));
-            if (seededSalesman) await ExecAsync(conn, "DELETE FROM [EXP业务员] WHERE [F工号] = @no", ("@no", EmpNo));
-            if (seededNetwork) await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号] = @code AND [F组织ID] = @org", ("@code", NetCode), ("@org", OrgId));
+            // 无条件删本测试用到的两脏名别名 + 合成工号 + 网点（arrange 已 force-correct 由本测试写入，删除范围安全）。
+            await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName2), ("@org", OrgId));
+            await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName), ("@org", OrgId));
+            await ExecAsync(conn, "DELETE FROM [EXP业务员] WHERE [F工号] = @no", ("@no", EmpNo));
+            await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号] = @code AND [F组织ID] = @org", ("@code", NetCode), ("@org", OrgId));
         }
     }
 
     private static async Task<bool> EnsureAlias2Async(STOTOPDbContext db)
     {
-        var exists = await db.Set<ExpSalesmanAlias>()
+        // 第二脏名同样 force-correct（删任何既有 (脏名2+org) 再插），避免残留映射污染。
+        var existing = await db.Set<ExpSalesmanAlias>()
             .IgnoreQueryFilters()
-            .AnyAsync(a => a.FName == DirtyName2 && a.FOrgId == OrgId);
-        if (exists) return false;
+            .Where(a => a.FName == DirtyName2 && a.FOrgId == OrgId)
+            .ToListAsync();
+        if (existing.Count > 0) db.Set<ExpSalesmanAlias>().RemoveRange(existing);
 
         db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias
         {
@@ -314,12 +318,19 @@ public class UnifyCourierFulfillTests
     // 安排 / 清理 helper
     // ─────────────────────────────────────────────────────────────
 
+    // 种子策略：force-correct（arrange 先删任何既有同键，再插本测试期望的映射），使本测试对其脏名→工号映射
+    // 具有权威性，不受残留/执行顺序影响（根治「别名已存在则跳过」导致解析到错工号的隔离假阴性）。
+    // 各方法仍返回 true（统一签名），但 finally 改为无条件清理本测试用到的具体脏名/合成工号，不再用返回值门控。
+
     private static async Task<bool> EnsureNetworkAsync(STOTOPDbContext db)
     {
-        var exists = await db.Set<ExpNetworkPoint>()
+        // 网点编码 320288 / 全称是真实主数据，可能与库内既有重合；用 (编码+org) force-correct，
+        // 仅替换本测试关心的那一条键，确保全称匹配目标一致。
+        var existing = await db.Set<ExpNetworkPoint>()
             .IgnoreQueryFilters()
-            .AnyAsync(np => np.FCode == NetCode && np.FOrgId == OrgId);
-        if (exists) return false;
+            .Where(np => np.FCode == NetCode && np.FOrgId == OrgId)
+            .ToListAsync();
+        if (existing.Count > 0) db.Set<ExpNetworkPoint>().RemoveRange(existing);
 
         db.Set<ExpNetworkPoint>().Add(new ExpNetworkPoint
         {
@@ -334,10 +345,12 @@ public class UnifyCourierFulfillTests
 
     private static async Task<bool> EnsureSalesmanAsync(STOTOPDbContext db)
     {
-        var exists = await db.Set<ExpSalesman>()
+        // 合成工号 3209999 仅供测试；force-correct 删任何既有再插，确保网点/状态符合本测试期望。
+        var existing = await db.Set<ExpSalesman>()
             .IgnoreQueryFilters()
-            .AnyAsync(s => s.FEmployeeNo == EmpNo);
-        if (exists) return false;
+            .Where(s => s.FEmployeeNo == EmpNo)
+            .ToListAsync();
+        if (existing.Count > 0) db.Set<ExpSalesman>().RemoveRange(existing);
 
         db.Set<ExpSalesman>().Add(new ExpSalesman
         {
@@ -353,10 +366,13 @@ public class UnifyCourierFulfillTests
 
     private static async Task<bool> EnsureAliasAsync(STOTOPDbContext db)
     {
-        var exists = await db.Set<ExpSalesmanAlias>()
+        // 关键修复点：脏名「城区吴健304」可能被其它测试（D1）残留映射到别的工号 → 旧逻辑「已存在则跳过」会
+        // 致本测试不种 3209999、matcher 解析到错工号。force-correct：删任何 (脏名+org) 既有，再插本测试期望的映射。
+        var existing = await db.Set<ExpSalesmanAlias>()
             .IgnoreQueryFilters()
-            .AnyAsync(a => a.FName == DirtyName && a.FOrgId == OrgId);
-        if (exists) return false;
+            .Where(a => a.FName == DirtyName && a.FOrgId == OrgId)
+            .ToListAsync();
+        if (existing.Count > 0) db.Set<ExpSalesmanAlias>().RemoveRange(existing);
 
         db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias
         {
