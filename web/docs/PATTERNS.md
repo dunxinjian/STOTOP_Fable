@@ -95,6 +95,7 @@ PageHeader 首行（toolbar-primary，恒显示）：
 | `backTo` prop | `#page-toolbar-left` | 返回按钮（主色 hover 浅橙） |
 
 - 标题不在页内显示，由面包屑承担；不改 keep-alive token 注册机制（`registerToolbar`/`instanceToken`）。
+- **页面 scoped `:deep` 够不到工具栏内容**：`#left`/`#actions`/`#toolbar` 被 Teleport 到面包屑（`AppBreadcrumb`）外层 DOM，页面 `<style scoped>`（含 `:deep`）无法命中被传送走的控件。要调工具栏控件的高度/样式，用**组件 prop**（如分段控件 `size="middle"` 拿原生 32px，对齐右簇筛选/按钮）或在 **`AppBreadcrumb` 的 `.toolbar-right :deep(...)`** 加全局规则；写进页面 scoped 里不生效（曾踩：分段 Tab scoped 高度无效，实测仍 24px）。
 
 ### EmptyState
 
