@@ -29,4 +29,22 @@ public static class TestDbContextFactory
 
         return new STOTOPDbContext(options);
     }
+
+    public static STOTOPDbContext Create(string databaseName, long? currentOrgId)
+    {
+        STOTOPDbContext.RegisterModuleAssembly(typeof(CfCard).Assembly);
+        STOTOPDbContext.RegisterModuleAssembly(typeof(OaExpenseRequest).Assembly);
+        STOTOPDbContext.RegisterModuleAssembly(typeof(SysUser).Assembly);
+        STOTOPDbContext.RegisterModuleAssembly(typeof(FinVoucher).Assembly);
+        STOTOPDbContext.RegisterModuleAssembly(typeof(ExpSalesman).Assembly);
+        STOTOPDbContext.RegisterModuleAssembly(typeof(QlException).Assembly);
+
+        var options = new DbContextOptionsBuilder<STOTOPDbContext>()
+            .UseInMemoryDatabase($"{databaseName}_{Guid.NewGuid():N}")
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .EnableSensitiveDataLogging()
+            .Options;
+
+        return new STOTOPDbContext(options, new TestOrgContextAccessor(currentOrgId));
+    }
 }
