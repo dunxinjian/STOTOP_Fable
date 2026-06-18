@@ -182,7 +182,7 @@ function handleCancel() {
 
 .oa-info {
   padding: 8px 12px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: $border-radius-sm;
   font-size: $font-size-sm;
   color: $text-regular;

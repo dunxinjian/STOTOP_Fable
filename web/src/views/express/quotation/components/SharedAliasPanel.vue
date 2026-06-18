@@ -28,11 +28,11 @@
     <template v-if="sharedShopEnabled">
       <a-divider style="margin: 12px 0 8px" />
       <div style="margin-bottom: 8px; font-weight: 500;">共享别名</div>
-      <div v-if="aliasList.length === 0" style="color: #999; font-size: 12px;">暂无别名</div>
+      <div v-if="aliasList.length === 0" style="color: var(--text-3); font-size: 12px;">暂无别名</div>
       <div v-else class="alias-tags">
         <a-tag v-for="alias in aliasList" :key="alias.id" :color="alias.isActive ? 'blue' : 'default'">
           {{ alias.alias }}
-          <span v-if="!alias.isActive" style="margin-left: 4px; color: #999">(已停用)</span>
+          <span v-if="!alias.isActive" style="margin-left: 4px; color: var(--text-3)">(已停用)</span>
         </a-tag>
       </div>
     </template>
@@ -45,7 +45,7 @@
       width="600px"
       centered
     >
-      <p style="color: #999;">店铺与别名的批量管理功能，请通过报价列表页的"批量管理"入口操作。</p>
+      <p style="color: var(--text-3);">店铺与别名的批量管理功能，请通过报价列表页的"批量管理"入口操作。</p>
     </a-modal>
   </div>
 </template>

@@ -38,7 +38,7 @@
             选择文件
           </a-button>
         </a-upload>
-        <div v-if="fileList.length" style="margin-top: 4px; color: #999; font-size: 12px;">
+        <div v-if="fileList.length" style="margin-top: 4px; color: var(--text-3); font-size: 12px;">
           支持 .xlsx、.xls 格式
         </div>
       </a-form-item>

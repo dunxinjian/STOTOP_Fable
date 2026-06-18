@@ -15,7 +15,7 @@
         </template>
         <template v-if="column.dataIndex === 'change'">
           <span class="old-value">{{ record.fOldValue || '(空)' }}</span>
-          <span style="margin: 0 6px; color: #999;">→</span>
+          <span style="margin: 0 6px; color: var(--text-3);">→</span>
           <span class="new-value">{{ record.fNewValue || '(空)' }}</span>
         </template>
       </template>

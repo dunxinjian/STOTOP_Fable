@@ -478,15 +478,15 @@ onMounted(() => {
 .aside-section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 // 功能入口区
 .aside-entries {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   padding-top: 8px;
   margin-top: 12px;
 }

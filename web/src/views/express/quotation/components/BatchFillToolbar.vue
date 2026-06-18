@@ -331,7 +331,7 @@ function handleColumnAdjust() {
 
 .group-label {
   font-size: 13px;
-  color: #666;
+  color: var(--text-2);
   white-space: nowrap;
 }
 

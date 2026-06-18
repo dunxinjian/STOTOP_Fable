@@ -269,7 +269,7 @@ async function handleViewDetail(id: number | string) {
 
   &.linked {
     background: var(--color-success-light);
-    border-color: #b7eb8f;
+    border-color: var(--color-success);
   }
 
   .scheme-info {

@@ -200,7 +200,7 @@ async function fetchGroups(shopName: string) {
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid $border-color-lighter;
   overflow: hidden;
 }

@@ -495,7 +495,7 @@ function handleImportSuccess() {
   border: 1px solid $border-color-lighter;
   border-radius: 0;
   overflow: hidden;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .left-panel {
@@ -580,7 +580,7 @@ function handleImportSuccess() {
 .all-quotation-area {
   height: 100%;
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid $border-color-lighter;
   border-radius: 0;
   display: flex;
