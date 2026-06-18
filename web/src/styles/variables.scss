@@ -76,12 +76,14 @@ $text-primary: var(--text-1, #1F2329);
 $text-regular: var(--text-2, #5A6068);
 $text-secondary: var(--text-3, #8A9099);
 $text-placeholder: var(--text-disabled, #BFC3C9);
+$text-on-accent: var(--text-on-accent, #FFFFFF); // 强调色块上的文字/图标
 
 // ===== 边框颜色（统一分隔线，桥接权威边框令牌）=====
 $border-color: var(--border, #E6E8EB);
 $border-color-light: var(--border, #E6E8EB);
 $border-color-lighter: var(--border, #E6E8EB);
 $border-color-faint: var(--border-faint, #F2F4F6); // 耳语级细线（比 --border 更浅一档）
+$color-danger-border: var(--color-danger-border, rgba(214, 88, 78, 0.30)); // 危险态焦点环/描边
 
 // ===== 背景颜色 =====
 $bg-page: var(--bg-page, #F5F6F8);

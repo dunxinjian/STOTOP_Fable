@@ -193,6 +193,7 @@ PageHeader 首行（toolbar-primary，恒显示）：
 | 文字 1/2/3/禁用 | `--text-1` / `--text-2` / `--text-3` / `--text-disabled` | `#1F2329` / `#5A6068` / `#8A9099` / `#BFC3C9` |
 | 表面 / 卡片 / 弱底 | `--bg-page` / `--bg-card` / `--bg-muted` | `#F7F8FA` / `#FFFFFF` / `#F1F3F6` |
 | 边框 普通 / 更浅(耳语) / 更强 | `--border` / `--border-faint` / `--border-strong` | `#ECEEF1` / `#F2F4F6` / `#DDE0E4` |
+| 强调块上文字 / 危险焦点环 | `--text-on-accent` / `--color-danger-border` | `#FFFFFF` / `rgba(214,88,78,.30)` |
 | 业务色 | `--biz-waybill/contract/quality/approval/points/finance` | 见 TOKENS.md |
 | 圆角 | `--radius-sm/md/lg/modal/pill` | `4/6/8/12/999px` |
 | 阴影 | `--shadow-sm/md/lg` | `0 1px 2px…` / `0 4px 12px…` / `0 8px 24px…` |

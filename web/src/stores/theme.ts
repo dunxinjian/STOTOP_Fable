@@ -279,6 +279,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--color-danger', c.colorError || '#D6584E')
     s.setProperty('--color-danger-light', '#FBEEEC')
     s.setProperty('--color-danger-text', '#9E332B')
+    s.setProperty('--color-danger-border', 'rgba(214, 88, 78, 0.30)') // 危险态焦点环/描边(对齐 --color-primary-border .30 口径)
     s.setProperty('--color-info', c.colorInfo || '#5B7290')
     s.setProperty('--color-info-light', '#EBEFF4')
     s.setProperty('--color-info-text', '#34455A')
@@ -287,6 +288,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--text-2', '#5A6068')
     s.setProperty('--text-3', '#8A9099')
     s.setProperty('--text-disabled', '#BFC3C9')
+    s.setProperty('--text-on-accent', '#FFFFFF') // 强调色块(橙/红/危险)之上的文字/图标色
     // —— 静态：表面/边框
     s.setProperty('--bg-page', '#F7F8FA')
     s.setProperty('--bg-card', '#FFFFFF')

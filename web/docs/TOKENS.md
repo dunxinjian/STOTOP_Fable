@@ -15,6 +15,7 @@
 | `--color-primary-active` | `#C94E00` | 主色按下 |
 | `--color-primary-light` | `#FFF3EA` | 主色浅底 |
 | `--color-primary-border` | `rgba(232,94,0,0.30)` | 主色描边 |
+| `--color-danger-border` | `rgba(214,88,78,0.30)` | 危险态焦点环/描边（对齐 --color-primary-border .30 口径） |
 
 ## 状态色（成功/警告/危险/信息，各带 -light/-text）
 
@@ -29,7 +30,7 @@
 
 ## 文字 / 表面 / 边框
 
-`--text-1 #1F2329` `--text-2 #5A6068` `--text-3 #8A9099` `--text-disabled #BFC3C9`
+`--text-1 #1F2329` `--text-2 #5A6068` `--text-3 #8A9099` `--text-disabled #BFC3C9` `--text-on-accent #FFFFFF`（强调色块上文字/图标）
 `--bg-page #F5F6F8` `--bg-card #FFFFFF` `--bg-muted #EEF0F3` `--border #E6E8EB` `--border-strong #D6D9DD`
 
 ## 外壳（topbar / sidebar）
