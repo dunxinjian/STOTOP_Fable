@@ -128,13 +128,11 @@ function onChange(pag: any) {
   background: var(--bg-card) !important;
 }
 
-// 列头精修：中性字色 + 收字重 + 字间距 + 清晰底线；上下加大呼吸（比数据行高一截，与首行拉开层次）
+// 列头精修：中性字色 + 收字重 + 字间距 + 清晰底线（紧贴数据行、不留间隔，靠样式区分而非空白）
 :deep(.ant-table-thead > tr > th) {
   color: var(--text-2);
   font-weight: 500;
   letter-spacing: 0.02em;
-  padding-top: 9px !important;
-  padding-bottom: 9px !important;
   border-bottom: 1px solid var(--border);
 }
 
