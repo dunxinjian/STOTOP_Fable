@@ -51,19 +51,14 @@ export function getPendingCount(params: { carrier: string }) {
   return get('/quality/carrier-dashboard/pending-count', params)
 }
 
-// 导出 URL（直接 window.open 走浏览器下载，带鉴权头需后端支持，否则用 a 标签+blob）
-export function buildExportUrl(params: EventQueryParams): string {
-  const qs = new URLSearchParams()
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') qs.append(k, String(v)) })
-  return `/api/quality/carrier-dashboard/events/export?${qs.toString()}`
+// 鉴权 blob 下载（带 Authorization header，避免 window.open 丢 JWT）
+export function exportEvents(params: EventQueryParams): Promise<Blob> {
+  return get<Blob>('/quality/carrier-dashboard/events/export', params, { responseType: 'blob' })
 }
 
 // ── 认领页（复用现有 unify 接口）──
 export function getPendingEmployees() {
   return get('/quality/unify/pending-employees')
-}
-export function runUnify() {
-  return post('/quality/unify/run')
 }
 export function rematchUnify() {
   return post('/quality/unify/rematch')

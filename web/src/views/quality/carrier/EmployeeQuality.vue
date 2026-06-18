@@ -67,11 +67,24 @@ const metricColumns = [
   { title: '网点', dataIndex: 'networkCode', width: 90 },
   { title: '派件量', dataIndex: '派件量', width: 80 },
   { title: '当日派签量', dataIndex: '当日派签量', width: 100 },
+  { title: '应上门量', dataIndex: '应上门量', width: 90 },
+  { title: '未上门量', dataIndex: '未上门量', width: 90 },
   { title: '客诉发起量', dataIndex: '客诉发起量', width: 100 },
+  { title: '工单定责量', dataIndex: '工单定责量', width: 100 },
   { title: '虚假签收数', dataIndex: '虚假签收数', width: 100 },
+  { title: '照片质检不合格数', dataIndex: '照片质检不合格数', width: 110 },
   { title: '超时T0', dataIndex: '派送超时T0数', width: 80 },
+  { title: '超时T1', dataIndex: '派送超时T1数', width: 80 },
+  { title: '超时T2', dataIndex: '派送超时T2数', width: 80 },
   { title: '超时T3', dataIndex: '派送超时T3数', width: 80 },
+  { title: '揽收不及时数', dataIndex: '揽收不及时数', width: 100 },
+  { title: '上传不及时数', dataIndex: '上传不及时数', width: 100 },
   { title: '问题件数', dataIndex: '问题件数', width: 90 },
+  { title: '违规虚假电联', dataIndex: '违规虚假电联', width: 100 },
+  { title: '违规无效电联', dataIndex: '违规无效电联', width: 100 },
+  { title: '违规照片定位虚假', dataIndex: '违规照片定位虚假', width: 110 },
+  { title: '违规签收文本不规范', dataIndex: '违规签收文本不规范', width: 120 },
+  { title: '违规引导代收', dataIndex: '违规引导代收', width: 100 },
   { title: '违规双签', dataIndex: '违规双签', width: 90 },
   { title: '考核金额合计', dataIndex: '考核金额合计', width: 110 },
 ]
@@ -128,7 +141,7 @@ onMounted(() => { fetchRank(); fetchMetrics() })
     <a-card title="员工21指标明细" size="small">
       <a-table
         :columns="metricColumns" :data-source="metrics" :loading="loading" row-key="empNo" size="small"
-        :scroll="{ x: 1200, y: 'calc(100vh - 460px)' }"
+        :scroll="{ x: 2600, y: 'calc(100vh - 460px)' }"
         :pagination="{ current: page, pageSize: size, total: metricsTotal, showSizeChanger: true, showQuickJumper: true, showTotal: (t: number) => `共 ${t} 条` }"
         @change="onTableChange">
         <template #bodyCell="{ column, record }">

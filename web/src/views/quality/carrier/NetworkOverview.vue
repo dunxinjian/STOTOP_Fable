@@ -44,8 +44,8 @@ function ensureChart(el: HTMLElement | undefined, cur: echarts.ECharts | null): 
   if (cur && cur.getDom() !== el) { cur.dispose(); cur = null }
   if (!cur) {
     cur = echarts.init(el)
-    ro?.disconnect(); ro = new ResizeObserver(() => { trendChart?.resize(); domainChart?.resize(); feeChart?.resize() })
-    if (trendRef.value) ro.observe(trendRef.value)
+    if (!ro) ro = new ResizeObserver(() => { trendChart?.resize(); domainChart?.resize(); feeChart?.resize() })
+    ro.observe(el)
   }
   return cur
 }
@@ -138,6 +138,8 @@ onBeforeUnmount(() => { ro?.disconnect(); trendChart?.dispose(); domainChart?.di
       <div class="kpi-item"><span class="kpi-label">虚签率</span><span class="kpi-value">{{ fmtRate(kpi.fakeSignRate) }}</span></div>
       <div class="kpi-divider" />
       <div class="kpi-item"><span class="kpi-label">考核金额合计</span><span class="kpi-value">¥{{ fmtNum(kpi.totalAssessFee) }}</span></div>
+      <div class="kpi-divider" />
+      <div class="kpi-item"><span class="kpi-label">问题件数</span><span class="kpi-value">{{ fmtNum(kpi.problemEventCount) }}</span></div>
     </div>
 
     <a-row :gutter="12">
