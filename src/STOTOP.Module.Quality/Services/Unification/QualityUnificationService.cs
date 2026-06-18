@@ -333,11 +333,354 @@ public class QualityUnificationService : IQualityUnificationService
     {
         return desc.StgTableName switch
         {
-            // 批次4在此追加各 NM 源的 typed 子集合并方法。
+            // ── C3 批次4：6 个网点指标源，逐源 typed 子集合并 upsert（照 UnifyBacklogMonitorAsync 范式）──
+            ShentongSourceMap.InfoIndexTimelyTable => UnifyInfoIndexTimelyAsync(orgId, desc, ct),
+            ShentongSourceMap.InfoIndexCompleteTable => UnifyInfoIndexCompleteAsync(orgId, desc, ct),
+            ShentongSourceMap.InfoIndexAccurateTable => UnifyInfoIndexAccurateAsync(orgId, desc, ct),
+            ShentongSourceMap.PickupAssessTable => UnifyPickupAssessAsync(orgId, desc, ct),
+            ShentongSourceMap.OutboundAssessTable => UnifyOutboundAssessAsync(orgId, desc, ct),
+            ShentongSourceMap.HandoverSummaryTable => UnifyHandoverSummaryAsync(orgId, desc, ct),
             _ => throw new NotSupportedException(
                 $"网点指标源「{desc.StgTableName}」尚未实现（C3 批次4填）"),
         };
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // C3 批次4：6 个网点指标源 typed 方法。每源照 UnifyBacklogMonitorAsync 范式：
+    //   投影读 STG → 网点匹配 → 业务日期 .Date 截断 → 同批字典去重 + 合并 upsert（只刷本源子集）。
+    // 6 源字段子集互不相交：
+    //   及时 → F揽收/派件/签收上传不及时率；完整 → F揽收/派件/到件缺失率；准确 → F不准确率/F到件不准确率；
+    //   揽收考核 → F及时揽收率/F未及时揽收量；出仓考核 → F一频次出仓及时率/F未及时出仓量/F出仓预估考核金额；
+    //   滞留汇总 → F滞留率/F考核滞留量/F滞留预估考核金额。
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>① 物流信息及时汇总 → 网点日指标（子集：揽收/派件/签收上传不及时率）。本源<b>无网点编码列，仅有名称</b>。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyInfoIndexTimelyAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongInfoIndexTimely>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new InfoTimelyRow(
+                r.FID, r.F批次ID, r.F网点名称, r.F统计日期,
+                r.F揽收上传不及时率, r.F派件上传不及时率, r.F签收上传不及时率))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            // 本源无网点编码列，仅有名称 → 按名称匹配；匹配到用 net.Code，未匹配回退源名称原文（保证唯一键稳定、不丢行）。
+            var net = await _matcher.ResolveNetworkAsync(null, row.F网点名称, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F网点名称 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F网点名称, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：物流信息上传不及时率（率存百分数；源列带 % 由 TryDecimal 仅去符号不除100）。
+            metric.F揽收上传不及时率 = ParseUtil.TryDecimal(row.F揽收上传不及时率);
+            metric.F派件上传不及时率 = ParseUtil.TryDecimal(row.F派件上传不及时率);
+            metric.F签收上传不及时率 = ParseUtil.TryDecimal(row.F签收上传不及时率);
+            // 其它 NM 源字段（完整/准确/揽收/出仓/滞留/积压…）一律不碰，保持既有值。
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>② 物流信息完整汇总 → 网点日指标（子集：揽收/派件/到件缺失率）。本源<b>无网点编码列，仅有名称</b>。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyInfoIndexCompleteAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongInfoIndexComplete>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new InfoCompleteRow(
+                r.FID, r.F批次ID, r.F网点名称, r.F统计日期,
+                r.F揽收缺失率, r.F派件缺失率, r.F到件缺失率))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(null, row.F网点名称, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F网点名称 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F网点名称, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：缺失率。
+            metric.F揽收缺失率 = ParseUtil.TryDecimal(row.F揽收缺失率);
+            metric.F派件缺失率 = ParseUtil.TryDecimal(row.F派件缺失率);
+            metric.F到件缺失率 = ParseUtil.TryDecimal(row.F到件缺失率);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>③ 物流信息准确汇总 → 网点日指标（子集：不准确率/到件不准确率）。本源<b>无网点编码列，仅有名称</b>。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyInfoIndexAccurateAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongInfoIndexAccurate>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new InfoAccurateRow(
+                r.FID, r.F批次ID, r.F网点名称, r.F统计日期,
+                r.F不准确率, r.F到件不准确率))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(null, row.F网点名称, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F网点名称 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F网点名称, area: null, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：准确率。
+            metric.F不准确率 = ParseUtil.TryDecimal(row.F不准确率);
+            metric.F到件不准确率 = ParseUtil.TryDecimal(row.F到件不准确率);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>④ 揽收考核汇总 → 网点日指标（子集：及时揽收率/未及时揽收量）。本源<b>有网点编码</b>（F揽收所属网点编码）。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyPickupAssessAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongPickupAssess>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new PickupAssessRow(
+                r.FID, r.F批次ID, r.F揽收所属网点编码, r.F揽收所属网点, r.F统计日期, r.F揽收省区,
+                r.F及时揽收率, r.F未及时揽收量))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            // 本源有网点编码（带名称兜底）；匹配到用 net.Code，未匹配回退源编码原文。
+            var net = await _matcher.ResolveNetworkAsync(row.F揽收所属网点编码, row.F揽收所属网点, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F揽收所属网点编码 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F揽收所属网点, area: null, province: row.F揽收省区, batchId: row.F批次ID);
+
+            // 本源负责子集：揽收（率存百分数；源「及时揽收率」无尾缀纯数值如 99.68 原样解析，未及时量整数）。
+            metric.F及时揽收率 = ParseUtil.TryDecimal(row.F及时揽收率);
+            metric.F未及时揽收量 = ParseUtil.TryInt(row.F未及时揽收量);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>⑤ 出仓考核汇总 → 网点日指标（子集：一频次出仓及时率/未及时出仓量/出仓预估考核金额）。本源<b>有网点编码</b>（F所属网点编码）。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyOutboundAssessAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongOutboundAssess>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new OutboundAssessRow(
+                r.FID, r.F批次ID, r.F所属网点编码, r.F所属网点, r.F统计日期, r.F片区,
+                r.F一频次考核出仓及时率, r.F一频次考核未及时出仓量, r.F一频次考核预估考核金额元))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(row.F所属网点编码, row.F所属网点, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F所属网点编码 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F所属网点, area: row.F片区, province: null, batchId: row.F批次ID);
+
+            // 本源负责子集：出仓（一频次=考核频次；率带 % 由 TryDecimal 去符号；金额 TryDecimal）。
+            metric.F一频次出仓及时率 = ParseUtil.TryDecimal(row.F一频次考核出仓及时率);
+            metric.F未及时出仓量 = ParseUtil.TryInt(row.F一频次考核未及时出仓量);
+            metric.F出仓预估考核金额 = ParseUtil.TryDecimal(row.F一频次考核预估考核金额元);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    /// <summary>⑥ 交货滞留汇总 → 网点日指标（子集：滞留率/考核滞留量/滞留预估考核金额）。本源<b>有网点编码</b>（F揽收所属网点编码）。
+    /// 注：草案「滞留预估考核金额」在 STG 真名为 <c>F滞留预估考核日</c>（导出列「滞留预估考核-日」去连字符），语义即滞留预估考核金额，映射到 QL <c>F滞留预估考核金额</c>。</summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyHandoverSummaryAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        var rows = await _db.Set<StgShentongHandoverSummary>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new HandoverSummaryRow(
+                r.FID, r.F批次ID, r.F揽收所属网点编码, r.F揽收网点所属网点, r.F统计日期, r.F揽收网点省区,
+                r.F滞留率, r.F考核滞留量, r.F滞留预估考核日))
+            .ToListAsync(ct);
+
+        int netUpserts = 0, networkUnmatched = 0, skipped = 0;
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
+        foreach (var row in rows)
+        {
+            var net = await _matcher.ResolveNetworkAsync(row.F揽收所属网点编码, row.F揽收网点所属网点, orgId, ct);
+            var netCode = net.Status == 1 ? net.Code : (row.F揽收所属网点编码 ?? "");
+            if (net.Status == 0) networkUnmatched++;
+
+            var bizDate = ParseUtil.TryDate(row.F统计日期)?.Date;
+            if (bizDate == null || string.IsNullOrEmpty(netCode)) { skipped++; continue; }
+
+            var (metric, isNew) = await GetOrAddNetworkMetricAsync(orgId, bizDate.Value, netCode!, metricCache, ct);
+            ApplyKeyAndCommonDims(metric, orgId, bizDate.Value, netCode!,
+                networkName: row.F揽收网点所属网点, area: null, province: row.F揽收网点省区, batchId: row.F批次ID);
+
+            // 本源负责子集：滞留（滞留率带 % 或纯数值由 TryDecimal 处理；考核滞留量整数；滞留预估考核日＝滞留预估考核金额）。
+            metric.F滞留率 = ParseUtil.TryDecimal(row.F滞留率);
+            metric.F考核滞留量 = ParseUtil.TryInt(row.F考核滞留量);
+            metric.F滞留预估考核金额 = ParseUtil.TryDecimal(row.F滞留预估考核日);
+
+            FinishUpsert(metric, isNew);
+            netUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new UnifyResult(0, 0, netUpserts, networkUnmatched, 0);
+    }
+
+    // ── 批次4 共用 helper：网点日指标合并 upsert 的同批去重查/建、键+公共维度写入、收尾 Add ──
+
+    /// <summary>
+    /// 按 (业务日期, 网点编码) 取网点日指标实体（先查同批缓存→再查库→库无则 new+Add+入缓存），返回 (实体, 是否新建)。
+    /// 与 UnifyBacklogMonitorAsync 同批去重逻辑一致：避免同批同键两行各 Add 撞 DB 唯一索引整批回滚。
+    /// </summary>
+    private async global::System.Threading.Tasks.Task<(QlShentongNetworkDailyMetric metric, bool isNew)> GetOrAddNetworkMetricAsync(
+        long orgId, DateTime bizDate, string netCode,
+        Dictionary<(DateTime, string), QlShentongNetworkDailyMetric> cache, CancellationToken ct)
+    {
+        var key = (bizDate, netCode);
+        if (cache.TryGetValue(key, out var cached)) return (cached, false);
+
+        var existing = await _db.Set<QlShentongNetworkDailyMetric>()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(m =>
+                m.FOrgId == orgId &&
+                m.F承运商 == "申通" &&
+                m.F业务日期 == bizDate &&
+                m.F网点编码 == netCode, ct);
+
+        var isNew = existing == null;
+        var metric = existing ?? new QlShentongNetworkDailyMetric();
+        cache[key] = metric;
+        return (metric, isNew);
+    }
+
+    /// <summary>
+    /// 写键 + 公共维度（多源都可写）。公共维度（网点名称/片区/省区）仅在本源有值时刷新，不清空别源已填值。
+    /// </summary>
+    private static void ApplyKeyAndCommonDims(
+        QlShentongNetworkDailyMetric metric, long orgId, DateTime bizDate, string netCode,
+        string? networkName, string? area, string? province, long batchId)
+    {
+        metric.FOrgId = orgId;
+        metric.F承运商 = "申通";
+        metric.F业务日期 = bizDate;
+        metric.F统计年月 = ParseUtil.Ym(bizDate);
+        metric.F网点编码 = netCode;
+        if (!string.IsNullOrWhiteSpace(networkName)) metric.F网点名称 = networkName;
+        if (!string.IsNullOrWhiteSpace(area)) metric.F片区 = area;
+        if (!string.IsNullOrWhiteSpace(province)) metric.F省区 = province;
+        metric.F来源批次ID = batchId;
+    }
+
+    /// <summary>新建实体补创建时间并 Add（既有实体只更新字段，EF 自动跟踪）。</summary>
+    private void FinishUpsert(QlShentongNetworkDailyMetric metric, bool isNew)
+    {
+        if (isNew)
+        {
+            metric.F创建时间 = DateTime.Now;
+            _db.Set<QlShentongNetworkDailyMetric>().Add(metric);
+        }
+    }
+
+    // ── 批次4 各源行内存投影（只含归一需要列，避免读全实体碰 NULL 系统列）──
+    private sealed record InfoTimelyRow(
+        long FID, long F批次ID, string? F网点名称, string? F统计日期,
+        string? F揽收上传不及时率, string? F派件上传不及时率, string? F签收上传不及时率);
+
+    private sealed record InfoCompleteRow(
+        long FID, long F批次ID, string? F网点名称, string? F统计日期,
+        string? F揽收缺失率, string? F派件缺失率, string? F到件缺失率);
+
+    private sealed record InfoAccurateRow(
+        long FID, long F批次ID, string? F网点名称, string? F统计日期,
+        string? F不准确率, string? F到件不准确率);
+
+    private sealed record PickupAssessRow(
+        long FID, long F批次ID, string? F揽收所属网点编码, string? F揽收所属网点, string? F统计日期, string? F揽收省区,
+        string? F及时揽收率, string? F未及时揽收量);
+
+    private sealed record OutboundAssessRow(
+        long FID, long F批次ID, string? F所属网点编码, string? F所属网点, string? F统计日期, string? F片区,
+        string? F一频次考核出仓及时率, string? F一频次考核未及时出仓量, string? F一频次考核预估考核金额元);
+
+    private sealed record HandoverSummaryRow(
+        long FID, long F批次ID, string? F揽收所属网点编码, string? F揽收网点所属网点, string? F统计日期, string? F揽收网点省区,
+        string? F滞留率, string? F考核滞留量, string? F滞留预估考核日);
 
     /// <summary>从行字典按列名取字符串值（NULL/缺列 → null；非字符串列 ToString）。</summary>
     private static string? Get(Dictionary<string, object?> row, string col)

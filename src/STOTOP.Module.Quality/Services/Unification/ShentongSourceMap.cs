@@ -124,6 +124,25 @@ public static class ShentongSourceMap
     /// <summary>STG申通_送货上门明细 表名常量（C3 批次3，虚假签收履约，<b>仅履约失败(F履约情况=履约失败)入事件</b>）。</summary>
     public const string HomeDeliveryTable = "STG申通_送货上门明细";
 
+    // ── C3 批次4：6 个网点指标源（NetworkMetric，各填互不相交的字段子集，按 网点×日 合并 upsert，typed 方法）──
+    /// <summary>STG申通_物流信息及时汇总 表名常量（C3 批次4，子集：揽收/派件/签收上传不及时率；无网点编码列仅名称）。</summary>
+    public const string InfoIndexTimelyTable = "STG申通_物流信息及时汇总";
+
+    /// <summary>STG申通_物流信息完整汇总 表名常量（C3 批次4，子集：揽收/派件/到件缺失率；无网点编码列仅名称）。</summary>
+    public const string InfoIndexCompleteTable = "STG申通_物流信息完整汇总";
+
+    /// <summary>STG申通_物流信息准确汇总 表名常量（C3 批次4，子集：不准确率/到件不准确率；无网点编码列仅名称）。</summary>
+    public const string InfoIndexAccurateTable = "STG申通_物流信息准确汇总";
+
+    /// <summary>STG申通_揽收考核汇总 表名常量（C3 批次4，子集：及时揽收率/未及时揽收量；有网点编码 F揽收所属网点编码）。</summary>
+    public const string PickupAssessTable = "STG申通_揽收考核汇总";
+
+    /// <summary>STG申通_出仓考核汇总 表名常量（C3 批次4，子集：一频次出仓及时率/未及时出仓量/出仓预估考核金额；有网点编码 F所属网点编码）。</summary>
+    public const string OutboundAssessTable = "STG申通_出仓考核汇总";
+
+    /// <summary>STG申通_交货滞留汇总 表名常量（C3 批次4，子集：滞留率/考核滞留量/滞留预估考核金额；有网点编码 F揽收所属网点编码）。</summary>
+    public const string HandoverSummaryTable = "STG申通_交货滞留汇总";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -531,5 +550,91 @@ public static class ShentongSourceMap
                 OnlyFilterEquals: "履约失败",          // 抽样确认：二值 履约失败 7 / 已履约 6，履约失败=被考核问题件
                 ProblemTypeConstant: "送货上门违规",   // 仅在列为 null 时兜底（本源列存在，不触发）
                 KeySnapshotColumns: new[] { "F统计日期", "F运单号", "F运单状态", "F承包区编号", "F承包区名称", "F业务员工号", "F派送小件员名称", "F回执情况", "F履约情况", "F违规行为二级内容", "F工单判罚类型", "F签收日期" }),
+
+            // ─────────────────────────────────────────────────────────────────────
+            // C3 批次4：6 个网点指标源（NetworkMetric，typed 方法逐源填互不相交字段子集，按 网点×日 合并 upsert）。
+            // 走 DispatchNetworkMetricAsync 按表名 switch 到各自 UnifyXxxAsync；typed 方法直接投影 STG 实体，
+            // 故下方描述符的列名字段仅作文档（实际列名以各 typed 方法内的实体投影为准）。
+            // 6 源字段子集互不相交，核实无抢占同一 QL 字段（见各 typed 方法注释）。
+            // ─────────────────────────────────────────────────────────────────────
+
+            // ① 物流信息及时汇总 → 子集：F揽收/派件/签收上传不及时率。无网点编码列，仅 F网点名称（按名称匹配，未匹配回退名称原文）。
+            [InfoIndexTimelyTable] = new ShentongSourceDescriptor(
+                StgTableName: InfoIndexTimelyTable,
+                QualityDomain: "物流信息",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: null,             // 无网点编码列，仅名称
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "INFT"),
+
+            // ② 物流信息完整汇总 → 子集：F揽收/派件/到件缺失率。无网点编码列，仅 F网点名称。
+            [InfoIndexCompleteTable] = new ShentongSourceDescriptor(
+                StgTableName: InfoIndexCompleteTable,
+                QualityDomain: "物流信息",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: null,
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "INFC"),
+
+            // ③ 物流信息准确汇总 → 子集：F不准确率/F到件不准确率。无网点编码列，仅 F网点名称。
+            [InfoIndexAccurateTable] = new ShentongSourceDescriptor(
+                StgTableName: InfoIndexAccurateTable,
+                QualityDomain: "物流信息",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: null,
+                NetworkNameColumn: "F网点名称",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "INFA"),
+
+            // ④ 揽收考核汇总 → 子集：F及时揽收率/F未及时揽收量。有网点编码 F揽收所属网点编码（按编码匹配，名称 F揽收所属网点 兜底）。
+            [PickupAssessTable] = new ShentongSourceDescriptor(
+                StgTableName: PickupAssessTable,
+                QualityDomain: "揽收时效",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F揽收所属网点编码",
+                NetworkNameColumn: "F揽收所属网点",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "PKAS"),
+
+            // ⑤ 出仓考核汇总 → 子集：F一频次出仓及时率/F未及时出仓量/F出仓预估考核金额。有网点编码 F所属网点编码。
+            [OutboundAssessTable] = new ShentongSourceDescriptor(
+                StgTableName: OutboundAssessTable,
+                QualityDomain: "出仓时效",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F所属网点编码",
+                NetworkNameColumn: "F所属网点",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "OBAS"),
+
+            // ⑥ 交货滞留汇总 → 子集：F滞留率/F考核滞留量/F滞留预估考核金额（STG真名 F滞留预估考核日，导出列「滞留预估考核-日」）。
+            //    有网点编码 F揽收所属网点编码（F揽收网点编码 抽样空，用「所属」编码），名称 F揽收网点所属网点。
+            [HandoverSummaryTable] = new ShentongSourceDescriptor(
+                StgTableName: HandoverSummaryTable,
+                QualityDomain: "交货滞留",
+                TargetKind: UnifyTargetKind.NetworkMetric,
+                NetworkCodeColumn: "F揽收所属网点编码",
+                NetworkNameColumn: "F揽收网点所属网点",
+                EmployeeNoColumn: null, EmployeeNameColumn: null,
+                ProblemTypeColumn: null,
+                DateColumn: "F统计日期",
+                WaybillColumn: null, PlatformColumn: null,
+                ProblemCodePrefix: "HDSM"),
         };
 }
