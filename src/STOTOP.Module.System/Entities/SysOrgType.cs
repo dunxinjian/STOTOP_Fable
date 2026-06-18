@@ -5,10 +5,10 @@ namespace STOTOP.Module.System.Entities;
 /// </summary>
 public class SysOrgType
 {
-    /// <summary>手动指定主键，与种子数据一致（1-6）</summary>
+    /// <summary>手动指定主键，与种子数据一致（1-9）</summary>
     public long FID { get; set; }
 
-    /// <summary>类型编码，如 GROUP / SUBSIDIARY / CENTER / BRANCH / DEPT / TEAM</summary>
+    /// <summary>类型编码，如 GROUP / SUBSIDIARY / CENTER / BRANCH / DEPT / TEAM / NETWORK_POINT / FRANCHISE_AREA / LAST_MILE_STATION</summary>
     public string FCode { get; set; } = "";
 
     /// <summary>类型名称，如 集团 / 子公司 / 中心 / 分公司 / 部门 / 团组</summary>
