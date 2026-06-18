@@ -89,7 +89,7 @@ public static class BasicDataSeeder
 
     // ========== EnsureOrgTypes ==========
     /// <summary>
-    /// 幂等初始化 SYS组织类型 种子数据（6条）
+    /// 幂等初始化 SYS组织类型 种子数据（9条）
     /// </summary>
     public static void EnsureOrgTypes(STOTOPDbContext context, bool isSqlServer = false)
     {
@@ -106,6 +106,9 @@ public static class BasicDataSeeder
             new() { FID = 4, FCode = "BRANCH",     FName = "分公司", FLevel = 3, FCanBindAccountSet = true,  FCanSwitch = true,  FIcon = "Location",      FSortOrder = 4, FIsEnabled = true, FCreateTime = now },
             new() { FID = 5, FCode = "DEPT",       FName = "部门",  FLevel = 3, FCanBindAccountSet = false, FCanSwitch = false, FIcon = "Files",          FSortOrder = 5, FIsEnabled = true, FCreateTime = now },
             new() { FID = 6, FCode = "TEAM",       FName = "团组",  FLevel = 4, FCanBindAccountSet = false, FCanSwitch = false, FIcon = "User",           FSortOrder = 6, FIsEnabled = true, FCreateTime = now },
+            new() { FID = 7, FCode = "NETWORK_POINT",      FName = "快递网点", FLevel = 3, FCanBindAccountSet = false, FCanSwitch = false, FIcon = "apartment",     FSortOrder = 7, FIsEnabled = true, FCreateTime = now },
+            new() { FID = 8, FCode = "FRANCHISE_AREA",     FName = "承包区",  FLevel = 4, FCanBindAccountSet = false, FCanSwitch = false, FIcon = "location_city", FSortOrder = 8, FIsEnabled = true, FCreateTime = now },
+            new() { FID = 9, FCode = "LAST_MILE_STATION",  FName = "末端驿站", FLevel = 4, FCanBindAccountSet = false, FCanSwitch = false, FIcon = "store",         FSortOrder = 9, FIsEnabled = true, FCreateTime = now },
         };
 
         context.Set<SysOrgType>().AddRange(types);
