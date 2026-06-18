@@ -149,14 +149,32 @@ public class UnifyBacklogMonitorTests
             Assert.True(result.NetworkMetricUpserts > 0, $"应有网点指标 upsert，实际 {result.NetworkMetricUpserts}");
 
             // ── 断言 1：网点日指标按 网点×日 落积压子集字段（非 null）──
+            // 同时纳入 F进港投诉率/F虚签投诉率（万分号源列，曾被 decimal.TryParse 判 false 落 null 丢数据）。
             var subsetOk = await CountAsync(conn,
                 $@"SELECT COUNT(*) FROM [{MetricTable}]
                    WHERE [FOrgId] = @org AND [F承运商] = N'申通' AND [F业务日期] = @d AND [F网点编码] = @code
                      AND [F积压倍数] IS NOT NULL AND [F遗失率ppm] IS NOT NULL
-                     AND [F进港投诉量] IS NOT NULL AND [F日均出港量] IS NOT NULL",
+                     AND [F进港投诉量] IS NOT NULL AND [F日均出港量] IS NOT NULL
+                     AND [F进港投诉率] IS NOT NULL AND [F虚签投诉率] IS NOT NULL",
                 ("@org", OrgId), ("@d", BizDate), ("@code", NetCode));
-            _log.WriteLine($"[积压子集] 积压倍数/遗失率ppm/进港投诉量/日均出港量 非空行数 = {subsetOk}（期望 1）");
+            _log.WriteLine($"[积压子集] 积压倍数/遗失率ppm/进港投诉量/日均出港量/进港投诉率/虚签投诉率 非空行数 = {subsetOk}（期望 1）");
             Assert.Equal(1, subsetOk);
+
+            // ── 断言 1b：万分号折算口径（率以「百分数数值」存）——文件 进港投诉率=6.4‱ → 0.064；虚签投诉率=3.69‱ → 0.0369 ──
+            // 用容差比较，避免浮点/精度脆弱；这两列若未支持万分号会落 null（上面断言已挡），此处再确认折算值正确。
+            var 进港投诉率 = await ScalarDecimalAsync(conn,
+                $@"SELECT [F进港投诉率] FROM [{MetricTable}]
+                   WHERE [FOrgId] = @org AND [F业务日期] = @d AND [F网点编码] = @code",
+                ("@org", OrgId), ("@d", BizDate), ("@code", NetCode));
+            var 虚签投诉率 = await ScalarDecimalAsync(conn,
+                $@"SELECT [F虚签投诉率] FROM [{MetricTable}]
+                   WHERE [FOrgId] = @org AND [F业务日期] = @d AND [F网点编码] = @code",
+                ("@org", OrgId), ("@d", BizDate), ("@code", NetCode));
+            _log.WriteLine($"[万分号折算] F进港投诉率={进港投诉率}（期望≈0.064），F虚签投诉率={虚签投诉率}（期望≈0.0369）");
+            Assert.NotNull(进港投诉率);
+            Assert.NotNull(虚签投诉率);
+            Assert.True(Math.Abs(进港投诉率!.Value - 0.064m) < 0.0001m, $"F进港投诉率 应≈0.064，实际 {进港投诉率}");
+            Assert.True(Math.Abs(虚签投诉率!.Value - 0.0369m) < 0.0001m, $"F虚签投诉率 应≈0.0369，实际 {虚签投诉率}");
 
             // ── 断言 2：只填子集——非本源「滞留」字段为 null（出仓被回归预置=99，单列下面专测）──
             var stayNull = await CountAsync(conn,
@@ -314,5 +332,16 @@ public class UnifyBacklogMonitorTests
         cmd.CommandText = sql;
         foreach (var (name, val) in ps) cmd.Parameters.AddWithValue(name, val);
         return Convert.ToInt32(await cmd.ExecuteScalarAsync());
+    }
+
+    private static async Task<decimal?> ScalarDecimalAsync(string conn, string sql, params (string name, object val)[] ps)
+    {
+        await using var c = new SqlConnection(conn);
+        await c.OpenAsync();
+        await using var cmd = c.CreateCommand();
+        cmd.CommandText = sql;
+        foreach (var (name, val) in ps) cmd.Parameters.AddWithValue(name, val);
+        var o = await cmd.ExecuteScalarAsync();
+        return o is null or DBNull ? (decimal?)null : Convert.ToDecimal(o);
     }
 }

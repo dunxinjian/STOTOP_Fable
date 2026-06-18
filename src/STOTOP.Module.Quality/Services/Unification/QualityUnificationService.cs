@@ -189,6 +189,11 @@ public class QualityUnificationService : IQualityUnificationService
 
         int empUpserts = 0, networkUnmatched = 0, employeeUnmatched = 0;
 
+        // 同批去重缓存：键 = (业务日期, 网点编码, 工号)。
+        // 防止同一次归一里出现两条相同唯一键行时，第二行查库查不到第一行刚 Add 但未 SaveChanges 的待插实体，
+        // 又 Add 第二个 → SaveChangesAsync 撞 DB 唯一索引 → 整批回滚。命中缓存则复用同一实例继续 upsert。
+        var metricCache = new Dictionary<(DateTime, string, string), QlShentongEmployeeDailyMetric>();
+
         foreach (var row in rows)
         {
             // ── 主数据匹配：网点（本源无编码，传名称）→ 员工（脏名，无工号）──
@@ -209,16 +214,25 @@ public class QualityUnificationService : IQualityUnificationService
             }
 
             // ── upsert 员工日指标（唯一键：工号 × 业务日期 × 网点编码，含 FOrgId/F承运商）──
-            var existing = await _db.Set<QlShentongEmployeeDailyMetric>()
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(m =>
-                    m.FOrgId == orgId &&
-                    m.F承运商 == "申通" &&
-                    m.F业务日期 == bizDate &&
-                    m.F网点编码 == net.Code &&
-                    m.F员工工号 == emp.EmployeeNo, ct);
+            // 先查同批缓存（命中=本批前面已处理过同键行，复用实例，isNew=false 避免重复 Add）；
+            // 未命中再查库；库无则 new+Add+入缓存。
+            var cacheKey = (bizDate, net.Code!, emp.EmployeeNo!);
+            bool isNew = false;
+            if (!metricCache.TryGetValue(cacheKey, out var metric))
+            {
+                var existing = await _db.Set<QlShentongEmployeeDailyMetric>()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(m =>
+                        m.FOrgId == orgId &&
+                        m.F承运商 == "申通" &&
+                        m.F业务日期 == bizDate &&
+                        m.F网点编码 == net.Code &&
+                        m.F员工工号 == emp.EmployeeNo, ct);
 
-            var metric = existing ?? new QlShentongEmployeeDailyMetric();
+                isNew = existing == null;
+                metric = existing ?? new QlShentongEmployeeDailyMetric();
+                metricCache[cacheKey] = metric;
+            }
 
             metric.FOrgId = orgId;
             metric.F承运商 = "申通";
@@ -255,7 +269,7 @@ public class QualityUnificationService : IQualityUnificationService
 
             metric.F来源批次ID = row.F批次ID;
 
-            if (existing == null)
+            if (isNew)
             {
                 metric.F创建时间 = DateTime.Now;
                 _db.Set<QlShentongEmployeeDailyMetric>().Add(metric);
@@ -329,11 +343,22 @@ public class QualityUnificationService : IQualityUnificationService
 
         int netUpserts = 0, networkUnmatched = 0, skipped = 0;
 
+        // 同批去重缓存：键 = (业务日期, 网点编码)。
+        // 防止同一次归一里出现两条相同 (网点×日) 行时，第二行查库查不到第一行刚 Add 但未 SaveChanges 的待插实体，
+        // 又 Add 第二个 → SaveChangesAsync 撞 DB 唯一索引 → 整批回滚。命中缓存则复用同一实例，
+        // 继续走「只刷本源子集不覆盖」的合并逻辑（同批重复键合并为一行）。
+        var metricCache = new Dictionary<(DateTime, string), QlShentongNetworkDailyMetric>();
+
         foreach (var row in rows)
         {
             // ── 网点匹配（本源有编码，按编码解析；无名称传 null）──
             var net = await _matcher.ResolveNetworkAsync(row.F网点编码, null, orgId, ct);
             // 网点编码（唯一键一部分）：匹配到用匹配码；未匹配回退源编码原文，避免丢行。
+            //
+            // 已知前提（C2 留作前提，不改键结构）：唯一键里「匹配码」与「未匹配回退原文」共用同一
+            // F网点编码 命名空间——极端下若某行匹配到的 net.Code 恰与另一行未匹配回退的 F网点编码 原文字面相同，
+            // 二者会被当作同一 (网点×日) 行合并。当前积压监控恒带网点编码、基本命中匹配，字面撞码概率极低，
+            // 故保留单一命名空间；若 C3 引入码空间不一致的源，需在键上区分「匹配码/原文码」来源。
             var netCode = net.Status == 1 ? net.Code : (row.F网点编码 ?? "");
             if (net.Status == 0) networkUnmatched++;
 
@@ -347,15 +372,24 @@ public class QualityUnificationService : IQualityUnificationService
             }
 
             // ── 合并 upsert（唯一键：FOrgId × 承运商 × 业务日期 × 网点编码）──
-            var existing = await _db.Set<QlShentongNetworkDailyMetric>()
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(m =>
-                    m.FOrgId == orgId &&
-                    m.F承运商 == "申通" &&
-                    m.F业务日期 == bizDate &&
-                    m.F网点编码 == netCode, ct);
+            // 先查同批缓存（命中=本批前面已处理过同键行，复用实例，isNew=false 避免重复 Add）；
+            // 未命中再查库；库无则 new+Add+入缓存。
+            var cacheKey = (bizDate.Value, netCode!);
+            bool isNew = false;
+            if (!metricCache.TryGetValue(cacheKey, out var metric))
+            {
+                var existing = await _db.Set<QlShentongNetworkDailyMetric>()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(m =>
+                        m.FOrgId == orgId &&
+                        m.F承运商 == "申通" &&
+                        m.F业务日期 == bizDate &&
+                        m.F网点编码 == netCode, ct);
 
-            var metric = existing ?? new QlShentongNetworkDailyMetric();
+                isNew = existing == null;
+                metric = existing ?? new QlShentongNetworkDailyMetric();
+                metricCache[cacheKey] = metric;
+            }
 
             // 键 + 公共维度（多源都可写；名称/片区/省区取本源原文，仅在有值时刷新，避免别源已填被清空）。
             metric.FOrgId = orgId;
@@ -388,7 +422,7 @@ public class QualityUnificationService : IQualityUnificationService
 
             metric.F来源批次ID = row.F批次ID;
 
-            if (existing == null)
+            if (isNew)
             {
                 metric.F创建时间 = DateTime.Now;
                 _db.Set<QlShentongNetworkDailyMetric>().Add(metric);

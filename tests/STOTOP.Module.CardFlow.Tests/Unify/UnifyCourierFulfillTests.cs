@@ -197,6 +197,119 @@ public class UnifyCourierFulfillTests
         }
     }
 
+    private const string DirtyName2 = "操作部吴健999"; // 第二个脏名（同人不同写法），别名同样映射到工号 3209999
+
+    /// <summary>
+    /// C2 修复2 同批重复键回归：直接向 STG 插入<b>两条</b>不同脏名、但都别名映射到<b>同一工号×网点</b>的行（同批次），
+    /// 二者归一后落到同一 QL 唯一键 (FOrgId,承运商,业务日期,网点编码,工号)。绕过导入、用测试 DbContext 直插。
+    ///
+    /// 修复前：员工指标路径逐行 FirstOrDefaultAsync 只查库，第二行查不到第一行刚 Add 未 SaveChanges 的待插实体 →
+    ///   又 Add 第二个 → SaveChangesAsync 撞唯一索引 UX_QL申通_员工日质量指标_日期网点员工 → 整批归一抛异常回滚。
+    /// 修复后：方法内维护内存字典按 (业务日期,网点编码,工号) 去重，同批重复键合并为一行。
+    /// 断言：不抛异常 + 该 (工号×日×网点) 仅 1 行（合并而非各自 Add）。try/finally 自清。
+    ///
+    /// 注：两脏名在 STG 唯一索引 (所属网点,所属小件员,FOrgId) 下是不同行（可共存），归一阶段才折叠到同一工号 → 同一 QL 键，
+    /// 这正是「同批重复键」的真实可达场景（与积压监控源不同——后者 STG 索引即网点×日，不可达，故护栏仅作模板防御）。
+    /// </summary>
+    [SkippableFact]
+    public async Task Unify_CourierFulfill_SameBatchDuplicateKey_MergedToSingleRow_NoIndexViolation()
+    {
+        Skip.IfNot(TestSqlConnection.IsAvailable, "无可用 SQL 连接，跳过集成测试");
+        var conn = TestSqlConnection.GetConnectionString()!;
+        TestSqlConnection.EnsureSystemConnectionFile();
+
+        await using var db = CreateDbContext(conn);
+        try { await db.Database.OpenConnectionAsync(); await db.Database.CloseConnectionAsync(); }
+        catch (Exception ex) { Skip.If(true, $"SQL 不可达，跳过：{ex.Message}"); }
+
+        CardFlowSeeder.Migrate(db);
+        QualityUnifySeeder.EnsureTables(db);
+
+        long batchId = 0;
+        bool seededNetwork = false, seededSalesman = false, seededAlias = false, seededAlias2 = false;
+        try
+        {
+            await CleanupMetricAsync(conn);
+            // 预清残留 STG（按本测试两脏名）
+            await ExecAsync(conn, $"DELETE FROM [{StgTable}] WHERE [FOrgId] = @org AND [F所属小件员] IN (@n1, @n2)",
+                ("@org", OrgId), ("@n1", DirtyName), ("@n2", DirtyName2));
+
+            seededNetwork = await EnsureNetworkAsync(db);
+            seededSalesman = await EnsureSalesmanAsync(db);
+            seededAlias = await EnsureAliasAsync(db);             // 城区吴健304 → 3209999
+            seededAlias2 = await EnsureAlias2Async(db);           // 操作部吴健999 → 3209999
+
+            // 建一个空批次（仅为批次日 → 业务日期；员工路径无日期列，业务日期取批次创建日）
+            var batch = new CfBatch
+            {
+                FFlowDefinitionId = 2324, FOrgId = OrgId, FTriggeredById = 1, FTriggeredTime = DateTime.Now,
+                FTriggerType = "fileUpload", FFilePath = "(dup-key-test)", FFileName = "(dup-key-test)",
+                FBatchNo = $"TESTC2DUP-{Guid.NewGuid():N}", FStatus = CfBatchStatus.Parsing,
+                FUploadMethod = "auto", FCreatedTime = DateTime.Now,
+            };
+            db.Set<CfBatch>().Add(batch);
+            await db.SaveChangesAsync();
+            batchId = batch.FID;
+
+            // ── 直插两条不同脏名、同批次的 STG 行（绕过导入）。两行某派签列取值不同以便观察合并 ──
+            db.Set<StgShentongCourierFulfill>().Add(new StgShentongCourierFulfill
+            {
+                FOrgId = OrgId, F批次ID = batchId, FIsRevoked = false,
+                F所属网点 = NetFullName, F所属小件员 = DirtyName,
+                F当日派签量 = "100", F当日派签率 = "99.0%", F客诉发起量 = "1",
+            });
+            db.Set<StgShentongCourierFulfill>().Add(new StgShentongCourierFulfill
+            {
+                FOrgId = OrgId, F批次ID = batchId, FIsRevoked = false,
+                F所属网点 = NetFullName, F所属小件员 = DirtyName2,
+                F当日派签量 = "200", F当日派签率 = "98.0%", F客诉发起量 = "2", // 故意与第一行不同
+            });
+            await db.SaveChangesAsync();
+
+            var batchDay = await ScalarDateAsync(conn, "SELECT CAST([F创建时间] AS DATE) FROM [CF批次] WHERE [FID] = @b", ("@b", batchId));
+
+            // ── 行为：归一（修复前会抛唯一索引冲突异常并回滚）──
+            var svc = new QualityUnificationService(db, new MasterDataMatcher(db));
+            var ex = await Record.ExceptionAsync(() => svc.UnifyShentongAsync(OrgId));
+            Assert.True(ex == null, $"同批重复键不应抛异常（应内存合并），实际抛出：{ex?.GetType().Name}: {ex?.Message}");
+
+            // ── 断言：该 (工号×日×网点) 仅 1 行（同批重复被合并，而非各自 Add 撞索引）──
+            var rows = await CountAsync(conn,
+                $"SELECT COUNT(*) FROM [{MetricTable}] WHERE [FOrgId] = @org AND [F员工工号] = @no AND [F业务日期] = @d AND [F网点编码] = @code",
+                ("@org", OrgId), ("@no", EmpNo), ("@d", batchDay), ("@code", NetCode));
+            _log.WriteLine($"[同批重复] (工号×日×网点) 行数 = {rows}（期望 1，重复被合并）");
+            Assert.Equal(1, rows);
+        }
+        finally
+        {
+            await CleanupMetricAsync(conn);
+            await CleanupBatchAsync(conn, StgTable, batchId);
+            await ExecAsync(conn, $"DELETE FROM [{StgTable}] WHERE [FOrgId] = @org AND [F所属小件员] IN (@n1, @n2)",
+                ("@org", OrgId), ("@n1", DirtyName), ("@n2", DirtyName2));
+            if (seededAlias2) await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName2), ("@org", OrgId));
+            if (seededAlias) await ExecAsync(conn, "DELETE FROM [EXP快递业务员名称映射] WHERE [F名称] = @n AND [F组织ID] = @org", ("@n", DirtyName), ("@org", OrgId));
+            if (seededSalesman) await ExecAsync(conn, "DELETE FROM [EXP业务员] WHERE [F工号] = @no", ("@no", EmpNo));
+            if (seededNetwork) await ExecAsync(conn, "DELETE FROM [EXP快递网点] WHERE [F编号] = @code AND [F组织ID] = @org", ("@code", NetCode), ("@org", OrgId));
+        }
+    }
+
+    private static async Task<bool> EnsureAlias2Async(STOTOPDbContext db)
+    {
+        var exists = await db.Set<ExpSalesmanAlias>()
+            .IgnoreQueryFilters()
+            .AnyAsync(a => a.FName == DirtyName2 && a.FOrgId == OrgId);
+        if (exists) return false;
+
+        db.Set<ExpSalesmanAlias>().Add(new ExpSalesmanAlias
+        {
+            FName = DirtyName2,
+            FEmployeeNo = EmpNo,
+            FOrgId = OrgId,
+        });
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     // ─────────────────────────────────────────────────────────────
     // 安排 / 清理 helper
     // ─────────────────────────────────────────────────────────────

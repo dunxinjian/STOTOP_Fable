@@ -21,9 +21,23 @@ public static class ParseUtil
         return null;
     }
 
-    /// <summary>尝试解析小数（去尾部空白与百分号）；失败返回 null。注意：百分号场景仅去符号、不除以 100。</summary>
-    public static decimal? TryDecimal(string? s) =>
-        decimal.TryParse((s ?? "").Trim().TrimEnd('%'), out var v) ? v : (decimal?)null;
+    /// <summary>
+    /// 尝试解析小数；失败返回 null（全部容错，不抛异常）。
+    /// 率以「百分数数值」口径存（不除以 100），按尾缀折算到与百分号同一标度：
+    ///   尾「‱」万分号(U+2031) → 去尾解析后 ×0.01（6.4‱ = 0.064% → 0.064）；
+    ///   尾「‰」千分号(U+2030) → 去尾解析后 ×0.1 （5‰   = 0.5%   → 0.5）；
+    ///   尾「%」百分号 或 无尾缀的纯数值 → ×1（仅去符号、不除 100；积压倍数/遗失率ppm 等无尾缀走原样解析，不受影响）。
+    /// </summary>
+    public static decimal? TryDecimal(string? s)
+    {
+        var t = (s ?? "").Trim();
+        if (t.EndsWith('‱'))
+            return decimal.TryParse(t[..^1].Trim(), out var w) ? w * 0.01m : (decimal?)null;
+        if (t.EndsWith('‰'))
+            return decimal.TryParse(t[..^1].Trim(), out var p) ? p * 0.1m : (decimal?)null;
+        // 百分号仅去符号、不除 100；无尾缀纯数值原样解析。
+        return decimal.TryParse(t.TrimEnd('%'), out var v) ? v : (decimal?)null;
+    }
 
     /// <summary>尝试解析整数；整数失败时退化为小数后截断；再失败返回 null。</summary>
     public static int? TryInt(string? s) =>
