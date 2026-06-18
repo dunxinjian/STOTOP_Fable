@@ -281,7 +281,28 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
         };
         return ApiResult<EmployeeMetricsPageDto>.Success(dto);
     }
-    public Task<ApiResult<List<EmployeeEventItemDto>>> GetEmployeeTimelineAsync(long orgId, string carrier, string empNo, DateTime from, DateTime to) => throw new NotImplementedException();
+    public async Task<ApiResult<List<EmployeeEventItemDto>>> GetEmployeeTimelineAsync(long orgId, string carrier, string empNo, DateTime from, DateTime to)
+    {
+        var toEnd = to.Date.AddDays(1);
+        var items = await _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == carrier
+                        && e.F员工工号 == empNo
+                        && e.F业务日期 >= from.Date && e.F业务日期 < toEnd)
+            .OrderByDescending(e => e.F业务日期)
+            .Select(e => new EmployeeEventItemDto
+            {
+                Date = e.F业务日期,
+                Waybill = e.F运单号,
+                NetworkName = e.F网点名称,
+                Domain = e.F质量域,
+                ProblemName = e.F问题类型名称,
+                Severity = e.F严重度,
+                Fee = e.F考核金额,
+            })
+            .ToListAsync();
+
+        return ApiResult<List<EmployeeEventItemDto>>.Success(items);
+    }
     public Task<ApiResult<EventPageDto>> GetEventsAsync(long orgId, EventQuery query) => throw new NotImplementedException();
     public Task<ApiResult<int>> GetPendingCountAsync(long orgId, string carrier) => throw new NotImplementedException();
 }
