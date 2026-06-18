@@ -32,6 +32,18 @@ PageHeader 首行（toolbar-primary，恒显示）：
 
 **列表页迁移配方**：① 筛选条 + 状态快筛 + 新增 全进 PageHeader 首行（`#left`/`#right`，见上规则），不用 `#toolbar`；② `a-card`+`a-table` → `<DataTable v-model:pagination @change>`，删 `paginationConfig`/`handleTableChange`/序号列/序号 bodyCell；③ `a-tag :color` → `<StatusTag :type>`；④ 去 `bordered`；⑤ 分页 `ref`，读 `.value.*`；⑥ 首行控件 `size="middle"`。
 
+**容器与表格观感（最终标准，样板：`system/UserManage` 数据多·验长列表）**：
+
+- **贴边容器**：列表页根用 `page-container page-container--flush`（或 `<PageLayout flush>`）。`--flush` 去掉页容器**四周留白（含顶部）**——表格满宽、并**直接贴住顶部工具栏**（靠工具栏自带底边线 + 浅阴影分隔），消除工具栏与表格间露出 `--bg-page` 的「灰带缝」。
+- **高度自适应**：`--flush` 下表格 `flex: 0 1 auto`——少数据按内容高（不撑满、无大片白）；数据超一屏时**表体内部滚动、列头与分页固定**。
+- **表格观感统一在全局 `ant-override.scss`**（所有 `a-table` 自动继承，**无需逐页**，且不要在页面或 DataTable 里 scoped 覆写）：
+  - 列头：白底融入数据行 + 中性墨字（`--text-2`）+ 字间距 + **耳语级柔线 `--border-faint`**（白表头白首行不留「缝」）。
+  - 行：**去斑马纹**，仅留一条极细行底线（`--border`）撑行结构；逐行扫读交给 hover。
+  - 行 hover：**中性浅灰 `--bg-muted`**（非浅橙）。
+  - 操作列：表体内 `a-button type="link"` 横向 padding 收到 4px，多操作（编辑/重置/删除）并排更紧凑。
+  - 分页：顶线降到 `--border-faint`、页码块去边框去底色、仅当前页留主色描边。
+- 个别超宽超密大报表若去斑马后难扫读，可**按页例外**恢复斑马（`:nth-child(even)` 浅底），不动整体克制风格。
+
 ### 2. 详情页（样板：TaskDetail）
 
 ```
@@ -131,6 +143,7 @@ PageHeader 首行（toolbar-primary，恒显示）：
 - 翻页：`@change` 触发后父组件重新取数；不再每页手写 `paginationConfig`/`handleTableChange`。
 - 其余列单元格用父组件 `#bodyCell` 作用域插槽（序号列由组件内部渲染）。
 - 密度：不显式传 `size`，继承 `ConfigProvider` 全局 `small`。
+- **观感不在此封装**：列头/行线/斑马/hover/分页等视觉统一在全局 `ant-override.scss`（见 §一.1）；DataTable 自身**无 scoped 样式**，只管行为（分页 v-model / 序号列 / 空态）。
 
 ### StatFilterTabs
 
@@ -161,6 +174,7 @@ PageHeader 首行（toolbar-primary，恒显示）：
 | prop | 默认 | 说明 |
 | --- | --- | --- |
 | `variant` | `'table'` | `table`=渲染全局 `.page-container`，保留表格 flex 滚动链（单表列表页，表体独立滚动）；`flow`=渲染独立 `.page-flow`（token 内边距+卡片间距+整页滚动），不施加表格链（多卡片纵向流式详情页） |
+| `flush` | `false` | 列表贴边：去 `.page-container` 四周留白（含顶部）让表格满宽并贴住工具栏 + 高度自适应（仅 `table` variant 生效，见 §一.1） |
 
 - flow variant 用独立类避开全局表格滚动链，**收编各页手写的「解除全局 .page-container 锁定」覆写**（禁止页面再 scoped 覆写 `.page-container` 或 `:deep(.ant-spin-*)` 解锁）。
 - 注意：flow（`.page-flow`）下裸 `<a-card>` 不受全局 `.page-container .ant-card{border-radius:0}` 压制，会保留自身圆角——这是预期差异。
@@ -177,7 +191,8 @@ PageHeader 首行（toolbar-primary，恒显示）：
 | 主色 / hover / 浅底 / 边框 | `--color-primary` / `-hover` / `-light` / `-border` | `#E85E00` / `#FF6700` / `#FFF3EA` / `rgba(232,94,0,.30)` |
 | 状态色（底/字） | `--color-success/warning/danger/info-light` `-text` | 见 TOKENS.md |
 | 文字 1/2/3/禁用 | `--text-1` / `--text-2` / `--text-3` / `--text-disabled` | `#1F2329` / `#5A6068` / `#8A9099` / `#BFC3C9` |
-| 表面 / 卡片 / 弱底 / 边框 | `--bg-page` / `--bg-card` / `--bg-muted` / `--border` | `#F5F6F8` / `#FFFFFF` / `#EEF0F3` / `#E6E8EB` |
+| 表面 / 卡片 / 弱底 | `--bg-page` / `--bg-card` / `--bg-muted` | `#F7F8FA` / `#FFFFFF` / `#F1F3F6` |
+| 边框 普通 / 更浅(耳语) / 更强 | `--border` / `--border-faint` / `--border-strong` | `#ECEEF1` / `#F2F4F6` / `#DDE0E4` |
 | 业务色 | `--biz-waybill/contract/quality/approval/points/finance` | 见 TOKENS.md |
 | 圆角 | `--radius-sm/md/lg/modal/pill` | `4/6/8/12/999px` |
 | 阴影 | `--shadow-sm/md/lg` | `0 1px 2px…` / `0 4px 12px…` / `0 8px 24px…` |
@@ -220,7 +235,7 @@ rg "\.page-toolbar|\.page-card" src/styles/index.scss
 
 ### preview 抽检清单（四类样板）
 
-- 列表页：VoucherList / ContractList —— 表头灰、行 hover 浅橙、偶数行斑马、内容区四周留白无横向溢出。
+- 列表页：system/UserManage（贴边·长列表样板）/ VoucherList / ContractList —— 表头白 + 耳语柔线、行 hover 中性浅灰、去斑马仅极细行底线、贴边满宽贴住工具栏、超屏时表体内滚而列头+分页固定。
 - 详情页：TaskDetail —— 返回按钮橙、侧栏元信息弱底。
 - 表单页：ExpenseReimburseSubmit —— 必填星红、校验错误文案、label 13px。
 - 仪表盘：express/Dashboard 全三 Tab —— KPI 条卡片范式、空态 small、panel 左条主色。
