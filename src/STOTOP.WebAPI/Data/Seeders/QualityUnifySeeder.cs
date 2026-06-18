@@ -24,6 +24,72 @@ public static class QualityUnifySeeder
         EnsureEmployeeDailyMetric(ctx);
         EnsureNetworkDailyMetric(ctx);
         EnsureSalesmanAlias(ctx);
+
+        // 建表后预置「固定常量问题类型」字典（一期 org=192 基线，幂等）。
+        SeedConstantProblemDict(ctx, 192);
+    }
+
+    /// <summary>
+    /// D2：预置「<b>固定常量问题类型</b>」字典（来自各 STG 源代码里写死的 <c>ProblemTypeConstant</c>，必然出现的高频类型）。
+    /// 给它们可读英文编码 + 合理默认，避免归一服务（QualityUnificationService.GetOrCreateProblemDictAsync）
+    /// 用前缀_短哈希自动建这批高频类型（短哈希码不可读）。
+    ///
+    /// 命中口径：唯一/查找键 = (FOrgId, F承运商, F质量域, F来源问题类型原文)。
+    /// 此处 <b>F质量域 + F来源问题类型原文 与 ShentongSourceMap 各源的 QualityDomain + ProblemTypeConstant 逐字一致</b>，
+    /// 归一查到种子即用、查不到仍自建（不破坏自动建逻辑，种子只是预置）。
+    /// 默认：严重度合理默认（一期不用于 KPI）、是否考核=否（与自动建口径一致）、可归责到人=是、状态=1。
+    ///
+    /// 注意「<b>列值型问题类型</b>」（投诉类型/拦截类型/不合格类型/问题件类型/履约状态…，值多变且源有 ProblemTypeColumn）<b>不在此种子</b>，
+    /// 仍靠归一按列值自动建。其中 疑似遗失/虚签投诉/虚假签收/履约失败 四源虽各有 ProblemTypeColumn（列优先），
+    /// 但抽样显示该列值恒等于本常量（如履约率源 F履约状态 全为「履约失败」），故仍预置常量原文（列值命中同一条种子）。
+    ///
+    /// 组织口径：字典 org 隔离。一期 stotop 为开发测试库、申通组织=192，按 192 落基线（幂等 IF NOT EXISTS）。
+    /// 生产多组织由归一自动建兜底，或后续按需扩展（不在此引入多组织枚举，保持轻量）。
+    /// 幂等：按四元唯一键 WHERE NOT EXISTS 判断，重复执行不新增、不报错。
+    /// 全部为固定字面量（org/域/原文/编码/严重度均代码写死，非用户输入），无 SQL 注入风险。
+    /// </summary>
+    public static void SeedConstantProblemDict(STOTOPDbContext ctx, long orgId)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // (质量域, 来源问题类型原文=名称, 编码, 默认严重度, 是否考核, 是否可归责到人)
+        // 域/原文与 ShentongSourceMap 各源 QualityDomain/ProblemTypeConstant 逐字一致（命中归一查找键）。
+        var rows = new (string Domain, string Raw, string Code, int Severity, bool Assessed, bool Attributable)[]
+        {
+            ("揽收时效",     "揽收不及时",  "PICK_LATE",            1, false, true), // STG申通_揽收分析明细
+            ("出仓时效",     "未及时出仓",  "OUTB_LATE",            1, false, true), // STG申通_未出仓监控明细
+            ("交货滞留",     "交货滞留",    "HANDOVER_DELAY",       1, false, true), // STG申通_交货滞留明细
+            ("派送签收时效", "签收未达标",  "SIGN_SUBSTD",          1, false, true), // STG申通_签收未达标明细
+            ("积压与遗失",   "疑似遗失",    "SUSPECT_LOSS",         2, false, true), // STG申通_疑似遗失明细
+            ("虚假签收履约", "虚签投诉",    "FAKE_SIGN_COMPLAINT",  2, false, true), // STG申通_虚签投诉明细
+            ("虚假签收履约", "虚假签收",    "FAKE_SIGN",            2, false, true), // STG申通_虚假签收明细
+            ("虚假签收履约", "履约失败",    "FULFILL_FAIL",         1, false, true), // STG申通_履约率明细(F履约状态 抽样恒「履约失败」)
+        };
+
+        foreach (var r in rows)
+        {
+            // 全字面量；中文原文/编码无单引号，按 SQL 字符串字面量直接拼（仍按惯例双写单引号防御）。
+            var domain = r.Domain.Replace("'", "''");
+            var raw = r.Raw.Replace("'", "''");
+            var code = r.Code.Replace("'", "''");
+            var name = raw; // 名称=原文
+            var assessed = r.Assessed ? 1 : 0;
+            var attributable = r.Attributable ? 1 : 0;
+
+            SeederHelper.ExecuteRawSql(ctx, $@"
+            IF NOT EXISTS (
+                SELECT 1 FROM [QL申通_质量问题字典]
+                WHERE [FOrgId] = {orgId}
+                  AND [F承运商] = N'申通'
+                  AND [F质量域] = N'{domain}'
+                  AND [F来源问题类型原文] = N'{raw}'
+            )
+            INSERT INTO [QL申通_质量问题字典]
+                ([FOrgId],[F承运商],[F质量域],[F来源问题类型原文],[F问题类型编码],[F问题类型名称],[F默认严重度],[F是否考核],[F是否可归责到人],[F状态])
+            VALUES
+                ({orgId}, N'申通', N'{domain}', N'{raw}', N'{code}', N'{name}', {r.Severity}, {assessed}, {attributable}, 1);
+            ");
+        }
     }
 
     // ── 1. QL申通_质量问题字典 ──
