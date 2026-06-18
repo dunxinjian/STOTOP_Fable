@@ -132,3 +132,27 @@ public class EventPageDto
     public List<QualityEventRowDto> Items { get; set; } = new();
     public int Total { get; set; }
 }
+
+/// <summary>视图2 21 指标明细分页结果</summary>
+public class EmployeeMetricsPageDto
+{
+    public List<EmployeeMetricRowDto> Items { get; set; } = new();
+    public int Total { get; set; }
+}
+
+/// <summary>视图3 问题件查询条件</summary>
+public class EventQuery
+{
+    public string Carrier { get; set; } = "申通";
+    public DateTime From { get; set; }
+    public DateTime To { get; set; }
+    public string? NetworkCode { get; set; }
+    public string? EmpNo { get; set; }
+    public string? Domain { get; set; }
+    public string? Platform { get; set; }
+    public int? Severity { get; set; }
+    public bool MultiDomainOnly { get; set; }
+    public bool PendingOnly { get; set; }
+    public int Page { get; set; } = 1;
+    public int Size { get; set; } = 50;
+}
