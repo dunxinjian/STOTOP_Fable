@@ -785,16 +785,16 @@ function renderTrendChart() {
     tooltip: { trigger: 'axis' },
     legend: { data: ['应收', '成本', '毛利', '毛利率'], bottom: 0 },
     grid: { left: '3%', right: '4%', bottom: '12%', top: '10%', containLabel: true },
-    xAxis: { type: 'category', data: dates, axisLabel: { color: '#666' } },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#5A6068' } },
     yAxis: [
-      { type: 'value', name: '金额(¥)', axisLabel: { color: '#999' }, splitLine: { lineStyle: { type: 'dashed' } } },
-      { type: 'value', name: '毛利率(%)', axisLabel: { color: '#999', formatter: (v: number) => v.toFixed(0) + '%' }, splitLine: { show: false } },
+      { type: 'value', name: '金额(¥)', axisLabel: { color: '#8A9099' }, splitLine: { lineStyle: { type: 'dashed' } } },
+      { type: 'value', name: '毛利率(%)', axisLabel: { color: '#8A9099', formatter: (v: number) => v.toFixed(0) + '%' }, splitLine: { show: false } },
     ],
     series: [
-      { name: '应收', type: 'line', data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#3A6FB0' }, lineStyle: { width: 2 } },
-      { name: '成本', type: 'line', data: trendData.value.map(d => d.totalCost), smooth: true, itemStyle: { color: '#E5484D' }, lineStyle: { width: 2 } },
-      { name: '毛利', type: 'line', data: trendData.value.map(d => d.profit), smooth: true, itemStyle: { color: '#2BA471' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(82,196,26,0.25)' }, { offset: 1, color: 'rgba(82,196,26,0.02)' }] } } },
-      { name: '毛利率', type: 'bar', yAxisIndex: 1, data: trendData.value.map(d => d.profitRate), barWidth: 20, itemStyle: { color: '#E6A700', borderRadius: [4, 4, 0, 0] } },
+      { name: '应收', type: 'line', data: trendData.value.map(d => d.totalCharge), smooth: true, itemStyle: { color: '#5B7290' }, lineStyle: { width: 2 } },
+      { name: '成本', type: 'line', data: trendData.value.map(d => d.totalCost), smooth: true, itemStyle: { color: '#D6584E' }, lineStyle: { width: 2 } },
+      { name: '毛利', type: 'line', data: trendData.value.map(d => d.profit), smooth: true, itemStyle: { color: '#3E9E6E' }, lineStyle: { width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(62,158,110,0.22)' }, { offset: 1, color: 'rgba(62,158,110,0.02)' }] } } },
+      { name: '毛利率', type: 'bar', yAxisIndex: 1, data: trendData.value.map(d => d.profitRate), barWidth: 20, itemStyle: { color: '#D49A2E', borderRadius: [4, 4, 0, 0] } },
     ],
   }, true)
 }
@@ -937,7 +937,8 @@ onBeforeUnmount(() => {
   gap: 0;
   row-gap: 8px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #f6f8fc 0%, #eef2f9 100%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   margin-bottom: 12px;
   flex-shrink: 0;
@@ -953,7 +954,7 @@ onBeforeUnmount(() => {
 
 .kpi-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   line-height: 18px;
   white-space: nowrap;
 }
@@ -969,7 +970,7 @@ onBeforeUnmount(() => {
 .kpi-divider {
   width: 1px;
   height: 32px;
-  background: #e0e0e0;
+  background: var(--border);
   flex-shrink: 0;
 }
 
@@ -983,12 +984,12 @@ onBeforeUnmount(() => {
   transition: background-color 0.2s;
 
   &:hover {
-    background: rgba(255, 77, 79, 0.06);
+    background: var(--color-danger-light);
   }
 
   &.kpi-active {
-    background: rgba(255, 77, 79, 0.1);
-    box-shadow: inset 0 0 0 1px #ffa39e;
+    background: var(--color-danger-light);
+    box-shadow: inset 0 0 0 1px var(--color-danger-border);
   }
 }
 
@@ -998,7 +999,7 @@ onBeforeUnmount(() => {
 .val-negative { color: var(--color-danger); }
 /* 低正毛利用橙/黄，与亏损的红区分开 */
 .val-warning { color: var(--color-warning); }
-.val-caution { color: #d4a106; }
+.val-caution { color: var(--color-warning-text); }
 
 /* 内容区 */
 .view-content {
@@ -1009,7 +1010,7 @@ onBeforeUnmount(() => {
 
 /* 趋势图 */
 .trend-view {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 16px;
 }
@@ -1023,8 +1024,6 @@ onBeforeUnmount(() => {
 /* 表格优化 */
 :deep(.ant-table) {
   .ant-table-thead > tr > th {
-    background: #fafafa;
-    font-weight: 600;
     font-size: 13px;
     padding: 8px 12px;
   }
@@ -1032,12 +1031,10 @@ onBeforeUnmount(() => {
     font-size: 13px;
     padding: 6px 12px;
   }
-  .ant-table-tbody > tr:hover > td {
-    background: #f0f7ff;
-  }
+  // 表头底色/字重/行 hover 交由全局 ant-override 中性样式接管(去本页旧灰底 + 旧蓝 hover)
   .ant-table-summary > tr > td,
   .ant-table-summary > tr > th {
-    background: #fafafa;
+    background: var(--bg-muted);
     font-weight: 600;
     font-size: 13px;
     padding: 8px 12px;
