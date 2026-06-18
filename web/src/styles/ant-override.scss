@@ -4,29 +4,36 @@
 
 // 全局表格行高标准化 - 紧凑风格，标题行与数据行高度一致
 .ant-table {
+  // 列头：白底融入数据行（无独立灰带）+ 中性墨字 + 耳语级柔线，克制不抢眼
+  // （原在 DataTable.vue scoped 内，已上移到全局，让所有列表表格一致）
   .ant-table-thead > tr > th {
-    background: var(--bg-muted); // 表头底（对齐 ConfigProvider Table.headerBg）
-    font-weight: 600;
-    color: $text-primary;
+    background: var(--bg-card);
+    font-weight: 500;
+    color: var(--text-2);
+    letter-spacing: 0.02em;
     padding: 6px 8px !important;
-    border-bottom: 1px solid $border-color-lighter;
+    border-bottom: 1px solid var(--border-faint);
     border-radius: 0 !important;
   }
 
+  // 数据行：保留一条极细行底线，撑起宽表的逐行结构
   .ant-table-tbody > tr > td {
     padding: 6px 8px !important;
     border-bottom: 1px solid $border-color-lighter;
   }
 
-  // 斑马纹：偶数行浅底，提升大表格行扫读
-  .ant-table-tbody > tr:nth-child(even) > td {
-    background: var(--bg-page);
-  }
+  // 【项1】去斑马纹：改为仅靠极细行底线 + hover 高亮（Linear/Notion 式克制干净）
 
-  // 行 hover 统一浅橙（与 ConfigProvider rowHoverBg 同口径）
+  // 【项2】行 hover：中性浅灰高亮（替代浅橙，去斑马后承担逐行扫读）
   .ant-table-tbody > tr:hover > td,
   .ant-table-tbody > tr.ant-table-row-hover > td {
-    background: var(--color-primary-light) !important;
+    background: var(--bg-muted) !important;
+  }
+
+  // 空态占位行不参与 hover 高亮（特异度需压过上面的行 hover 规则）
+  .ant-table-tbody > tr.ant-table-placeholder:hover > td,
+  .ant-table-tbody > tr.ant-table-placeholder > td.ant-table-cell-row-hover {
+    background: var(--bg-card) !important;
   }
 
   // small 尺寸
@@ -76,7 +83,7 @@
   width: 100%;
   margin-top: 0;
   padding: 4px 8px;
-  border-top: 1px solid $border-color-lighter;
+  border-top: 1px solid var(--border-faint); // 【项4】顶部分隔线降到耳语级
   background: transparent;
   font-size: 12px;
 
@@ -90,6 +97,16 @@
     line-height: 24px;
     margin-inline-end: 4px;
     font-size: 12px;
+  }
+
+  // 【项4】页码块降视觉重量：去边框去底色，仅当前页留主色描边
+  .ant-pagination-item {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .ant-pagination-item-active {
+    border-color: var(--color-primary);
   }
 
   .ant-pagination-item a {
@@ -263,6 +280,11 @@
 // 操作列固定和统一
 .ant-table-cell.action-col {
   white-space: nowrap;
+}
+
+// 【项3】操作列：表体内 link 按钮收紧横向内边距，多操作（编辑/重置/删除）并排更紧凑
+.ant-table-tbody .ant-btn-link {
+  padding-inline: 4px;
 }
 
 // 表格内数值右对齐

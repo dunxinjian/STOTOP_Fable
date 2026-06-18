@@ -121,26 +121,5 @@ function onChange(pag: any) {
   emit('change')
 }
 </script>
-
-<style scoped lang="scss">
-:deep(.ant-table-placeholder:hover > td),
-:deep(.ant-table-placeholder > td.ant-table-cell-row-hover) {
-  background: var(--bg-card) !important;
-}
-
-// 列头精修：白底融入数据行（无独立灰带）；底分隔线用“耳语级”浅令牌 --border-faint，
-// 比 --border 更浅一档——白表头+白首行时既保留一丝结构层次、又不再像一条“缝”。
-:deep(.ant-table-thead > tr > th) {
-  background: var(--bg-card);
-  color: var(--text-2);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid var(--border-faint);
-}
-
-// 分页更紧凑：收上下留白
-:deep(.ant-pagination) {
-  padding-top: 2px;
-  padding-bottom: 2px;
-}
-</style>
+<!-- 表格观感（列头/行线/斑马/hover/分页）统一收口在全局 styles/ant-override.scss；
+     本封装只管行为（分页 v-model / 序号列 / 空态），不再重复 scoped 样式。 -->
