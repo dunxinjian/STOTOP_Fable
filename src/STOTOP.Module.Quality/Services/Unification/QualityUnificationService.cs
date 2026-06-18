@@ -31,9 +31,27 @@ public class QualityUnificationService : IQualityUnificationService
 
     public async global::System.Threading.Tasks.Task<UnifyResult> UnifyShentongAsync(long orgId, CancellationToken ct = default)
     {
-        // C0：仅事件类（物流完整性明细）。后续 C1/C2/C3 按 ShentongSourceMap 分发其它源。
-        var desc = ShentongSourceMap.All[ShentongSourceMap.LogisticsCompletenessTable];
-        return await UnifyLogisticsCompletenessAsync(orgId, desc, ct);
+        // 泛化分发：遍历源映射，按 TargetKind 分派到对应路径，累计五项计数。
+        // 加源 = 向 ShentongSourceMap.All 追加一条 + （新种类时）在此补一个 switch 分支。
+        int events = 0, empUpserts = 0, netUpserts = 0, netUnmatched = 0, empUnmatched = 0;
+
+        foreach (var desc in ShentongSourceMap.All.Values)
+        {
+            var r = desc.TargetKind switch
+            {
+                UnifyTargetKind.Event => await UnifyLogisticsCompletenessAsync(orgId, desc, ct),
+                UnifyTargetKind.EmployeeMetric => await UnifyCourierFulfillAsync(orgId, desc, ct),
+                // NetworkMetric 留 C2；本任务 All 不含网点指标源，default 不会触发。
+                _ => throw new NotSupportedException($"未支持的归一目标种类 {desc.TargetKind}（源 {desc.StgTableName}）"),
+            };
+            events += r.EventsUpserted;
+            empUpserts += r.EmployeeMetricUpserts;
+            netUpserts += r.NetworkMetricUpserts;
+            netUnmatched += r.NetworkUnmatched;
+            empUnmatched += r.EmployeeUnmatched;
+        }
+
+        return new UnifyResult(events, empUpserts, netUpserts, netUnmatched, empUnmatched);
     }
 
     /// <summary>
@@ -137,6 +155,146 @@ public class QualityUnificationService : IQualityUnificationService
             NetworkUnmatched: networkUnmatched,
             EmployeeUnmatched: employeeUnmatched);
     }
+
+    /// <summary>
+    /// 员工指标类路径：STG申通_小件员履约指标 → QL申通_员工日质量指标。
+    /// 员工级粒度（1 行/网点/小件员）。本源<b>无日期列</b>，业务日期取批次创建日；
+    /// 员工<b>无工号、仅脏名</b>，仅当主数据匹配到工号（emp.Status∈{1,2}）才建指标（工号是唯一键一部分）。
+    /// 唯一键 (FOrgId,F承运商,F业务日期,F网点编码,F员工工号)，按键 upsert，重复跑不增行（幂等）。
+    /// </summary>
+    private async global::System.Threading.Tasks.Task<UnifyResult> UnifyCourierFulfillAsync(
+        long orgId, ShentongSourceDescriptor desc, CancellationToken ct)
+    {
+        // 只投影需要的列（避免读全实体碰 STG 表允许 NULL、实体声明非空 long 的系统列，如 F账套ID NULL → SqlNullValueException）。
+        var rows = await _db.Set<StgShentongCourierFulfill>()
+            .IgnoreQueryFilters()
+            .Where(r => r.FOrgId == orgId && !r.FIsRevoked)
+            .Select(r => new CourierRow(
+                r.FID, r.F批次ID, r.F所属网点, r.F所属小件员,
+                r.F当日派签量, r.F当日派签率, r.F应上门量, r.F未上门量, r.F按需上门率,
+                r.F客诉发起量, r.F工单定责量, r.F客诉发起率,
+                r.F虚假电联, r.F无效电联, r.F双签, r.F照片定位虚假, r.F签收文本不规范, r.F引导代收,
+                r.F回访真实率))
+            .ToListAsync(ct);
+
+        // 一次性查本批次集合的 CfBatch.F创建时间，建 F批次ID → 批次日(.Date) 映射。
+        var batchIds = rows.Select(r => r.F批次ID).Distinct().ToList();
+        var batchDays = await _db.Set<CfBatch>()
+            .IgnoreQueryFilters()
+            .Where(b => batchIds.Contains(b.FID))
+            .Select(b => new { b.FID, b.FCreatedTime })
+            .ToDictionaryAsync(x => x.FID, x => x.FCreatedTime.Date, ct);
+
+        int empUpserts = 0, networkUnmatched = 0, employeeUnmatched = 0;
+
+        foreach (var row in rows)
+        {
+            // ── 主数据匹配：网点（本源无编码，传名称）→ 员工（脏名，无工号）──
+            var net = await _matcher.ResolveNetworkAsync(null, row.F所属网点, orgId, ct);
+            var emp = await _matcher.ResolveEmployeeAsync(null, row.F所属小件员, net.Code, orgId, ct);
+
+            if (net.Status == 0) networkUnmatched++;
+
+            // 业务日期 = 批次创建日。TODO：用户将让申通给该导出加日期列；届时改读源日期列（desc.DateColumn）。
+            var bizDate = batchDays.TryGetValue(row.F批次ID, out var d) ? d : DateTime.Today;
+
+            // 仅 emp.Status∈{1,2}（匹配到工号）才 upsert 员工日指标——工号是唯一键一部分，未确定工号无法建键。
+            // 未匹配(Status 0/3)→ 不建指标，计入 EmployeeUnmatched；待人工认领+补别名后重跑生成。
+            if (emp.Status is not (1 or 2))
+            {
+                employeeUnmatched++;
+                continue;
+            }
+
+            // ── upsert 员工日指标（唯一键：工号 × 业务日期 × 网点编码，含 FOrgId/F承运商）──
+            var existing = await _db.Set<QlShentongEmployeeDailyMetric>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(m =>
+                    m.FOrgId == orgId &&
+                    m.F承运商 == "申通" &&
+                    m.F业务日期 == bizDate &&
+                    m.F网点编码 == net.Code &&
+                    m.F员工工号 == emp.EmployeeNo, ct);
+
+            var metric = existing ?? new QlShentongEmployeeDailyMetric();
+
+            metric.FOrgId = orgId;
+            metric.F承运商 = "申通";
+            metric.F业务日期 = bizDate;
+            metric.F统计年月 = ParseUtil.Ym(bizDate);
+            metric.F网点编码 = net.Code!;
+            metric.F员工工号 = emp.EmployeeNo!;
+            metric.F员工姓名原文 = row.F所属小件员;   // 脏名原文
+            metric.F员工ID = emp.EmployeeId;
+
+            // ── 派签 ──
+            metric.F当日派签量 = ParseUtil.TryInt(row.F当日派签量);
+            metric.F当日派签率 = ParseUtil.TryDecimal(row.F当日派签率);
+            metric.F应上门量 = ParseUtil.TryInt(row.F应上门量);
+            metric.F未上门量 = ParseUtil.TryInt(row.F未上门量);
+            metric.F按需上门率 = ParseUtil.TryDecimal(row.F按需上门率);
+
+            // ── 客诉 ──
+            metric.F客诉发起量 = ParseUtil.TryInt(row.F客诉发起量);
+            metric.F工单定责量 = ParseUtil.TryInt(row.F工单定责量);
+            metric.F客诉发起率 = ParseUtil.TryDecimal(row.F客诉发起率);
+
+            // ── 违规 ──
+            metric.F违规虚假电联 = ParseUtil.TryInt(row.F虚假电联);
+            metric.F违规无效电联 = ParseUtil.TryInt(row.F无效电联);
+            metric.F违规双签 = ParseUtil.TryInt(row.F双签);
+            metric.F违规照片定位虚假 = ParseUtil.TryInt(row.F照片定位虚假);
+            metric.F违规签收文本不规范 = ParseUtil.TryInt(row.F签收文本不规范);
+            metric.F违规引导代收 = ParseUtil.TryInt(row.F引导代收);
+            metric.F回访真实率 = ParseUtil.TryDecimal(row.F回访真实率);
+
+            // 事件类才有的字段（F虚假签收数/F照片质检不合格数/F派送超时T0-T3/F问题件数/F考核金额合计 等）
+            // 来自事件聚合，非本源直供，本期留 null（不覆盖既有值——upsert 时仅本源字段被刷新）。
+
+            metric.F来源批次ID = row.F批次ID;
+
+            if (existing == null)
+            {
+                metric.F创建时间 = DateTime.Now;
+                _db.Set<QlShentongEmployeeDailyMetric>().Add(metric);
+            }
+
+            empUpserts++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new UnifyResult(
+            EventsUpserted: 0,
+            EmployeeMetricUpserts: empUpserts,
+            NetworkMetricUpserts: 0,
+            NetworkUnmatched: networkUnmatched,
+            EmployeeUnmatched: employeeUnmatched);
+    }
+
+    /// <summary>
+    /// 小件员履约源行的内存投影（只含归一需要的列），避免读全实体碰 NULL 系统列。
+    /// </summary>
+    private sealed record CourierRow(
+        long FID,
+        long F批次ID,
+        string? F所属网点,
+        string? F所属小件员,
+        string? F当日派签量,
+        string? F当日派签率,
+        string? F应上门量,
+        string? F未上门量,
+        string? F按需上门率,
+        string? F客诉发起量,
+        string? F工单定责量,
+        string? F客诉发起率,
+        string? F虚假电联,
+        string? F无效电联,
+        string? F双签,
+        string? F照片定位虚假,
+        string? F签收文本不规范,
+        string? F引导代收,
+        string? F回访真实率);
 
     /// <summary>
     /// 按唯一键 (orgId,申通,域,原文) 查问题字典；缺失则创建一条默认条目并保存（让字典从数据自动长出）。

@@ -56,6 +56,9 @@ public static class ShentongSourceMap
     /// <summary>STG申通_物流完整性明细 表名常量。</summary>
     public const string LogisticsCompletenessTable = "STG申通_物流完整性明细";
 
+    /// <summary>STG申通_小件员履约指标 表名常量（C1 员工日指标源）。</summary>
+    public const string CourierFulfillTable = "STG申通_小件员履约指标";
+
     /// <summary>
     /// 全部源描述（按 STG 表名索引）。后续加源 = 这里追加一条。
     /// </summary>
@@ -75,5 +78,21 @@ public static class ShentongSourceMap
                 WaybillColumn: "F运单号",
                 PlatformColumn: "F订单平台",
                 ProblemCodePrefix: "LOGI"),
+
+            // C1：小件员履约指标 → 员工日质量指标（员工级，1 行/网点/小件员）。
+            // 网点仅有名称（无编码列），员工仅有脏名（无工号列），源无日期列（业务日期取批次创建日，详见服务内 TODO）。
+            [CourierFulfillTable] = new ShentongSourceDescriptor(
+                StgTableName: CourierFulfillTable,
+                QualityDomain: "员工综合",
+                TargetKind: UnifyTargetKind.EmployeeMetric,
+                NetworkCodeColumn: null,            // 本源无网点编码列，仅有名称
+                NetworkNameColumn: "F所属网点",
+                EmployeeNoColumn: null,             // 本源无工号列，仅有脏名
+                EmployeeNameColumn: "F所属小件员",
+                ProblemTypeColumn: null,            // 指标类无问题类型列
+                DateColumn: null,                   // 本源无日期列，取批次日（TODO：申通补日期列后改读源列）
+                WaybillColumn: null,
+                PlatformColumn: null,
+                ProblemCodePrefix: "CRFL"),
         };
 }
