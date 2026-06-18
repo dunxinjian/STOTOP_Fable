@@ -123,6 +123,14 @@ const showToolbar = computed(() => {
   border-radius: $border-radius-sm;
 }
 
+// 工具栏内分段控件（a-radio-group button）统一 32px 高，与右侧筛选/按钮对齐。
+// 控件经 PageHeader Teleport 到此，页面 scoped :deep 够不到，必须在面包屑全局设；
+// 用 size="small" 保持紧凑宽度（不挤换行），仅强制高度。
+.app-toolbar :deep(.ant-radio-button-wrapper) {
+  height: 32px;
+  line-height: 30px;
+}
+
 .toolbar-secondary {
   border-top: 1px solid $border-color-lighter;
   min-height: 40px;

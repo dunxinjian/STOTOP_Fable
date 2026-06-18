@@ -2,7 +2,7 @@
   <div class="page-container">
     <PageHeader title="毛利分析">
       <template #left>
-        <a-radio-group v-model:value="activeView" button-style="solid" size="middle" @change="handleViewChange">
+        <a-radio-group v-model:value="activeView" button-style="solid" size="small" @change="handleViewChange">
           <a-radio-button value="client">业务对象</a-radio-button>
           <a-radio-button value="shop">报价</a-radio-button>
           <a-radio-button value="intermediary">中间人</a-radio-button>
