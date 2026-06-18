@@ -206,9 +206,9 @@ const scrollX = computed(() => {
   }
 
   :deep(.region-cell) {
-    background-color: #fafafa;
+    background-color: var(--bg-muted);
     font-weight: 500;
-    border-right: 1px solid #e8e8e8;
+    border-right: 1px solid var(--border);
   }
 
   :deep(.ant-table-thead > tr > th) {
@@ -220,13 +220,13 @@ const scrollX = computed(() => {
   }
 
   :deep(.ant-table-tbody > tr:last-child > td) {
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid var(--border);
   }
 }
 
 .region-text {
   font-size: 12px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-1);
 }
 </style>
