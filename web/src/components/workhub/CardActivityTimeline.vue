@@ -16,7 +16,7 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { getCard, getCardLogs } from '@/api/cardflow'
-import type { CardDetailDto, ActionLogDto } from '@/types/cardflow'
+import type { ActionLogDto } from '@/types/cardflow'
 import {
   buildActivityEvents,
   buildPendingStages,
@@ -27,42 +27,59 @@ import {
 const props = defineProps<{ cardId: number }>()
 
 const loading = ref(false)
+const hasError = ref(false)
 const events = ref<ActivityEvent[]>([])
 const pendingStages = ref<PendingStage[]>([])
 
-// 模块级小缓存：避免 J/K 来回切重复拉（预览态可接受短暂陈旧）
-const cache = new Map<number, { events: ActivityEvent[]; pending: PendingStage[] }>()
+// 模块级小缓存（带 TTL）：避免 J/K 来回切重复拉；TTL 防止流转中卡片长期陈旧
+const CACHE_TTL = 60_000
+const cache = new Map<number, { events: ActivityEvent[]; pending: PendingStage[]; ts: number }>()
+
+// 实例级请求序号：latest-wins，丢弃被新选中卡取代的旧请求结果
+let loadSeq = 0
 
 async function load(id: number) {
   if (!id) {
     events.value = []
     pendingStages.value = []
+    hasError.value = false
     return
   }
   const cached = cache.get(id)
-  if (cached) {
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
     events.value = cached.events
     pendingStages.value = cached.pending
+    hasError.value = false
     return
   }
+  const seq = ++loadSeq
   loading.value = true
+  hasError.value = false
   try {
+    let detailOk = true
     const [detailRes, logsRes] = await Promise.all([
-      getCard(id).catch(() => null),
+      getCard(id).catch(() => {
+        detailOk = false
+        return null
+      }),
       getCardLogs(id).catch(() => [] as ActionLogDto[]),
     ])
-    const detail = detailRes as CardDetailDto | null
+    if (seq !== loadSeq) return // 已被更新的请求取代，丢弃旧结果
     const evs = buildActivityEvents(
-      detail?.stageInstances || [],
-      detail?.auditTrail || [],
-      (logsRes as ActionLogDto[]) || [],
+      detailRes?.stageInstances ?? [],
+      detailRes?.auditTrail ?? [],
+      logsRes ?? [],
     )
-    const pend = buildPendingStages(detail?.stageInstances || [])
+    const pend = buildPendingStages(detailRes?.stageInstances ?? [])
     events.value = evs
     pendingStages.value = pend
-    cache.set(id, { events: evs, pending: pend })
+    hasError.value = !detailOk && evs.length === 0 && pend.length === 0
+    // 仅在卡片详情成功时缓存，避免把失败的空结果固化
+    if (detailOk) {
+      cache.set(id, { events: evs, pending: pend, ts: Date.now() })
+    }
   } finally {
-    loading.value = false
+    if (seq === loadSeq) loading.value = false
   }
 }
 
@@ -89,14 +106,16 @@ watch(() => props.cardId, (id) => load(id), { immediate: true })
     <div v-if="loading" class="ca-state"><a-spin size="small" /></div>
 
     <template v-else>
-      <div v-if="events.length === 0 && pendingStages.length === 0" class="ca-state">
+      <div v-if="hasError" class="ca-state">加载失败，可刷新重试</div>
+
+      <div v-else-if="events.length === 0 && pendingStages.length === 0" class="ca-state">
         暂无活动记录
       </div>
 
       <div v-else class="ca-timeline">
         <div
           v-for="(ev, idx) in events"
-          :key="idx"
+          :key="`${ev.kind}-${ev.time}-${idx}`"
           class="ca-item"
           :class="`ca-item--${ev.kind}`"
         >
