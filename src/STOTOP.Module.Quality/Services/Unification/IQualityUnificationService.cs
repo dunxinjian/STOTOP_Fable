@@ -3,9 +3,9 @@ namespace STOTOP.Module.Quality.Services.Unification;
 /// <summary>
 /// 归一一次的结果计数。
 /// </summary>
-/// <param name="EventsUpserted">写入/更新的质量事件行数。</param>
-/// <param name="EmployeeMetricUpserts">写入/更新的员工日指标行数（C0 暂为 0）。</param>
-/// <param name="NetworkMetricUpserts">写入/更新的网点日指标行数（C0 暂为 0）。</param>
+/// <param name="EventsUpserted">写入/更新的质量事件行数（事件类源贡献；指标类源为 0）。</param>
+/// <param name="EmployeeMetricUpserts">写入/更新的员工日指标行数（员工指标源贡献；其它源为 0）。</param>
+/// <param name="NetworkMetricUpserts">写入/更新的网点日指标行数（网点指标源贡献；其它源为 0）。</param>
 /// <param name="NetworkUnmatched">网点未匹配（Status==0）的事件数。</param>
 /// <param name="EmployeeUnmatched">员工未确定绑定（Status∈{0,3}）的事件数。</param>
 public record UnifyResult(
@@ -33,7 +33,8 @@ public record RematchResult(
 public interface IQualityUnificationService
 {
     /// <summary>
-    /// 归一指定组织下的申通各源。C0 仅实现事件类（物流完整性明细）路径。
+    /// 归一指定组织下的申通各源。三类目标（事件 / 网点日指标 / 员工日指标）均已落地，
+    /// 覆盖 ShentongSourceMap 全部 29 源（按目标种类 + 表名分发处理）。
     /// </summary>
     global::System.Threading.Tasks.Task<UnifyResult> UnifyShentongAsync(long orgId, CancellationToken ct = default);
 

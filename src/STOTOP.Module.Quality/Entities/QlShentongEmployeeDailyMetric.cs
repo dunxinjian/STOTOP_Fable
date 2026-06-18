@@ -13,7 +13,7 @@ public class QlShentongEmployeeDailyMetric : BaseEntity, IOrgScoped
     public string F承运商 { get; set; } = "申通";
     /// <summary>业务日期</summary>
     public DateTime F业务日期 { get; set; }
-    /// <summary>统计年月（yyyy-MM）</summary>
+    /// <summary>统计年月（yyyyMM，由 ParseUtil.Ym 产出，无连字符）</summary>
     public string? F统计年月 { get; set; }
     /// <summary>网点编码</summary>
     public string F网点编码 { get; set; } = string.Empty;

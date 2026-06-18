@@ -37,7 +37,8 @@ public class QualityUnificationService : IQualityUnificationService
         //  - 3 个已实现的 typed 源按<b>表名精确派发</b>到各自专用方法（保留各源特有的列结构/合并语义）：
         //      物流完整性 → C0 typed、小件员履约 → C1 typed、积压监控 → C2 typed。
         //  - 其它<b>事件类</b>源 → 通用事件路径 UnifyGenericEventAsync（列名来自描述符，行用 StgRawReader raw-SQL 读）。
-        //  - 其它<b>网点指标</b>源 → DispatchNetworkMetricAsync（本批仅空壳，NM 源批次4再填）。
+        //  - 其它<b>网点指标</b>源 → DispatchNetworkMetricAsync（按表名 switch 接全 10 个 NM 源：
+        //      批次4 物流信息及时/完整/准确 + 揽收/出仓/滞留汇总 6 源、批次5 末端派送/签收率/拦截/渗透 4 源）。
         //  - EmployeeMetric 维持 C1（目前仅小件员履约一条）。
         // 加事件源 = 向 ShentongSourceMap.All 追加一条描述符即可，无需改本方法（通用路径自动接手）。
         int events = 0, empUpserts = 0, netUpserts = 0, netUnmatched = 0, empUnmatched = 0;
@@ -56,7 +57,7 @@ public class QualityUnificationService : IQualityUnificationService
                 // ── 员工指标类：维持 C1（小件员履约 typed）──
                 UnifyTargetKind.EmployeeMetric => await UnifyCourierFulfillAsync(orgId, desc, ct),
 
-                // ── 网点指标类：积压监控 typed，其余 → 空壳分发（批次4填）──
+                // ── 网点指标类：积压监控 typed，其余 → DispatchNetworkMetricAsync 按表名接全 10 个 NM 源 ──
                 UnifyTargetKind.NetworkMetric => desc.StgTableName switch
                 {
                     ShentongSourceMap.BacklogMonitorTable => await UnifyBacklogMonitorAsync(orgId, desc, ct),
@@ -102,6 +103,8 @@ public class QualityUnificationService : IQualityUnificationService
         {
             // ── 网点重解析（仅当前未匹配）：用事件存的网点名称原文重匹配 ──
             // 注意：事件当前网点编码（可能是历史回退原文）不作匹配入参，统一靠名称重解析，避免脏码干扰。
+            // 已知局限：固定传 null code，仅按名称重解析——编码型源未匹配时编码已为 null（主数据通常先于导入就位，
+            //   首次归一即按编码命中；落到这里的未匹配多是名称型源），故重解析只需名称即可，不丢可命中行。
             var netCode = ev.F网点编码;
             if (ev.F网点匹配状态 == 0)
             {

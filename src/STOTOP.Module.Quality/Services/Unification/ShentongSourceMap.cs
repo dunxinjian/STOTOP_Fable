@@ -3,7 +3,7 @@ namespace STOTOP.Module.Quality.Services.Unification;
 /// <summary>
 /// 归一目标种类：事件类（一行一质量事件，写 QL申通_承运商质量事件）/
 /// 网点指标类（写 QL申通_网点日质量指标）/ 员工指标类（写 QL申通_员工日质量指标）。
-/// 本任务（C0）仅落地事件类；指标类留给 C1/C2/C3。
+/// 三类目标均已落地（事件类 / 网点指标类 / 员工指标类）。
 /// </summary>
 public enum UnifyTargetKind
 {
@@ -59,8 +59,8 @@ public record ShentongSourceDescriptor(
     string[]? KeySnapshotColumns = null);
 
 /// <summary>
-/// 申通各 STG 源 → 归一目标的静态映射表。扩展点：C1/C2/C3 增量加条目。
-/// 本任务（C0）只含「物流完整性明细」一条（事件类，域=物流信息）。
+/// 申通各 STG 源 → 归一目标的静态映射表。扩展点：增量加条目即接新源。
+/// 现已覆盖全部 29 源（事件类 / 网点指标类 / 员工指标类，C0~C3 累计填充）。
 /// </summary>
 public static class ShentongSourceMap
 {
