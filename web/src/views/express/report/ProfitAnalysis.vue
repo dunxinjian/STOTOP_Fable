@@ -863,8 +863,8 @@ onBeforeUnmount(() => {
 :deep(.ant-radio-group-solid) {
   .ant-radio-button-wrapper {
     font-size: 13px;
-    height: 30px;
-    line-height: 28px;
+    height: 32px;
+    line-height: 30px;
     padding: 0 14px;
   }
 }
