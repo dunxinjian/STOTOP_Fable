@@ -245,10 +245,10 @@ public class QualityUnificationService : IQualityUnificationService
                 emp = await _matcher.ResolveEmployeeAsync(empNo, empNameRaw, net.Code, orgId, ct);
             }
 
-            // ── 问题类型原文：列优先（列非 null 取列），否则用常量；Trim ──
-            var problemRaw = (desc.ProblemTypeColumn != null
+            // ── 问题类型原文：列优先（列非 null 取列），否则用常量；列单元格为 NULL 也兜底为 ""（脏数据常态，勿 NRE 整批回滚）；Trim ──
+            var problemRaw = ((desc.ProblemTypeColumn != null
                 ? Get(row, desc.ProblemTypeColumn)
-                : desc.ProblemTypeConstant ?? "").Trim();
+                : desc.ProblemTypeConstant) ?? "").Trim();
             var dict = await GetOrCreateProblemDictAsync(orgId, desc, problemRaw, dictCache, ct);
 
             // ── upsert 质量事件（唯一键：FOrgId × 承运商 × 来源STG表 × 来源行ID）──
