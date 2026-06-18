@@ -227,7 +227,60 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
         };
         return ApiResult<EmployeeRankDto>.Success(dto);
     }
-    public Task<ApiResult<EmployeeMetricsPageDto>> GetEmployeeMetricsAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, int page, int size) => throw new NotImplementedException();
+    public async Task<ApiResult<EmployeeMetricsPageDto>> GetEmployeeMetricsAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, int page, int size)
+    {
+        var toEnd = to.Date.AddDays(1);
+        if (page <= 0) page = 1;
+        if (size <= 0) size = 50;
+
+        var mq = _db.Set<QlShentongEmployeeDailyMetric>()
+            .Where(m => m.FOrgId == orgId && m.F承运商 == carrier
+                        && m.F业务日期 >= from.Date && m.F业务日期 < toEnd
+                        && m.F员工工号 != "");
+        if (!string.IsNullOrEmpty(networkCode))
+            mq = mq.Where(m => m.F网点编码 == networkCode);
+
+        var rows = await mq.ToListAsync(); // 按工号期间 SUM 在内存聚合
+        var grouped = rows
+            .GroupBy(m => new { m.F员工工号, m.F员工姓名原文, m.F网点编码 })
+            .Select(g => new EmployeeMetricRowDto
+            {
+                EmpNo = g.Key.F员工工号,
+                EmpName = g.Key.F员工姓名原文,
+                NetworkCode = g.Key.F网点编码,
+                派件量 = g.Sum(m => m.F派件量 ?? 0),
+                当日派签量 = g.Sum(m => m.F当日派签量 ?? 0),
+                应上门量 = g.Sum(m => m.F应上门量 ?? 0),
+                未上门量 = g.Sum(m => m.F未上门量 ?? 0),
+                客诉发起量 = g.Sum(m => m.F客诉发起量 ?? 0),
+                工单定责量 = g.Sum(m => m.F工单定责量 ?? 0),
+                虚假签收数 = g.Sum(m => m.F虚假签收数 ?? 0),
+                照片质检不合格数 = g.Sum(m => m.F照片质检不合格数 ?? 0),
+                派送超时T0数 = g.Sum(m => m.F派送超时T0数 ?? 0),
+                派送超时T1数 = g.Sum(m => m.F派送超时T1数 ?? 0),
+                派送超时T2数 = g.Sum(m => m.F派送超时T2数 ?? 0),
+                派送超时T3数 = g.Sum(m => m.F派送超时T3数 ?? 0),
+                揽收不及时数 = g.Sum(m => m.F揽收不及时数 ?? 0),
+                上传不及时数 = g.Sum(m => m.F上传不及时数 ?? 0),
+                问题件数 = g.Sum(m => m.F问题件数 ?? 0),
+                违规虚假电联 = g.Sum(m => m.F违规虚假电联 ?? 0),
+                违规无效电联 = g.Sum(m => m.F违规无效电联 ?? 0),
+                违规双签 = g.Sum(m => m.F违规双签 ?? 0),
+                违规照片定位虚假 = g.Sum(m => m.F违规照片定位虚假 ?? 0),
+                违规签收文本不规范 = g.Sum(m => m.F违规签收文本不规范 ?? 0),
+                违规引导代收 = g.Sum(m => m.F违规引导代收 ?? 0),
+                考核金额合计 = g.Sum(m => m.F考核金额合计 ?? 0m),
+            })
+            .OrderByDescending(x => x.考核金额合计)
+            .ToList();
+
+        var dto = new EmployeeMetricsPageDto
+        {
+            Total = grouped.Count,
+            Items = grouped.Skip((page - 1) * size).Take(size).ToList()
+        };
+        return ApiResult<EmployeeMetricsPageDto>.Success(dto);
+    }
     public Task<ApiResult<List<EmployeeEventItemDto>>> GetEmployeeTimelineAsync(long orgId, string carrier, string empNo, DateTime from, DateTime to) => throw new NotImplementedException();
     public Task<ApiResult<EventPageDto>> GetEventsAsync(long orgId, EventQuery query) => throw new NotImplementedException();
     public Task<ApiResult<int>> GetPendingCountAsync(long orgId, string carrier) => throw new NotImplementedException();
