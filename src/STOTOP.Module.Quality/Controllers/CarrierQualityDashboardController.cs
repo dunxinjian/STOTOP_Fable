@@ -68,4 +68,38 @@ public class CarrierQualityDashboardController : ControllerBase
     [RequirePermission(QualityPermissions.CarrierQualityView)]
     public Task<ApiResult<int>> GetPendingCount([FromQuery] string carrier)
         => _service.GetPendingCountAsync(GetOrgId(), carrier);
+
+    [HttpGet("events/export")]
+    [RequirePermission(QualityPermissions.CarrierQualityView)]
+    public async Task<IActionResult> ExportEvents([FromQuery] EventQuery query)
+    {
+        query.Page = 1;
+        query.Size = 100000; // 一次性全量（按期上千行，足够）
+        var result = await _service.GetEventsAsync(GetOrgId(), query);
+        var rows = result.Data?.Items ?? new List<QualityEventRowDto>();
+
+        string Esc(string? s)
+        {
+            s ??= "";
+            return s.Contains(',') || s.Contains('"') || s.Contains('\n') ? $"\"{s.Replace("\"", "\"\"")}\"" : s;
+        }
+
+        var sb = new global::System.Text.StringBuilder();
+        sb.AppendLine("业务日期,运单号,网点编码,网点名称,员工工号,员工姓名,质量域,问题类型,严重度,是否考核,考核金额,平台,待认领,多域命中");
+        foreach (var r in rows)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                Esc(r.Date?.ToString("yyyy-MM-dd")), Esc(r.Waybill), Esc(r.NetworkCode), Esc(r.NetworkName),
+                Esc(r.EmpNo), Esc(r.EmpNameRaw), Esc(r.Domain), Esc(r.ProblemName), r.Severity.ToString(),
+                r.IsAssessed ? "是" : "否", (r.Fee ?? 0m).ToString("0.00"), Esc(r.Platform),
+                r.IsPending ? "是" : "否", r.IsMultiDomain ? "是" : "否"
+            }));
+        }
+
+        var body = global::System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var bytes = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(body).ToArray();
+        var fileName = $"问题件追踪-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+        return File(bytes, "text/csv;charset=utf-8", fileName);
+    }
 }
