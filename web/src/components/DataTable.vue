@@ -127,4 +127,20 @@ function onChange(pag: any) {
 :deep(.ant-table-placeholder > td.ant-table-cell-row-hover) {
   background: var(--bg-card) !important;
 }
+
+// 列头精修：中性字色 + 收字重 + 字间距 + 清晰底线；上下加大呼吸（比数据行高一截，与首行拉开层次）
+:deep(.ant-table-thead > tr > th) {
+  color: var(--text-2);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+  border-bottom: 1px solid var(--border);
+}
+
+// 分页更紧凑：收上下留白
+:deep(.ant-pagination) {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
 </style>
