@@ -128,14 +128,14 @@ function onChange(pag: any) {
   background: var(--bg-card) !important;
 }
 
-// 列头精修：白底融入数据行（无独立灰带），且去掉底分隔线——
-// 白表头+白首行时那条 1px 边线会被读成一条"缝"，故仅靠中性字 + 字间距区分，彻底无缝。
+// 列头精修：白底融入数据行（无独立灰带）；底分隔线用“耳语级”浅令牌 --border-faint，
+// 比 --border 更浅一档——白表头+白首行时既保留一丝结构层次、又不再像一条“缝”。
 :deep(.ant-table-thead > tr > th) {
   background: var(--bg-card);
   color: var(--text-2);
   font-weight: 500;
   letter-spacing: 0.02em;
-  border-bottom: none;
+  border-bottom: 1px solid var(--border-faint);
 }
 
 // 分页更紧凑：收上下留白

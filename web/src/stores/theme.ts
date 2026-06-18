@@ -293,6 +293,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--bg-muted', '#F1F3F6')
     s.setProperty('--border', '#ECEEF1')
     s.setProperty('--border-strong', '#DDE0E4')
+    s.setProperty('--border-faint', '#F2F4F6') // 比 --border 更浅一档：表头/行间等“耳语级”分隔线，避免白对白时细线被读成缝
     // —— 静态：外壳
     s.setProperty('--topbar-ink', '#232834')
     s.setProperty('--topbar-ink-admin', '#171A22')

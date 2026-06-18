@@ -81,6 +81,7 @@ $text-placeholder: var(--text-disabled, #BFC3C9);
 $border-color: var(--border, #E6E8EB);
 $border-color-light: var(--border, #E6E8EB);
 $border-color-lighter: var(--border, #E6E8EB);
+$border-color-faint: var(--border-faint, #F2F4F6); // 耳语级细线（比 --border 更浅一档）
 
 // ===== 背景颜色 =====
 $bg-page: var(--bg-page, #F5F6F8);
