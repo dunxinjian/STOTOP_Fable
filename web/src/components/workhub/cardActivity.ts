@@ -25,6 +25,7 @@ export interface PendingStage {
 // 若后端新增其它决策类动作，加到此集合即可。
 export const DECISION_ACTION_TYPES = new Set(['approve', 'reject'])
 
+// 注：approve/reject 仅供 actionText() 被直接调用时使用；buildActivityEvents 内部已过滤它们（决策来自审批节点）。
 const ACTION_TEXT: Record<string, string> = {
   create: '创建草稿',
   submit: '提交审批',
@@ -63,6 +64,14 @@ function ts(v?: string | null): number {
   return Number.isNaN(t) ? NaN : t
 }
 
+// 同一时刻的事件展示优先级：先进入节点、再决策、再操作、最后系统轨迹
+const KIND_ORDER: Record<ActivityKind, number> = {
+  'node-enter': 0,
+  decision: 1,
+  op: 2,
+  system: 3,
+}
+
 /** 合并三源为去重的活动事件，按时间升序（发起在前、最新在后） */
 export function buildActivityEvents(
   stageInstances: StageInstanceDto[] = [],
@@ -93,11 +102,13 @@ export function buildActivityEvents(
         node: s.stageName,
       })
     }
-    const decided = (s.assignees || []).filter((a) => a.completedTime)
+    const decided = (s.assignees || []).filter(
+      (a): a is typeof a & { completedTime: string } => !!a.completedTime,
+    )
     if (decided.length > 0) {
       for (const a of decided) {
         events.push({
-          time: a.completedTime as string,
+          time: a.completedTime,
           kind: 'decision',
           title: statusLabel(a.status),
           actor: a.userName,
@@ -132,7 +143,7 @@ export function buildActivityEvents(
   // 5. 升序排序，丢弃无有效时间
   return events
     .filter((e) => !Number.isNaN(ts(e.time)))
-    .sort((a, b) => ts(a.time) - ts(b.time))
+    .sort((a, b) => ts(a.time) - ts(b.time) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind])
 }
 
 /** 当前待审节点（pending/processing），用于底部高亮 footer */
@@ -144,6 +155,6 @@ export function buildPendingStages(stageInstances: StageInstanceDto[] = []): Pen
       assignees: (s.assignees || [])
         .filter((a) => !a.completedTime)
         .map((a) => a.userName)
-        .filter(Boolean),
+        .filter((n): n is string => !!n),
     }))
 }
