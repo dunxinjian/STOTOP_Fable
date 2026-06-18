@@ -30,14 +30,14 @@ using Task = global::System.Threading.Tasks.Task;
 /// 仅靠 <see cref="ShentongSourceMap.All"/> 里新加的描述符驱动，无服务主干改动。
 ///
 /// 每源一个 [SkippableFact]（失败隔离），统一 Arrange/Act/Assert：
-///  Arrange：建 STG+QL 表；清本 org 既有 QL 事件/字典；种子 ExpNetworkPoint(320288=江苏太仓市城区公司,org=192)；
-///           用 Plan1 导入封装把该源样例导入对应 STG(org=192)。
+///  Arrange：建 STG+QL 表；清本 org 既有 QL 事件/字典 + 5 源 STG 本网点残留（防跨批次 FID 撞号污染计数）；
+///           种子 ExpNetworkPoint(320288=江苏太仓市城区公司,org=192)；用 Plan1 导入封装把该源样例导入对应 STG(org=192)。
 ///  Act：    svc.UnifyShentongAsync(192)（本源走通用路径；其它已实现源各自处理，互不干扰）。
 ///  Assert： 本源本批事件行数 > 0；
 ///           过滤源 → 事件数 == 满足过滤条件的 STG 行数（过滤生效）；整源源 → 事件数 == 全部 STG 行数；
 ///           F质量域 正确；问题类型名称正确（常量源=该常量；列源=STG distinct(列)，空单元格落「(未分类)」）；
 ///           网点 320288 匹配(状态1)；F关键字段JSON 全非空；再跑一次行数不变（幂等）。
-///  Cleanup：try/finally 删本 org QL 事件/字典 + 本批 STG + CfBatch + 种子网点。
+///  Cleanup：try/finally 删本 org QL 事件/字典 + 本批 STG + 5 源 STG 本网点残留 + CfBatch + 种子网点。
 /// </summary>
 [Collection("StotopRealDb")] // 串行化：与其它真库集成测试共享 stotop
 public class ShentongBatch1EventSourcesTests
@@ -152,6 +152,9 @@ public class ShentongBatch1EventSourcesTests
         try
         {
             await CleanupQualityAsync(conn);
+            // 预清 STG 残留：删 5 个事件源里本网点的旧批次行，避免跨批次 FID 撞号污染本批 F来源批次ID 计数
+            // （真库测试已知坑：UnifyGenericEventAsync 按「org+表名」读全部未撤销行、不按批次，残留旧行会被复跑重新处理）。
+            await CleanupStgResidueAsync(conn);
             seededNetwork = await EnsureNetworkAsync(db);
 
             // ── Arrange：导入样例到对应 STG ──
@@ -243,6 +246,8 @@ public class ShentongBatch1EventSourcesTests
         {
             await CleanupQualityAsync(conn);
             await CleanupBatchAsync(conn, c.StgTable, batchId);
+            // 清 STG 残留（按网点删全部 5 源本网点行）：与预清同口径，确保本次运行不给后续跑/其它源留残留。
+            await CleanupStgResidueAsync(conn);
             if (seededNetwork) await CleanupNetworkAsync(conn);
         }
     }
@@ -411,6 +416,33 @@ public class ShentongBatch1EventSourcesTests
     {
         await ExecAsync(conn, $"DELETE FROM [{EventTable}] WHERE [FOrgId] = @org", ("@org", OrgId));
         await ExecAsync(conn, $"DELETE FROM [{DictTable}] WHERE [FOrgId] = @org", ("@org", OrgId));
+    }
+
+    /// <summary>
+    /// 删 5 个批次1事件源 STG 表里本测试网点（江苏太仓市城区公司）的残留行——真库测试已知坑。
+    /// <para>
+    /// 成因：<see cref="QualityUnificationService.UnifyShentongAsync"/> → UnifyGenericEventAsync 用 StgRawReader
+    /// 按「org+表名」读<b>全部未撤销 STG 行（不按批次、无 ORDER BY）</b>，事件 upsert 键是 (FOrgId,承运商,来源STG表,来源行ID=FID)。
+    /// 上一次中断运行（finally 未执行）残留的旧批次行若与本批行 FID 撞号，会和本批行映射到同一事件键，
+    /// 读取顺序不确定 → 复跑时「最后写入者」可能把事件 F来源批次ID 改指向残留批次，使本批计数下滑（幂等断言假阴性）。
+    /// </para>
+    /// <para>
+    /// 这 5 源描述符均无有效网点编码列（<c>NetworkCodeColumn=null</c>），归一按<b>网点名称精确匹配</b>种子网点；
+    /// 种子仅设 FFullName=江苏太仓市城区公司，故凡被归到本网点的行其名称列恒等于该全称 → 按名称列删可精确命中全部残留。
+    /// 导入前（清旧残留）+ finally（清本次行）都调用，确保归一只看到本批行。仿 ShentongBatch4NetworkMetricTests.CleanupStgResidueAsync。
+    /// </para>
+    /// </summary>
+    private static async Task CleanupStgResidueAsync(string conn)
+    {
+        // 5 源 DELETE 共用同一组参数 (@org,@name)，合并到一条命令一次连接执行
+        // （真库为远程，单次连接握手成本高；批量减少连接数/网络往返）。各源用其归一所用的网点名称列。
+        var sql =
+            $"DELETE FROM [{ShentongSourceMap.PickupAnalysisTable}] WHERE [FOrgId]=@org AND [F揽收所属网点]=@name;" +
+            $"DELETE FROM [{ShentongSourceMap.OutboundMonitorTable}] WHERE [FOrgId]=@org AND [F应签所属网点]=@name;" +
+            $"DELETE FROM [{ShentongSourceMap.HandoverDelayTable}] WHERE [FOrgId]=@org AND [F揽收所属网点]=@name;" +
+            $"DELETE FROM [{ShentongSourceMap.DeliveryAssessTable}] WHERE [FOrgId]=@org AND [F应签收所属网点名称]=@name;" +
+            $"DELETE FROM [{ShentongSourceMap.SignSubstandardTable}] WHERE [FOrgId]=@org AND [F应签网点]=@name;";
+        await ExecAsync(conn, sql, ("@org", OrgId), ("@name", NetFullName));
     }
 
     private static async Task CleanupNetworkAsync(string conn)

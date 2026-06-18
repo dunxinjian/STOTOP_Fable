@@ -17,9 +17,13 @@ namespace STOTOP.Module.CardFlow.Tests;
 /// 修复：把所有访问共享 stotop 库的真库集成测试类归入同一个 Collection，并
 /// DisableParallelization=true，使它们彼此串行。纯 InMemory / 纯函数单测不带此标记，
 /// 仍按 xUnit 默认跨类并行，整体测试时长基本不受影响。
+///
+/// 残留自愈（机制 B）：实现 <see cref="ICollectionFixture{T}"/>&lt;<see cref="ShentongStgResidueResetFixture"/>&gt;，
+/// 使 xUnit 在本 collection 任何测试运行前一次性清空 org=192 的 [STG申通_*]/[QL申通_*] 残留——
+/// 根治被中断进程留下的孤儿残留命中「跨批次去重」导致首次导入被整批跳过的假阴性。详见 <see cref="ShentongStgResidueReset"/>。
 /// </summary>
 [CollectionDefinition("StotopRealDb", DisableParallelization = true)]
-public sealed class StotopRealDbCollection
+public sealed class StotopRealDbCollection : ICollectionFixture<ShentongStgResidueResetFixture>
 {
-    // 仅作为 [CollectionDefinition] 的载体，无 fixture。
+    // [CollectionDefinition] 载体 + 机制 B 基线重置 fixture（跨轮自愈）。
 }
