@@ -244,6 +244,13 @@ async function handleWorkItemAction(action: WorkItemAction) {
   }
 }
 
+// ===== 稍后处理（操作收敛到右栏后，defer 由此触发）=====
+function handleDefer() {
+  if (!workItem.value) return
+  hub.deferItem(workItem.value.id)
+  emit('close')
+}
+
 // ===== 查看完整页面 =====
 function goToDetailRoute() {
   if (workItem.value?.detailRoute) {
@@ -381,8 +388,12 @@ function goToDetailRoute() {
 
           </div>
 
-          <!-- 操作按钮区（sticky bottom） -->
-          <div v-if="workItem.actions && workItem.actions.length > 0" class="wi-actions">
+          <!-- 操作按钮区（sticky bottom）：稍后处理（左）+ 主操作（右） -->
+          <div class="wi-actions">
+            <a-button type="text" size="small" class="wi-defer-btn" @click="handleDefer">
+              <template #icon><ClockCircleOutlined /></template>
+              稍后处理
+            </a-button>
             <a-button
               v-for="action in workItem.actions"
               :key="action.key"
@@ -747,6 +758,11 @@ function goToDetailRoute() {
 .wi-action-btn {
   flex: 1;
   min-width: 80px;
+}
+
+.wi-defer-btn {
+  flex-shrink: 0;
+  color: $text-secondary;
 }
 
 // ===== 对话详情（ConversationThread 占满） =====
