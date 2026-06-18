@@ -741,7 +741,7 @@ onBeforeUnmount(() => {
 @use '@/styles/variables.scss' as *;
 
 .profit-content {
-  padding: 0 16px 16px;
+  padding: 0; // 去掉本层冗余留白——两侧/上下统一由 .page-container 提供，避免与其 16px 叠成 32px
   display: flex;
   flex-direction: column;
   height: calc(100vh - 48px); // 减去工具栏高度
