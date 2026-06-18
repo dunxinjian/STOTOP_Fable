@@ -22,7 +22,7 @@ public class StgShentongBacklogMonitor : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 
     // 业务字段（64 列；括号/连字符列 dbColumn 已去除非法字符）

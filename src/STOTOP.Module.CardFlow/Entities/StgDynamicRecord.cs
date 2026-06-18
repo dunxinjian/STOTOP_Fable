@@ -18,6 +18,6 @@ public class StgDynamicRecord : BaseEntity, IStagingRecord
     public string? FDataScopeId { get; set; }
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 }

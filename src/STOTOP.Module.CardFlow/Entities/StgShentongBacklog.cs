@@ -20,7 +20,7 @@ public class StgShentongBacklog : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 
     // 业务字段（41 列，对应 sheet「末端时效积压明细」表头）

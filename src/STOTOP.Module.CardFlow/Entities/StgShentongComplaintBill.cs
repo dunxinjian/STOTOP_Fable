@@ -22,7 +22,7 @@ public class StgShentongComplaintBill : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 
     // 业务字段（23 列，均为 row2 中全局唯一的列名）

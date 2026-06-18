@@ -15,7 +15,7 @@ public class StgShentongDeliveryDaily : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }   // 同上恒 NULL
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }              // 仅入库，不参与去重/取数（按组织隔离）
+    public long? F账套ID { get; set; }              // 仅入库，不参与去重/取数（按组织隔离）
     public string? F归属网点编号 { get; set; }     // 取数过滤列（OutletResolver 规范化）
     public string? F其他列数据 { get; set; }        // ExcelInput BulkCopy 无条件写 -> 必须有
     public string? F业务主键 { get; set; }          // keyFields 哈希，ExcelInput 无条件写 -> 必须有

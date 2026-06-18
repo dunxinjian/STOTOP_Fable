@@ -24,7 +24,7 @@ public class StgShentongSignRateAssess : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 
     // 业务字段（仅 6 列：第 1 行全局唯一名；分时段明细未逐列建模）

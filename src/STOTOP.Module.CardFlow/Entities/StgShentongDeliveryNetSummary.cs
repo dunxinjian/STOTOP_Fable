@@ -21,7 +21,7 @@ public class StgShentongDeliveryNetSummary : BaseEntity, IStagingRecord
     public long? FSourceWorkItemId { get; set; }
     public bool FIsRevoked { get; set; }
     public long FOrgId { get; set; }
-    public long F账套ID { get; set; }
+    public long? F账套ID { get; set; }
     public string? F归属网点编号 { get; set; }
 
     // 业务字段（55 列）

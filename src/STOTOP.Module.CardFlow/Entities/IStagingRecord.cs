@@ -13,6 +13,6 @@ public interface IStagingRecord : IOrgScoped
     string? FDataScopeId { get; set; }
     long? FSourceWorkItemId { get; set; }
     bool FIsRevoked { get; set; }
-    long F账套ID { get; set; }
+    long? F账套ID { get; set; }
     string? F归属网点编号 { get; set; }
 }
