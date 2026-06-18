@@ -159,7 +159,74 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
 
         return ApiResult<List<DomainStatItem>>.Success(result);
     }
-    public Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN) => throw new NotImplementedException();
+    public async Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN)
+    {
+        var toEnd = to.Date.AddDays(1);
+        if (topN <= 0) topN = 10;
+
+        List<EmployeeRankItemDto> items;
+
+        if (dimension == "problem")
+        {
+            // 问题件 = 质量事件计数（按工号聚合）
+            var evq = _db.Set<QlShentongQualityEvent>()
+                .Where(e => e.FOrgId == orgId && e.F承运商 == carrier
+                            && e.F业务日期 >= from.Date && e.F业务日期 < toEnd
+                            && e.F员工工号 != null && e.F员工工号 != "");
+            if (!string.IsNullOrEmpty(networkCode))
+                evq = evq.Where(e => e.F网点编码 == networkCode);
+
+            var grouped = await evq
+                .GroupBy(e => new { e.F员工工号, e.F员工姓名原文, e.F网点编码 })
+                .Select(g => new { g.Key.F员工工号, g.Key.F员工姓名原文, g.Key.F网点编码, Count = g.Count() })
+                .ToListAsync();
+
+            items = grouped.Select(g => new EmployeeRankItemDto
+            {
+                EmpNo = g.F员工工号!,
+                EmpName = g.F员工姓名原文,
+                NetworkCode = g.F网点编码,
+                Value = g.Count
+            }).ToList();
+        }
+        else
+        {
+            // 客诉/虚签/超时/考核金额 = 员工日指标按工号期间汇总
+            var mq = _db.Set<QlShentongEmployeeDailyMetric>()
+                .Where(m => m.FOrgId == orgId && m.F承运商 == carrier
+                            && m.F业务日期 >= from.Date && m.F业务日期 < toEnd
+                            && m.F员工工号 != "");
+            if (!string.IsNullOrEmpty(networkCode))
+                mq = mq.Where(m => m.F网点编码 == networkCode);
+
+            var rows = await mq.ToListAsync();
+            items = rows
+                .GroupBy(m => new { m.F员工工号, m.F员工姓名原文, m.F网点编码 })
+                .Select(g => new EmployeeRankItemDto
+                {
+                    EmpNo = g.Key.F员工工号,
+                    EmpName = g.Key.F员工姓名原文,
+                    NetworkCode = g.Key.F网点编码,
+                    Value = dimension switch
+                    {
+                        "complaint" => g.Sum(m => m.F客诉发起量 ?? 0),
+                        "fakesign" => g.Sum(m => m.F虚假签收数 ?? 0),
+                        "timeout" => g.Sum(m => TimeoutTotal(m.F派送超时T0数, m.F派送超时T1数, m.F派送超时T2数, m.F派送超时T3数)),
+                        "fee" => g.Sum(m => m.F考核金额合计 ?? 0m),
+                        _ => 0m
+                    }
+                })
+                .ToList();
+        }
+
+        var dto = new EmployeeRankDto
+        {
+            Dimension = dimension,
+            Worst = items.OrderByDescending(x => x.Value).Take(topN).ToList(),
+            Best = items.Where(x => x.Value > 0).OrderBy(x => x.Value).Take(topN).ToList()
+        };
+        return ApiResult<EmployeeRankDto>.Success(dto);
+    }
     public Task<ApiResult<EmployeeMetricsPageDto>> GetEmployeeMetricsAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, int page, int size) => throw new NotImplementedException();
     public Task<ApiResult<List<EmployeeEventItemDto>>> GetEmployeeTimelineAsync(long orgId, string carrier, string empNo, DateTime from, DateTime to) => throw new NotImplementedException();
     public Task<ApiResult<EventPageDto>> GetEventsAsync(long orgId, EventQuery query) => throw new NotImplementedException();
