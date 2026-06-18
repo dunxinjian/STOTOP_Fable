@@ -32,8 +32,9 @@ public static class QualityModuleExtensions
         services.AddScoped<IPerformanceService, PerformanceService>();
         services.AddScoped<IAlertConfigService, AlertConfigService>();
 
-        // 统一质控：主数据匹配
+        // 统一质控：主数据匹配 + 归一服务
         services.AddScoped<IMasterDataMatcher, MasterDataMatcher>();
+        services.AddScoped<IQualityUnificationService, QualityUnificationService>();
 
         // 事件处理器
         services.AddScoped<IEventHandler<ExceptionCreatedEvent>, ExceptionCreatedEventHandler>();
