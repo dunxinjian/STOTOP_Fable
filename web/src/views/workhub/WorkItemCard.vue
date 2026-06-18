@@ -307,7 +307,8 @@
       <template v-else>
         <div class="card-line-row">
           <span class="card-line" :title="item.summary">
-            <template v-for="link in visibleLinks" :key="link.route">
+            <template v-for="(link, idx) in visibleLinks" :key="link.route">
+              <span v-if="idx > 0" class="link-separator">·</span>
               <span
                 class="related-link"
                 :class="{ disabled: !hasPermission(link) }"
@@ -315,8 +316,8 @@
               >
                 <component :is="getIconComponent(link.icon)" class="link-icon" />{{ link.label }}
               </span>
-              <span class="link-separator">·</span>
-            </template>{{ item.summary }}
+            </template>
+            <span v-if="visibleLinks.length && item.summary" class="link-separator">·</span>{{ item.summary }}
           </span>
           <span v-if="item.deadline" class="deadline" :class="{ overdue: isOverdue }">
             <ClockCircleOutlined class="deadline-icon" />

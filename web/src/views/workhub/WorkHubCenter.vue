@@ -598,8 +598,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 批量操作栏（多选模式下显示） -->
-          <div class="batch-action-bar" v-else>
+          <!-- 批量操作栏（多选模式下显示；独立 v-if，不与筛选栏的 showFilters 耦合） -->
+          <div class="batch-action-bar" v-if="hub.isMultiSelectMode.value">
             <span class="batch-info">
               已选 {{ hub.selectedItemIds.value.size }} 项
             </span>
