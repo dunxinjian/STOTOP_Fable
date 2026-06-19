@@ -815,7 +815,8 @@ async function handleSaveInitialBalances() {
     await saveInitialBalances({ accountSetId, items })
     message.success('保存成功')
   } catch (error) {
-    message.error('保存失败')
+    // 失败原因由请求拦截器统一弹出服务器返回的具体消息（如"期初借贷不平衡，借方合计…差额…"），此处不重复提示
+    console.error('保存期初余额失败:', error)
   } finally {
     savingInitial.value = false
   }
