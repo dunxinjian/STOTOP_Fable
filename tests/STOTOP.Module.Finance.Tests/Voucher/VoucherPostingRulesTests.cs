@@ -24,10 +24,13 @@ public class VoucherPostingRulesTests
     }
 
     [Fact]
-    public void ResolvePeriod_ignores_other_account_sets()
+    public void ResolvePeriod_does_not_return_period_from_other_account_set()
     {
-        var p = VoucherPostingRules.ResolvePeriod(Periods(), new DateTime(2026, 6, 15), accountSetId: 1);
-        Assert.Equal(1, p.FAccountSetId);
+        // 账套 1 与账套 2 都有 6 月期间（FID 11 vs 99）；用账套 2 查必须返回账套 2 的期间，
+        // 真正验证账套隔离（核心安全语义），而非与上一条断言同一次调用。
+        var p = VoucherPostingRules.ResolvePeriod(Periods(), new DateTime(2026, 6, 15), accountSetId: 2);
+        Assert.Equal(99, p.FID);
+        Assert.Equal(2, p.FAccountSetId);
     }
 
     [Fact]

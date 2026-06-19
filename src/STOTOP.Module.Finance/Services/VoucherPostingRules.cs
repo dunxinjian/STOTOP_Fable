@@ -10,6 +10,8 @@ public static class VoucherPostingRules
 {
     /// <summary>
     /// 按 日期 + 账套 在候选期间中定位唯一期间；查不到抛错（缺账期一律拒绝落库）。
+    /// 假设同账套的期间互不重叠（建账时保证）；OrderByDescending(FStartDate) 仅作防御性兜底，
+    /// 万一存在重叠取开始日期最晚者，勿因"反正不重叠"而删除此排序。
     /// </summary>
     public static FinAccountPeriod ResolvePeriod(
         IEnumerable<FinAccountPeriod> candidates, DateTime date, long accountSetId)
