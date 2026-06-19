@@ -35,4 +35,13 @@ public static class VoucherPostingRules
             throw new InvalidOperationException(
                 $"{period.FYear}年第{period.FPeriodNo}期已结账，不能在该期间登记/修改凭证");
     }
+
+    /// <summary>
+    /// 归属鉴权谓词：凭证是否对当前上下文可见/可操作。
+    /// currentOrgId==0（无 HttpContext，后台任务）→ 不约束；
+    /// currentAccountSetId==0（无 X-AccountSet-Id 请求头）→ 仅校验组织。
+    /// </summary>
+    public static bool IsAccessible(FinVoucher voucher, long currentOrgId, long currentAccountSetId)
+        => (currentOrgId == 0 || voucher.FOrgId == currentOrgId)
+        && (currentAccountSetId == 0 || voucher.FAccountSetId == currentAccountSetId);
 }

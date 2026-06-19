@@ -53,4 +53,26 @@ public class VoucherPostingRulesTests
         var open = new FinAccountPeriod { FID = 11, FIsClosed = 0 };
         Assert.Null(Record.Exception(() => VoucherPostingRules.EnsureOpenForPosting(open)));
     }
+
+    private static FinVoucher OwnedVoucher() => new() { FID = 1, FOrgId = 100, FAccountSetId = 7 };
+
+    [Fact]
+    public void IsAccessible_true_when_org_and_account_set_match()
+        => Assert.True(VoucherPostingRules.IsAccessible(OwnedVoucher(), currentOrgId: 100, currentAccountSetId: 7));
+
+    [Fact]
+    public void IsAccessible_false_when_other_org()
+        => Assert.False(VoucherPostingRules.IsAccessible(OwnedVoucher(), currentOrgId: 200, currentAccountSetId: 7));
+
+    [Fact]
+    public void IsAccessible_false_when_other_account_set_same_org()
+        => Assert.False(VoucherPostingRules.IsAccessible(OwnedVoucher(), currentOrgId: 100, currentAccountSetId: 8));
+
+    [Fact]
+    public void IsAccessible_degrades_to_org_only_when_no_account_set_header()
+        => Assert.True(VoucherPostingRules.IsAccessible(OwnedVoucher(), currentOrgId: 100, currentAccountSetId: 0));
+
+    [Fact]
+    public void IsAccessible_degrades_to_unconstrained_when_no_org_context()
+        => Assert.True(VoucherPostingRules.IsAccessible(OwnedVoucher(), currentOrgId: 0, currentAccountSetId: 0));
 }
