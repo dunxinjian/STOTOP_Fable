@@ -162,8 +162,15 @@ public class AccountController : ControllerBase
     [RequireAccountSetPermission(AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult> SaveInitialBalances([FromBody] SaveInitialBalancesRequest request)
     {
-        await _accountService.SaveInitialBalancesAsync(request);
-        return ApiResult.Ok("保存期初余额成功");
+        try
+        {
+            await _accountService.SaveInitialBalancesAsync(request);
+            return ApiResult.Ok("保存期初余额成功");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult.Fail(ex.Message);
+        }
     }
 
     /// <summary>
