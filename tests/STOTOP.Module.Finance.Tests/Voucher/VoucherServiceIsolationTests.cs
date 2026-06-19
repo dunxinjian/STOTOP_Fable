@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using Xunit;
 
@@ -51,7 +52,7 @@ public class VoucherServiceIsolationTests
         Assert.Single(db.Set<FinVoucher>()); // 未删除
     }
 
-    // Audit 走 GetByIdAsync(FindAsync 绕过全局过滤器)：跨组织缺口。
+    // Audit 改走 GetOwnedVoucherAsync：跨组织凭证因 Query() 全局组织过滤器不可见 → 返回 null → 拒绝。
     [Fact]
     public async Task Audit_rejects_other_org()
     {
@@ -65,5 +66,34 @@ public class VoucherServiceIsolationTests
         Assert.False(ok);
         // 跨组织读取需 IgnoreQueryFilters（当前 org=999 过滤器会隐藏 org=100 的凭证）
         Assert.Equal(1, db.Set<FinVoucher>().IgnoreQueryFilters().Single().FStatus);
+    }
+
+    // Update 是唯一"取实体后改字段并 SaveChanges"的写路径，跨账套必须被拒、原数据不被改写。
+    [Fact]
+    public async Task Update_rejects_other_account_set_same_org()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(Update_rejects_other_account_set_same_org), orgId: 100);
+        var id = await SeedForeignVoucherAsync(db);
+        var http = VoucherServiceTestHarness.HttpContext(orgId: 100, accountSetId: 8); // 同组织、账套8≠7
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var req = new CreateVoucherRequest
+        {
+            VoucherWord = "记",
+            Date = new DateTime(2026, 6, 1),
+            PeriodId = 11,
+            Entries =
+            {
+                new CreateVoucherEntryRequest { LineNo = 1, Summary = "篡改", AccountId = 1, DebitAmount = 50m },
+                new CreateVoucherEntryRequest { LineNo = 2, Summary = "篡改", AccountId = 2, CreditAmount = 50m },
+            }
+        };
+
+        var result = await service.UpdateAsync(id, req, "attacker");
+
+        Assert.Null(result); // 越账套：视为不存在，不更新
+        // 原分录金额仍为 100（未被改写成 50）
+        var entries = db.Set<FinVoucherEntry>().Where(e => e.FVoucherId == id).ToList();
+        Assert.All(entries, e => Assert.True(e.FDebitAmount == 100m || e.FCreditAmount == 100m));
     }
 }
