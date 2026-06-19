@@ -18,9 +18,7 @@
         <a-descriptions-item label="行业">{{ customer.industry || '-' }}</a-descriptions-item>
         <a-descriptions-item label="规模">{{ customer.scale || '-' }}</a-descriptions-item>
         <a-descriptions-item label="状态">
-          <a-tag :color="statusColorMap[customer.status] || 'default'">
-            {{ statusTextMap[customer.status] || '未知' }}
-          </a-tag>
+          <StatusTag :type="custStatusType(customer.status)" dot>{{ statusTextMap[customer.status] || '未知' }}</StatusTag>
         </a-descriptions-item>
         <a-descriptions-item label="BD负责人">{{ getEmployeeName(customer.bdEmployeeId) }}</a-descriptions-item>
         <a-descriptions-item label="运维负责人">{{ getEmployeeName(customer.maintenanceEmployeeId) }}</a-descriptions-item>
@@ -43,12 +41,12 @@
             :loading="contactLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'isPrimary'">
-                <a-tag v-if="record.isPrimary" color="gold">主联系人</a-tag>
+                <StatusTag v-if="record.isPrimary" type="warning">主联系人</StatusTag>
                 <span v-else>-</span>
               </template>
               <template v-if="column.dataIndex === 'action'">
@@ -69,7 +67,7 @@
             :loading="visitLoading"
             :pagination="visitPaginationConfig"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
             @change="handleVisitTableChange"
           >
@@ -78,9 +76,7 @@
                 {{ (visitPagination.pageIndex - 1) * visitPagination.pageSize + index + 1 }}
               </template>
               <template v-if="column.dataIndex === 'visitMethod'">
-                <a-tag :color="methodColorMap[record.visitMethod] || 'default'">
-                  {{ methodTextMap[record.visitMethod] || '其他' }}
-                </a-tag>
+                <StatusTag>{{ methodTextMap[record.visitMethod] || '其他' }}</StatusTag>
               </template>
             </template>
           </a-table>
@@ -94,19 +90,15 @@
             :loading="orderLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'status'">
-                <a-tag :color="orderStatusColor[record.status] || 'default'">
-                  {{ orderStatusText[record.status] || '未知' }}
-                </a-tag>
+                <StatusTag :type="orderStatusTagType(record.status)" dot>{{ orderStatusText[record.status] || '未知' }}</StatusTag>
               </template>
               <template v-if="column.dataIndex === 'priority'">
-                <a-tag :color="priorityColor[record.priority] || 'default'">
-                  {{ priorityText[record.priority] || '-' }}
-                </a-tag>
+                <StatusTag :type="priorityTagType(record.priority)">{{ priorityText[record.priority] || '-' }}</StatusTag>
               </template>
             </template>
           </a-table>
@@ -120,14 +112,12 @@
             :loading="contractLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'status'">
-                <a-tag :color="record.status === 1 ? 'success' : 'default'">
-                  {{ record.status === 1 ? '生效' : '草稿' }}
-                </a-tag>
+                <StatusTag :type="record.status === 1 ? 'success' : 'default'">{{ record.status === 1 ? '生效' : '草稿' }}</StatusTag>
               </template>
               <template v-if="column.dataIndex === 'action'">
                 <a-button type="link" size="small" @click="handleViewContract(record)">
@@ -149,7 +139,7 @@
             :loading="invoiceLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #bodyCell="{ column, record }">
@@ -157,9 +147,7 @@
                 ¥{{ (record.totalCharge ?? 0).toFixed(2) }}
               </template>
               <template v-if="column.dataIndex === 'status'">
-                <a-tag :color="invoiceStatusColor[record.status] || 'default'">
-                  {{ invoiceStatusText[record.status] || '未知' }}
-                </a-tag>
+                <StatusTag :type="invoiceStatusTagType(record.status)" dot>{{ invoiceStatusText[record.status] || '未知' }}</StatusTag>
               </template>
               <template v-if="column.dataIndex === 'action'">
                 <a-button type="link" size="small" @click="router.push({ name: 'ExpressInvoiceDetail', params: { id: record.id } })">
@@ -181,14 +169,12 @@
             :loading="prepaymentLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'status'">
-                <a-tag :color="record.status === 1 ? 'success' : record.status === 0 ? 'processing' : 'default'">
-                  {{ record.status === 0 ? '待确认' : record.status === 1 ? '已确认' : '已取消' }}
-                </a-tag>
+                <StatusTag :type="record.status === 1 ? 'success' : record.status === 0 ? 'info' : 'default'">{{ record.status === 0 ? '待确认' : record.status === 1 ? '已确认' : '已取消' }}</StatusTag>
               </template>
             </template>
             <template #emptyText>
@@ -205,7 +191,7 @@
             :loading="allocationLoading"
             :pagination="false"
             row-key="id"
-            bordered
+            :bordered="false"
             size="small"
           >
             <template #emptyText>
@@ -231,7 +217,7 @@
             size="small"
             :pagination="{ pageSize: 10 }"
             row-key="id"
-            bordered
+            :bordered="false"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.dataIndex === 'points'">
@@ -266,7 +252,7 @@
             size="small"
             :pagination="{ pageSize: 10 }"
             row-key="refNo"
-            bordered
+            :bordered="false"
           >
             <template #emptyText>
               <EmptyState description="暂无财务记录" />
@@ -281,17 +267,17 @@
               <a-timeline-item
                 v-for="item in timelineItems"
                 :key="item.id"
-                :color="timelineColor(item.type)"
+                :color="timelineDotColor(item.type)"
               >
                 <template #label>
-                  <span style="color: #999; font-size: 12px">{{ item.occurredTime }}</span>
+                  <span style="color: var(--text-3); font-size: 12px">{{ item.occurredTime }}</span>
                 </template>
                 <div>
-                  <a-tag :color="timelineColor(item.type)" size="small">{{ timelineTypeText(item.type) }}</a-tag>
+                  <StatusTag :type="timelineTagType(item.type)">{{ timelineTypeText(item.type) }}</StatusTag>
                   <strong style="margin-left: 4px">{{ item.title }}</strong>
                 </div>
-                <div v-if="item.content" style="color: #666; margin-top: 4px; font-size: 13px">{{ item.content }}</div>
-                <div v-if="item.creatorName" style="color: #999; margin-top: 2px; font-size: 12px">操作人: {{ item.creatorName }}</div>
+                <div v-if="item.content" style="color: var(--text-2); margin-top: 4px; font-size: 13px">{{ item.content }}</div>
+                <div v-if="item.creatorName" style="color: var(--text-3); margin-top: 2px; font-size: 12px">操作人: {{ item.creatorName }}</div>
               </a-timeline-item>
             </a-timeline>
             <EmptyState v-else description="暂无时间线数据" />
@@ -352,6 +338,7 @@ import { LineChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import EmptyState from '@/components/EmptyState.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getCustomerById,
   getCustomerTimeline,
@@ -382,13 +369,18 @@ const customerId = computed(() => Number(route.params.id))
 
 // 状态映射
 const statusTextMap: Record<number, string> = { 0: '潜在', 1: '活跃', 2: '流失' }
-const statusColorMap: Record<number, string> = { 0: 'blue', 1: 'success', 2: 'error' }
 const methodTextMap: Record<number, string> = { 1: '上门', 2: '电话', 3: '线上', 4: '其他' }
-const methodColorMap: Record<number, string> = { 1: 'blue', 2: 'green', 3: 'purple', 4: 'default' }
 const orderStatusText: Record<number, string> = { 0: '待接单', 1: '处理中', 2: '待确认', 3: '已完成', 4: '已关闭' }
-const orderStatusColor: Record<number, string> = { 0: 'default', 1: 'processing', 2: 'warning', 3: 'success', 4: 'error' }
 const priorityText: Record<number, string> = { 1: '紧急', 2: '高', 3: '中', 4: '低' }
-const priorityColor: Record<number, string> = { 1: 'red', 2: 'orange', 3: 'blue', 4: 'default' }
+
+// a-tag 预设色名 → StatusTag 语义类型（有序走语义、纯分类走中性）
+type STagType = 'success' | 'warning' | 'danger' | 'info' | 'default'
+const custStatusType = (s: number): STagType => (['info', 'success', 'danger'] as const)[s] || 'default'
+const orderStatusTagType = (s: number): STagType => (['default', 'info', 'warning', 'success', 'default'] as const)[s] || 'default'
+const priorityTagType = (p: number): STagType => (({ 1: 'danger', 2: 'warning', 3: 'info', 4: 'default' } as Record<number, STagType>)[p]) || 'default'
+const invoiceStatusTagType = (s: number): STagType => (['default', 'info', 'warning', 'success'] as const)[s] || 'default'
+const timelineTagType = (t: string): STagType => (({ visit: 'info', order: 'warning', contract: 'success', prepayment: 'warning', feedback: 'danger' } as Record<string, STagType>)[t]) || 'default'
+const timelineDotColor = (t: string): string => (({ visit: 'var(--color-info)', order: 'var(--color-warning)', contract: 'var(--color-success)', prepayment: 'var(--color-warning)', feedback: 'var(--color-danger)' } as Record<string, string>)[t]) || 'var(--text-3)'
 
 // 员工映射
 const employeeMap = ref<Record<number, string>>({})
@@ -463,7 +455,6 @@ const prepaymentLoading = ref(false)
 const invoiceList = ref<any[]>([])
 const invoiceLoading = ref(false)
 const invoiceStatusText: Record<number, string> = { 0: '草稿', 1: '已确认', 2: '已发送', 3: '已收款' }
-const invoiceStatusColor: Record<number, string> = { 0: 'default', 1: 'blue', 2: 'orange', 3: 'green' }
 const invoiceColumns = [
   { title: '账单号', dataIndex: 'invoiceNo', key: 'invoiceNo', width: 150 },
   { title: '应收金额', dataIndex: 'totalCharge', key: 'totalCharge', width: 120, align: 'right' as const },
@@ -537,10 +528,6 @@ const profitChartOption = computed(() => {
 const timelineItems = ref<CustomerTimelineItemDto[]>([])
 const timelineLoading = ref(false)
 
-function timelineColor(type: string) {
-  const map: Record<string, string> = { visit: 'blue', order: 'orange', contract: 'green', prepayment: 'gold', feedback: 'red' }
-  return map[type] || 'gray'
-}
 function timelineTypeText(type: string) {
   const map: Record<string, string> = { visit: '拜访', order: '工单', contract: '合同', prepayment: '预付款', feedback: '反馈' }
   return map[type] || type
