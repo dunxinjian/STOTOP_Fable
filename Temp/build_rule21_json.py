@@ -194,6 +194,7 @@ def main():
         "accountSetId": ACCOUNT_SET_ID,
         "keyFields": ["F科目编码", "F费用名称", "F业务摘要"],
         "unmatchedAction": "createDraft",
+        "draftPlaceholderAccountId": 700044,  # 1901 待处理财产损溢(账套2)，createDraft 待补录草稿占位科目
         "filterConditions": [],
         "matchingLayers": {
             "exactMatchField": "F科目编码",

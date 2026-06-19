@@ -11,6 +11,7 @@
     "F业务摘要"
   ],
   "unmatchedAction": "createDraft",
+  "draftPlaceholderAccountId": 700044,
   "filterConditions": [],
   "matchingLayers": {
     "exactMatchField": "F科目编码",

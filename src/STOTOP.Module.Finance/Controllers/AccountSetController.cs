@@ -140,7 +140,7 @@ public class AccountSetController : ControllerBase
         {
             new { code = "empty", name = "空账套", description = "只创建基础结构，不预置科目", accountCount = 0 },
             new { code = "standard", name = "小企业会计准则", description = "适用于小企业的标准科目体系", accountCount = await _accountSetService.GetTemplateAccountCountAsync(0) },
-            new { code = "express-delivery", name = "快递行业标准", description = "快递物流行业专用科目体系", accountCount = await _accountSetService.GetTemplateAccountCountAsync(-2) }
+            new { code = "express-delivery", name = "快递行业标准", description = "快递物流行业专用科目体系", accountCount = await _accountSetService.GetTemplateAccountCountAsync(2) }
         };
         return ApiResult<List<object>>.Success(templates);
     }
@@ -156,7 +156,7 @@ public class AccountSetController : ControllerBase
             long sourceId = code switch
             {
                 "standard" => 0,
-                "express-delivery" => -2,
+                "express-delivery" => 2,
                 _ => throw new ArgumentException("无效的模板编码")
             };
 
