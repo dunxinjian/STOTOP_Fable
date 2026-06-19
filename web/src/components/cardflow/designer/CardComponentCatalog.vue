@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import draggable from 'vuedraggable'
+import { HolderOutlined } from '@ant-design/icons-vue'
 import type { CardComponentDefinition, SchemaFieldDefinition } from '@/types/cardflow'
 import {
   CARD_COMPONENT_CAPABILITIES,
@@ -467,7 +468,7 @@ function addCatalogItem(item: CatalogItem) {
           >
             <template #item="{ element }">
               <button type="button" class="cf-component-catalog__tile" :title="element.hint" @click="addCatalogItem(element)">
-                <i class="cf-component-catalog__drag-handle" aria-hidden="true">⋮⋮</i>
+                <i class="cf-component-catalog__drag-handle" aria-hidden="true"><HolderOutlined /></i>
                 <b class="cf-component-catalog__icon" aria-hidden="true">{{ element.icon }}</b>
                 <span>
                   <strong :title="element.title">{{ element.title }}</strong>
@@ -505,7 +506,7 @@ function addCatalogItem(item: CatalogItem) {
           >
             <template #item="{ element }">
               <button type="button" class="cf-component-catalog__tile cf-component-catalog__tile--suite" :title="element.hint" @click="addCatalogItem(element)">
-                <i class="cf-component-catalog__drag-handle" aria-hidden="true">⋮⋮</i>
+                <i class="cf-component-catalog__drag-handle" aria-hidden="true"><HolderOutlined /></i>
                 <b class="cf-component-catalog__icon" aria-hidden="true">{{ element.icon }}</b>
                 <span>
                   <strong :title="element.title">{{ element.title }}</strong>
@@ -577,7 +578,7 @@ function addCatalogItem(item: CatalogItem) {
                 <b class="cf-component-catalog__icon" aria-hidden="true">{{ element.icon }}</b>
                 <span :title="element.title">{{ element.title }}</span>
                 <em>{{ element.hint }}</em>
-                <i class="cf-component-catalog__drag-handle" aria-hidden="true">⋮⋮</i>
+                <i class="cf-component-catalog__drag-handle" aria-hidden="true"><HolderOutlined /></i>
               </button>
             </template>
           </draggable>
