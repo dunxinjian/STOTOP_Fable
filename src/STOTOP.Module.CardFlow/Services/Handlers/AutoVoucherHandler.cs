@@ -151,6 +151,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
         // 6. 预加载辅助核算项目
         var auxResolver = new AutoVoucherAuxiliaryResolver(_logger);
         var auxItems = await _dbContext.Set<FinAuxiliaryItem>()
+            .IgnoreQueryFilters() // BUG1: 绕过 IOrgScoped 全局过滤(FOrgId==192)，否则 FOrgId==0 的全局项(express_brand/business_direction)被滤掉，只剩 outlet
             .Where(a => a.FEnableStatus == 1)
             .Where(a => a.FOrgId == ctx.OrgId || a.FOrgId == 0)
             .Select(a => new AuxiliaryItemInfo { Id = a.FID, AuxType = a.FAuxType ?? "", Code = a.FCode, Name = a.FName })
@@ -473,28 +474,38 @@ public partial class AutoVoucherHandler : IClassificationHandler
         // [D10] createDraft: 未匹配行真生待补录草稿（循环之后，按业务日期分组，仿会计期间查询）
         if (config.UnmatchedAction == "createDraft" && allUnmatchedRows.Count > 0)
         {
-            foreach (var (dateKey, dateRows) in GroupRowsByDateField(allUnmatchedRows, config.DateField))
+            // BUG2 防崩: 占位科目无效则跳过草稿生成。F科目ID 不可空 + FK 到 FIN科目，
+            // AccountId=0 会触发 FK_FIN凭证分录_科目ID 冲突 → 中断收尾 + 残留孤儿草稿
+            var phAcc = config.DraftPlaceholderAccountId ?? 0;
+            if (phAcc == 0)
             {
-                DateTime voucherDate = dateKey ?? DateTime.Now;
-                var period = await _dbContext.Set<FinAccountPeriod>()
-                    .FirstOrDefaultAsync(p => p.FAccountSetId == accountSetId
-                        && p.FStartDate <= voucherDate && p.FEndDate >= voucherDate);
-                if (period == null)
+                warnings.Add($"createDraft 未配占位科目(draftPlaceholderAccountId)，{allUnmatchedRows.Count}行未匹配暂不生成待补录草稿");
+            }
+            else
+            {
+                foreach (var (dateKey, dateRows) in GroupRowsByDateField(allUnmatchedRows, config.DateField))
                 {
-                    warnings.Add($"待补录草稿: 日期{voucherDate:yyyy-MM-dd}未找到会计期间(账套{accountSetId})");
-                    continue;
+                    DateTime voucherDate = dateKey ?? DateTime.Now;
+                    var period = await _dbContext.Set<FinAccountPeriod>()
+                        .FirstOrDefaultAsync(p => p.FAccountSetId == accountSetId
+                            && p.FStartDate <= voucherDate && p.FEndDate >= voucherDate);
+                    if (period == null)
+                    {
+                        warnings.Add($"待补录草稿: 日期{voucherDate:yyyy-MM-dd}未找到会计期间(账套{accountSetId})");
+                        continue;
+                    }
+                    var scopeId = $"{ctx.BatchId}_unmatched_{(dateKey?.ToString("yyyyMMdd") ?? "nodate")}";
+                    var exists = await connection.QueryFirstOrDefaultAsync<long?>(
+                        "SELECT TOP 1 FID FROM [FIN凭证] WHERE [F数据作用域ID] = @Key", new { Key = scopeId });
+                    if (exists.HasValue) continue;   // 去重：重跑不重复建草稿
+                    var draftReq = BuildDraftRequest(config, dateRows, voucherDate, period.FID, ctx.BatchId, scopeId);
+                    if (draftReq.Entries[0].DebitAmount == 0m)
+                        warnings.Add($"待补录草稿金额为0(批次{ctx.BatchId} 日期{(dateKey?.ToString("yyyyMMdd") ?? "nodate")})，请确认数据源金额列名");
+                    var draft = await _voucherService.SaveDraftAsync(draftReq, "数据导入系统", accountSetId);
+                    generatedVoucherIds.Add(draft.Id);
+                    _logger.LogInformation("AutoVoucher V2: 生成待补录草稿凭证 {VoucherId}, 日期={Date}, 未匹配行数={Count}",
+                        draft.Id, voucherDate.ToString("yyyy-MM-dd"), dateRows.Count);
                 }
-                var scopeId = $"{ctx.BatchId}_unmatched_{(dateKey?.ToString("yyyyMMdd") ?? "nodate")}";
-                var exists = await connection.QueryFirstOrDefaultAsync<long?>(
-                    "SELECT TOP 1 FID FROM [FIN凭证] WHERE [F数据作用域ID] = @Key", new { Key = scopeId });
-                if (exists.HasValue) continue;   // 去重：重跑不重复建草稿
-                var draftReq = BuildDraftRequest(config, dateRows, voucherDate, period.FID, ctx.BatchId, scopeId);
-                if (draftReq.Entries[0].DebitAmount == 0m)
-                    warnings.Add($"待补录草稿金额为0(批次{ctx.BatchId} 日期{(dateKey?.ToString("yyyyMMdd") ?? "nodate")})，请确认数据源金额列名");
-                var draft = await _voucherService.SaveDraftAsync(draftReq, "数据导入系统", accountSetId);
-                generatedVoucherIds.Add(draft.Id);
-                _logger.LogInformation("AutoVoucher V2: 生成待补录草稿凭证 {VoucherId}, 日期={Date}, 未匹配行数={Count}",
-                    draft.Id, voucherDate.ToString("yyyy-MM-dd"), dateRows.Count);
             }
         }
 
