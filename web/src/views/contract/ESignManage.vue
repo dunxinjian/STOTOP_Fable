@@ -1,13 +1,13 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="电子签管理" description="管理合同电子签署记录">
-      <template #toolbar>
-        <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 8px;">
-          <a-input v-model:value="searchForm.keyword" size="small" placeholder="合同号" style="width: 200px" allowClear @keyup.enter="handleSearch" />
-          <a-select v-model:value="searchForm.signStatus" size="small" placeholder="签署状态" style="width: 140px" allowClear :options="signStatusOptions" />
-          <a-button type="primary" size="small" @click="handleSearch">查询</a-button>
-          <a-button size="small" @click="handleReset">重置</a-button>
-        </div>
+      <template #left>
+        <a-input v-model:value="searchForm.keyword" size="middle" placeholder="合同号" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
+        <a-select v-model:value="searchForm.signStatus" size="middle" placeholder="签署状态" style="width: 140px" allow-clear :options="signStatusOptions" @change="handleSearch" />
+        <a-button type="primary" size="middle" @click="handleSearch">查询</a-button>
+        <a-button size="middle" @click="handleReset">
+          <template #icon><ReloadOutlined /></template>重置
+        </a-button>
       </template>
     </PageHeader>
 
@@ -18,54 +18,35 @@
       style="margin-bottom: 16px"
     />
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 1100 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'signStatus'">
-            <a-tag :color="signStatusColor(record.signStatus)">
-              {{ signStatusText(record.signStatus) }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'signedTime'">
-            {{ record.signedTime || '-' }}
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button
-              v-if="has(ContractPermissions.ESignManage) && record.signStatus === 0"
-              type="link"
-              size="small"
-              @click="handleMarkSigned(record)"
-            >
-              标记已签
-            </a-button>
-            <a-button
-              v-if="has(ContractPermissions.ESignManage) && record.signStatus === 0"
-              type="link"
-              size="small"
-              danger
-              @click="handleReject(record)"
-            >
-              拒签
-            </a-button>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1100 }"
+      row-key="id"
+      empty-text="暂无电子签记录"
+      @change="fetchList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'signStatus'">
+          <StatusTag :type="signStatusTagType(record.signStatus)">{{ signStatusText(record.signStatus) }}</StatusTag>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无电子签记录" />
+        <template v-if="column.dataIndex === 'signedTime'">
+          {{ record.signedTime || '-' }}
         </template>
-      </a-table>
-    </a-card>
+        <template v-if="column.dataIndex === 'action'">
+          <a-button
+            v-if="has(ContractPermissions.ESignManage) && record.signStatus === 0"
+            type="link" size="small" @click="handleMarkSigned(record)"
+          >标记已签</a-button>
+          <a-button
+            v-if="has(ContractPermissions.ESignManage) && record.signStatus === 0"
+            type="link" size="small" danger @click="handleReject(record)"
+          >拒签</a-button>
+        </template>
+      </template>
+    </DataTable>
 
     <!-- 标记已签弹窗 -->
     <a-modal
@@ -106,13 +87,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { UploadFile } from 'ant-design-vue'
-import { UploadOutlined } from '@ant-design/icons-vue'
+import { UploadOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { usePermission, ContractPermissions } from '@/utils/permission'
 import {
   getESignRecordList,
@@ -133,12 +115,11 @@ function signStatusText(status: number) {
   return ['待签', '已签', '已拒签'][status] || '未知'
 }
 
-function signStatusColor(status: number) {
-  return ['processing', 'success', 'error'][status] || 'default'
+function signStatusTagType(s: number): 'success' | 'danger' | 'info' | 'default' {
+  return (['info', 'success', 'danger'] as const)[s] || 'default'
 }
 
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '合同号', dataIndex: 'contractNo', key: 'contractNo', width: 150 },
   { title: '签署人', dataIndex: 'signer', key: 'signer', width: 120 },
   { title: '签署角色', dataIndex: 'signerRole', key: 'signerRole', width: 100 },
@@ -155,22 +136,7 @@ const searchForm = reactive({
 
 const loading = ref(false)
 const tableData = ref<ESignRecordDto[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchList()
-}
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 
 const signDialogVisible = ref(false)
 const submitLoading = ref(false)
@@ -185,14 +151,14 @@ async function fetchList() {
   loading.value = true
   try {
     const params: any = {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }
     if (searchForm.signStatus !== undefined) params.signStatus = searchForm.signStatus
     const res = await getESignRecordList(params) as any
     if (res) {
       tableData.value = res?.items || res || []
-      pagination.total = res?.total || res?.length || 0
+      pagination.value.total = res?.total || res?.length || 0
     }
   } finally {
     loading.value = false
@@ -200,14 +166,14 @@ async function fetchList() {
 }
 
 function handleSearch() {
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
 function handleReset() {
   searchForm.keyword = ''
   searchForm.signStatus = undefined
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
