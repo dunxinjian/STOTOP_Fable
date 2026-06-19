@@ -69,13 +69,13 @@ function select(key: string | number) {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs4);
-  padding: var(--space-xs4) var(--space-md12);
+  padding: var(--space-sm8) var(--space-md12);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-card);
   color: var(--text-2);
   font-size: var(--font-sm2);
-  line-height: 22px;
+  line-height: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
