@@ -44,15 +44,15 @@
                   :loading="loading"
                   :pagination="false"
                   row-key="id"
-                  bordered
+                  :bordered="false"
                   size="small"
                   :scroll="{ y: 400 }"
                 >
                   <template #bodyCell="{ column, record }">
                     <template v-if="column.dataIndex === 'remainDays'">
-                      <a-tag :color="record.remainDays <= 7 ? 'error' : 'warning'">
+                      <StatusTag :type="record.remainDays <= 7 ? 'danger' : 'warning'">
                         {{ record.remainDays }}天
-                      </a-tag>
+                      </StatusTag>
                     </template>
                     <template v-if="column.dataIndex === 'action'">
                       <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
@@ -74,15 +74,15 @@
                   :loading="loading"
                   :pagination="false"
                   row-key="id"
-                  bordered
+                  :bordered="false"
                   size="small"
                   :scroll="{ y: 400 }"
                 >
                   <template #bodyCell="{ column, record }">
                     <template v-if="column.dataIndex === 'status'">
-                      <a-tag :color="contractStatusColor(record.status)">
+                      <StatusTag :type="statusTagType(record.status)">
                         {{ contractStatusText(record.status) }}
-                      </a-tag>
+                      </StatusTag>
                     </template>
                     <template v-if="column.dataIndex === 'action'">
                       <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
@@ -132,6 +132,7 @@ import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from
 import { PlusOutlined, SyncOutlined, ExportOutlined, AuditOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getContractList,
   type ContractListItemDto,
@@ -148,8 +149,8 @@ function contractStatusText(status: number) {
   return statusMap[status] || '未知'
 }
 
-function contractStatusColor(status: number) {
-  return ['default', 'processing', 'warning', 'success', 'error', 'default'][status] || 'default'
+function statusTagType(s: number): 'success' | 'warning' | 'danger' | 'info' | 'default' {
+  return (['default', 'info', 'warning', 'success', 'danger', 'default'] as const)[s] || 'default'
 }
 
 // 统计数据
@@ -199,6 +200,7 @@ function initCharts() {
 function updateCharts() {
   if (pieChart) {
     pieChart.setOption({
+      color: ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E', '#7C9CB5', '#B0976A'],
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
       legend: { bottom: 0 },
       series: [{
@@ -220,8 +222,9 @@ function updateCharts() {
         data: statusDistribution.value.map(i => i.value),
         itemStyle: {
           color: (params: any) => {
-            const colors = ['#909399', '#409eff', '#e6a23c', '#67c23a', '#f56c6c', '#909399']
-            return colors[params.dataIndex] || '#409eff'
+            // 状态语义色(0草稿中性/1审批info/2待签warning/3生效success/4到期danger/5终止中性);ECharts 不解析 var()，用 theme.ts 真 hex
+            const colors = ['#8A9099', '#5B7290', '#D49A2E', '#3E9E6E', '#D6584E', '#8A9099']
+            return colors[params.dataIndex] || '#8A9099'
           },
         },
         barWidth: 40,
@@ -377,7 +380,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 32px;
   padding: 14px 20px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 16px;
   flex-shrink: 0;
@@ -390,7 +393,7 @@ onBeforeUnmount(() => {
 }
 .kpi-item + .kpi-item {
   padding-left: 32px;
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid var(--border);
 }
 .kpi-dot {
   width: 8px;
@@ -401,7 +404,7 @@ onBeforeUnmount(() => {
 }
 .kpi-label {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 .kpi-value {
   font-size: 20px;
@@ -439,8 +442,8 @@ onBeforeUnmount(() => {
 }
 
 .content-panel {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   height: 100%;
@@ -449,7 +452,7 @@ onBeforeUnmount(() => {
 .panel-title {
   font-size: 15px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
   margin-bottom: 12px;
   padding-left: 10px;
   border-left: 3px solid var(--color-info);
@@ -473,7 +476,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 .quick-action-item:hover {
   background: var(--color-primary-light);
