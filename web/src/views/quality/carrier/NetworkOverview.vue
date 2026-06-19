@@ -5,12 +5,20 @@ import * as echarts from 'echarts'
 import dayjs, { type Dayjs } from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
 import { useThemeStore } from '@/stores/theme'
-import { getNetworkKpi, getNetworkTrend, getDomainDistribution, getFeeByDomain } from '@/api/carrierQuality'
+import { getNetworkKpi, getNetworkTrend, getDomainDistribution, getFeeByDomain, getNetworkOptions } from '@/api/carrierQuality'
 
 const theme = useThemeStore()
 const carrier = ref('申通')
 const dateRange = ref<[Dayjs, Dayjs]>([dayjs().subtract(29, 'day').startOf('day'), dayjs()])
 const networkCode = ref<string | undefined>(undefined)
+const networkOptions = ref<{ value: string; label: string }[]>([])
+
+async function loadNetworkOptions() {
+  try {
+    const list = (await getNetworkOptions({ carrier: carrier.value })) as any[]
+    networkOptions.value = (list || []).map((n: any) => ({ value: n.code, label: n.name ? `${n.name}（${n.code}）` : n.code }))
+  } catch { /* 下拉为空不影响主查询 */ }
+}
 
 const kpi = ref<any>({})
 const loading = ref(false)
@@ -107,7 +115,7 @@ function renderFee(data: any[]) {
 
 function handleSearch() { fetchAll() }
 
-onMounted(fetchAll)
+onMounted(() => { loadNetworkOptions(); fetchAll() })
 onBeforeUnmount(() => { ro?.disconnect(); trendChart?.dispose(); domainChart?.dispose(); feeChart?.dispose() })
 </script>
 
@@ -118,6 +126,10 @@ onBeforeUnmount(() => { ro?.disconnect(); trendChart?.dispose(); domainChart?.di
       <template #actions>
         <div style="display:flex;align-items:center;gap:8px;">
           <a-select v-model:value="carrier" size="middle" style="width:100px" :options="[{ value: '申通', label: '申通' }]" />
+          <a-select
+            v-model:value="networkCode" size="middle" style="width:220px"
+            placeholder="全部网点" allow-clear show-search option-filter-prop="label"
+            :options="networkOptions" />
           <a-range-picker v-model:value="dateRange" size="middle" style="width:260px" />
           <a-button type="primary" size="middle" @click="handleSearch">查询</a-button>
         </div>

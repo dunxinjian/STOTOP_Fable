@@ -159,6 +159,26 @@ public class CarrierQualityDashboardService : ICarrierQualityDashboardService
 
         return ApiResult<List<DomainStatItem>>.Success(result);
     }
+
+    public async Task<ApiResult<List<NetworkOptionDto>>> GetNetworkOptionsAsync(long orgId, string carrier)
+    {
+        // 候选网点 = 网点日指标 ∪ 事件(已绑编码)，按编码去重，取首个非空名称
+        var fromMetric = await _db.Set<QlShentongNetworkDailyMetric>()
+            .Where(m => m.FOrgId == orgId && m.F承运商 == carrier && m.F网点编码 != "")
+            .Select(m => new { Code = m.F网点编码, Name = m.F网点名称 })
+            .Distinct().ToListAsync();
+        var fromEvent = await _db.Set<QlShentongQualityEvent>()
+            .Where(e => e.FOrgId == orgId && e.F承运商 == carrier && e.F网点编码 != null && e.F网点编码 != "")
+            .Select(e => new { Code = e.F网点编码!, Name = e.F网点名称 })
+            .Distinct().ToListAsync();
+        var result = fromMetric.Concat(fromEvent)
+            .GroupBy(x => x.Code)
+            .Select(g => new NetworkOptionDto { Code = g.Key, Name = g.Select(x => x.Name).FirstOrDefault(n => !string.IsNullOrEmpty(n)) })
+            .OrderBy(x => x.Code)
+            .ToList();
+        return ApiResult<List<NetworkOptionDto>>.Success(result);
+    }
+
     public async Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN)
     {
         var toEnd = to.Date.AddDays(1);

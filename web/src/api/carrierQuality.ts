@@ -21,6 +21,10 @@ export function getDomainDistribution(params: CarrierQuery) {
 export function getFeeByDomain(params: CarrierQuery) {
   return get('/quality/carrier-dashboard/network/fee-by-domain', params)
 }
+export interface NetworkOption { code: string; name?: string }
+export function getNetworkOptions(params: { carrier: string }) {
+  return get<NetworkOption[]>('/quality/carrier-dashboard/network/options', params)
+}
 
 // ── 视图2 员工质量 ──
 export function getEmployeeRank(params: CarrierQuery & { dimension: string; topN?: number }) {

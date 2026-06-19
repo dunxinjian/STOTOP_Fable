@@ -42,6 +42,11 @@ public class CarrierQualityDashboardController : ControllerBase
     public Task<ApiResult<List<DomainStatItem>>> GetFeeByDomain([FromQuery] string carrier, [FromQuery] DateTime from, [FromQuery] DateTime to, [FromQuery] string? networkCode)
         => _service.GetFeeByDomainAsync(GetOrgId(), carrier, from, to, networkCode);
 
+    [HttpGet("network/options")]
+    [RequirePermission(QualityPermissions.CarrierQualityView)]
+    public Task<ApiResult<List<NetworkOptionDto>>> GetNetworkOptions([FromQuery] string carrier)
+        => _service.GetNetworkOptionsAsync(GetOrgId(), carrier);
+
     // ── 视图2 员工质量 ──
     [HttpGet("employee/rank")]
     [RequirePermission(QualityPermissions.CarrierQualityView)]

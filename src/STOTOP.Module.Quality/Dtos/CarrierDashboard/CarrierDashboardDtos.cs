@@ -156,3 +156,10 @@ public class EventQuery
     public int Page { get; set; } = 1;
     public int Size { get; set; } = 50;
 }
+
+/// <summary>视图1 网点筛选下拉选项</summary>
+public class NetworkOptionDto
+{
+    public string Code { get; set; } = string.Empty;
+    public string? Name { get; set; }
+}

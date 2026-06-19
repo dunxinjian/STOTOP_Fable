@@ -10,6 +10,7 @@ public interface ICarrierQualityDashboardService
     Task<ApiResult<List<NetworkTrendPointDto>>> GetNetworkTrendAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode);
     Task<ApiResult<List<DomainStatItem>>> GetDomainDistributionAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode);
     Task<ApiResult<List<DomainStatItem>>> GetFeeByDomainAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode);
+    Task<ApiResult<List<NetworkOptionDto>>> GetNetworkOptionsAsync(long orgId, string carrier);
 
     // 视图2 员工质量
     Task<ApiResult<EmployeeRankDto>> GetEmployeeRankAsync(long orgId, string carrier, DateTime from, DateTime to, string? networkCode, string dimension, int topN);
