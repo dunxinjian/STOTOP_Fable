@@ -93,4 +93,63 @@ public class VoucherServiceTransactionTests
         Assert.Empty(db.Set<FinVoucher>());
         Assert.Empty(db.Set<FinVoucherEntry>());
     }
+
+    // UpdateAsync 是"先删旧分录、再插新分录"的最复杂写路径：插新分录中途失败时，
+    // 事务必须整体回滚——旧分录不能丢、凭证内容不被部分改写。
+    [Fact]
+    public async Task Update_rolls_back_and_keeps_old_entries_when_new_entry_write_fails()
+    {
+        using var conn = new SqliteConnection("DataSource=:memory:");
+        conn.Open();
+        await using var db = CreateSqliteDb(conn);
+
+        db.Set<FinAccount>().AddRange(
+            VoucherServiceTestHarness.Account(1, "1001", "库存现金", AcctSet, Org),
+            VoucherServiceTestHarness.Account(2, "3001", "实收资本", AcctSet, Org));
+        db.Set<FinAccountPeriod>().Add(VoucherServiceTestHarness.Period(11, 2026, 6, AcctSet));
+        await db.SaveChangesAsync();
+
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+
+        // 1) 先正常创建一张含 2 条分录(金额100)的凭证
+        var created = await VoucherServiceTestHarness.Build(db, http).CreateAsync(new CreateVoucherRequest
+        {
+            VoucherWord = "记", Date = new DateTime(2026, 6, 15), PeriodId = 0,
+            Entries =
+            {
+                new CreateVoucherEntryRequest { LineNo = 1, Summary = "原始", AccountId = 1, DebitAmount = 100m },
+                new CreateVoucherEntryRequest { LineNo = 2, Summary = "原始", AccountId = 2, CreditAmount = 100m },
+            }
+        }, "tester", AcctSet);
+
+        // 2) 用"插新分录第 1 次即抛错"的 service 更新（UpdateAsync 先删旧2条→插新第1条即抛）
+        var opLog = new OperationLogService(
+            new Repository<FinOperationLog>(db), http, Microsoft.Extensions.Logging.Abstractions.NullLogger<OperationLogService>.Instance);
+        var changeTracking = new ChangeTrackingService(new Repository<FinChangeHistory>(db), http);
+        var faulty = new VoucherService(
+            new Repository<FinVoucher>(db),
+            new ThrowOnNthEntryRepository(new Repository<FinVoucherEntry>(db), throwOn: 1),
+            new Repository<FinAccount>(db),
+            new Repository<FinAccountPeriod>(db),
+            opLog, changeTracking, http,
+            new VoucherServiceTestHarness.NoOpEventDispatcher(), db);
+
+        var updateReq = new CreateVoucherRequest
+        {
+            VoucherWord = "记", Date = new DateTime(2026, 6, 16), PeriodId = 0,
+            Entries =
+            {
+                new CreateVoucherEntryRequest { LineNo = 1, Summary = "篡改", AccountId = 1, DebitAmount = 999m },
+                new CreateVoucherEntryRequest { LineNo = 2, Summary = "篡改", AccountId = 2, CreditAmount = 999m },
+            }
+        };
+        await Assert.ThrowsAsync<InvalidOperationException>(() => faulty.UpdateAsync(created.Id, updateReq, "attacker"));
+
+        // 3) 用同一连接的全新上下文读 DB 真实状态（绕开 ChangeTracker 残留）：旧2条分录仍在、金额仍为100、无999
+        await using var verify = CreateSqliteDb(conn);
+        var entries = verify.Set<FinVoucherEntry>().Where(e => e.FVoucherId == created.Id).ToList();
+        Assert.Equal(2, entries.Count);
+        Assert.All(entries, e => Assert.True(e.FDebitAmount == 100m || e.FCreditAmount == 100m));
+        Assert.DoesNotContain(entries, e => e.FDebitAmount == 999m || e.FCreditAmount == 999m);
+    }
 }

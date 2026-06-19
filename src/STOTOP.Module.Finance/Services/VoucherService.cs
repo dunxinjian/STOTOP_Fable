@@ -372,12 +372,13 @@ public class VoucherService : IVoucherService
 
                 await _entryRepository.AddAsync(entry);
             }
-
-            await _operationLogService.LogAsync(
-                accountSetId, "凭证", "新增",
-                $"新增凭证 {voucher.FVoucherWord}{voucher.FVoucherNo}",
-                voucher.FID, $"{voucher.FVoucherWord}{voucher.FVoucherNo}");
         });
+
+        // 操作日志为 fire-and-forget（内部吞异常），放到事务提交之后，只记录已提交的操作、不占事务连接/锁
+        await _operationLogService.LogAsync(
+            accountSetId, "凭证", "新增",
+            $"新增凭证 {voucher.FVoucherWord}{voucher.FVoucherNo}",
+            voucher.FID, $"{voucher.FVoucherWord}{voucher.FVoucherNo}");
 
         // 读回与事件发布放到事务提交之后
         var createdVoucher = await GetByIdAsync(voucher.FID) ?? throw new InvalidOperationException("创建凭证失败");
@@ -790,12 +791,13 @@ public class VoucherService : IVoucherService
                 };
                 await _entryRepository.AddAsync(newEntry);
             }
-
-            await _operationLogService.LogAsync(
-                source.FAccountSetId, "凭证", "复制",
-                $"复制凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
-                newVoucher.FID, $"{newVoucher.FVoucherWord}{newVoucher.FVoucherNo}");
         });
+
+        // 操作日志 fire-and-forget，放到事务提交之后
+        await _operationLogService.LogAsync(
+            source.FAccountSetId, "凭证", "复制",
+            $"复制凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
+            newVoucher.FID, $"{newVoucher.FVoucherWord}{newVoucher.FVoucherNo}");
 
         return ApiResult<object>.Success(new { newVoucherId = newVoucher.FID, voucherNo = newVoucher.FVoucherNo }, "复制成功");
     }
@@ -860,12 +862,13 @@ public class VoucherService : IVoucherService
                 };
                 await _entryRepository.AddAsync(newEntry);
             }
-
-            await _operationLogService.LogAsync(
-                source.FAccountSetId, "凭证", "冲销",
-                $"冲销凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
-                newVoucher.FID, $"{newVoucher.FVoucherWord}{newVoucher.FVoucherNo}");
         });
+
+        // 操作日志 fire-and-forget，放到事务提交之后
+        await _operationLogService.LogAsync(
+            source.FAccountSetId, "凭证", "冲销",
+            $"冲销凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
+            newVoucher.FID, $"{newVoucher.FVoucherWord}{newVoucher.FVoucherNo}");
 
         return ApiResult<object>.Success(new { newVoucherId = newVoucher.FID, voucherNo = newVoucher.FVoucherNo }, "冲销凭证已生成");
     }
