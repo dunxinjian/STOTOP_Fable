@@ -167,7 +167,7 @@ function patch(partial: Partial<StageRouteRuleRequest>) {
   display: grid;
   place-items: center;
   min-height: 180px;
-  color: #7c8781;
+  color: var(--text-2);
   font-size: 13px;
 }
 
@@ -182,16 +182,16 @@ function patch(partial: Partial<StageRouteRuleRequest>) {
 
 .cf-route-editor__head {
   padding-bottom: 10px;
-  border-bottom: 1px solid #e7ebe9;
+  border-bottom: 1px solid var(--border);
 
   strong {
     display: block;
-    color: #1c2d26;
+    color: var(--text-1);
     font-size: 14px;
   }
 
   span {
-    color: #718078;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -210,16 +210,16 @@ function patch(partial: Partial<StageRouteRuleRequest>) {
 
   label > span,
   .cf-route-editor__section-title span {
-    color: #5f6f67;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
 
 .cf-route-editor__default {
   padding: 10px 12px;
-  border: 1px solid #e2e7e4;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fafcfb;
+  background: var(--bg-muted);
 
   strong,
   span {
@@ -227,13 +227,13 @@ function patch(partial: Partial<StageRouteRuleRequest>) {
   }
 
   strong {
-    color: #26352e;
+    color: var(--text-1);
     font-size: 13px;
   }
 
   span {
     margin-top: 2px;
-    color: #74817a;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -248,7 +248,7 @@ function patch(partial: Partial<StageRouteRuleRequest>) {
   align-items: baseline;
 
   strong {
-    color: #26352e;
+    color: var(--text-1);
     font-size: 13px;
   }
 }
