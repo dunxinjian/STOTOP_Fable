@@ -68,6 +68,32 @@ public class ContractService : IContractService
         };
     }
 
+    public async Task<ContractStatisticsDto> GetStatisticsAsync()
+    {
+        var grouped = await _contractRepository.Query()
+            .GroupBy(c => c.FStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var statusNames = new[] { "草稿", "审批中", "待签署", "已生效", "已到期", "已终止" };
+        var byStatus = new List<ContractStatusGroupDto>();
+        for (var s = 0; s < statusNames.Length; s++)
+        {
+            byStatus.Add(new ContractStatusGroupDto
+            {
+                Status = s,
+                StatusName = statusNames[s],
+                Count = grouped.FirstOrDefault(x => x.Status == s)?.Count ?? 0
+            });
+        }
+
+        return new ContractStatisticsDto
+        {
+            TotalCount = byStatus.Sum(b => b.Count),
+            ByStatus = byStatus
+        };
+    }
+
     public async Task<ContractDto?> GetContractByIdAsync(long id)
     {
         var entity = await _contractRepository.Query()

@@ -155,3 +155,18 @@ public class ContractQueryRequest
     public int? Status { get; set; }
     public int? ContractNature { get; set; }
 }
+
+/// <summary>合同状态统计</summary>
+public class ContractStatisticsDto
+{
+    public int TotalCount { get; set; }
+    public List<ContractStatusGroupDto> ByStatus { get; set; } = new();
+}
+
+/// <summary>按状态分组统计</summary>
+public class ContractStatusGroupDto
+{
+    public int Status { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public int Count { get; set; }
+}

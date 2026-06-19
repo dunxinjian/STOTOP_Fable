@@ -27,6 +27,11 @@ public class ContractController : ControllerBase
         return ApiResult<PagedResult<ContractListItemDto>>.Success(result);
     }
 
+    [HttpGet("statistics")]
+    [RequirePermission(ContractPermissions.ContractView)]
+    public async Task<ApiResult<ContractStatisticsDto>> GetStatistics()
+        => ApiResult<ContractStatisticsDto>.Success(await _service.GetStatisticsAsync());
+
     [HttpGet("{id}")]
     [RequirePermission(ContractPermissions.ContractView)]
     public async Task<ApiResult<ContractDto>> GetById(long id)
