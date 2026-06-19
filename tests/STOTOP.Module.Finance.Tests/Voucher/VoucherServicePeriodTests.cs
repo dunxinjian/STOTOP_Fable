@@ -119,4 +119,19 @@ public class VoucherServicePeriodTests
         Assert.NotEmpty(entries);
         Assert.All(entries, e => Assert.Equal(Org, e.FOrgId));
     }
+
+    [Fact]
+    public async Task SaveDraft_resolves_period_from_date()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(SaveDraft_resolves_period_from_date), Org);
+        await SeedAsync(db, periodNo: 6);
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var dto = await service.SaveDraftAsync(BalancedRequest(new DateTime(2026, 6, 15)), "tester", AcctSet);
+
+        var saved = db.Set<FinVoucher>().Single(v => v.FID == dto.Id);
+        Assert.Equal(11, saved.FPeriodId);
+        Assert.Equal(0, saved.FStatus); // 草稿
+    }
 }

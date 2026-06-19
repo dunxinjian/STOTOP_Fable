@@ -527,7 +527,14 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto> SaveDraftAsync(CreateVoucherRequest request, string creator, long accountSetId = 0)
     {
-        var nextNo = await GetNextNumberAsync(request.VoucherWord, request.PeriodId, accountSetId);
+        // 草稿按日期解析期间（不做结账硬拒绝，草稿允许暂存）
+        long periodId = request.PeriodId;
+        if (periodId <= 0)
+        {
+            var period = await ResolvePeriodAsync(request.Date, accountSetId);
+            periodId = period.FID;
+        }
+        var nextNo = await GetNextNumberAsync(request.VoucherWord, periodId, accountSetId);
 
         // 确定组织ID：优先从HttpContext获取，后台任务无HttpContext时从账套反查
         long orgId = GetCurrentOrgId();
@@ -544,7 +551,7 @@ public class VoucherService : IVoucherService
             FVoucherWord = request.VoucherWord,
             FVoucherNo = nextNo,
             FDate = request.Date,
-            FPeriodId = request.PeriodId,
+            FPeriodId = periodId,
             FAttachmentCount = request.AttachmentCount,
             FCreator = creator,
             FStatus = 0, // 草稿
@@ -682,14 +689,16 @@ public class VoucherService : IVoucherService
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var nextNo = await GetNextNumberAsync(source.FVoucherWord, source.FPeriodId, source.FAccountSetId);
+        var targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+        VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
         {
             FVoucherWord = source.FVoucherWord,
             FVoucherNo = nextNo,
             FDate = DateTime.Today,
-            FPeriodId = source.FPeriodId,
+            FPeriodId = targetPeriod.FID,
             FAttachmentCount = 0,
             FCreator = source.FCreator,
             FStatus = 1, // 待审核
@@ -738,14 +747,16 @@ public class VoucherService : IVoucherService
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var nextNo = await GetNextNumberAsync(source.FVoucherWord, source.FPeriodId, source.FAccountSetId);
+        var targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+        VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
         {
             FVoucherWord = source.FVoucherWord,
             FVoucherNo = nextNo,
             FDate = DateTime.Today,
-            FPeriodId = source.FPeriodId,
+            FPeriodId = targetPeriod.FID,
             FAttachmentCount = 0,
             FCreator = source.FCreator,
             FStatus = 1, // 待审核
