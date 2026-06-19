@@ -4,7 +4,6 @@
       <template #left>
         <a-input v-model:value="searchForm.keyword" size="middle" placeholder="合同号/标题" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
         <a-select v-model:value="searchForm.typeId" size="middle" placeholder="类型" style="width: 140px" allow-clear :options="typeOptions" @change="handleSearch" />
-        <a-range-picker v-model:value="searchForm.dateRange" size="middle" style="width: 240px" />
         <a-button size="middle" @click="handleReset">
           <template #icon><ReloadOutlined /></template>重置
         </a-button>
@@ -494,7 +493,6 @@ const searchForm = reactive({
   keyword: '',
   typeId: undefined as number | undefined,
   status: '' as '' | number,
-  dateRange: null as [Dayjs, Dayjs] | null,
 })
 
 // 表格数据
@@ -618,7 +616,6 @@ function handleReset() {
   searchForm.keyword = ''
   searchForm.typeId = undefined
   searchForm.status = ''
-  searchForm.dateRange = null
   pagination.value.pageIndex = 1
   fetchList()
 }
