@@ -31,6 +31,7 @@ public static class FinanceSeeder
             new(7, "批次5-S3: 手工数据加 F期间键 + 回填 'M:'+期间 (2026-06-17)", MigrateV7),
             new(8, "批次5-S6: 删废弃 FIN阿米巴分摊比例 表 (2026-06-17)", MigrateV8),
             new(9, "品牌版科目覆盖：删两账套旧科目重建(保留各账套真实1002/1012) (2026-06-18)", MigrateV9),
+            new(10, "品牌版科目4项调整：220301/54010501改名 + 新增50010105 + 删54010502 (2026-06-19)", MigrateV10),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2184,5 +2185,51 @@ public static class FinanceSeeder
 
         SET IDENTITY_INSERT [FIN阿米巴损益项] OFF;
         ");
+    }
+
+    private static void MigrateV10(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // ① 220301 改名（不动 FID）
+        ExecSql(ctx, @"UPDATE [FIN科目] SET [F名称]=N'预收面单'
+            WHERE [F编码]=N'220301' AND [F账套ID] IN (1,2);");
+
+        // ② 54010501 改名（不动 FID）
+        ExecSql(ctx, @"UPDATE [FIN科目] SET [F名称]=N'总部服务费'
+            WHERE [F编码]=N'54010501' AND [F账套ID] IN (1,2);");
+
+        // ③ 删 54010502 网点赋能：先守卫引用为0，再解资产类别折旧引用，再删
+        ExecSql(ctx, @"
+            IF EXISTS (
+                SELECT 1 FROM [FIN凭证分录] e JOIN [FIN科目] k ON e.[F科目ID]=k.[FID]
+                WHERE k.[F编码]=N'54010502' AND k.[F账套ID] IN (1,2)
+              UNION ALL
+                SELECT 1 FROM [FIN科目余额] b JOIN [FIN科目] k ON b.[F科目ID]=k.[FID]
+                WHERE k.[F编码]=N'54010502' AND k.[F账套ID] IN (1,2)
+              UNION ALL
+                SELECT 1 FROM [FIN辅助核算余额] a JOIN [FIN科目] k ON a.[F科目ID]=k.[FID]
+                WHERE k.[F编码]=N'54010502' AND k.[F账套ID] IN (1,2)
+              UNION ALL
+                SELECT 1 FROM [FIN凭证模板分录] t JOIN [FIN科目] k ON t.[F科目ID]=k.[FID]
+                WHERE k.[F编码]=N'54010502' AND k.[F账套ID] IN (1,2)
+            )
+            BEGIN RAISERROR(N'54010502 仍被凭证/余额/模板引用，中止删除', 16, 1); RETURN; END");
+        ExecSql(ctx, @"UPDATE [FIN资产类别] SET [F对应折旧科目ID]=NULL
+            WHERE [F对应折旧科目ID] IN (SELECT [FID] FROM [FIN科目]
+                WHERE [F编码]=N'54010502' AND [F账套ID] IN (1,2));");
+        ExecSql(ctx, @"DELETE FROM [FIN科目]
+            WHERE [F编码]=N'54010502' AND [F账套ID] IN (1,2);");
+
+        // ④ 新增 50010105 其他出港收入（500101 下末级，借鉴 50010104 形态）
+        ExecSql(ctx, @"
+            SET IDENTITY_INSERT [FIN科目] ON;
+            IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID]=600483)
+            INSERT INTO [FIN科目] ([FID],[F编码],[F名称],[F类别],[F余额方向],[F级次],[F父ID],[F是否末级],[F辅助核算],[F外币],[F计算单位],[F启用状态],[F账套ID],[F创建时间],[F更新时间],[F启用年度],[F启用期间])
+            VALUES (600483, N'50010105', N'其他出港收入', N'营业收入', N'贷', 3, 600240, 1, N'outlet,business_direction,express_brand,business_unit,customer,project', NULL, NULL, 1, 1, N'2026-06-19 00:00:00.000', N'2026-06-19 00:00:00.000', 0, 0);
+            IF NOT EXISTS (SELECT 1 FROM [FIN科目] WHERE [FID]=700428)
+            INSERT INTO [FIN科目] ([FID],[F编码],[F名称],[F类别],[F余额方向],[F级次],[F父ID],[F是否末级],[F辅助核算],[F外币],[F计算单位],[F启用状态],[F账套ID],[F创建时间],[F更新时间],[F启用年度],[F启用期间])
+            VALUES (700428, N'50010105', N'其他出港收入', N'营业收入', N'贷', 3, 700181, 1, N'outlet,business_direction,express_brand,business_unit,customer,project', NULL, NULL, 1, 2, N'2026-06-19 00:00:00.000', N'2026-06-19 00:00:00.000', 0, 0);
+            SET IDENTITY_INSERT [FIN科目] OFF;");
     }
 }
