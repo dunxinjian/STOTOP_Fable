@@ -118,7 +118,7 @@
     <a-card v-show="currentCategory === 'initial'" :bordered="false" class="table-card initial-table-card">
       <!-- 工具栏 -->
       <div class="initial-toolbar">
-        <a-button type="primary" @click="handleSaveInitialBalances" :loading="savingInitial">
+        <a-button type="primary" @click="handleSaveInitialBalances" :loading="savingInitial" :disabled="!isInitialBalanced">
           <SaveOutlined />保存
         </a-button>
         <span class="initial-tip">
@@ -174,11 +174,20 @@
               <a-table-summary-cell :index="1" />
               <a-table-summary-cell :index="2" />
               <a-table-summary-cell :index="3" :align="'right'">
-                {{ formatAmount(initialBalances.filter((r: any) => r.isLeaf).reduce((sum: number, r: any) => sum + (r.debitBalance ?? 0), 0)) }}
+                {{ formatAmount(initialDebitTotal) }}
               </a-table-summary-cell>
               <a-table-summary-cell :index="4" :align="'right'">
-                {{ formatAmount(initialBalances.filter((r: any) => r.isLeaf).reduce((sum: number, r: any) => sum + (r.creditBalance ?? 0), 0)) }}
+                {{ formatAmount(initialCreditTotal) }}
               </a-table-summary-cell>
+            </a-table-summary-row>
+            <a-table-summary-row>
+              <a-table-summary-cell :index="0">借贷差额</a-table-summary-cell>
+              <a-table-summary-cell :index="1" />
+              <a-table-summary-cell :index="2" />
+              <a-table-summary-cell :index="3" :align="'right'">
+                <span :class="{ 'initial-diff-unbalanced': !isInitialBalanced }">{{ formatAmount(initialDifference) }}</span>
+              </a-table-summary-cell>
+              <a-table-summary-cell :index="4" />
             </a-table-summary-row>
           </a-table-summary>
         </template>
@@ -356,6 +365,15 @@ const initialColumns = [
 // 表格数据
 const accountTree = ref<any[]>([])
 const initialBalances = ref<any[]>([])
+
+// 期初借贷合计与试算平衡（仅末级参与）
+const initialDebitTotal = computed(() =>
+  initialBalances.value.filter((r: any) => r.isLeaf).reduce((sum: number, r: any) => sum + (r.debitBalance ?? 0), 0))
+const initialCreditTotal = computed(() =>
+  initialBalances.value.filter((r: any) => r.isLeaf).reduce((sum: number, r: any) => sum + (r.creditBalance ?? 0), 0))
+const initialDifference = computed(() => initialDebitTotal.value - initialCreditTotal.value)
+const isInitialBalanced = computed(() => Math.abs(initialDifference.value) < 0.005)
+
 const loading = ref(false)
 const savingInitial = ref(false)
 const selectedRows = ref<any[]>([])
@@ -1089,6 +1107,11 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   font-size: 13px;
   color: $text-regular;
   font-style: italic;
+}
+
+.initial-diff-unbalanced {
+  color: $color-danger;
+  font-weight: 600;
 }
 
 // ===== 弹窗样式 =====
