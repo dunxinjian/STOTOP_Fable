@@ -72,6 +72,7 @@ public static class CardFlowSeeder
             new(50, "网点质控：接入 STG申通_物流完整性明细（建表 + 规则3101 + 流程2301 + 首节点5101）(2026-06-17，原 V23，因 master 的派件量 V23 占用而改 50)", MigrateV50),
             new(51, "派件量补丁：存量库补建 STG申通派件日明细+规则3006+流程2330（V23在存量库被网点质控占用未执行，复用幂等 MigrateV23）(2026-06-19)", MigrateV23),
             new(52, "凭证规则21按品牌版科目重配（建/追平 FID=21 + 备份V1）(2026-06-19)", MigrateV52),
+            new(53, "createDraft占位科目注入：规则21 config 加 draftPlaceholderAccountId=700044(1901待处理财产损溢) (2026-06-19)", MigrateV53),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -16922,6 +16923,14 @@ END
         END
         SET IDENTITY_INSERT [CF自动插件_规则] OFF;
         ");
+    }
+    private static void MigrateV53(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+        // 规则21 createDraft 待补录草稿占位科目 = 700044(账套2 1901 待处理财产损溢)
+        ExecSql(ctx, @"UPDATE [CF自动插件_规则]
+            SET [F规则配置JSON] = JSON_MODIFY([F规则配置JSON], '$.draftPlaceholderAccountId', 700044)
+            WHERE [FID] = 21 AND ISJSON([F规则配置JSON]) = 1;");
     }
     private static void MigrateV24(STOTOPDbContext ctx)
     {
