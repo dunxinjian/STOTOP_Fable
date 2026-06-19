@@ -94,10 +94,12 @@ public sealed class StageRouteResolver : IStageRouteResolver
                 TypeErrors = evaluation.TypeErrors,
                 ConsumedFields = evaluation.ConsumedFields
             });
-            if (evaluation.Matched && evaluation.TypeErrors.Count == 0)
+            if (evaluation.Matched)
             {
                 selected = rule;
-                result.Reason = $"命中条件：{rule.FRouteName}";
+                result.Reason = evaluation.TypeErrors.Count == 0
+                    ? $"命中条件：{rule.FRouteName}"
+                    : $"命中条件：{rule.FRouteName}（注意：含类型错误的子条件，已忽略）";
                 break;
             }
         }

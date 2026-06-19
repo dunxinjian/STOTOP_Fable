@@ -143,6 +143,41 @@ public class StageRouteResolverTests
         Assert.Contains(result.Candidates, c => c.EdgeKey == "empty_rule" && !c.Matched);
     }
 
+    [Fact]
+    public async global::System.Threading.Tasks.Task ResolveNextStage_OrMatchedWithSiblingTypeError_StillSelectsRule()
+    {
+        using var db = TestDbContextFactory.Create(nameof(ResolveNextStage_OrMatchedWithSiblingTypeError_StillSelectsRule));
+        var stages = SeedStages(db);
+        db.Set<CfStageRouteRule>().AddRange(
+            new CfStageRouteRule
+            {
+                FFlowVersionId = 10, FEdgeKey = "or_rule",
+                FFromStageDefinitionId = stages.Source.FID, FFromStageKey = "manager",
+                FToStageDefinitionId = stages.GeneralManager.FID, FToStageKey = "gm",
+                FRouteName = "大额或类型错",
+                // or: amount>=5000 (true) OR category>5 (string vs number → TypeError)
+                FConditionJson = """{"logic":"or","conditions":[{"field":"card.amount","operator":"gte","value":5000},{"field":"card.category","operator":"gt","value":5}]}""",
+                FPriority = 1, FStatus = "active"
+            },
+            new CfStageRouteRule
+            {
+                FFlowVersionId = 10, FEdgeKey = "default_finance",
+                FFromStageDefinitionId = stages.Source.FID, FFromStageKey = "manager",
+                FToStageDefinitionId = stages.Finance.FID, FToStageKey = "finance",
+                FRouteName = "默认", FPriority = 99, FIsDefault = true, FStatus = "active"
+            });
+        await db.SaveChangesAsync();
+
+        var resolver = new StageRouteResolver(db, new ConditionRuleEvaluator(), new ConditionEvaluationContextBuilder(db));
+        var card = new CfCard { FID = 1, FFlowVersionId = 10, FDataJson = """{"amount":6800,"category":"travel"}""" };
+        var current = new CfStageInstance { FID = 20, FStageDefinitionId = stages.Source.FID, FRound = 1 };
+
+        var result = await resolver.ResolveNextStageAsync(card, current, CancellationToken.None);
+
+        Assert.Equal("or_rule", result.SelectedRoute?.FEdgeKey);  // or 真命中(amount分支)→应选中,不被兄弟类型错毒化
+        Assert.Equal(stages.GeneralManager.FID, result.NextStage?.FID);
+    }
+
     private static (CfStageDefinition Source, CfStageDefinition Finance, CfStageDefinition GeneralManager) SeedStages(STOTOP.Infrastructure.Data.STOTOPDbContext db)
     {
         var source = new CfStageDefinition { FID = 101, FFlowVersionId = 10, FStageKey = "manager", FStageName = "主管审批", FSortOrder = 1 };
