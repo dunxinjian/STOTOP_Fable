@@ -5,6 +5,7 @@ import {
   buildCapabilityProps,
   resolveComponentCapability,
 } from './cardComponentCapabilities'
+import StatusTag from '@/components/StatusTag.vue'
 
 const props = defineProps<{
   open: boolean
@@ -187,9 +188,9 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
         <h3>发布状态</h3>
         <div class="cf-component-config__row">
           <span>能力分层</span>
-          <a-tag :color="componentCapability.publishable ? 'green' : 'orange'">
+          <StatusTag :type="componentCapability.publishable ? 'success' : 'warning'">
             {{ componentCapability.publishable ? componentCapability.tier : '暂缓' }}
-          </a-tag>
+          </StatusTag>
         </div>
         <p v-for="warning in configWarnings" :key="warning">{{ warning }}</p>
       </section>
@@ -505,14 +506,14 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
     flex-direction: column;
     gap: 9px;
     padding: 11px 12px;
-    border: 1px solid #e4e9e6;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    background: #fbfcfb;
+    background: var(--bg-muted);
   }
 
   h3 {
     margin: 0;
-    color: #24342d;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 700;
   }
@@ -523,7 +524,7 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
     gap: 5px;
 
     span {
-      color: #62736b;
+      color: var(--text-2);
       font-size: 12px;
     }
   }
@@ -538,7 +539,7 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
 }
 
 .cf-component-config__row span {
-  color: #62736b;
+  color: var(--text-2);
   font-size: 12px;
 }
 
@@ -562,14 +563,14 @@ function setOption(index: number, key: 'label' | 'value', value: string) {
     border-radius: 5px;
     padding: 6px 8px;
     background: var(--color-warning-light);
-    color: #8a4b00;
+    color: var(--color-warning-text);
     font-size: 12px;
     line-height: 18px;
   }
 
   &.is-blocking {
-    border-color: #ffd591;
-    background: #fffaf0;
+    border-color: var(--color-warning);
+    background: var(--color-warning-light);
   }
 }
 
