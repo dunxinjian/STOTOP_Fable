@@ -2,20 +2,21 @@
   <div class="page-container page-container--flush">
     <PageHeader title="合同管理" description="管理合同信息与审批流程">
       <template #left>
-        <StatFilterTabs inline v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />
-      </template>
-      <template #right>
         <a-input v-model:value="searchForm.keyword" size="middle" placeholder="合同号/标题" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
         <a-select v-model:value="searchForm.typeId" size="middle" placeholder="类型" style="width: 140px" allow-clear :options="typeOptions" @change="handleSearch" />
         <a-range-picker v-model:value="searchForm.dateRange" size="middle" style="width: 240px" />
         <a-button size="middle" @click="handleReset">
           <template #icon><ReloadOutlined /></template>重置
         </a-button>
+      </template>
+      <template #right>
         <a-button v-if="has(ContractPermissions.ContractCreate)" type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新建合同
         </a-button>
       </template>
     </PageHeader>
+
+    <StatFilterTabs v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />
 
     <DataTable
       v-model:pagination="pagination"
