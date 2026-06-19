@@ -1,85 +1,69 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="合同管理" description="管理合同信息与审批流程">
-      <template #actions>
-        <a-button v-if="has(ContractPermissions.ContractCreate)" type="primary" @click="handleAdd">
+      <template #left>
+        <StatFilterTabs inline v-model:active="searchForm.status" :tabs="statusTabs" @change="handleSearch" />
+      </template>
+      <template #right>
+        <a-input v-model:value="searchForm.keyword" size="middle" placeholder="合同号/标题" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
+        <a-select v-model:value="searchForm.typeId" size="middle" placeholder="类型" style="width: 140px" allow-clear :options="typeOptions" />
+        <a-range-picker v-model:value="searchForm.dateRange" size="middle" style="width: 240px" />
+        <a-button size="middle" @click="handleReset">
+          <template #icon><ReloadOutlined /></template>重置
+        </a-button>
+        <a-button v-if="has(ContractPermissions.ContractCreate)" type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新建合同
         </a-button>
       </template>
-      <template #toolbar>
-        <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 8px;">
-          <a-input v-model:value="searchForm.keyword" size="small" placeholder="合同号/标题" style="width: 200px" allowClear @keyup.enter="handleSearch" />
-          <a-select v-model:value="searchForm.typeId" size="small" placeholder="类型" style="width: 140px" allowClear :options="typeOptions" />
-          <a-select v-model:value="searchForm.status" size="small" placeholder="状态" style="width: 120px" allowClear :options="statusOptions" />
-          <a-range-picker v-model:value="searchForm.dateRange" size="small" style="width: 240px" />
-          <a-button type="primary" size="small" @click="handleSearch">查询</a-button>
-          <a-button size="small" @click="handleReset">重置</a-button>
-        </div>
-      </template>
     </PageHeader>
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 1400 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'title'">
-            <a-tooltip :title="record.title">
-              <a @click="handleViewDetail(record)" style="cursor: pointer">{{ record.title }}</a>
-            </a-tooltip>
-          </template>
-          <template v-if="column.dataIndex === 'typeName'">
-            <a-tag>{{ record.typeName || '-' }}</a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'amount'">
-            {{ record.amount != null ? formatAmount(record.amount) : '-' }}
-          </template>
-          <template v-if="column.dataIndex === 'contractNature'">
-            {{ natureText(record.contractNature) }}
-          </template>
-          <template v-if="column.dataIndex === 'status'">
-            <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button type="link" size="small" @click="handleViewDetail(record)">查看</a-button>
-            <a-button
-              v-if="has(ContractPermissions.ContractEdit) && record.status === 0"
-              type="link"
-              size="small"
-              @click="handleEdit(record)"
-            >编辑</a-button>
-            <a-button
-              v-if="has(ContractPermissions.ContractApprove) && record.status === 0"
-              type="link"
-              size="small"
-              @click="handleSubmitApproval(record)"
-            >发起审批</a-button>
-            <a-popconfirm
-              v-if="has(ContractPermissions.ContractDelete) && record.status === 0"
-              title="确定删除该合同吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleDelete(record)"
-            >
-              <a-button type="link" size="small" danger>删除</a-button>
-            </a-popconfirm>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1400 }"
+      row-key="id"
+      empty-text="暂无合同数据"
+      @change="fetchList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'title'">
+          <a-tooltip :title="record.title">
+            <a class="contract-title-link" @click="handleViewDetail(record)">{{ record.title }}</a>
+          </a-tooltip>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无合同数据" />
+        <template v-if="column.dataIndex === 'typeName'">
+          <a-tag>{{ record.typeName || '-' }}</a-tag>
         </template>
-      </a-table>
-    </a-card>
+        <template v-if="column.dataIndex === 'amount'">
+          {{ record.amount != null ? formatAmount(record.amount) : '-' }}
+        </template>
+        <template v-if="column.dataIndex === 'contractNature'">
+          {{ natureText(record.contractNature) }}
+        </template>
+        <template v-if="column.dataIndex === 'status'">
+          <StatusTag :type="statusTagType(record.status)">{{ statusText(record.status) }}</StatusTag>
+        </template>
+        <template v-if="column.dataIndex === 'action'">
+          <a-button type="link" size="small" @click="handleViewDetail(record)">查看</a-button>
+          <a-button
+            v-if="has(ContractPermissions.ContractEdit) && record.status === 0"
+            type="link" size="small" @click="handleEdit(record)"
+          >编辑</a-button>
+          <a-button
+            v-if="has(ContractPermissions.ContractApprove) && record.status === 0"
+            type="link" size="small" @click="handleSubmitApproval(record)"
+          >发起审批</a-button>
+          <a-popconfirm
+            v-if="has(ContractPermissions.ContractDelete) && record.status === 0"
+            title="确定删除该合同吗？" ok-text="确定" cancel-text="取消" @confirm="handleDelete(record)"
+          >
+            <a-button type="link" size="small" danger>删除</a-button>
+          </a-popconfirm>
+        </template>
+      </template>
+    </DataTable>
 
     <!-- 新建/编辑合同弹窗 -->
     <a-modal
@@ -192,7 +176,7 @@
           :columns="partyColumns"
           :data-source="formData.parties"
           :pagination="false"
-          bordered
+          :bordered="false"
           size="small"
           style="width: 100%; margin-bottom: 16px"
         >
@@ -299,7 +283,7 @@
               :columns="detailPartyColumns"
               :data-source="detailData.parties || []"
               :pagination="false"
-              bordered
+              :bordered="false"
               size="small"
               row-key="id"
             >
@@ -324,13 +308,13 @@
               :columns="detailClauseColumns"
               :data-source="detailData.clauses || []"
               :pagination="false"
-              bordered
+              :bordered="false"
               size="small"
               row-key="id"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'isKeyClause'">
-                  <a-tag v-if="record.isKeyClause" color="error">关键条款</a-tag>
+                  <StatusTag v-if="record.isKeyClause" type="danger">关键条款</StatusTag>
                   <span v-else>-</span>
                 </template>
               </template>
@@ -342,7 +326,7 @@
               :columns="detailESignColumns"
               :data-source="detailData.eSignRecords || []"
               :pagination="false"
-              bordered
+              :bordered="false"
               size="small"
               row-key="id"
             >
@@ -361,7 +345,7 @@
               :columns="detailReminderColumns"
               :data-source="detailData.reminders || []"
               :pagination="false"
-              bordered
+              :bordered="false"
               size="small"
               row-key="id"
             >
@@ -378,10 +362,10 @@
           <a-tab-pane key="chain" tab="续签链">
             <div v-if="detailData.relatedContractNo" style="padding: 16px">
               <a-timeline>
-                <a-timeline-item color="blue">
+                <a-timeline-item color="var(--color-info)">
                   原合同：{{ detailData.relatedContractNo }}
                 </a-timeline-item>
-                <a-timeline-item color="green">
+                <a-timeline-item color="var(--color-success)">
                   当前合同：{{ detailData.contractNo }}
                 </a-timeline-item>
               </a-timeline>
@@ -418,9 +402,12 @@ import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { Dayjs } from 'dayjs'
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatFilterTabs from '@/components/StatFilterTabs.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import ContractStatusFlow from './components/ContractStatusFlow.vue'
 import { usePermission, ContractPermissions } from '@/utils/permission'
 import {
@@ -432,8 +419,10 @@ import {
   updateContractStatus,
   getAllEnabledContractTypes,
   getContractTemplateList,
+  getContractStatistics,
   type ContractListItemDto,
   type ContractDto,
+  type ContractStatisticsDto,
   type CreateContractPartyRequest,
   type CreateContractClauseRequest,
 } from '@/api/contract'
@@ -452,12 +441,14 @@ const statusOptions = [
 
 function statusText(s: number) { return ['草稿', '审批中', '待签署', '已生效', '已到期', '已终止'][s] || '未知' }
 function statusColor(s: number) { return ['default', 'processing', 'warning', 'success', 'error', 'default'][s] || 'default' }
+function statusTagType(s: number): 'success' | 'warning' | 'danger' | 'info' | 'default' {
+  return (['default', 'info', 'warning', 'success', 'danger', 'default'] as const)[s] || 'default'
+}
 function natureText(n: number) { return ['新签', '续签', '变更', '补充'][n] || '-' }
 function formatAmount(v: number) { return `¥${v.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}` }
 
 // 表格列
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '合同号', dataIndex: 'contractNo', key: 'contractNo', width: 150 },
   { title: '标题', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
   { title: '类型', dataIndex: 'typeName', key: 'typeName', width: 100 },
@@ -511,29 +502,30 @@ const detailReminderColumns = [
 const searchForm = reactive({
   keyword: '',
   typeId: undefined as number | undefined,
-  status: undefined as number | undefined,
+  status: '' as '' | number,
   dateRange: null as [Dayjs, Dayjs] | null,
 })
 
 // 表格数据
 const loading = ref(false)
 const tableData = ref<ContractListItemDto[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
+const statistics = ref<ContractStatisticsDto>({ totalCount: 0, byStatus: [] })
 
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchList()
+function getStatusCount(s: number): number {
+  return statistics.value.byStatus.find(g => g.status === s)?.count ?? 0
 }
+
+const statusTabs = computed(() => [
+  { key: '', label: '全部', count: statistics.value.totalCount },
+  { key: 0, label: '草稿',   count: getStatusCount(0), color: 'var(--text-3)' },
+  { key: 1, label: '审批中', count: getStatusCount(1), color: 'var(--color-info)' },
+  { key: 2, label: '待签署', count: getStatusCount(2), color: 'var(--color-warning)' },
+  { key: 3, label: '已生效', count: getStatusCount(3), color: 'var(--color-success)' },
+  { key: 4, label: '已到期', count: getStatusCount(4), color: 'var(--color-danger)' },
+  { key: 5, label: '已终止', count: getStatusCount(5), color: 'var(--text-3)' },
+])
 
 // 下拉选项
 const typeOptions = ref<{ label: string; value: number }[]>([])
@@ -606,30 +598,37 @@ async function fetchList() {
   loading.value = true
   try {
     const params: any = {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }
     if (searchForm.keyword) params.keyword = searchForm.keyword
     if (searchForm.typeId !== undefined) params.typeId = searchForm.typeId
-    if (searchForm.status !== undefined) params.status = searchForm.status
+    if (searchForm.status !== '' && searchForm.status !== undefined) params.status = searchForm.status
     const res = await getContractList(params) as any
     if (res) {
       tableData.value = res?.items || res || []
-      pagination.total = res?.total || res?.length || 0
+      pagination.value.total = res?.total || res?.length || 0
     }
   } finally {
     loading.value = false
   }
 }
 
-function handleSearch() { pagination.pageIndex = 1; fetchList() }
+async function fetchStatistics() {
+  try {
+    const res = await getContractStatistics() as any
+    if (res) statistics.value = res
+  } catch (e) { console.error('获取合同统计失败:', e) }
+}
+
+function handleSearch() { pagination.value.pageIndex = 1; fetchList() }
 
 function handleReset() {
   searchForm.keyword = ''
   searchForm.typeId = undefined
-  searchForm.status = undefined
+  searchForm.status = ''
   searchForm.dateRange = null
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
@@ -752,6 +751,7 @@ async function handleSubmit() {
     }
     dialogVisible.value = false
     fetchList()
+    fetchStatistics()
   } finally { submitLoading.value = false }
 }
 
@@ -760,6 +760,7 @@ async function handleDelete(row: ContractListItemDto) {
     await deleteContract(row.id)
     message.success('删除成功')
     fetchList()
+    fetchStatistics()
   } catch (e) { console.error('删除失败:', e) }
 }
 
@@ -768,6 +769,7 @@ async function handleSubmitApproval(row: any) {
     await updateContractStatus(row.id, 1)
     message.success('已发起审批')
     fetchList()
+    fetchStatistics()
   } catch (e) { console.error('发起审批失败:', e) }
 }
 
@@ -787,6 +789,7 @@ function handleInitiateSign(row: any) {
 onMounted(() => {
   fetchTypeOptions()
   fetchList()
+  fetchStatistics()
 })
 </script>
 
@@ -796,10 +799,10 @@ onMounted(() => {
 .section-title {
   font-size: 15px;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--text-1);
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid $border-color-lighter;
+  border-bottom: 1px solid var(--border-faint);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -814,10 +817,14 @@ onMounted(() => {
   }
 }
 
+.contract-title-link {
+  cursor: pointer;
+}
+
 .clause-item {
   margin-bottom: 8px;
   padding: 8px;
-  background: $bg-page;
+  background: var(--bg-page);
   border-radius: $border-radius-sm;
 }
 </style>
