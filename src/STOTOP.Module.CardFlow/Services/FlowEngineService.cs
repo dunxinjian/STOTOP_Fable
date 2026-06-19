@@ -814,6 +814,9 @@ public class FlowEngineService : IFlowEngineService
         var stageInstances = await _dbContext.Set<CfStageInstance>()
             .Where(s => s.FCardId == card.FID)
             .ToListAsync();
+        var routeSnapshots = await _dbContext.Set<CfRouteDecisionSnapshot>()
+            .Where(s => s.FCardId == card.FID && s.FRound == card.FCurrentRound)
+            .ToListAsync();
 
         var targetResult = string.Equals(request.ReturnMode, "toSpecified", StringComparison.OrdinalIgnoreCase)
             ? _returnToStageRuntime.ResolveSpecifiedTarget(
@@ -821,12 +824,14 @@ public class FlowEngineService : IFlowEngineService
                 stageInstances,
                 currentStage.FStageDefinitionId,
                 card.FCurrentRound,
-                request.TargetStageId)
+                request.TargetStageId,
+                routeSnapshots)
             : _returnToStageRuntime.ResolvePreviousTarget(
                 stages,
                 stageInstances,
                 currentStage.FStageDefinitionId,
-                card.FCurrentRound);
+                card.FCurrentRound,
+                routeSnapshots);
 
         if (!targetResult.Success)
         {
@@ -865,7 +870,9 @@ public class FlowEngineService : IFlowEngineService
             stages,
             stageInstances,
             targetDefinition.FID,
-            card.FCurrentRound);
+            card.FCurrentRound,
+            currentStage.FStageDefinitionId,
+            routeSnapshots);
         foreach (var instance in supersededInstances)
         {
             _dbContext.Entry(instance).State = EntityState.Modified;
