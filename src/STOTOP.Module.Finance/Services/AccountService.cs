@@ -296,6 +296,29 @@ public class AccountService : IAccountService
         var account = await LoadAccountAsync(id);
         if (account == null) return false;
 
+        // 停用时校验（启用无害，不校验）：被凭证引用/有启用下级/有余额则拒绝
+        if (account.FEnableStatus == 1)
+        {
+            // 凭证按组织隔离、科目账套级共享，须跨组织检查（同 DeleteAsync）
+            var hasVoucher = await _voucherEntryRepository.Query()
+                .IgnoreQueryFilters()
+                .AnyAsync(e => e.FAccountId == id);
+            if (hasVoucher)
+                throw new InvalidOperationException("该科目已被凭证引用，无法停用");
+
+            var hasEnabledChildren = await _accountRepository.Query()
+                .AnyAsync(a => a.FParentId == id && a.FEnableStatus == 1);
+            if (hasEnabledChildren)
+                throw new InvalidOperationException("该科目有启用的下级科目，无法停用");
+
+            // 有余额时停用会让该余额从期初/试算合计中凭空消失，拒绝
+            var hasBalance = await _balanceRepository.Query()
+                .AnyAsync(b => b.FAccountId == id
+                    && (b.FBeginDebit != 0 || b.FBeginCredit != 0 || b.FEndDebit != 0 || b.FEndCredit != 0));
+            if (hasBalance)
+                throw new InvalidOperationException("该科目存在余额，无法停用");
+        }
+
         account.FEnableStatus = account.FEnableStatus == 1 ? 0 : 1;
         account.FUpdatedTime = DateTime.Now;
         await _accountRepository.UpdateAsync(account);

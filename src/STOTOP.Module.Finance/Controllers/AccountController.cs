@@ -143,12 +143,19 @@ public class AccountController : ControllerBase
     [RequireAccountSetPermission(AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult> ToggleStatus(long id)
     {
-        var result = await _accountService.ToggleStatusAsync(id);
-        if (!result)
+        try
         {
-            return ApiResult.Fail("科目不存在");
+            var result = await _accountService.ToggleStatusAsync(id);
+            if (!result)
+            {
+                return ApiResult.Fail("科目不存在");
+            }
+            return ApiResult.Ok("状态切换成功");
         }
-        return ApiResult.Ok("状态切换成功");
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult.Fail(ex.Message);
+        }
     }
 
     [HttpGet("initial-balances")]
