@@ -95,7 +95,8 @@
             {{ record.balanceDirection === '借' ? '借' : '贷' }}
           </template>
           <template v-if="column.dataIndex === 'auxiliary'">
-            {{ formatAuxiliary(record.auxiliary) }}
+            <span>{{ formatAuxiliary(record.auxiliary) }}</span>
+            <a class="aux-set-link" @click="router.push({ name: 'AuxiliarySetting' })">设置</a>
           </template>
           <template v-if="column.dataIndex === 'unit'">
             <span v-if="record.unit">{{ record.unit }}<SettingOutlined class="unit-icon" /></span>
@@ -320,7 +321,9 @@ import {
 import { useAccountSetStore } from '@/stores/accountSet'
 import { AccountSetPermissions } from '@/constants/accountSetPermissions'
 import { formatAuxiliaryCodes } from '@/constants/auxTypes'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const accountSetStore = useAccountSetStore()
 
 // 是否有科目编辑权限（控制头部按钮、行内操作、启停开关）
@@ -1065,6 +1068,17 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   font-size: 12px;
   margin-left: 4px;
   color: $text-secondary;
+}
+
+.aux-set-link {
+  margin-left: 8px;
+  font-size: 12px;
+  color: $color-primary;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 // ===== 期初值表格 =====
