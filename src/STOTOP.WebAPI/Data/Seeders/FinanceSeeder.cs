@@ -32,6 +32,7 @@ public static class FinanceSeeder
             new(8, "批次5-S6: 删废弃 FIN阿米巴分摊比例 表 (2026-06-17)", MigrateV8),
             new(9, "品牌版科目覆盖：删两账套旧科目重建(保留各账套真实1002/1012) (2026-06-18)", MigrateV9),
             new(10, "品牌版科目4项调整：220301/54010501改名 + 新增50010105 + 删54010502 (2026-06-19)", MigrateV10),
+            new(11, "快递行业模板FID3明细=账套2科目快照(排1002/1012子科目)+sourceId口径 (2026-06-19)", MigrateV11),
         };
         MigrationRunner.RunMigrations(ctx, Module, steps);
     }
@@ -2231,5 +2232,33 @@ public static class FinanceSeeder
             INSERT INTO [FIN科目] ([FID],[F编码],[F名称],[F类别],[F余额方向],[F级次],[F父ID],[F是否末级],[F辅助核算],[F外币],[F计算单位],[F启用状态],[F账套ID],[F创建时间],[F更新时间],[F启用年度],[F启用期间])
             VALUES (700428, N'50010105', N'其他出港收入', N'营业收入', N'贷', 3, 700181, 1, N'outlet,business_direction,express_brand,business_unit,customer,project', NULL, NULL, 1, 2, N'2026-06-19 00:00:00.000', N'2026-06-19 00:00:00.000', 0, 0);
             SET IDENTITY_INSERT [FIN科目] OFF;");
+    }
+
+    private static void MigrateV11(STOTOPDbContext ctx)
+    {
+        if (!SeederHelper.IsSqlServer(ctx)) return;
+
+        // FID3「快递行业标准模板」明细 = 账套2(太仓美申)科目快照。
+        // 模板项 FID 复用科目 FID、F父ID 直接复制 → ApplyTemplate 的 idMapping 还原父子。
+        // 排除 1002/1012 下账套私有银行账户子科目；二者本身设为叶子。
+        ExecSql(ctx, @"DELETE FROM [FIN科目模板_明细] WHERE [F模板ID]=3;");
+
+        ExecSql(ctx, @"
+            SET IDENTITY_INSERT [FIN科目模板_明细] ON;
+            INSERT INTO [FIN科目模板_明细]
+              ([FID],[F模板ID],[F编码],[F名称],[F类别],[F余额方向],[F级次],[F父ID],[F是否末级],[F辅助核算],[F外币],[F计算单位],[F排序])
+            SELECT [FID], 3, [F编码], [F名称], [F类别], [F余额方向], [F级次], [F父ID],
+                   CASE WHEN [F编码] IN (N'1002', N'1012') THEN 1 ELSE [F是否末级] END,
+                   [F辅助核算], [F外币], [F计算单位], 0
+            FROM [FIN科目]
+            WHERE [F账套ID]=2
+              AND NOT ([F编码] LIKE N'1002%' AND LEN([F编码]) > 4)
+              AND NOT ([F编码] LIKE N'1012%' AND LEN([F编码]) > 4);
+            SET IDENTITY_INSERT [FIN科目模板_明细] OFF;");
+
+        // 模板说明与实际数据源对齐
+        ExecSql(ctx, @"UPDATE [FIN科目模板]
+            SET [F说明]=N'源自太仓美申账套快照（排除各账套私有银行账户子科目）'
+            WHERE [FID]=3;");
     }
 }
