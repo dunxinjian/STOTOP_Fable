@@ -89,22 +89,22 @@ function setRequired(componentId: string, required: boolean) {
   }
 
   header strong {
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 13px;
   }
 
   header span {
     margin-top: 2px;
-    color: #75827c;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
 
 .cf-stage-component-view__empty {
   padding: 12px;
-  border: 1px dashed #d7dfdb;
+  border: 1px dashed var(--border);
   border-radius: 6px;
-  color: #7d8983;
+  color: var(--text-3);
   font-size: 12px;
   text-align: center;
 }
@@ -120,9 +120,9 @@ function setRequired(componentId: string, required: boolean) {
     align-items: center;
     gap: 10px;
     padding: 8px 10px;
-    border: 1px solid #e3e8e5;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    background: #fff;
+    background: var(--bg-card);
   }
 }
 
@@ -138,13 +138,13 @@ function setRequired(componentId: string, required: boolean) {
   }
 
   strong {
-    color: #26372f;
+    color: var(--text-1);
     font-size: 13px;
   }
 
   span {
     margin-top: 2px;
-    color: #73817a;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
