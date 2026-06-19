@@ -18,7 +18,7 @@
               placeholder="辅助核算类型"
               allowClear
               style="width: 160px"
-              :options="auxiliaryTypes.map(t => ({ label: t.name, value: t.code }))"
+              :options="auxiliaryTypes.map(t => ({ label: auxTypeLabel(t.name), value: t.name }))"
               @change="loadData"
             />
           </div>
@@ -68,6 +68,7 @@ import { ref, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { DownloadOutlined } from '@ant-design/icons-vue'
 import { getAuxiliaryBalance, getPeriods, getAuxiliaryTypes } from '@/api/finance'
+import { auxTypeLabel } from '@/constants/auxTypes'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import AccountSetSelector from '@/components/AccountSetSelector.vue'
@@ -82,7 +83,8 @@ const filterForm = ref({
 })
 
 const periodList = ref<{ id: number; label: string; year: number; month: number }[]>([])
-const auxiliaryTypes = ref<{ id: number; code: string; name: string }[]>([])
+// 注：后端 AuxiliaryTypeDto 的 name 存的是英文码（outlet…），展示时经 auxTypeLabel 翻译
+const auxiliaryTypes = ref<{ id: number; name: string }[]>([])
 
 // 表格数据
 const tableData = ref<any[]>([])

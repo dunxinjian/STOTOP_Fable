@@ -107,6 +107,7 @@ import { message } from 'ant-design-vue'
 import { SearchOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import { getAuxiliaryItemsByAccountSet, createAuxiliaryItem } from '@/api/finance'
 import { getAllEnabledSuppliers } from '@/api/supplier'
+import { AUX_TYPE_LABELS } from '@/constants/auxTypes'
 
 interface AuxItem {
   id: number
@@ -138,20 +139,8 @@ const dialogVisible = computed({
   set: (val) => emit('update:visible', val)
 })
 
-// 辅助类型标签映射
-const typeLabels: Record<string, string> = {
-  customer: '客户',
-  supplier: '供应商',
-  department: '部门',
-  project: '项目',
-  employee: '员工',
-  business_unit: '经营单元',
-  express_brand: '快递品牌',
-  outlet: '网点',
-  business_direction: '业务方向',
-}
-
-const typeLabel = computed(() => typeLabels[props.auxType] || '辅助项')
+// 辅助类型标签映射统一收敛到 @/constants/auxTypes（单一真源）
+const typeLabel = computed(() => AUX_TYPE_LABELS[props.auxType] || '辅助项')
 const dialogTitle = computed(() => `选择${typeLabel.value}`)
 
 // 供应商类型：数据从供应商管理模块获取，不允许快速新增

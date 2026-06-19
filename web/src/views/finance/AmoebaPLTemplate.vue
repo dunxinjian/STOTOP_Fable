@@ -889,6 +889,7 @@ import {
 import { getCustomerList } from '@/api/crm'
 import { useAccountSetStore } from '@/stores/accountSet'
 import { useOrgContextStore } from '@/stores/orgContext'
+import { auxTypeLabel } from '@/constants/auxTypes'
 
 const accountSetStore = useAccountSetStore()
 const orgContextStore = useOrgContextStore()
@@ -2143,26 +2144,14 @@ const showFormulaCard = computed(() => {
   return r === 'group' || r === 'formula' || r === 'indicator'
 })
 
-// 辅助类型选项（从后端 API 动态加载）
-const AUX_TYPE_LABEL_MAP: Record<string, string> = {
-  outlet: '网点',
-  express_brand: '快递品牌',
-  business_unit: '业务单元',
-  business_object: '业务对象',
-  business_direction: '业务方向',
-  customer: '客户',
-  supplier: '供应商',
-  department: '部门',
-  employee: '员工',
-  project: '项目',
-}
+// 辅助类型选项（从后端 API 动态加载，编码→中文映射收敛到 @/constants/auxTypes）
 const auxTypeOptions = ref<{ value: string; label: string }[]>([])
 async function loadAuxTypes() {
   try {
     const types = await getAuxiliaryTypes()
     auxTypeOptions.value = (types || []).map((t: any) => {
       const name = t?.name || t?.code || ''
-      return { value: name, label: AUX_TYPE_LABEL_MAP[name] || name }
+      return { value: name, label: auxTypeLabel(name) }
     }).filter(o => !!o.value)
   } catch (e) {
     console.error('加载辅助类型列表失败', e)

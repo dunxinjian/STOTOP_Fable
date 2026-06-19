@@ -307,10 +307,10 @@ import {
   toggleAccountStatus,
   getInitialBalances,
   saveInitialBalances,
-  getAuxiliaryTypes,
 } from '@/api/finance'
 import { useAccountSetStore } from '@/stores/accountSet'
 import { AccountSetPermissions } from '@/constants/accountSetPermissions'
+import { formatAuxiliaryCodes } from '@/constants/auxTypes'
 
 const accountSetStore = useAccountSetStore()
 
@@ -417,9 +417,6 @@ const flattenAccounts = computed(() => {
   flatten(accountTree.value || [], 1)
   return result
 })
-
-// 辅助核算类型
-const auxiliaryTypes = ref<any[]>([])
 
 // 弹窗相关
 const dialogVisible = ref(false)
@@ -542,17 +539,9 @@ const formRules: Record<string, any[]> = {
 }
 
 // 格式化辅助核算显示：后端返回逗号分隔的编码字符串，按编码映射为中文名称
+// 映射统一收敛到 @/constants/auxTypes（单一真源）
 function formatAuxiliary(aux: any): string {
-  if (!aux || typeof aux !== 'string') return ''
-  return aux
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-    .map(code => {
-      const type = auxiliaryTypes.value.find(t => t.code === code)
-      return type ? type.name : code
-    })
-    .join('、')
+  return formatAuxiliaryCodes(aux)
 }
 
 // 加载数据
@@ -580,16 +569,6 @@ async function loadData() {
     console.error('加载数据失败:', error)
   } finally {
     loading.value = false
-  }
-}
-
-// 加载辅助核算类型
-async function loadAuxiliaryTypes() {
-  try {
-    const res = await getAuxiliaryTypes() as any
-    auxiliaryTypes.value = res || []
-  } catch (error) {
-    console.error('加载辅助核算类型失败:', error)
   }
 }
 
@@ -847,7 +826,6 @@ function resetForm() {
 
 onMounted(() => {
   loadData()
-  loadAuxiliaryTypes()
 })
 
 // 监听账套切换
