@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
+using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.Finance.Services.FormulaEngine;
@@ -1018,7 +1019,7 @@ public class ReportService : IReportService
             if (!accountEntries.Any()) continue;
             
             decimal amount;
-            if (account.FCategory == "损益")
+            if (FinAccountCategory.IsProfitLoss(account.FCategory))
             {
                 // 损益类科目
                 if (account.FBalanceDirection == "贷")
