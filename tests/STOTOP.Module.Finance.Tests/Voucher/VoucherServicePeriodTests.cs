@@ -92,4 +92,31 @@ public class VoucherServicePeriodTests
         Assert.Contains("已结账", ex.Message);
         Assert.Empty(db.Set<FinVoucher>());
     }
+
+    [Fact]
+    public async Task Update_reresolves_period_and_tags_entries_with_org()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(Update_reresolves_period_and_tags_entries_with_org), Org);
+        db.Set<FinAccount>().AddRange(
+            VoucherServiceTestHarness.Account(1, "1001", "库存现金", AcctSet, Org),
+            VoucherServiceTestHarness.Account(2, "3001", "实收资本", AcctSet, Org));
+        db.Set<FinAccountPeriod>().AddRange(
+            VoucherServiceTestHarness.Period(10, 2026, 5, AcctSet),
+            VoucherServiceTestHarness.Period(11, 2026, 6, AcctSet));
+        await db.SaveChangesAsync();
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var created = await service.CreateAsync(BalancedRequest(new DateTime(2026, 5, 10)), "tester", AcctSet);
+        Assert.Equal(10, db.Set<FinVoucher>().Single(v => v.FID == created.Id).FPeriodId);
+
+        var updateReq = BalancedRequest(new DateTime(2026, 6, 20));
+        await service.UpdateAsync(created.Id, updateReq, "modifier");
+
+        var saved = db.Set<FinVoucher>().Single(v => v.FID == created.Id);
+        Assert.Equal(11, saved.FPeriodId);
+        var entries = db.Set<FinVoucherEntry>().Where(e => e.FVoucherId == created.Id).ToList();
+        Assert.NotEmpty(entries);
+        Assert.All(entries, e => Assert.Equal(Org, e.FOrgId));
+    }
 }

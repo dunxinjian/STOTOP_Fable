@@ -406,8 +406,23 @@ public class VoucherService : IVoucherService
             FAccountSetId = voucher.FAccountSetId
         };
 
+        // 期间随日期重解析（后端权威），并校验目标期间未结账（无论 PeriodId 来源）
+        long newPeriodId = request.PeriodId;
+        if (newPeriodId <= 0)
+        {
+            var newPeriod = await ResolvePeriodAsync(request.Date, voucher.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(newPeriod);
+            newPeriodId = newPeriod.FID;
+        }
+        else
+        {
+            var newPeriod = await _periodRepository.GetByIdAsync(newPeriodId);
+            if (newPeriod != null)
+                VoucherPostingRules.EnsureOpenForPosting(newPeriod);
+        }
+
         voucher.FDate = request.Date;
-        voucher.FPeriodId = request.PeriodId;
+        voucher.FPeriodId = newPeriodId;
         voucher.FAttachmentCount = request.AttachmentCount;
         voucher.FModifier = modifier;
         voucher.FRemark = request.Remark;
@@ -418,10 +433,10 @@ public class VoucherService : IVoucherService
         // 记录凭证字段级变更
         await _changeTrackingService.TrackChangesAsync("凭证", voucher.FID, oldSnapshot, voucher, voucher.FAccountSetId);
 
-        // 删除旧分录
-        foreach (var entry in voucher.Entries)
+        // 删除旧分录（先快照分录ID，避免删除时修改正在枚举的导航集合）
+        foreach (var entryId in voucher.Entries.Select(e => e.FID).ToList())
         {
-            await _entryRepository.DeleteAsync(entry.FID);
+            await _entryRepository.DeleteAsync(entryId);
         }
 
         // 添加新分录
@@ -440,10 +455,12 @@ public class VoucherService : IVoucherService
                 FAuxiliaryJson = entryRequest.AuxiliaryJson,
                 FDebitAmount = entryRequest.DebitAmount,
                 FCreditAmount = entryRequest.CreditAmount,
+                FOrgId = voucher.FOrgId,
+                FDataScopeId = request.DataScopeId,
                 FCreatedTime = DateTime.Now,
                 FUpdatedTime = DateTime.Now
             };
-            
+
             await _entryRepository.AddAsync(entry);
         }
 
