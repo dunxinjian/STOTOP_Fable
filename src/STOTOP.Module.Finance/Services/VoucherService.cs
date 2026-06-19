@@ -689,8 +689,17 @@ public class VoucherService : IVoucherService
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
-        VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        // 复制单落当前开放期：今日无对应期间或已结账则拒绝（转 Fail，避免端点 500）
+        FinAccountPeriod targetPeriod;
+        try
+        {
+            targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult<object>.Fail(ex.Message);
+        }
         var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
@@ -725,6 +734,8 @@ public class VoucherService : IVoucherService
                 FAuxiliaryJson = entry.FAuxiliaryJson,
                 FDebitAmount = entry.FDebitAmount,
                 FCreditAmount = entry.FCreditAmount,
+                FOrgId = source.FOrgId,
+                FDataScopeId = entry.FDataScopeId,
                 FCreatedTime = DateTime.Now,
                 FUpdatedTime = DateTime.Now
             };
@@ -747,8 +758,17 @@ public class VoucherService : IVoucherService
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
-        VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        // 红字冲销落当前开放期：今日无对应期间或已结账则拒绝（转 Fail，避免端点 500）
+        FinAccountPeriod targetPeriod;
+        try
+        {
+            targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult<object>.Fail(ex.Message);
+        }
         var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
@@ -783,6 +803,8 @@ public class VoucherService : IVoucherService
                 FAuxiliaryJson = entry.FAuxiliaryJson,
                 FDebitAmount = -entry.FDebitAmount,
                 FCreditAmount = -entry.FCreditAmount,
+                FOrgId = source.FOrgId,
+                FDataScopeId = entry.FDataScopeId,
                 FCreatedTime = DateTime.Now,
                 FUpdatedTime = DateTime.Now
             };

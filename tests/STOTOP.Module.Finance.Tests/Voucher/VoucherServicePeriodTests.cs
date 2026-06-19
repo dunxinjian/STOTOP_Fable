@@ -134,4 +134,56 @@ public class VoucherServicePeriodTests
         Assert.Equal(11, saved.FPeriodId);
         Assert.Equal(0, saved.FStatus); // 草稿
     }
+
+    // 复制/冲销按今日解析期间：今日所在期间已结账时，返回 Fail（而非抛异常致端点 500）。
+    [Fact]
+    public async Task Copy_returns_fail_when_today_period_closed()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(Copy_returns_fail_when_today_period_closed), Org);
+        var src = await SeedSourceVoucherForTodayAsync(db, todayPeriodClosed: 1);
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var res = await service.CopyAsync(src);
+
+        Assert.NotEqual(200, res.Code);
+        Assert.Contains("已结账", res.Message);
+        Assert.Single(db.Set<FinVoucher>()); // 未生成复制单
+    }
+
+    [Fact]
+    public async Task Reverse_succeeds_into_open_today_period_and_creates_red_entries()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(Reverse_succeeds_into_open_today_period_and_creates_red_entries), Org);
+        var src = await SeedSourceVoucherForTodayAsync(db, todayPeriodClosed: 0);
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var res = await service.ReverseAsync(src);
+
+        Assert.Equal(200, res.Code);
+        var redEntries = db.Set<FinVoucherEntry>().Where(e => e.FVoucherId != src).ToList();
+        Assert.NotEmpty(redEntries);
+        Assert.All(redEntries, e => Assert.Equal(Org, e.FOrgId));       // 红冲分录带组织标记
+        Assert.Contains(redEntries, e => e.FDebitAmount < 0 || e.FCreditAmount < 0); // 确为红字
+    }
+
+    // 播种一张属于今日所在期间的源凭证；todayPeriodClosed 控制今日期间是否已结账。
+    private static async Task<long> SeedSourceVoucherForTodayAsync(
+        STOTOP.Infrastructure.Data.STOTOPDbContext db, int todayPeriodClosed)
+    {
+        var today = DateTime.Today;
+        db.Set<FinAccountPeriod>().Add(
+            VoucherServiceTestHarness.Period(30, today.Year, today.Month, AcctSet, todayPeriodClosed));
+        db.Set<FinVoucher>().Add(new FinVoucher
+        {
+            FID = 700, FVoucherWord = "记", FVoucherNo = 1, FDate = today, FPeriodId = 30,
+            FStatus = 2, FAccountSetId = AcctSet, FOrgId = Org, FCreator = "owner"
+        });
+        db.Set<FinVoucherEntry>().AddRange(
+            new FinVoucherEntry { FID = 1, FVoucherId = 700, FLineNo = 1, FAccountId = 1, FDebitAmount = 100m, FOrgId = Org },
+            new FinVoucherEntry { FID = 2, FVoucherId = 700, FLineNo = 2, FAccountId = 2, FCreditAmount = 100m, FOrgId = Org });
+        await db.SaveChangesAsync();
+        return 700;
+    }
 }
