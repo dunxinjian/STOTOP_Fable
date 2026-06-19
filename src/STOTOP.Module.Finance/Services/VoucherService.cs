@@ -256,7 +256,16 @@ public class VoucherService : IVoucherService
         foreach (var entry in request.Entries)
             ValidateAuxiliaryJson(entry.AuxiliaryJson);
 
-        var nextNo = await GetNextNumberAsync(request.VoucherWord, request.PeriodId, accountSetId);
+        // 期间解析 + 结账校验（后端权威：PeriodId<=0 时按日期解析；已结账期拒绝）
+        long periodId = request.PeriodId;
+        if (periodId <= 0)
+        {
+            var period = await ResolvePeriodAsync(request.Date, accountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(period);
+            periodId = period.FID;
+        }
+
+        var nextNo = await GetNextNumberAsync(request.VoucherWord, periodId, accountSetId);
 
         // 确定组织ID：优先从HttpContext获取，后台任务无HttpContext时从账套反查
         long orgId = GetCurrentOrgId();
@@ -273,7 +282,7 @@ public class VoucherService : IVoucherService
             FVoucherWord = request.VoucherWord,
             FVoucherNo = nextNo,
             FDate = request.Date,
-            FPeriodId = request.PeriodId,
+            FPeriodId = periodId,
             FAttachmentCount = request.AttachmentCount,
             FCreator = creator,
             FStatus = 1, // 待审核
@@ -619,8 +628,19 @@ public class VoucherService : IVoucherService
         var maxNo = await _voucherRepository.Query()
             .Where(v => v.FVoucherWord == voucherWord && v.FPeriodId == periodId && v.FAccountSetId == accountSetId)
             .MaxAsync(v => (int?)v.FVoucherNo) ?? 0;
-        
+
         return maxNo + 1;
+    }
+
+    /// <summary>
+    /// 解析凭证期间：按 日期+账套 定位；查不到抛错。复用 VoucherPostingRules 纯规则。
+    /// </summary>
+    private async Task<FinAccountPeriod> ResolvePeriodAsync(DateTime date, long accountSetId)
+    {
+        var candidates = await _periodRepository.Query()
+            .Where(p => p.FAccountSetId == accountSetId)
+            .ToListAsync();
+        return VoucherPostingRules.ResolvePeriod(candidates, date, accountSetId);
     }
 
     public async Task<int> GetPendingAuditCountAsync(long accountSetId = 0)
