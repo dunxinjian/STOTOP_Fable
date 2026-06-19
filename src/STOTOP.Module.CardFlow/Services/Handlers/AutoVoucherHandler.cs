@@ -14,6 +14,8 @@ using STOTOP.Module.CardFlow.Models;
 using STOTOP.Module.Finance.Services.Interfaces;
 using STOTOP.Module.CardFlow.AutoPlugin;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("STOTOP.Module.CardFlow.Tests")]
+
 namespace STOTOP.Module.CardFlow.Services.Handlers;
 
 public partial class AutoVoucherHandler : IClassificationHandler
@@ -168,6 +170,8 @@ public partial class AutoVoucherHandler : IClassificationHandler
         var warnings = new List<string>();
         var generatedVoucherIds = new List<long>();
         int processedGroupIndex = 0;
+        // [D10] createDraft: 跨所有 GroupBy 组收集全量未匹配行，循环结束后统一生成待补录草稿
+        var allUnmatchedRows = new List<IDictionary<string, object>>();
 
         foreach (var groupRows in groups)
         {
@@ -192,6 +196,7 @@ public partial class AutoVoucherHandler : IClassificationHandler
                     if (groupId == null)
                     {
                         unmatchedCount++;
+                        allUnmatchedRows.Add(row); // [D10] 全量收集供 createDraft，与采样并存不影响 skip 语义
                         if (unmatchedSampleRows.Count < maxSampleRows)
                             unmatchedSampleRows.Add(row);
                         continue;
@@ -465,6 +470,32 @@ public partial class AutoVoucherHandler : IClassificationHandler
             }
         }
 
+        // [D10] createDraft: 未匹配行真生待补录草稿（循环之后，按业务日期分组，仿会计期间查询）
+        if (config.UnmatchedAction == "createDraft" && allUnmatchedRows.Count > 0)
+        {
+            foreach (var (dateKey, dateRows) in GroupRowsByDateField(allUnmatchedRows, config.DateField))
+            {
+                DateTime voucherDate = dateKey ?? DateTime.Now;
+                var period = await _dbContext.Set<FinAccountPeriod>()
+                    .FirstOrDefaultAsync(p => p.FAccountSetId == accountSetId
+                        && p.FStartDate <= voucherDate && p.FEndDate >= voucherDate);
+                if (period == null)
+                {
+                    warnings.Add($"待补录草稿: 日期{voucherDate:yyyy-MM-dd}未找到会计期间(账套{accountSetId})");
+                    continue;
+                }
+                var scopeId = $"{ctx.BatchId}_unmatched_{(dateKey?.ToString("yyyyMMdd") ?? "nodate")}";
+                var exists = await connection.QueryFirstOrDefaultAsync<long?>(
+                    "SELECT TOP 1 FID FROM [FIN凭证] WHERE [F数据作用域ID] = @Key", new { Key = scopeId });
+                if (exists.HasValue) continue;   // 去重：重跑不重复建草稿
+                var draftReq = BuildDraftRequest(config, dateRows, voucherDate, period.FID, ctx.BatchId, scopeId);
+                var draft = await _voucherService.SaveDraftAsync(draftReq, "数据导入系统", accountSetId);
+                generatedVoucherIds.Add(draft.Id);
+                _logger.LogInformation("AutoVoucher V2: 生成待补录草稿凭证 {VoucherId}, 日期={Date}, 未匹配行数={Count}",
+                    draft.Id, voucherDate.ToString("yyyy-MM-dd"), dateRows.Count);
+            }
+        }
+
         // 8. 写入 CF凭证生成记录
         var record = new CfVoucherRecord
         {
@@ -670,6 +701,31 @@ public partial class AutoVoucherHandler : IClassificationHandler
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// [D10] 构建未匹配行的待补录草稿凭证请求。
+    /// 金额逐行累加(收入列+支出列，一行只一列非0)；借贷两行用占位科目同额，
+    /// Source="费用支出"、Remark含[待补录]，配合 SaveDraftAsync 写 FStatus=0 草稿(允许 AccountId=0)。
+    /// </summary>
+    internal static CreateVoucherRequest BuildDraftRequest(
+        RulesBasedVoucherConfigV2 config, List<IDictionary<string, object>> rows,
+        DateTime voucherDate, long periodId, long batchId, string scopeId)
+    {
+        decimal total = 0m;
+        foreach (var r in rows)
+            foreach (var col in new[] { "F发生额收入", "F发生额支出" })
+                if (r.TryGetValue(col, out var v) && decimal.TryParse(v?.ToString(), out var d)) total += Math.Abs(d);
+        long acc = config.DraftPlaceholderAccountId ?? 0;
+        var entries = new List<CreateVoucherEntryRequest> {
+            new() { LineNo = 1, Summary = "[待补录]未匹配行", AccountId = acc, DebitAmount = total, CreditAmount = 0 },
+            new() { LineNo = 2, Summary = "[待补录]未匹配行", AccountId = acc, DebitAmount = 0, CreditAmount = total },
+        };
+        return new CreateVoucherRequest {
+            VoucherWord = config.VoucherWord, Date = voucherDate, PeriodId = periodId,
+            Source = "费用支出", Remark = $"[待补录] 数据导入未匹配(V2) - 批次{batchId}",
+            DataScopeId = scopeId, Entries = entries
+        };
     }
 
     /// <summary>

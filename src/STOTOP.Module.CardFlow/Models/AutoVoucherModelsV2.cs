@@ -28,6 +28,8 @@ public class RulesBasedVoucherConfigV2
     /// "error" - 整批标记失败
     /// </summary>
     public string UnmatchedAction { get; set; } = "skip";
+    /// <summary>[D10] createDraft 未匹配行的待补录占位科目ID（借方），为空则用 AccountId=0 草稿</summary>
+    public long? DraftPlaceholderAccountId { get; set; }
     /// <summary>
     /// [E5] 数据行预筛选条件（匹配引擎运行前过滤，如排除金额=0或作废行）。
     /// 为空则不过滤，所有行均进入匹配引擎。
