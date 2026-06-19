@@ -435,17 +435,17 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
     display: block;
   }
 
-  strong { color: #1f3029; font-size: 14px; }
-  span { margin-top: 2px; color: #75827c; font-size: 12px; }
+  strong { color: var(--text-1); font-size: 14px; }
+  span { margin-top: 2px; color: var(--text-2); font-size: 12px; }
 }
 
 .cf-dynamic-policy-editor__empty {
   display: grid;
   place-items: center;
   min-height: 120px;
-  border: 1px dashed #d4ddd8;
+  border: 1px dashed var(--border);
   border-radius: 6px;
-  color: #7b8781;
+  color: var(--text-3);
   font-size: 13px;
 }
 
@@ -454,9 +454,9 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  border: 1px solid #e1e6e3;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .cf-dynamic-policy-card__top {
@@ -478,7 +478,7 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
   }
 
   span {
-    color: #62736b;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -489,19 +489,19 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #eef1ef;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fbfcfb;
+  background: var(--bg-muted);
 }
 
 .cf-dynamic-policy-card__title {
-  color: #24342d;
+  color: var(--text-1);
   font-size: 13px;
   font-weight: 700;
 
   span {
     margin-left: 8px;
-    color: #7c8781;
+    color: var(--text-2);
     font-size: 12px;
     font-weight: 400;
   }
@@ -513,7 +513,7 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
   gap: 6px;
 
   span {
-    color: #62736b;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -538,7 +538,7 @@ function numericTagsToArray(value: string[] | number[] | undefined) {
   gap: 12px;
 
   span {
-    color: #596a62;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
