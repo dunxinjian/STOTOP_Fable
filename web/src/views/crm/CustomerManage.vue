@@ -1,67 +1,31 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="客户管理">
-      <template #actions>
-        <a-input
-          v-model:value="searchForm.keyword"
-          placeholder="简称 / 联系人 / 电话"
-          allow-clear
-          style="width: 200px"
-          @keyup.enter="handleSearch"
-        />
-        <a-select
-          v-model:value="searchForm.orgId"
-          placeholder="所属组织"
-          allow-clear
-          style="width: 130px"
-          :options="orgOptions"
-          show-search
-          :filter-option="(input: string, option: any) => option.label?.toLowerCase().includes(input.toLowerCase())"
-        />
-        <a-button @click="handleReset"><template #icon><ReloadOutlined /></template>重置</a-button>
-        <a-divider type="vertical" style="margin: 0 4px" />
-        <a-button v-if="has(CrmPermissions.CustomerCreate)" type="primary" @click="handleAdd">
-          <template #icon><PlusOutlined /></template>新增客户
-        </a-button>
+      <template #left>
+        <StatFilterTabs inline v-model:active="activeStatusTab" :tabs="statusTabs" @change="handleTabChange" />
+      </template>
+      <template #right>
+        <a-input v-model:value="searchForm.keyword" size="middle" placeholder="简称 / 联系人 / 电话" allow-clear style="width: 200px" @keyup.enter="handleSearch" />
+        <a-select v-model:value="searchForm.orgId" size="middle" placeholder="所属组织" allow-clear style="width: 130px" :options="orgOptions" show-search :filter-option="(input: string, option: any) => option.label?.toLowerCase().includes(input.toLowerCase())" @change="handleSearch" />
+        <a-button size="middle" @click="handleReset"><template #icon><ReloadOutlined /></template>重置</a-button>
+        <a-button v-if="has(CrmPermissions.CustomerCreate)" type="primary" size="middle" @click="handleAdd"><template #icon><PlusOutlined /></template>新增客户</a-button>
       </template>
     </PageHeader>
 
-    <!-- 状态快筛 Tab 兼 KPI 指标条 -->
-    <div class="status-tab-bar">
-      <div
-        v-for="tab in statusTabs"
-        :key="tab.key"
-        class="status-tab-item"
-        :class="{ active: activeStatusTab === tab.key }"
-        @click="handleTabChange(tab.key)"
-      >
-        <span class="tab-dot" :style="{ background: tab.color }"></span>
-        <span class="tab-label">{{ tab.label }}</span>
-        <span class="tab-count" :style="{ color: activeStatusTab === tab.key ? tab.color : 'rgba(0,0,0,0.45)' }">
-          {{ tab.count }}
-        </span>
-      </div>
-    </div>
-
     <!-- 表格 -->
-    <a-table
+    <DataTable
+      v-model:pagination="pagination"
       :columns="tableColumns"
       :data-source="tableData"
       :loading="loading"
-      :pagination="paginationConfig"
-      row-key="id"
       :scroll="{ x: 1100 }"
-      class="customer-table"
+      row-key="id"
+      empty-text="暂无客户数据"
       :row-class-name="() => 'clickable-row'"
-      @change="handleTableChange"
+      @change="fetchList"
       @row-click="(record: any) => handleViewDetail(record)"
     >
-      <template #bodyCell="{ column, record, index }">
-        <!-- 序号 -->
-        <template v-if="column.dataIndex === 'index'">
-          {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-        </template>
-
+      <template #bodyCell="{ column, record }">
         <!-- 客户名称（合并列） -->
         <template v-if="column.key === 'customerName'">
           <div class="customer-name-cell">
@@ -74,29 +38,24 @@
         <template v-if="column.key === 'quotationCount'">
           <span
             class="quotation-count"
-            :class="getQuotationCount(record.code || String(record.id)) > 0 ? 'count-positive' : 'count-zero'"
-            @click.stop="getQuotationCount(record.code || String(record.id)) > 0 && handleQuotation(record)"
-            :style="getQuotationCount(record.code || String(record.id)) > 0 ? 'cursor:pointer' : ''"
-          >
-            {{ quotationCountLoading ? '…' : getQuotationCount(record.code || String(record.id)) }}
-          </span>
+            :class="qc(record) > 0 ? 'count-positive' : 'count-zero'"
+            @click.stop="qc(record) > 0 && handleQuotation(record)"
+            :style="qc(record) > 0 ? 'cursor:pointer' : ''"
+          >{{ quotationCountLoading ? '…' : qc(record) }}</span>
         </template>
 
         <!-- 联系信息（合并列） -->
         <template v-if="column.key === 'contactInfo'">
           <div class="contact-cell">
-            <span v-if="record.contact" class="contact-name"><UserOutlined style="font-size:11px;margin-right:3px;opacity:.5" />{{ record.contact }}</span>
-            <span v-if="record.phone" class="contact-phone"><PhoneOutlined style="font-size:11px;margin-right:3px;opacity:.5" />{{ record.phone }}</span>
+            <span v-if="record.contact" class="contact-name"><UserOutlined class="contact-icon" />{{ record.contact }}</span>
+            <span v-if="record.phone" class="contact-phone"><PhoneOutlined class="contact-icon" />{{ record.phone }}</span>
             <span v-if="!record.contact && !record.phone" class="text-muted">-</span>
           </div>
         </template>
 
         <!-- 状态 -->
         <template v-if="column.dataIndex === 'status'">
-          <span class="status-tag" :class="`status-${record.status}`">
-            <span class="status-dot"></span>
-            {{ statusTextMap[record.status] || '未知' }}
-          </span>
+          <StatusTag :type="custStatusType(record.status)" dot>{{ statusTextMap[record.status] || '未知' }}</StatusTag>
         </template>
 
         <!-- BD负责人 -->
@@ -137,10 +96,7 @@
           </div>
         </template>
       </template>
-      <template #emptyText>
-        <EmptyState description="暂无客户数据" />
-      </template>
-    </a-table>
+    </DataTable>
 
     <!-- 新增/编辑 Drawer -->
     <a-drawer
@@ -301,11 +257,14 @@ import {
   EllipsisOutlined, DollarOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatFilterTabs from '@/components/StatFilterTabs.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import QuotationDrawer from '@/views/express/components/QuotationDrawer.vue'
 import { usePermission, CrmPermissions } from '@/utils/permission'
 import {
   getCustomerList,
+  getCustomerStatistics,
   getCustomerById,
   createCustomer,
   updateCustomer,
@@ -313,6 +272,7 @@ import {
   getBdList,
   getMaintenanceList,
   type CustomerListItemDto,
+  type CustomerStatisticsDto,
   type CreateCustomerRequest,
   type CrmRoleMappingListItemDto,
 } from '@/api/crm'
@@ -333,7 +293,6 @@ const statusOptions = [
 const statusTextMap: Record<number, string> = { 0: '潜在', 1: '活跃', 2: '流失' }
 
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 56, align: 'center' as const },
   { title: '客户名称', key: 'customerName', width: 200, ellipsis: true },
   { title: '报价', key: 'quotationCount', width: 72, align: 'center' as const },
   { title: '联系信息', key: 'contactInfo', width: 160 },
@@ -343,45 +302,47 @@ const tableColumns = [
   { title: '操作', key: 'action', width: 180, align: 'center' as const, fixed: 'right' as const },
 ]
 
-// BD头像色板
-const bdColors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
+// BD头像：走 --avatar-palette 色环令牌（DOM 元素 var() 可解析）
 function getBdColor(id?: number): string {
-  if (!id) return '#d9d9d9'
-  return bdColors[id % bdColors.length]
+  if (!id) return 'var(--text-disabled)'
+  return `var(--avatar-palette-${(id % 6) + 1})`
 }
 
 // ==================== 状态Tab ====================
 
 const activeStatusTab = ref<number | ''>('')
 
-const stats = reactive({ total: 0, potential: 0, active: 0, lost: 0 })
+const statistics = ref<CustomerStatisticsDto>({ totalCount: 0, byStatus: [] })
+function getStatCount(s: number): number {
+  return statistics.value.byStatus.find(g => g.status === s)?.count ?? 0
+}
 
 const statusTabs = computed(() => [
-  { key: '' as const, label: '全部', color: 'rgba(0,0,0,0.25)', count: stats.total },
-  { key: 0 as const, label: '潜在', color: 'var(--color-info)', count: stats.potential },
-  { key: 1 as const, label: '活跃', color: 'var(--color-success)', count: stats.active },
-  { key: 2 as const, label: '流失', color: 'var(--color-danger)', count: stats.lost },
+  { key: '' as const, label: '全部', count: statistics.value.totalCount },
+  { key: 0 as const, label: '潜在', count: getStatCount(0), color: 'var(--color-info)' },
+  { key: 1 as const, label: '活跃', count: getStatCount(1), color: 'var(--color-success)' },
+  { key: 2 as const, label: '流失', count: getStatCount(2), color: 'var(--color-danger)' },
 ])
+
+function custStatusType(s: number): 'success' | 'warning' | 'danger' | 'info' | 'default' {
+  return (['info', 'success', 'danger'] as const)[s] || 'default'
+}
+
+function qc(record: any): number {
+  return getQuotationCount(record.code || String(record.id))
+}
 
 function handleTabChange(key: number | '') {
   activeStatusTab.value = key
   searchForm.status = key === '' ? undefined : key
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
-async function initStats() {
+async function fetchStatistics() {
   try {
-    const [allRes, potRes, actRes, lostRes] = await Promise.all([
-      getCustomerList({ pageIndex: 1, pageSize: 1 }) as any,
-      getCustomerList({ pageIndex: 1, pageSize: 1, status: 0 }) as any,
-      getCustomerList({ pageIndex: 1, pageSize: 1, status: 1 }) as any,
-      getCustomerList({ pageIndex: 1, pageSize: 1, status: 2 }) as any,
-    ])
-    stats.total = allRes?.total ?? 0
-    stats.potential = potRes?.total ?? 0
-    stats.active = actRes?.total ?? 0
-    stats.lost = lostRes?.total ?? 0
+    const res = await getCustomerStatistics() as any
+    if (res) statistics.value = res
   } catch { /* ignore */ }
 }
 
@@ -419,25 +380,10 @@ const searchForm = reactive({
 
 const loading = ref(false)
 const tableData = ref<CustomerListItemDto[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchList()
-}
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 
 function handleSearch() {
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
@@ -446,21 +392,21 @@ function handleReset() {
   searchForm.orgId = undefined
   searchForm.status = undefined
   activeStatusTab.value = ''
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
 async function fetchList() {
   loading.value = true
   try {
-    const params: any = { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize }
+    const params: any = { pageIndex: pagination.value.pageIndex, pageSize: pagination.value.pageSize }
     if (searchForm.keyword) params.keyword = searchForm.keyword
     if (searchForm.status !== undefined) params.status = searchForm.status
     if (searchForm.orgId !== undefined) params.orgId = searchForm.orgId
     const res = await getCustomerList(params) as any
     if (res) {
       tableData.value = res?.items || res || []
-      pagination.total = res?.total || res?.length || 0
+      pagination.value.total = res?.total || res?.length || 0
     }
     fetchQuotationCounts()
   } finally {
@@ -681,7 +627,7 @@ async function handleSubmit() {
     }
     dialogVisible.value = false
     fetchList()
-    initStats()
+    fetchStatistics()
   } finally {
     submitLoading.value = false
   }
@@ -697,7 +643,7 @@ function confirmDelete(row: CustomerListItemDto) {
       try {
         await deleteCustomer(row.id)
         fetchList()
-        initStats()
+        fetchStatistics()
       } catch (error) {
         console.error('删除失败:', error)
       }
@@ -709,94 +655,14 @@ onMounted(() => {
   fetchOrgs()
   fetchEmployees()
   fetchList()
-  initStats()
+  fetchStatistics()
 })
 </script>
 
 <style scoped lang="scss">
-// ==================== 状态 Tab 行 ====================
-.status-tab-bar {
-  display: flex;
-  align-items: stretch;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 0 16px;
-  flex-shrink: 0;
-}
-
-.status-tab-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 20px;
-  height: 46px;
+// 整行可点击（跳详情）
+:deep(.clickable-row) {
   cursor: pointer;
-  position: relative;
-  transition: color 0.2s;
-  user-select: none;
-  color: rgba(0, 0, 0, 0.65);
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: transparent;
-    border-radius: 1px;
-    transition: background 0.2s;
-  }
-
-  &.active {
-    color: rgba(0, 0, 0, 0.85);
-    font-weight: 500;
-
-    &::after {
-      background: var(--color-primary);
-    }
-  }
-
-  &:hover:not(.active) {
-    color: rgba(0, 0, 0, 0.85);
-    background: rgba(0, 0, 0, 0.02);
-  }
-}
-
-.tab-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.tab-label {
-  font-size: 14px;
-}
-
-.tab-count {
-  font-size: 13px;
-  font-weight: 600;
-  min-width: 20px;
-  text-align: center;
-  transition: color 0.2s;
-}
-
-// ==================== 表格 ====================
-.customer-table {
-  :deep(.ant-table) {
-    border-radius: 0;
-  }
-  :deep(.ant-table-thead > tr > th) {
-    background: #fafafa;
-  }
-  :deep(.clickable-row) {
-    cursor: pointer;
-    &:hover td {
-      background: var(--color-primary-light) !important;
-    }
-  }
 }
 
 // 客户名称合并列
@@ -808,7 +674,7 @@ onMounted(() => {
   .name-primary {
     font-weight: 500;
     font-size: 14px;
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--text-1);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -816,7 +682,7 @@ onMounted(() => {
 
   .name-secondary {
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--text-3);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -845,49 +711,19 @@ onMounted(() => {
 
   .contact-name {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.75);
+    color: var(--text-2);
   }
 
   .contact-phone {
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--text-3);
   }
 }
 
-// 状态 Tag
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  &.status-0 {
-    background: var(--color-info-light);
-    color: var(--color-info);
-    .status-dot { background: var(--color-info); }
-  }
-
-  &.status-1 {
-    background: var(--color-success-light);
-    color: var(--color-success);
-    .status-dot { background: var(--color-success); }
-  }
-
-  &.status-2 {
-    background: var(--color-danger-light);
-    color: var(--color-danger);
-    .status-dot { background: var(--color-danger); }
-  }
+.contact-icon {
+  font-size: 11px;
+  margin-right: 3px;
+  opacity: 0.5;
 }
 
 // BD负责人列
@@ -901,7 +737,7 @@ onMounted(() => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 12px;
   font-weight: 600;
   display: flex;
@@ -925,14 +761,14 @@ onMounted(() => {
 
 // 通用灰色文本
 .text-muted {
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--text-disabled);
 }
 
 // ==================== Drawer 表单分区 ====================
 .form-section-title {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-2);
   padding-left: 10px;
   border-left: 3px solid var(--color-info);
   margin: 20px 0 14px;
