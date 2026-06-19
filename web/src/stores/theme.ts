@@ -310,6 +310,13 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--biz-approval', '#5B7290')
     s.setProperty('--biz-points', '#C99A2E')
     s.setProperty('--biz-finance', '#B8860B')
+    // —— 静态：头像色环（CustomerManage BD 头像等；DOM 元素走 var() 可解析）
+    s.setProperty('--avatar-palette-1', '#5B7290')
+    s.setProperty('--avatar-palette-2', '#6BA292')
+    s.setProperty('--avatar-palette-3', '#C99A6B')
+    s.setProperty('--avatar-palette-4', '#9B8AB8')
+    s.setProperty('--avatar-palette-5', '#C77B6B')
+    s.setProperty('--avatar-palette-6', '#8FB07E')
     // —— 静态：圆角
     s.setProperty('--radius-sm', '4px')
     s.setProperty('--radius-md', '6px')

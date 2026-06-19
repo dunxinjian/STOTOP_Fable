@@ -54,6 +54,17 @@ export interface CustomerListItemDto {
   createdTime: string
 }
 
+export interface CustomerStatusGroupDto {
+  status: number
+  statusName: string
+  count: number
+}
+
+export interface CustomerStatisticsDto {
+  totalCount: number
+  byStatus: CustomerStatusGroupDto[]
+}
+
 export interface CustomerContactDto {
   id: number
   customerId: number
@@ -705,6 +716,10 @@ export function getMaintenanceList(orgId: number) {
 
 export function getCustomerList(params: CustomerQueryRequest) {
   return get('/crm/customers', params)
+}
+
+export function getCustomerStatistics() {
+  return get('/crm/customers/statistics')
 }
 
 export function getCustomerById(id: number) {
