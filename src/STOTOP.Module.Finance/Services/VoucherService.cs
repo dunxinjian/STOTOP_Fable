@@ -256,13 +256,21 @@ public class VoucherService : IVoucherService
         foreach (var entry in request.Entries)
             ValidateAuxiliaryJson(entry.AuxiliaryJson);
 
-        // 期间解析 + 结账校验（后端权威：PeriodId<=0 时按日期解析；已结账期拒绝）
+        // 期间解析 + 结账校验（后端权威：PeriodId<=0 时按日期解析；无论来源，已结账期一律拒绝）
         long periodId = request.PeriodId;
         if (periodId <= 0)
         {
             var period = await ResolvePeriodAsync(request.Date, accountSetId);
             VoucherPostingRules.EnsureOpenForPosting(period);
             periodId = period.FID;
+        }
+        else
+        {
+            // 调用方直接传入 periodId（如 CardFlow 桥接/导入）：若该期间存在且已结账，同样拒绝。
+            // 期间不存在时不在此处中断（保持对历史/特殊调用方的兼容），由后续落库与外键约束兜底。
+            var period = await _periodRepository.GetByIdAsync(periodId);
+            if (period != null)
+                VoucherPostingRules.EnsureOpenForPosting(period);
         }
 
         var nextNo = await GetNextNumberAsync(request.VoucherWord, periodId, accountSetId);

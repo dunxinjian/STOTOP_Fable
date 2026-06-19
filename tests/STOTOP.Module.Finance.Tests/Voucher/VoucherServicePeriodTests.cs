@@ -74,4 +74,22 @@ public class VoucherServicePeriodTests
         Assert.Contains("已结账", ex.Message);
         Assert.Empty(db.Set<FinVoucher>());
     }
+
+    // 调用方直接传入已结账期间的 periodId（如桥接/导入路径）也必须被拒，不只是日期解析路径。
+    [Fact]
+    public async Task Create_rejects_when_explicit_periodId_refers_to_closed_period()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(Create_rejects_when_explicit_periodId_refers_to_closed_period), Org);
+        await SeedAsync(db, periodNo: 6, isClosed: 1); // 期间 FID=11 已结账
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var request = BalancedRequest(new DateTime(2026, 6, 15));
+        request.PeriodId = 11; // 显式传入已结账期间，绕过日期解析分支
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateAsync(request, "tester", AcctSet));
+        Assert.Contains("已结账", ex.Message);
+        Assert.Empty(db.Set<FinVoucher>());
+    }
 }
