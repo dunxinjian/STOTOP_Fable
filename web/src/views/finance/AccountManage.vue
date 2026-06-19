@@ -122,7 +122,7 @@
           <SaveOutlined />保存
         </a-button>
         <span class="initial-tip">
-          <InfoCircleOutlined />提示：仅末级科目可录入期初余额，按余额方向只允许编辑对应列
+          <InfoCircleOutlined />提示：仅末级科目可录入期初余额，按余额方向只允许编辑对应列；损益类科目不录期初
         </span>
       </div>
       <a-table
@@ -148,9 +148,9 @@
               v-model:value="record.debitBalance"
               :precision="2"
               :controls="false"
-              :disabled="record.balanceDirection !== '借'"
+              :disabled="record.balanceDirection !== '借' || record.accountCode?.startsWith('5')"
               style="width: 100%"
-              @change="() => record.balanceDirection !== '借' && (record.debitBalance = 0)"
+              @change="() => { if (record.balanceDirection !== '借' || record.accountCode?.startsWith('5')) record.debitBalance = 0 }"
             />
             <span v-else class="non-leaf-amount">{{ formatAmount(record.debitBalance) }}</span>
           </template>
@@ -160,9 +160,9 @@
               v-model:value="record.creditBalance"
               :precision="2"
               :controls="false"
-              :disabled="record.balanceDirection !== '贷'"
+              :disabled="record.balanceDirection !== '贷' || record.accountCode?.startsWith('5')"
               style="width: 100%"
-              @change="() => record.balanceDirection !== '贷' && (record.creditBalance = 0)"
+              @change="() => { if (record.balanceDirection !== '贷' || record.accountCode?.startsWith('5')) record.creditBalance = 0 }"
             />
             <span v-else class="non-leaf-amount">{{ formatAmount(record.creditBalance) }}</span>
           </template>
