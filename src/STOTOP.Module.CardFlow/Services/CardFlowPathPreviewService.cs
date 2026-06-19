@@ -239,24 +239,16 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
             cardData[pair.Key] = pair.Value;
         }
 
-        return new ConditionEvaluationContext
+        return ConditionContextFactory.Build(new ConditionContextInputs
         {
             CardData = cardData,
-            SourceContext = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["sourceModule"] = request.SourceModule,
-                ["sourceType"] = request.SourceType,
-                ["sourceId"] = request.SourceId
-            },
-            Initiator = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["id"] = request.InitiatorId
-            },
-            InitiatorOrg = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["orgId"] = request.OrgId
-            }
-        };
+            SourceModule = request.SourceModule,
+            SourceType = request.SourceType,
+            SourceId = request.SourceId,
+            InitiatorId = request.InitiatorId,
+            OrgId = request.OrgId,
+            HasCurrentStage = false
+        });
     }
 
     private static Dictionary<string, object?> ParseObject(string? json)
