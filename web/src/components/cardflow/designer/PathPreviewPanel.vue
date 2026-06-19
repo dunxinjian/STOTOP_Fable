@@ -162,8 +162,8 @@ async function runPreview() {
     display: block;
   }
 
-  strong { color: #1f3029; font-size: 14px; }
-  span { margin-top: 2px; color: #76837d; font-size: 12px; }
+  strong { color: var(--text-1); font-size: 14px; }
+  span { margin-top: 2px; color: var(--text-2); font-size: 12px; }
 }
 
 .cf-path-preview__form {
@@ -178,7 +178,7 @@ async function runPreview() {
   }
 
   label > span {
-    color: #62736b;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -196,25 +196,25 @@ async function runPreview() {
   align-items: center;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #dde7e2;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #f6fbf9;
+  background: var(--bg-muted);
 }
 
 .cf-path-preview__step {
   position: relative;
   padding: 5px 9px;
   border-radius: 999px;
-  background: #fff;
-  border: 1px solid #cbd9d3;
-  color: #26372f;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-1);
   font-size: 12px;
 
   &:not(:last-child)::after {
     content: '→';
     position: absolute;
     right: -13px;
-    color: #8b9993;
+    color: var(--text-3);
   }
 }
 
@@ -227,22 +227,22 @@ async function runPreview() {
 
 .cf-path-preview__warnings {
   padding: 9px 10px;
-  border: 1px solid #f1d8a8;
+  border: 1px solid var(--color-warning);
   border-radius: 6px;
-  background: #fffaf0;
+  background: var(--color-warning-light);
 
   strong,
   span {
-    color: #8a5e14;
+    color: var(--color-warning-text);
     font-size: 12px;
   }
 }
 
 .cf-path-preview__details article {
   padding: 9px 10px;
-  border: 1px solid #e4e9e6;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .cf-path-preview__detail-head {
@@ -252,12 +252,12 @@ async function runPreview() {
   gap: 8px;
 
   strong {
-    color: #26372f;
+    color: var(--text-1);
     font-size: 13px;
   }
 
   span {
-    color: #74817b;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -269,12 +269,12 @@ async function runPreview() {
   margin-top: 8px;
 
   span {
-    color: #65746d;
+    color: var(--text-2);
     font-size: 12px;
   }
 
   .is-hit {
-    color: #1f6f5f;
+    color: var(--color-primary);
     font-weight: 600;
   }
 }
