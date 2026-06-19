@@ -26,14 +26,15 @@ public class VoucherController : ControllerBase
     }
 
     /// <summary>
-    /// 解析当前账套：优先 query 参数，其次回退 X-AccountSet-Id 请求头
-    /// （权限过滤器读取同一请求头，避免 action 拿到 0 导致 FAccountSetId 落 0）。
+    /// 解析当前账套：请求头 X-AccountSet-Id 优先，其次回退 query 参数。
+    /// 与权限过滤器(RequireAccountSetPermission 头优先)、服务层读回(GetCurrentAccountSetId 仅读头)保持同一口径，
+    /// 避免「落库账套用 query、鉴权/读回用头」三者背离 → 已提交却读回失败(500) 或落到非预期账套。
     /// </summary>
     private long ResolveAccountSetId(long accountSetId)
     {
-        if (accountSetId > 0) return accountSetId;
         var header = Request.Headers["X-AccountSet-Id"].FirstOrDefault();
-        return long.TryParse(header, out var id) ? id : 0;
+        if (long.TryParse(header, out var id) && id > 0) return id;
+        return accountSetId;
     }
 
     [HttpGet]

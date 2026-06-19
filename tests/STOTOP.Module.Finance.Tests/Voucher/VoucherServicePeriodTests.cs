@@ -168,6 +168,31 @@ public class VoucherServicePeriodTests
         Assert.Contains(redEntries, e => e.FDebitAmount < 0 || e.FCreditAmount < 0); // 确为红字
     }
 
+    // 补录提交=过账动作：草稿创建后所在期间已结账时，补录完成必须被拒、状态保持草稿(0)。
+    [Fact]
+    public async Task CompleteRecord_rejects_when_period_closed()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(CompleteRecord_rejects_when_period_closed), Org);
+        db.Set<FinAccountPeriod>().Add(VoucherServiceTestHarness.Period(11, 2026, 6, AcctSet, isClosed: 1));
+        db.Set<FinVoucher>().Add(new FinVoucher
+        {
+            FID = 600, FVoucherWord = "记", FVoucherNo = 1, FDate = new DateTime(2026, 6, 10),
+            FPeriodId = 11, FStatus = 0, FRemark = "[待补录]", FAccountSetId = AcctSet, FOrgId = Org, FCreator = "u"
+        });
+        db.Set<FinVoucherEntry>().AddRange(
+            new FinVoucherEntry { FID = 1, FVoucherId = 600, FLineNo = 1, FAccountId = 1, FDebitAmount = 100m, FOrgId = Org },
+            new FinVoucherEntry { FID = 2, FVoucherId = 600, FLineNo = 2, FAccountId = 2, FCreditAmount = 100m, FOrgId = Org });
+        await db.SaveChangesAsync();
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        var res = await service.CompleteRecordAsync(600);
+
+        Assert.NotEqual(200, res.Code);
+        Assert.Contains("已结账", res.Message);
+        Assert.Equal(0, db.Set<FinVoucher>().Single(v => v.FID == 600).FStatus); // 仍是草稿，未提交
+    }
+
     // 播种一张属于今日所在期间的源凭证；todayPeriodClosed 控制今日期间是否已结账。
     private static async Task<long> SeedSourceVoucherForTodayAsync(
         STOTOP.Infrastructure.Data.STOTOPDbContext db, int todayPeriodClosed)

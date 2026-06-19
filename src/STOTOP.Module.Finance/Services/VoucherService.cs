@@ -1071,6 +1071,11 @@ public class VoucherService : IVoucherService
         if (incompleteEntries.Any())
             return ApiResult.Fail($"尚有 {incompleteEntries.Count} 条分录未填写科目，请先完善科目信息");
 
+        // 补录提交=过账动作：若草稿创建后所在期间已结账，禁止补录提交（不入已结账期）
+        var period = await _periodRepository.GetByIdAsync(voucher.FPeriodId);
+        if (period != null && period.FIsClosed == 1)
+            return ApiResult.Fail($"{period.FYear}年第{period.FPeriodNo}期已结账，不能补录提交该凭证");
+
         // 将状态从草稿(0)改为待审核(1)
         voucher.FStatus = 1;
         // 清除备注中的"[待补录]"标记
