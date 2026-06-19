@@ -2,10 +2,12 @@
   <div class="contract-dashboard">
     <PageHeader title="合同看板">
       <template #left>
-        <a-segmented v-model:value="activeTab" :options="tabOptions" />
+        <a-radio-group v-model:value="activeTab" button-style="solid" size="middle">
+          <a-radio-button v-for="opt in tabOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</a-radio-button>
+        </a-radio-group>
       </template>
       <template #right>
-        <a-button type="primary" @click="router.push('/contract/list?action=create')">
+        <a-button type="primary" size="middle" @click="router.push('/contract/list?action=create')">
           <template #icon><PlusOutlined /></template>新建合同
         </a-button>
       </template>
