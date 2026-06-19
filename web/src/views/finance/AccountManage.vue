@@ -777,11 +777,26 @@ function handleBatchDelete() {
 
 // 启用/停用切换
 async function handleStatusChange(row: any, val: boolean) {
+  // 停用前二次确认（启用直接）；被凭证引用/有启用下级/有余额的科目后端会拒绝
+  if (!val) {
+    Modal.confirm({
+      title: '确认停用',
+      content: `确定要停用科目「${row.name}」吗？被凭证引用、有启用下级或有余额的科目将无法停用。`,
+      okType: 'danger',
+      onOk: () => doToggleStatus(row, val),
+    })
+    return
+  }
+  doToggleStatus(row, val)
+}
+
+async function doToggleStatus(row: any, val: boolean) {
   try {
     await toggleAccountStatus(row.id)
     message.success(val ? '已启用' : '已停用')
     loadData()
   } catch (error) {
+    // 失败原因由请求拦截器统一弹后端消息（如"该科目已被凭证引用，无法停用"）
     console.error('状态切换失败:', error)
   }
 }
