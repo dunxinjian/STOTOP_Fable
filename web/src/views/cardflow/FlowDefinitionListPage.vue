@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatusTag from '@/components/StatusTag.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { FLOW_STATUS_META, FLOW_STATUS_OPTIONS, type FlowStatus } from './flowStatusMeta'
 import {
   getFlowDefinitions,
@@ -531,9 +532,9 @@ onMounted(async () => {
           <div style="display: flex; align-items: center; gap: 4px; justify-content: center;">
             <span v-if="(rawRecord as any).currentVersion" class="version-badge">v{{ (rawRecord as any).currentVersion }}</span>
             <span v-else class="text-muted">-</span>
-            <a-tag v-if="(rawRecord as any).hasDraft" color="blue" :bordered="false" style="margin: 0; font-size: 11px; line-height: 1.4; padding: 0 4px;">
+            <StatusTag v-if="(rawRecord as any).hasDraft" type="info" style="margin: 0; font-size: 11px; line-height: 1.4; padding: 0 4px;">
               有草稿
-            </a-tag>
+            </StatusTag>
           </div>
         </template>
 
@@ -626,17 +627,19 @@ onMounted(async () => {
 
       <!-- 空状态引导 -->
       <template #emptyText>
-        <div class="empty-guide">
-          <div class="empty-icon">
-            <FileAddOutlined />
+        <EmptyState
+          title="创建您的第一个卡片流程"
+          description="流程定义用于配置审批节点、表单字段与流转规则。"
+          :icon="FileAddOutlined"
+          size="small"
+        >
+          <div style="margin-top: 16px;">
+            <a-button type="primary" @click="gotoCreate">
+              <template #icon><PlusOutlined /></template>
+              新建流程
+            </a-button>
           </div>
-          <div class="empty-title">创建您的第一个卡片流程</div>
-          <div class="empty-tip">流程定义用于配置审批节点、表单字段与流转规则。</div>
-          <a-button type="primary" @click="gotoCreate">
-            <template #icon><PlusOutlined /></template>
-            新建流程
-          </a-button>
-        </div>
+        </EmptyState>
       </template>
     </a-table>
 
@@ -650,7 +653,7 @@ onMounted(async () => {
       <a-spin :spinning="templateLoading">
         <div
           v-if="templateList.length === 0 && !templateLoading"
-          style="text-align: center; padding: 24px; color: #999;"
+          style="text-align: center; padding: 24px; color: var(--text-3);"
         >
           暂无可用模板
         </div>
@@ -689,7 +692,7 @@ onMounted(async () => {
 .toolbar-divider {
   width: 1px;
   height: 20px;
-  background: #e8e8e8;
+  background: var(--border);
   margin: 0 8px;
   flex-shrink: 0;
 }
@@ -697,7 +700,7 @@ onMounted(async () => {
 .caret {
   margin-left: 2px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
 }
 
 // 表格整体
@@ -708,10 +711,10 @@ onMounted(async () => {
   :deep(.ant-table-thead > tr > th) {
     font-weight: 600;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    background: #fafafa;
+    background: var(--bg-muted);
   }
   :deep(.ant-table-tbody > tr > td) {
     padding-top: 12px;
@@ -719,7 +722,7 @@ onMounted(async () => {
     transition: background-color 0.15s ease;
   }
   :deep(.ant-table-tbody > tr:hover > td) {
-    background: #f8f9fb;
+    background: var(--bg-muted);
   }
   // 操作列渐显
   :deep(.ant-table-tbody > tr .row-actions) {
@@ -745,16 +748,16 @@ onMounted(async () => {
     padding-inline: 6px;
     height: 28px;
     border-radius: 4px;
-    color: #595959;
+    color: var(--text-2);
     transition: background-color 0.15s ease;
 
     &:hover {
-      background: #f0f0f0;
+      background: var(--border);
       color: var(--color-primary);
     }
 
     &:disabled {
-      color: #d9d9d9;
+      color: var(--text-3);
     }
   }
 
@@ -783,7 +786,7 @@ onMounted(async () => {
 
 .flow-desc {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   margin-top: 2px;
   line-height: 1.3;
   overflow: hidden;
@@ -798,43 +801,14 @@ onMounted(async () => {
   padding: 1px 8px;
   font-size: 12px;
   font-weight: 500;
-  color: #595959;
-  background: #f5f5f5;
+  color: var(--text-2);
+  background: var(--bg-muted);
   border-radius: 10px;
   line-height: 1.6;
 }
 
 .text-muted {
-  color: #d9d9d9;
+  color: var(--text-3);
 }
 
-// 空状态
-.empty-guide {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-  border-radius: 8px;
-
-  .empty-icon {
-    font-size: 52px;
-    color: #bfbfbf;
-    margin-bottom: 20px;
-  }
-
-  .empty-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #262626;
-    margin-bottom: 8px;
-  }
-
-  .empty-tip {
-    font-size: 13px;
-    color: #8c8c8c;
-    margin-bottom: 24px;
-  }
-}
 </style>
