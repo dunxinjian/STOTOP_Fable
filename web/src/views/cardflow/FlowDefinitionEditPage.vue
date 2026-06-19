@@ -70,6 +70,8 @@ import {
   parseDetailSchemaFields,
 } from '@/utils/cardflowSchema'
 import StatusTag from '@/components/StatusTag.vue'
+import BaseCard from '@/components/BaseCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { FLOW_STATUS_META, type FlowStatus } from './flowStatusMeta'
 
 // ==================== 状态形态 ====================
@@ -1826,22 +1828,24 @@ function goBack() {
 
         <!-- 步骤 2：字段设计 -->
         <div v-show="activeStep === 1" class="fdef-step" :class="{ 'fdef-step--err': errors.schema }">
-          <div class="fdef-schema-guide">
-            <span class="fdef-schema-guide__item">
-              <strong>字段 = 数据结构</strong>
-              <em>保存数据、参与条件路由和统计</em>
-            </span>
-            <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
-            <span class="fdef-schema-guide__item">
-              <strong>下一步配置卡片视图</strong>
-              <em>把字段、明细、关系和快照编排成审批人看到的卡片</em>
-            </span>
-            <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
-            <span class="fdef-schema-guide__item">
-              <strong>节点权限</strong>
-              <em>到节点链里设置可见、可编辑、脱敏</em>
-            </span>
-          </div>
+          <BaseCard no-padding class="fdef-schema-guide-card">
+            <div class="fdef-schema-guide">
+              <span class="fdef-schema-guide__item">
+                <strong>字段 = 数据结构</strong>
+                <em>保存数据、参与条件路由和统计</em>
+              </span>
+              <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
+              <span class="fdef-schema-guide__item">
+                <strong>下一步配置卡片视图</strong>
+                <em>把字段、明细、关系和快照编排成审批人看到的卡片</em>
+              </span>
+              <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
+              <span class="fdef-schema-guide__item">
+                <strong>节点权限</strong>
+                <em>到节点链里设置可见、可编辑、脱敏</em>
+              </span>
+            </div>
+          </BaseCard>
 
           <a-row :gutter="16" class="fdef-schema-cols">
             <a-col :span="12">
@@ -1873,7 +1877,7 @@ function goBack() {
             </aside>
 
             <section class="fdef-card-canvas" aria-label="卡片视图画布">
-              <header class="fdef-card-canvas__head">
+              <header class="page-section__title fdef-card-canvas__head">
                 <div>
                   <strong>运行态卡片画布</strong>
                   <span>拖拽组件 · 编辑组件 · 所见即所得，{{ state.cardComponents.length }} 个已编排</span>
@@ -1968,9 +1972,12 @@ function goBack() {
                       </article>
                     </template>
                     <template #footer>
-                      <div v-if="state.cardComponents.length === 0" class="fdef-card-canvas__empty">
-                        从左侧组件库拖拽组件到这里，搭建审批人看到的卡片视图。
-                      </div>
+                      <EmptyState
+                        v-if="state.cardComponents.length === 0"
+                        size="small"
+                        title="从左侧组件库拖拽组件到这里，搭建审批人看到的卡片视图。"
+                        class="fdef-card-canvas__empty"
+                      />
                     </template>
                   </draggable>
                 </div>
@@ -2190,9 +2197,12 @@ function goBack() {
                   </a-button>
                 </div>
 
-                <div v-else class="fdef-component-inspector__empty">
-                  点击画布中的组件，或从左侧拖入一个组件。
-                </div>
+                <EmptyState
+                  v-else
+                  size="small"
+                  title="点击画布中的组件，或从左侧拖入一个组件。"
+                  class="fdef-component-inspector__empty"
+                />
               </section>
             </aside>
           </div>
@@ -2266,9 +2276,12 @@ function goBack() {
                         @update:detail-rows="updateRuntimePreviewDetailRows"
                       />
                     </div>
-                    <div v-else class="fdef-preview-card__empty">
-                      当前节点无可见组件。请到节点链中配置组件可见、可编辑或脱敏权限。
-                    </div>
+                    <EmptyState
+                      v-else
+                      size="small"
+                      title="当前节点无可见组件。请到节点链中配置组件可见、可编辑或脱敏权限。"
+                      class="fdef-preview-card__empty"
+                    />
                   </div>
                 </section>
 
@@ -2349,128 +2362,130 @@ function goBack() {
         <!-- 步骤 5：流程配置 -->
         <div v-show="activeStep === 4" class="fdef-step">
           <div class="fdef-flow-config">
-            <section class="fdef-flow-section">
-              <header class="fdef-flow-section__head">
-                <span>审批规则</span>
+            <BaseCard title="审批规则" class="fdef-flow-config-card">
+              <template #extra>
                 <small>控制退回、重提、兜底管理员和流程依赖</small>
-              </header>
+              </template>
 
-              <div class="fdef-fc-item">
-                <div class="fdef-fc-item__label">退回策略</div>
-                <a-radio-group
-                  v-model:value="state.settings.rejectStrategy"
-                  class="fdef-fc-item__control"
-                >
-                  <a-radio value="toInitiator">退至发起人</a-radio>
-                  <a-radio value="toPrevious">退至上一节点</a-radio>
-                  <a-radio value="toSpecified">指定节点</a-radio>
-                </a-radio-group>
-              </div>
-
-              <div class="fdef-fc-item">
-                <div class="fdef-fc-item__label">重提策略</div>
-                <a-radio-group
-                  v-model:value="state.settings.resubmitStrategy"
-                  class="fdef-fc-item__control"
-                >
-                  <a-radio value="fromStart">从头开始</a-radio>
-                  <a-radio value="fromRejected">从退回节点</a-radio>
-                </a-radio-group>
-              </div>
-
-              <div class="fdef-fc-item">
-                <div class="fdef-fc-item__label">
-                  审批管理员
-                  <span class="fdef-fc-item__hint">用于人工节点处理人为空时的兜底处理</span>
-                </div>
-                <a-select
-                  v-model:value="state.settings.approvalAdminUserIds"
-                  mode="multiple"
-                  style="width: 100%"
-                  placeholder="搜索并选择审批管理员"
-                  :options="approvalAdminUserOptions"
-                  :loading="approvalAdminSearchLoading"
-                  show-search
-                  option-filter-prop="label"
-                  :filter-option="filterOption"
-                  @search="onApprovalAdminSearch"
-                />
-              </div>
-
-              <div class="fdef-fc-item">
-                <div class="fdef-fc-item__label">
-                  前置依赖
-                  <span class="fdef-fc-item__hint">流程发布前必须满足的依赖项</span>
-                </div>
-                <div class="fdef-prereq">
-                  <div
-                    v-for="(p, i) in state.settings.prerequisites"
-                    :key="i"
-                    class="fdef-prereq__row"
+              <div class="fdef-flow-config-body">
+                <div class="fdef-fc-item">
+                  <div class="fdef-fc-item__label">退回策略</div>
+                  <a-radio-group
+                    v-model:value="state.settings.rejectStrategy"
+                    class="fdef-fc-item__control"
                   >
-                    <a-select
-                      v-model:value="p.flowCode"
-                      placeholder="选择依赖流程"
-                      style="flex:1"
-                      :options="availableFlows.map(f => ({ value: f.code, label: f.name }))"
-                    />
-                    <a-checkbox v-model:checked="p.required">必需</a-checkbox>
-                    <a-button danger type="text" size="small" @click="removePrerequisite(i)">移除</a-button>
+                    <a-radio value="toInitiator">退至发起人</a-radio>
+                    <a-radio value="toPrevious">退至上一节点</a-radio>
+                    <a-radio value="toSpecified">指定节点</a-radio>
+                  </a-radio-group>
+                </div>
+
+                <div class="fdef-fc-item">
+                  <div class="fdef-fc-item__label">重提策略</div>
+                  <a-radio-group
+                    v-model:value="state.settings.resubmitStrategy"
+                    class="fdef-fc-item__control"
+                  >
+                    <a-radio value="fromStart">从头开始</a-radio>
+                    <a-radio value="fromRejected">从退回节点</a-radio>
+                  </a-radio-group>
+                </div>
+
+                <div class="fdef-fc-item">
+                  <div class="fdef-fc-item__label">
+                    审批管理员
+                    <span class="fdef-fc-item__hint">用于人工节点处理人为空时的兜底处理</span>
                   </div>
-                  <a-button type="dashed" block @click="addPrerequisite">+ 添加前置依赖</a-button>
+                  <a-select
+                    v-model:value="state.settings.approvalAdminUserIds"
+                    mode="multiple"
+                    style="width: 100%"
+                    placeholder="搜索并选择审批管理员"
+                    :options="approvalAdminUserOptions"
+                    :loading="approvalAdminSearchLoading"
+                    show-search
+                    option-filter-prop="label"
+                    :filter-option="filterOption"
+                    @search="onApprovalAdminSearch"
+                  />
+                </div>
+
+                <div class="fdef-fc-item">
+                  <div class="fdef-fc-item__label">
+                    前置依赖
+                    <span class="fdef-fc-item__hint">流程发布前必须满足的依赖项</span>
+                  </div>
+                  <div class="fdef-prereq">
+                    <div
+                      v-for="(p, i) in state.settings.prerequisites"
+                      :key="i"
+                      class="fdef-prereq__row"
+                    >
+                      <a-select
+                        v-model:value="p.flowCode"
+                        placeholder="选择依赖流程"
+                        style="flex:1"
+                        :options="availableFlows.map(f => ({ value: f.code, label: f.name }))"
+                      />
+                      <a-checkbox v-model:checked="p.required">必需</a-checkbox>
+                      <a-button danger type="text" size="small" @click="removePrerequisite(i)">移除</a-button>
+                    </div>
+                    <a-button type="dashed" block @click="addPrerequisite">+ 添加前置依赖</a-button>
+                  </div>
                 </div>
               </div>
-            </section>
+            </BaseCard>
 
-            <section class="fdef-flow-section">
-              <header class="fdef-flow-section__head">
-                <span>业务扩展</span>
+            <BaseCard title="业务扩展" class="fdef-flow-config-card">
+              <template #extra>
                 <small>保留财务冲销、余额生成和清算等业务插件配置</small>
-              </header>
+              </template>
 
-              <div class="fdef-switch-item">
-                <span class="fdef-switch-item__label">启用冲销</span>
-                <a-switch v-model:checked="state.settings.offsetEnabled" />
-              </div>
+              <div class="fdef-flow-config-body">
+                <div class="fdef-switch-item">
+                  <span class="fdef-switch-item__label">启用冲销</span>
+                  <a-switch v-model:checked="state.settings.offsetEnabled" />
+                </div>
 
-              <div
-                v-if="state.settings.offsetEnabled"
-                class="fdef-fc-item fdef-fc-item--inset"
-              >
-                <div class="fdef-fc-item__label">冲销来源流程</div>
-                <a-select
-                  v-model:value="state.settings.offsetSourceFlowCodes"
-                  mode="multiple"
-                  placeholder="选择可冲销的源流程"
-                  style="width:100%"
-                  :options="availableFlows.map(f => ({ value: f.code, label: f.name }))"
-                />
-              </div>
+                <div
+                  v-if="state.settings.offsetEnabled"
+                  class="fdef-fc-item fdef-fc-item--inset"
+                >
+                  <div class="fdef-fc-item__label">冲销来源流程</div>
+                  <a-select
+                    v-model:value="state.settings.offsetSourceFlowCodes"
+                    mode="multiple"
+                    placeholder="选择可冲销的源流程"
+                    style="width:100%"
+                    :options="availableFlows.map(f => ({ value: f.code, label: f.name }))"
+                  />
+                </div>
 
-              <div class="fdef-switch-item">
-                <span class="fdef-switch-item__label">完成后生成余额</span>
-                <a-switch v-model:checked="state.settings.generateBalance" />
-              </div>
+                <div class="fdef-switch-item">
+                  <span class="fdef-switch-item__label">完成后生成余额</span>
+                  <a-switch v-model:checked="state.settings.generateBalance" />
+                </div>
 
-              <div class="fdef-switch-item">
-                <span class="fdef-switch-item__label">完成后清算余额</span>
-                <a-switch v-model:checked="state.settings.settleBalance" />
-              </div>
+                <div class="fdef-switch-item">
+                  <span class="fdef-switch-item__label">完成后清算余额</span>
+                  <a-switch v-model:checked="state.settings.settleBalance" />
+                </div>
 
-              <div
-                v-if="state.settings.settleBalance"
-                class="fdef-fc-item fdef-fc-item--inset"
-              >
-                <div class="fdef-fc-item__label">清算来源流程编码</div>
-                <a-input v-model:value="state.settings.settleSourceFlowCode" placeholder="例：expense_apply" />
+                <div
+                  v-if="state.settings.settleBalance"
+                  class="fdef-fc-item fdef-fc-item--inset"
+                >
+                  <div class="fdef-fc-item__label">清算来源流程编码</div>
+                  <a-input v-model:value="state.settings.settleSourceFlowCode" placeholder="例：expense_apply" />
+                </div>
               </div>
-            </section>
+            </BaseCard>
           </div>
         </div>
 
         <!-- 步骤 6：预演与发布校验 -->
         <div v-show="activeStep === 5" class="fdef-step fdef-step--preview">
-          <header class="fdef-preview-stephead">
+          <header class="page-section__title fdef-preview-stephead">
             <strong>节点视图预览</strong>
             <span>预演任意节点的运行态卡片、审批路径与发布前风险。</span>
           </header>
@@ -2498,11 +2513,13 @@ function goBack() {
             </a-button>
           </div>
 
-          <div v-if="loadError" class="fdef-preview-not-ready fdef-preview-not-ready--error">
-            <div class="fdef-preview-not-ready__copy">
-              <strong>流程定义还没有加载成功</strong>
-              <span>无法读取当前草稿、字段、卡片视图和节点链。请重新加载，或返回列表确认该流程是否存在。</span>
-            </div>
+          <EmptyState
+            v-if="loadError"
+            size="small"
+            title="流程定义还没有加载成功"
+            description="无法读取当前草稿、字段、卡片视图和节点链。请重新加载，或返回列表确认该流程是否存在。"
+            class="fdef-preview-not-ready fdef-preview-not-ready--error"
+          >
             <div class="fdef-preview-not-ready__actions">
               <a-button type="primary" @click="reloadFlowDefinition">
                 <template #icon><ReloadOutlined /></template>
@@ -2510,13 +2527,15 @@ function goBack() {
               </a-button>
               <a-button @click="goBack">返回列表</a-button>
             </div>
-          </div>
+          </EmptyState>
 
-          <div v-else-if="!previewReady" class="fdef-preview-not-ready">
-            <div class="fdef-preview-not-ready__copy">
-              <strong>预演还未就绪</strong>
-              <span>完成下面配置后，这里会展示真实运行态卡片、审批路径和发布前风险。</span>
-            </div>
+          <EmptyState
+            v-else-if="!previewReady"
+            size="small"
+            title="预演还未就绪"
+            description="完成下面配置后，这里会展示真实运行态卡片、审批路径和发布前风险。"
+            class="fdef-preview-not-ready"
+          >
             <div class="fdef-preview-readiness">
               <button
                 v-for="item in previewReadinessItems"
@@ -2536,17 +2555,13 @@ function goBack() {
                 <b v-if="!item.ready || item.key === 'loaded'">{{ item.actionText }}</b>
               </button>
             </div>
-          </div>
+          </EmptyState>
 
           <div v-else class="fdef-preview-workbench">
-            <section class="fdef-preview-pane fdef-preview-card-pane">
-              <header class="fdef-preview-pane__head">
-                <div>
-                  <strong>节点卡片工作视图</strong>
-                  <span>{{ selectedPreviewStage?.name || '未选择节点' }} · 审批人实际看到的卡片</span>
-                </div>
+            <BaseCard title="节点卡片工作视图" no-padding class="fdef-preview-card-pane">
+              <template #extra>
                 <a-tag>{{ previewVisibleComponentCount }} 个可见组件</a-tag>
-              </header>
+              </template>
               <div class="fdef-preview-card-stage">
                 <div class="fdef-preview-card fdef-preview-card--runtime">
                   <div
@@ -2567,32 +2582,32 @@ function goBack() {
                       is-admin
                     />
                   </div>
-                  <div v-else class="fdef-preview-card__empty">
-                    当前节点无可见组件。请到节点链中配置该节点的组件可见、可编辑或脱敏权限。
+                  <EmptyState
+                    v-else
+                    size="small"
+                    title="当前节点无可见组件。请到节点链中配置该节点的组件可见、可编辑或脱敏权限。"
+                    class="fdef-preview-card__empty"
+                  >
                     <a-button size="small" type="link" @click="activeStep = 3">去节点链</a-button>
-                  </div>
+                  </EmptyState>
                 </div>
               </div>
-            </section>
+            </BaseCard>
 
-            <section class="fdef-preview-pane fdef-preview-path-pane">
+            <BaseCard no-padding class="fdef-preview-path-pane">
               <PathPreviewPanel
                 :flow-definition-id="flowId"
                 :preview-api="previewFlowDraftPath"
                 :disabled="!previewReady"
               />
-            </section>
+            </BaseCard>
 
-            <section class="fdef-preview-pane fdef-preview-check-pane">
-              <header class="fdef-preview-pane__head">
-                <div>
-                  <strong>发布校验</strong>
-                  <span>只显示会影响预演或发布的关键问题。</span>
-                </div>
+            <BaseCard title="发布校验" class="fdef-preview-check-pane">
+              <template #extra>
                 <StatusTag :type="previewConfigWarnings.length ? 'warning' : 'success'">
                   {{ previewConfigWarnings.length ? `${previewConfigWarnings.length} 项风险` : '可发布' }}
                 </StatusTag>
-              </header>
+              </template>
 
               <div class="fdef-preview-check-list">
                 <div
@@ -2631,7 +2646,7 @@ function goBack() {
                   <span>条件边</span><b>{{ state.routes.length }}</b>
                 </div>
               </div>
-            </section>
+            </BaseCard>
           </div>
         </div>
       </div>
@@ -2652,7 +2667,7 @@ function goBack() {
         v-if="designerSelection.type === 'node' && selectedDesignerStage"
         class="fdef-drawer-section"
       >
-        <header class="fdef-drawer-section__head">
+        <header class="page-section__title fdef-drawer-section__head">
           <strong>{{ selectedDesignerStage.name || '未命名节点' }}</strong>
           <span>节点链内部负责审批路径、处理人策略和节点视图权限</span>
         </header>
@@ -3037,16 +3052,16 @@ function goBack() {
 }
 
 /* 步骤 2 字段设计 */
+.fdef-schema-guide-card {
+  margin: 0 0 14px;
+}
+
 .fdef-schema-guide {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.35fr) auto minmax(0, 1fr);
   gap: 10px;
   align-items: stretch;
-  margin: 0 0 14px;
   padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-muted);
 }
 
 .fdef-schema-guide__item {
@@ -3194,7 +3209,7 @@ function goBack() {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  padding-bottom: 8px;
+  padding: 10px 14px 8px;
   border-bottom: 1px solid var(--border);
 
   strong,
@@ -3202,25 +3217,12 @@ function goBack() {
     display: block;
   }
 
-  strong {
-    flex: 0 0 auto;
-    color: var(--text-1);
-    font-size: 14px;
-    white-space: nowrap;
-  }
-
   span {
     min-width: 0;
     margin-top: 2px;
-    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
-}
-
-.fdef-card-canvas__head {
-  padding: 10px 14px 9px;
-  background: var(--bg-card);
 }
 
 .fdef-card-canvas__list {
@@ -3235,18 +3237,6 @@ function goBack() {
 
 .fdef-card-canvas__empty {
   grid-column: 1 / -1;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  min-height: 180px;
-  padding: 20px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 8px;
-  color: var(--text-2);
-  font-size: 13px;
-  line-height: 22px;
-  text-align: center;
-  background: color-mix(in srgb, var(--bg-card) 82%, transparent);
 }
 
 .fdef-card-canvas-item {
@@ -3726,19 +3716,6 @@ function goBack() {
   }
 }
 
-.fdef-component-inspector__empty {
-  display: grid;
-  place-items: center;
-  min-height: 136px;
-  padding: 16px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 8px;
-  color: var(--text-2);
-  font-size: 13px;
-  line-height: 20px;
-  text-align: center;
-  background: var(--bg-muted);
-}
 
 .fdef-designer-tabs {
   flex: 1;
@@ -3790,14 +3767,8 @@ function goBack() {
     display: block;
   }
 
-  strong {
-    color: var(--text-1);
-    font-size: 15px;
-  }
-
   span {
     margin-top: 4px;
-    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -3838,33 +3809,17 @@ function goBack() {
   gap: 14px;
 }
 
-.fdef-flow-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px 18px;
-  background: var(--bg-page);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-.fdef-flow-section__head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-
-  span {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-1);
-  }
-
-  small {
+.fdef-flow-config-card {
+  :deep(.base-card__extra) small {
     font-size: 12px;
     color: var(--text-3);
   }
+}
+
+.fdef-flow-config-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* 通用配置项：紧凑的 label + 控件 */
@@ -3958,14 +3913,8 @@ function goBack() {
   gap: 2px;
   margin-bottom: 12px;
 
-  > strong {
-    font-size: 15px;
-    color: var(--text-1);
-  }
-
   > span {
     font-size: 12px;
-    color: var(--text-2);
   }
 }
 
@@ -4019,51 +3968,16 @@ function goBack() {
   }
 }
 
-.fdef-preview-not-ready {
-  display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-  gap: 18px;
-  min-height: 520px;
-  padding: 28px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
-    linear-gradient(180deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
-    var(--bg-muted);
-  background-size: 24px 24px;
-}
-
 .fdef-preview-not-ready--error {
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 360px;
-  align-items: start;
   background: var(--color-danger-light);
-  border-color: color-mix(in srgb, var(--color-danger) 20%, transparent);
-}
-
-.fdef-preview-not-ready__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 520px;
-
-  strong {
-    color: var(--text-1);
-    font-size: 18px;
-    line-height: 26px;
-  }
-
-  span {
-    color: var(--text-2);
-    font-size: 13px;
-    line-height: 21px;
-  }
+  border: 1px solid color-mix(in srgb, var(--color-danger) 20%, transparent);
+  border-radius: 8px;
 }
 
 .fdef-preview-not-ready__actions {
   display: flex;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .fdef-preview-readiness {
@@ -4139,37 +4053,10 @@ function goBack() {
   min-height: 640px;
 }
 
-.fdef-preview-pane {
+.fdef-preview-card-pane,
+.fdef-preview-path-pane,
+.fdef-preview-check-pane {
   min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-card);
-}
-
-.fdef-preview-pane__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-
-  strong,
-  span {
-    display: block;
-  }
-
-  strong {
-    color: var(--text-1);
-    font-size: 14px;
-  }
-
-  span {
-    margin-top: 2px;
-    color: var(--text-2);
-    font-size: 12px;
-    line-height: 18px;
-  }
 }
 
 .fdef-preview-card-stage {
@@ -4226,16 +4113,6 @@ function goBack() {
   flex-direction: column;
 }
 
-.fdef-preview-card__empty {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  padding: 34px 0;
-  color: var(--text-2);
-  font-size: 13px;
-  line-height: 20px;
-  text-align: center;
-}
 
 .fdef-preview-path-pane {
   padding: 12px;
@@ -4388,7 +4265,6 @@ function goBack() {
   .fdef-preview-controlbar,
   .fdef-preview-controlbar__node,
   .fdef-preview-workbench,
-  .fdef-preview-not-ready,
   .fdef-preview-readiness {
     grid-template-columns: 1fr;
   }
