@@ -765,6 +765,22 @@ public class FlowDefinitionService : IFlowDefinitionService
                     throw new InvalidOperationException($"非默认分支必须配置条件：{rule.FEdgeKey}");
             }
         }
+
+        if (rules.Count > 0)
+        {
+            var nodeKeys = stages
+                .Select(s => s.FStageKey)
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .ToList();
+            var entryKey = stages.FirstOrDefault()?.FStageKey;
+            var edges = rules
+                .Select(rule => (From: rule.FFromStageKey, To: rule.FToStageKey))
+                .ToList();
+
+            var graphErrors = RouteGraphValidator.Validate(nodeKeys, entryKey, edges);
+            if (graphErrors.Count > 0)
+                throw new InvalidOperationException(string.Join("；", graphErrors));
+        }
     }
 
     private async Task ValidateDynamicPoliciesAsync(long flowVersionId, List<CfStageDefinition> stages)
