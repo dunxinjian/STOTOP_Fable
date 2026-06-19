@@ -1,78 +1,53 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="合同模板" description="管理合同模板信息与版本">
-      <template #actions>
-        <a-button v-if="has(ContractPermissions.TemplateManage)" type="primary" @click="handleAdd">
+      <template #left>
+        <a-input v-model:value="searchForm.keyword" size="middle" placeholder="模板名称" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
+        <a-select v-model:value="searchForm.typeId" size="middle" placeholder="合同类型" style="width: 160px" allow-clear :options="typeOptions" @change="handleSearch" />
+        <a-select v-model:value="searchForm.status" size="middle" placeholder="状态" style="width: 120px" allow-clear :options="statusOptions" @change="handleSearch" />
+        <a-button type="primary" size="middle" @click="handleSearch">查询</a-button>
+        <a-button size="middle" @click="handleReset">
+          <template #icon><ReloadOutlined /></template>重置
+        </a-button>
+      </template>
+      <template #right>
+        <a-button v-if="has(ContractPermissions.TemplateManage)" type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新增模板
         </a-button>
       </template>
-      <template #toolbar>
-        <div style="display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 8px;">
-          <a-input v-model:value="searchForm.keyword" size="small" placeholder="模板名称" style="width: 200px" allowClear @keyup.enter="handleSearch" />
-          <a-select v-model:value="searchForm.typeId" size="small" placeholder="合同类型" style="width: 160px" allowClear :options="typeOptions" />
-          <a-select v-model:value="searchForm.status" size="small" placeholder="状态" style="width: 120px" allowClear :options="statusOptions" />
-          <a-button type="primary" size="small" @click="handleSearch">查询</a-button>
-          <a-button size="small" @click="handleReset">重置</a-button>
-        </div>
-      </template>
     </PageHeader>
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 1000 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'status'">
-            <a-tag :color="templateStatusColor(record.status)">
-              {{ templateStatusText(record.status) }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button
-              v-if="has(ContractPermissions.TemplateManage)"
-              type="link"
-              size="small"
-              @click="handleEdit(record)"
-            >
-              <EditOutlined />编辑
-            </a-button>
-            <a-popconfirm
-              v-if="has(ContractPermissions.TemplateManage) && record.status !== 1"
-              title="发布后旧版本将自动停用，确定发布吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handlePublish(record)"
-            >
-              <a-button type="link" size="small">
-                <CheckOutlined />发布
-              </a-button>
-            </a-popconfirm>
-            <a-button
-              v-if="has(ContractPermissions.TemplateManage) && record.status === 1"
-              type="link"
-              size="small"
-              danger
-              @click="handleDisable(record)"
-            >
-              停用
-            </a-button>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 1000 }"
+      row-key="id"
+      empty-text="暂无模板数据"
+      @change="fetchList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'status'">
+          <StatusTag :type="templateStatusTagType(record.status)">{{ templateStatusText(record.status) }}</StatusTag>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无模板数据" />
+        <template v-if="column.dataIndex === 'action'">
+          <a-button v-if="has(ContractPermissions.TemplateManage)" type="link" size="small" @click="handleEdit(record)">
+            <EditOutlined />编辑
+          </a-button>
+          <a-popconfirm
+            v-if="has(ContractPermissions.TemplateManage) && record.status !== 1"
+            title="发布后旧版本将自动停用，确定发布吗？" ok-text="确定" cancel-text="取消" @confirm="handlePublish(record)"
+          >
+            <a-button type="link" size="small"><CheckOutlined />发布</a-button>
+          </a-popconfirm>
+          <a-button
+            v-if="has(ContractPermissions.TemplateManage) && record.status === 1"
+            type="link" size="small" danger @click="handleDisable(record)"
+          >停用</a-button>
         </template>
-      </a-table>
-    </a-card>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -132,13 +107,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, CheckOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { usePermission, ContractPermissions } from '@/utils/permission'
 import {
   getContractTemplateList,
@@ -162,12 +138,11 @@ function templateStatusText(status: number) {
   return ['草稿', '已发布', '已停用'][status] || '未知'
 }
 
-function templateStatusColor(status: number) {
-  return ['default', 'success', 'error'][status] || 'default'
+function templateStatusTagType(s: number): 'success' | 'default' {
+  return (['default', 'success', 'default'] as const)[s] || 'default'
 }
 
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '模板名称', dataIndex: 'templateName', key: 'templateName', width: 200, ellipsis: true },
   { title: '合同类型', dataIndex: 'typeName', key: 'typeName', width: 120 },
   { title: '版本号', dataIndex: 'version', key: 'version', width: 80, align: 'center' as const, customRender: ({ text }: any) => `V${text}` },
@@ -184,23 +159,8 @@ const searchForm = reactive({
 
 const loading = ref(false)
 const tableData = ref<ContractTemplateListItemDto[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 const typeOptions = ref<{ label: string; value: number }[]>([])
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchList()
-}
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
@@ -234,8 +194,8 @@ async function fetchList() {
   loading.value = true
   try {
     const params: any = {
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }
     if (searchForm.keyword) params.keyword = searchForm.keyword
     if (searchForm.typeId !== undefined) params.typeId = searchForm.typeId
@@ -243,7 +203,7 @@ async function fetchList() {
     const res = await getContractTemplateList(params) as any
     if (res) {
       tableData.value = res?.items || res || []
-      pagination.total = res?.total || res?.length || 0
+      pagination.value.total = res?.total || res?.length || 0
     }
   } finally {
     loading.value = false
@@ -251,7 +211,7 @@ async function fetchList() {
 }
 
 function handleSearch() {
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
@@ -259,7 +219,7 @@ function handleReset() {
   searchForm.keyword = ''
   searchForm.typeId = undefined
   searchForm.status = undefined
-  pagination.pageIndex = 1
+  pagination.value.pageIndex = 1
   fetchList()
 }
 
