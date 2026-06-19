@@ -216,13 +216,13 @@ function checkTypeMismatch(): HealthItem[] {
   }
 
   strong {
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 14px;
   }
 
   span {
     margin-top: 2px;
-    color: #75827c;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -235,9 +235,9 @@ function checkTypeMismatch(): HealthItem[] {
 
 .cf-rule-health__item {
   padding: 9px 10px;
-  border: 1px solid #e1e8e4;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
 
   strong,
   span {
@@ -245,30 +245,30 @@ function checkTypeMismatch(): HealthItem[] {
   }
 
   strong {
-    color: #26372f;
+    color: var(--text-1);
     font-size: 13px;
   }
 
   span {
     margin-top: 3px;
-    color: #65746d;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 1.5;
   }
 
   &--error {
-    border-color: #f0c5c5;
-    background: #fff7f7;
+    border-color: var(--color-danger);
+    background: var(--color-danger-light);
   }
 
   &--warning {
-    border-color: #efd9ab;
-    background: #fffaf0;
+    border-color: var(--color-warning);
+    background: var(--color-warning-light);
   }
 
   &--ok {
-    border-color: #cde3d7;
-    background: #f5fbf8;
+    border-color: var(--color-success);
+    background: var(--color-success-light);
   }
 }
 </style>
