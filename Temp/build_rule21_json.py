@@ -42,14 +42,13 @@ BRAND_ITEM_CODE = "ST"
 
 
 def load_code2fid():
-    """现查账套2 全部 code->fid。优先复用已有 dump，否则调 dbq。"""
-    if not os.path.exists(CODES_DUMP):
-        subprocess.run(
-            [sys.executable, DBQ,
-             "SELECT FID,F编码 FROM FIN科目 WHERE F账套ID=2",
-             "--out", CODES_DUMP],
-            check=True,
-        )
+    """现查账套2 全部 code->fid。每次无条件重查 dbq（Task1 刚改过科目表，不能复用旧缓存）。"""
+    subprocess.run(
+        [sys.executable, DBQ,
+         "SELECT FID,F编码 FROM FIN科目 WHERE F账套ID=2",
+         "--out", CODES_DUMP],
+        check=True,
+    )
     with open(CODES_DUMP, encoding="utf-8") as f:
         rsets = json.load(f)
     rs = rsets[0]
@@ -164,8 +163,8 @@ def main():
     if BORROW_CODE not in code2fid:
         raise SystemExit(f"借方科目 {BORROW_CODE} 在账套2 未查到 fid")
     borrow_fid = code2fid[BORROW_CODE]
-    assert borrow_fid == BORROW_FID_EXPECT, \
-        f"220201 fid={borrow_fid} != 期望 {BORROW_FID_EXPECT}"
+    if borrow_fid != BORROW_FID_EXPECT:
+        raise SystemExit(f"220201 fid 漂移: {borrow_fid} != {BORROW_FID_EXPECT}")
 
     mapping = json.load(open(MAPPING_FILE, encoding="utf-8"))
     combos = mapping["combos"]
