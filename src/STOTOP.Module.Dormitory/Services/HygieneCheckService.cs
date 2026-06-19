@@ -121,6 +121,24 @@ public class HygieneCheckService : IHygieneCheckService
         return (await GetHygieneCheckByIdAsync(hygieneCheck.FID))!;
     }
 
+    public async Task<HygieneCheckDto?> UpdateHygieneCheckAsync(long id, UpdateHygieneCheckRequest request)
+    {
+        var hygieneCheck = await _hygieneCheckRepository.Query()
+            .AsTracking()
+            .FirstOrDefaultAsync(hc => hc.FID == id);
+
+        if (hygieneCheck == null) return null;
+
+        hygieneCheck.FInspectorId = request.InspectorId;
+        hygieneCheck.FCheckDate = request.CheckDate;
+        hygieneCheck.FScore = request.Score;
+        hygieneCheck.FResult = request.Result;
+        hygieneCheck.FRemark = request.Remark;
+
+        await _hygieneCheckRepository.UpdateAsync(hygieneCheck);
+        return await GetHygieneCheckByIdAsync(id);
+    }
+
     public async Task<bool> DeleteHygieneCheckAsync(long id)
     {
         var hygieneCheck = await _hygieneCheckRepository.GetByIdAsync(id);

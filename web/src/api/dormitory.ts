@@ -209,7 +209,7 @@ export interface CreateFacilityRequest {
 
 export interface UpdateFacilityRequest extends CreateFacilityRequest {}
 
-// 报修工单
+// 报修工单（字段对齐后端：description/priority/result/handledTime）
 export interface RepairOrderDto {
   id: number
   roomId: number
@@ -217,27 +217,32 @@ export interface RepairOrderDto {
   buildingName?: string
   reporterId: number
   reporterName?: string
-  issueType: string
-  issueDescription: string
-  urgency: number
+  description: string
+  priority: number
   status: number
   handlerId?: number
   handlerName?: string
-  handleResult?: string
-  handleTime?: string
+  result?: string
+  handledTime?: string
   createdTime?: string
   updatedTime?: string
 }
 
 export interface CreateRepairOrderRequest {
   roomId: number
-  issueType: string
-  issueDescription: string
-  urgency: number
+  reporterId: number
+  description: string
+  priority: number
+}
+
+export interface UpdateRepairOrderRequest {
+  description: string
+  priority: number
 }
 
 export interface HandleRepairOrderRequest {
-  handleResult: string
+  handlerId: number
+  result: string
   status: number
 }
 
@@ -273,28 +278,35 @@ export interface CreateVisitorRequest {
 
 export interface UpdateVisitorRequest extends CreateVisitorRequest {}
 
-// 卫生检查
+// 卫生检查（字段对齐后端：inspectorId/inspectorName）
 export interface HygieneCheckDto {
   id: number
   roomId: number
   roomNumber?: string
   buildingName?: string
   checkDate: string
-  checkerId: number
-  checkerName?: string
-  score: number
-  result: string
-  issues?: string
+  inspectorId: number
+  inspectorName?: string
+  score?: number
+  result?: string
   remark?: string
   createdTime?: string
 }
 
 export interface CreateHygieneCheckRequest {
   roomId: number
+  inspectorId: number
   checkDate: string
-  score: number
-  result: string
-  issues?: string
+  score?: number
+  result?: string
+  remark?: string
+}
+
+export interface UpdateHygieneCheckRequest {
+  inspectorId: number
+  checkDate: string
+  score?: number
+  result?: string
   remark?: string
 }
 
@@ -527,6 +539,11 @@ export function createRepairOrder(data: CreateRepairOrderRequest): Promise<Repai
   return post('/dormitory/repair-orders', data)
 }
 
+// 更新报修工单（描述/紧急程度）
+export function updateRepairOrder(id: number, data: UpdateRepairOrderRequest): Promise<RepairOrderDto> {
+  return put(`/dormitory/repair-orders/${id}`, data)
+}
+
 // 处理报修工单
 export function handleRepairOrder(
   id: number,
@@ -587,6 +604,11 @@ export function getHygieneCheckList(params: {
 // 创建卫生检查
 export function createHygieneCheck(data: CreateHygieneCheckRequest): Promise<HygieneCheckDto> {
   return post('/dormitory/hygiene-checks', data)
+}
+
+// 更新卫生检查
+export function updateHygieneCheck(id: number, data: UpdateHygieneCheckRequest): Promise<HygieneCheckDto> {
+  return put(`/dormitory/hygiene-checks/${id}`, data)
 }
 
 // 删除卫生检查
