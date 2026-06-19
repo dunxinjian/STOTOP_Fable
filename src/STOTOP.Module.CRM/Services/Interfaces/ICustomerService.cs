@@ -6,6 +6,7 @@ namespace STOTOP.Module.CRM.Services.Interfaces;
 public interface ICustomerService
 {
     Task<PagedResult<CustomerListItemDto>> GetCustomersAsync(CustomerQueryRequest request);
+    Task<CustomerStatisticsDto> GetStatisticsAsync();
     Task<CustomerDto?> GetCustomerByCodeAsync(string code);
     Task<CustomerDto> CreateCustomerAsync(CreateCustomerRequest request);
     Task<CustomerDto?> UpdateCustomerAsync(string code, UpdateCustomerRequest request);

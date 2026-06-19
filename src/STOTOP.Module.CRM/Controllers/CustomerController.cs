@@ -32,6 +32,11 @@ public class CustomerController : ControllerBase
         return ApiResult<PagedResult<CustomerListItemDto>>.Success(result);
     }
 
+    [HttpGet("statistics")]
+    [RequirePermission(CrmPermissions.CustomerView)]
+    public async Task<ApiResult<CustomerStatisticsDto>> GetStatistics()
+        => ApiResult<CustomerStatisticsDto>.Success(await _customerService.GetStatisticsAsync());
+
     [HttpGet("{code}")]
     [RequirePermission(CrmPermissions.CustomerView)]
     public async Task<ApiResult<CustomerDto>> GetByCode(string code)

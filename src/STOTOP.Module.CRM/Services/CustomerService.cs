@@ -88,6 +88,27 @@ public class CustomerService : ICustomerService
         };
     }
 
+    public async Task<CustomerStatisticsDto> GetStatisticsAsync()
+    {
+        var grouped = await _customerRepository.Query()
+            .GroupBy(c => c.FStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var statusNames = new[] { "潜在", "活跃", "流失" };
+        var byStatus = new List<CustomerStatusGroupDto>();
+        for (var s = 0; s < statusNames.Length; s++)
+        {
+            byStatus.Add(new CustomerStatusGroupDto
+            {
+                Status = s,
+                StatusName = statusNames[s],
+                Count = grouped.FirstOrDefault(x => x.Status == s)?.Count ?? 0
+            });
+        }
+        return new CustomerStatisticsDto { TotalCount = byStatus.Sum(b => b.Count), ByStatus = byStatus };
+    }
+
     public async Task<CustomerDto?> GetCustomerByCodeAsync(string code)
     {
         var customer = await _customerRepository.Query()

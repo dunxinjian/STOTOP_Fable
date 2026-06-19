@@ -232,3 +232,18 @@ public class UpdateCustomerStatusRequest
 {
     public int Status { get; set; }
 }
+
+/// <summary>客户状态统计</summary>
+public class CustomerStatisticsDto
+{
+    public int TotalCount { get; set; }
+    public List<CustomerStatusGroupDto> ByStatus { get; set; } = new();
+}
+
+/// <summary>按状态分组统计</summary>
+public class CustomerStatusGroupDto
+{
+    public int Status { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
