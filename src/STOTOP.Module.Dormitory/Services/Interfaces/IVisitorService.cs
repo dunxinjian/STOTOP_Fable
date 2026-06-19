@@ -9,6 +9,6 @@ public interface IVisitorService
     Task<VisitorDto?> GetVisitorByIdAsync(long id);
     Task<VisitorDto> CreateVisitorAsync(CreateVisitorRequest request);
     Task<VisitorDto?> UpdateVisitorAsync(long id, UpdateVisitorRequest request);
-    Task<VisitorDto?> DepartureAsync(long id, DepartureRequest request);
+    Task<VisitorDto?> DepartureAsync(long id, DateTime? departureTime = null);
     Task<bool> DeleteVisitorAsync(long id);
 }

@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STOTOP.Module.CardFlow", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STOTOP.Module.Workflow", "STOTOP.Module.Workflow\STOTOP.Module.Workflow.csproj", "{92CDDFB1-EFD9-47EB-8798-399D4899B5C0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STOTOP.Module.Dormitory.Tests", "..\tests\STOTOP.Module.Dormitory.Tests\STOTOP.Module.Dormitory.Tests.csproj", "{75B34192-844A-4873-B7A4-83A91FE9C358}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -321,6 +323,18 @@ Global
 		{92CDDFB1-EFD9-47EB-8798-399D4899B5C0}.Release|x64.Build.0 = Release|Any CPU
 		{92CDDFB1-EFD9-47EB-8798-399D4899B5C0}.Release|x86.ActiveCfg = Release|Any CPU
 		{92CDDFB1-EFD9-47EB-8798-399D4899B5C0}.Release|x86.Build.0 = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|x64.Build.0 = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Debug|x86.Build.0 = Debug|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|x64.ActiveCfg = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|x64.Build.0 = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|x86.ActiveCfg = Release|Any CPU
+		{75B34192-844A-4873-B7A4-83A91FE9C358}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

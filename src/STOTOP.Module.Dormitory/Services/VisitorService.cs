@@ -135,7 +135,7 @@ public class VisitorService : IVisitorService
         return await GetVisitorByIdAsync(id);
     }
 
-    public async Task<VisitorDto?> DepartureAsync(long id, DepartureRequest request)
+    public async Task<VisitorDto?> DepartureAsync(long id, DateTime? departureTime = null)
     {
         var visitor = await _visitorRepository.Query()
             .AsTracking()
@@ -143,7 +143,7 @@ public class VisitorService : IVisitorService
 
         if (visitor == null) return null;
 
-        visitor.FDepartureTime = request.DepartureTime;
+        visitor.FDepartureTime = departureTime ?? DateTime.Now;
         visitor.FStatus = 2; // 2 = 已离开
 
         await _visitorRepository.UpdateAsync(visitor);

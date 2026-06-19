@@ -144,10 +144,8 @@ export interface ExpenseDto {
   expenseType: string
   month: string
   amount: number
-  paidAmount: number
+  shareMethod?: string
   status: number
-  dueDate?: string
-  paidDate?: string
   remark?: string
   createdTime?: string
   updatedTime?: string
@@ -158,11 +156,31 @@ export interface CreateExpenseRequest {
   expenseType: string
   month: string
   amount: number
-  dueDate?: string
+  shareMethod?: string
   remark?: string
 }
 
-export interface UpdateExpenseRequest extends CreateExpenseRequest {}
+export interface UpdateExpenseRequest extends CreateExpenseRequest {
+  status?: number
+}
+
+// 费用分摊明细
+export interface ExpenseShareDto {
+  employeeId: number
+  employeeName?: string
+  amount: number
+}
+
+export interface ExpenseAllocationDto {
+  expenseId: number
+  roomId: number
+  roomNumber: string
+  shareMethod?: string
+  expenseAmount: number
+  occupantCount: number
+  allocatedTotal: number
+  shares: ExpenseShareDto[]
+}
 
 // 设施
 export interface FacilityDto {
@@ -458,6 +476,11 @@ export function updateExpense(id: number, data: UpdateExpenseRequest): Promise<E
 // 删除费用
 export function deleteExpense(id: number): Promise<boolean> {
   return del(`/dormitory/expenses/${id}`)
+}
+
+// 费用分摊明细（按房间当前在住人分摊）
+export function getExpenseAllocation(id: number): Promise<ExpenseAllocationDto> {
+  return get(`/dormitory/expenses/${id}/allocation`)
 }
 
 // ==================== 设施管理 API ====================

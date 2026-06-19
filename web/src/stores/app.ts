@@ -19,7 +19,7 @@ export const MODULE_TABS: ModuleTab[] = [
   { code: 'cardflow', name: '卡片流转', route: '/cardflow', icon: 'ApartmentOutlined' },
   { code: 'crm', name: '客户关系', route: '/crm/dashboard', icon: 'UserOutlined' },
   { code: 'hr', name: '人资管理', route: '/hr/home', icon: 'TeamOutlined' },
-  { code: 'dormitory', name: '宿舍管理', route: '/dormitory/home', icon: 'HomeOutlined' },
+  { code: 'dormitory', name: '宿舍管理', route: '/dormitory', icon: 'HomeOutlined' },
   { code: 'vehicle', name: '三轮车管理', route: '/vehicle/home', icon: 'CarOutlined' },
   { code: 'contract', name: '合同管理', route: '/contract', icon: 'FileTextOutlined' },
   { code: 'supplier', name: '供应商管理', route: '/supplier/home', icon: 'ShopOutlined' },

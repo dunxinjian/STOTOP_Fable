@@ -78,4 +78,16 @@ public class ExpenseController : ControllerBase
         var result = await _expenseService.GetMonthlySummaryAsync(month);
         return ApiResult<List<MonthlyExpenseSummaryDto>>.Success(result);
     }
+
+    /// <summary>费用分摊明细：按房间当前在住人分摊（均摊/固定）</summary>
+    [HttpGet("{id}/allocation")]
+    public async Task<ApiResult<ExpenseAllocationDto>> GetAllocation(long id)
+    {
+        var result = await _expenseService.GetExpenseAllocationAsync(id);
+        if (result == null)
+        {
+            return ApiResult<ExpenseAllocationDto>.Fail("费用记录不存在");
+        }
+        return ApiResult<ExpenseAllocationDto>.Success(result);
+    }
 }

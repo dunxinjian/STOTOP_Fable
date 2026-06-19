@@ -61,10 +61,10 @@ public class VisitorController : ControllerBase
         return ApiResult<VisitorDto>.Success(result, "更新访客记录成功");
     }
 
-    [HttpPut("{id}/departure")]
-    public async Task<ApiResult<VisitorDto>> Departure(long id, [FromBody] DepartureRequest request)
+    [HttpPut("{id}/leave")]
+    public async Task<ApiResult<VisitorDto>> Departure(long id)
     {
-        var result = await _visitorService.DepartureAsync(id, request);
+        var result = await _visitorService.DepartureAsync(id);
         if (result == null)
         {
             return ApiResult<VisitorDto>.Fail("访客记录不存在");
