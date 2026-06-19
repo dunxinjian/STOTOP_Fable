@@ -31,6 +31,9 @@ import {
   ReloadOutlined,
   CopyOutlined,
   DeleteOutlined,
+  HolderOutlined,
+  RightOutlined,
+  EditOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import SchemaFieldEditor from '@/components/cardflow/SchemaFieldEditor.vue'
@@ -227,8 +230,8 @@ const auto = useAutoSave({
 const saveStateText = computed(() => {
   if (auto.saveState.value === 'saving') return '保存中...'
   if (auto.saveState.value === 'error')  return '保存失败'
-  if (auto.saveState.value === 'dirty')  return '● 未保存的更改'
-  return '✓ 已保存'
+  if (auto.saveState.value === 'dirty')  return '未保存的更改'
+  return '已保存'
 })
 const saveStateClass = computed(() => `tb-state tb-state--${auto.saveState.value}`)
 
@@ -1688,13 +1691,17 @@ function goBack() {
           <strong v-if="!isNew">{{ state.basic.flowName || '未命名流程' }}</strong>
         </span>
         <span
-          v-if="draftVersionNumber && publishedVersionNumber"
+          v-if="draftVersionNumber || publishedVersionNumber"
           class="tb-version-context"
-          :title="`正在编辑草稿 v${draftVersionNumber}，当前已发布版本为 v${publishedVersionNumber}。修改需发布后才会生效。`"
+          :title="draftVersionNumber && publishedVersionNumber
+            ? `正在编辑草稿 v${draftVersionNumber}，当前已发布版本为 v${publishedVersionNumber}。修改需发布后才会生效。`
+            : draftVersionNumber
+              ? `草稿 v${draftVersionNumber}，尚未发布`
+              : `已发布 v${publishedVersionNumber}`"
         >
-          <span class="tb-version-context__draft">草稿 v{{ draftVersionNumber }}</span>
-          <span class="tb-version-context__published">已发布 v{{ publishedVersionNumber }}</span>
-          <span class="tb-version-context__note">发布后生效</span>
+          <span v-if="draftVersionNumber" class="tb-version-context__draft">草稿 v{{ draftVersionNumber }}</span>
+          <span v-if="publishedVersionNumber" class="tb-version-context__published">已发布 v{{ publishedVersionNumber }}</span>
+          <span v-if="draftVersionNumber && publishedVersionNumber" class="tb-version-context__note">发布后生效</span>
         </span>
       </template>
 
@@ -1743,7 +1750,7 @@ function goBack() {
           <CheckCircleFilled v-if="auto.saveState.value === 'saved'" />
           <LoadingOutlined v-else-if="auto.saveState.value === 'saving'" />
           <CloseCircleFilled v-else-if="auto.saveState.value === 'error'" />
-          <span v-else class="tb-state-dot">●</span>
+          <EditOutlined v-else />
           {{ saveStateText }}
         </span>
       </template>
@@ -1825,12 +1832,12 @@ function goBack() {
               <strong>字段 = 数据结构</strong>
               <em>保存数据、参与条件路由和统计</em>
             </span>
-            <span class="fdef-schema-guide__arrow">→</span>
+            <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
             <span class="fdef-schema-guide__item">
               <strong>下一步配置卡片视图</strong>
               <em>把字段、明细、关系和快照编排成审批人看到的卡片</em>
             </span>
-            <span class="fdef-schema-guide__arrow">→</span>
+            <span class="fdef-schema-guide__arrow"><RightOutlined /></span>
             <span class="fdef-schema-guide__item">
               <strong>节点权限</strong>
               <em>到节点链里设置可见、可编辑、脱敏</em>
@@ -1923,7 +1930,7 @@ function goBack() {
                         @click="selectCardComponent(component.id)"
                         @keyup.enter="selectCardComponent(component.id)"
                       >
-                        <i class="fdef-card-canvas-item__handle" aria-hidden="true">⋮⋮</i>
+                        <i class="fdef-card-canvas-item__handle" aria-hidden="true"><HolderOutlined /></i>
                         <div
                           v-if="selectedCardComponent?.id === component.id"
                           class="fdef-card-canvas-item__inline-actions"
