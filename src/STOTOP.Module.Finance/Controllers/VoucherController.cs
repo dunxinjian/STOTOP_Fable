@@ -25,6 +25,17 @@ public class VoucherController : ControllerBase
         _voucherExcelService = voucherExcelService;
     }
 
+    /// <summary>
+    /// 解析当前账套：优先 query 参数，其次回退 X-AccountSet-Id 请求头
+    /// （权限过滤器读取同一请求头，避免 action 拿到 0 导致 FAccountSetId 落 0）。
+    /// </summary>
+    private long ResolveAccountSetId(long accountSetId)
+    {
+        if (accountSetId > 0) return accountSetId;
+        var header = Request.Headers["X-AccountSet-Id"].FirstOrDefault();
+        return long.TryParse(header, out var id) ? id : 0;
+    }
+
     [HttpGet]
     [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<VoucherPagedResult>> GetPagedList([FromQuery] VoucherQueryRequest request, [FromQuery] long accountSetId = 0)
@@ -52,8 +63,9 @@ public class VoucherController : ControllerBase
         try
         {
             var creator = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
+            var effectiveAccountSetId = ResolveAccountSetId(accountSetId);
             // 手动录入凭证：强校验科目辅助核算契约(声明的维度必须带齐, E2)
-            var result = await _voucherService.CreateAsync(request, creator, accountSetId, enforceAuxContract: true);
+            var result = await _voucherService.CreateAsync(request, creator, effectiveAccountSetId, enforceAuxContract: true);
             return ApiResult<VoucherDto>.Success(result, "创建凭证成功");
         }
         catch (InvalidOperationException ex)
@@ -131,7 +143,7 @@ public class VoucherController : ControllerBase
     public async Task<ApiResult<VoucherDto>> SaveDraft([FromBody] CreateVoucherRequest request, [FromQuery] long accountSetId = 0)
     {
         var creator = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
-        var result = await _voucherService.SaveDraftAsync(request, creator, accountSetId);
+        var result = await _voucherService.SaveDraftAsync(request, creator, ResolveAccountSetId(accountSetId));
         return ApiResult<VoucherDto>.Success(result, "保存草稿成功");
     }
 
