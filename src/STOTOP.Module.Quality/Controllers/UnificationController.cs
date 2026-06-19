@@ -34,7 +34,7 @@ public class UnificationController : ControllerBase
     /// 按 (员工姓名原文, 网点编码) 聚合计数，供前端逐条认领（建别名/绑工号）。
     /// </summary>
     [HttpGet("pending-employees")]
-    [RequirePermission(QualityPermissions.ExceptionManage)]
+    [RequirePermission(QualityPermissions.CarrierMasterDataClaim)]
     public async Task<ApiResult<List<PendingEmployeeDto>>> GetPendingEmployees()
     {
         var orgId = GetOrgId();
@@ -61,7 +61,7 @@ public class UnificationController : ControllerBase
     /// 手动归一：对当前组织整批归一全申通源（事件 + 员工日指标 + 网点日指标），按唯一键 upsert（幂等）。
     /// </summary>
     [HttpPost("run")]
-    [RequirePermission(QualityPermissions.ExceptionManage)]
+    [RequirePermission(QualityPermissions.CarrierMasterDataClaim)]
     public async Task<ApiResult<UnifyResult>> Run(CancellationToken ct)
     {
         var orgId = GetOrgId();
@@ -74,7 +74,7 @@ public class UnificationController : ControllerBase
     /// 用户在「待认领」补别名后调用，使历史未匹配事件命中并回填网点编码/员工工号。
     /// </summary>
     [HttpPost("rematch")]
-    [RequirePermission(QualityPermissions.ExceptionManage)]
+    [RequirePermission(QualityPermissions.CarrierMasterDataClaim)]
     public async Task<ApiResult<RematchResult>> Rematch(CancellationToken ct)
     {
         var orgId = GetOrgId();

@@ -11,6 +11,7 @@ using STOTOP.Module.Quality.Services.Performance;
 using STOTOP.Module.Quality.Services.Review;
 using STOTOP.Module.Quality.Services.Alert;
 using STOTOP.Module.Quality.Services.Rule;
+using STOTOP.Module.Quality.Services.CarrierDashboard;
 using STOTOP.Module.Quality.Services.Unification;
 
 namespace STOTOP.Module.Quality;
@@ -23,6 +24,7 @@ public static class QualityModuleExtensions
     public static IServiceCollection AddQualityModule(this IServiceCollection services)
     {
         services.AddScoped<IQualityDashboardService, QualityDashboardService>();
+        services.AddScoped<ICarrierQualityDashboardService, CarrierQualityDashboardService>();
         services.AddScoped<IExceptionService, ExceptionService>();
         services.AddScoped<IQualityRuleService, QualityRuleService>();
         services.AddScoped<IDetectionService, DetectionService>();
