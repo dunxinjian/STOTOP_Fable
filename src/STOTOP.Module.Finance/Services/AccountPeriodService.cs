@@ -8,6 +8,7 @@ using STOTOP.Infrastructure.Events;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.Finance.Events;
+using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Services.Interfaces;
 
 namespace STOTOP.Module.Finance.Services;
@@ -189,7 +190,7 @@ public class AccountPeriodService : IAccountPeriodService
 
         // 3. 查询所有损益类末级科目，汇总本期发生额并生成结转凭证
         var profitAndLossAccounts = await _accountRepository.Query()
-            .Where(a => a.FCategory == "损益" && a.FIsLeaf == 1 && a.FAccountSetId == accountSetId)
+            .Where(a => FinAccountCategory.ProfitLossCategories.Contains(a.FCategory) && a.FIsLeaf == 1 && a.FAccountSetId == accountSetId)
             .ToListAsync();
 
         var periodVoucherIds = await _voucherRepository.Query()
