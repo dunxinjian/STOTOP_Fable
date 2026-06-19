@@ -895,11 +895,11 @@ function runtimeAccessLabel(access: string | null | undefined) {
   return '只读'
 }
 
-function runtimeAccessColor(access: string | null | undefined) {
-  if (access === 'editable' || access === 'required') return 'blue'
-  if (access === 'masked') return 'orange'
+function runtimeAccessType(access: string | null | undefined): 'info' | 'warning' | 'default' | 'success' {
+  if (access === 'editable' || access === 'required') return 'info'
+  if (access === 'masked') return 'warning'
   if (access === 'hidden') return 'default'
-  return 'green'
+  return 'success'
 }
 
 function runtimeComponentCapability(component: CardComponentRuntime) {
@@ -1682,10 +1682,9 @@ function goBack() {
   <div class="fdef-edit">
     <PageHeader :title="isNew ? '新建流程定义' : '编辑流程定义'">
       <template #left>
-        <button class="tb-back" @click="goBack">
-          <ArrowLeftOutlined />
-          <span>返回</span>
-        </button>
+        <a-button type="link" @click="goBack" style="padding: 0 4px;">
+          <ArrowLeftOutlined />返回
+        </a-button>
         <span class="tb-title">
           {{ isNew ? '新建流程' : '编辑' }}
           <strong v-if="!isNew">{{ state.basic.flowName || '未命名流程' }}</strong>
@@ -2286,9 +2285,9 @@ function goBack() {
                     >
                       <div>
                         <strong>{{ item.title }}</strong>
-                        <a-tag :color="runtimeAccessColor(item.access)">
+                        <StatusTag :type="runtimeAccessType(item.access)">
                           {{ runtimeAccessLabel(item.access) }}
-                        </a-tag>
+                        </StatusTag>
                       </div>
                       <span>{{ item.binding }}</span>
                       <p>{{ item.capability }}</p>
@@ -2484,9 +2483,9 @@ function goBack() {
                 :disabled="loadError || !state.stages.length"
                 :placeholder="previewToolbarPlaceholder"
               />
-              <a-tag v-if="selectedPreviewStage" :color="selectedPreviewStage.type === 'manual' ? 'blue' : 'green'">
+              <StatusTag v-if="selectedPreviewStage" :type="selectedPreviewStage.type === 'manual' ? 'info' : 'success'">
                 {{ selectedPreviewStage.type === 'manual' ? '人工节点工作视图' : '自动节点只读视图' }}
-              </a-tag>
+              </StatusTag>
             </div>
             <div class="fdef-preview-controlbar__stats">
               <span v-for="stat in previewCoverageStats" :key="stat.key">
@@ -2590,9 +2589,9 @@ function goBack() {
                   <strong>发布校验</strong>
                   <span>只显示会影响预演或发布的关键问题。</span>
                 </div>
-                <a-tag :color="previewConfigWarnings.length ? 'warning' : 'success'">
+                <StatusTag :type="previewConfigWarnings.length ? 'warning' : 'success'">
                   {{ previewConfigWarnings.length ? `${previewConfigWarnings.length} 项风险` : '可发布' }}
-                </a-tag>
+                </StatusTag>
               </header>
 
               <div class="fdef-preview-check-list">
@@ -2777,20 +2776,6 @@ function goBack() {
 }
 
 /* ============ 工具栏元素 ============ */
-.tb-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  color: var(--color-info);
-  cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 4px;
-  line-height: 22px;
-  &:hover { background: color-mix(in srgb, var(--color-info) 6%, transparent); }
-}
 .tb-title {
   display: inline-flex;
   align-items: center;
@@ -2928,7 +2913,6 @@ function goBack() {
   &--dirty   { color: var(--color-warning-text); background: color-mix(in srgb, var(--color-warning) 8%, transparent); }
   &--error   { color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 8%, transparent); }
 }
-.tb-state-dot { font-size: 10px; }
 
 /* ============ 步骤条 ============ */
 /* 固定高度、不参与压缩，让出剩余空间给 .fdef-step-body */
