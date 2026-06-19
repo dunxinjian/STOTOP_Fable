@@ -752,7 +752,7 @@ onMounted(async () => {
     transition: background-color 0.15s ease;
 
     &:hover {
-      background: var(--border);
+      background: var(--bg-muted);
       color: var(--color-primary);
     }
 
