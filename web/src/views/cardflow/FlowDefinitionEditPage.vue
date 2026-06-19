@@ -3305,7 +3305,7 @@ function goBack() {
 
 .fdef-card-canvas-item--ghost {
   opacity: .58;
-  background: var(--color-success-light);
+  background: var(--color-primary-light);
 }
 
 .fdef-card-canvas-item--chosen {
@@ -4037,7 +4037,7 @@ function goBack() {
   border: 1px solid var(--border);
   border-radius: 8px;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-info) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
     linear-gradient(180deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
     var(--bg-muted);
   background-size: 24px 24px;
