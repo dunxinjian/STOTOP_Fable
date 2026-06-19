@@ -1,6 +1,15 @@
 <template>
   <div class="contract-dashboard">
-    <PageHeader title="合同看板" />
+    <PageHeader title="合同看板">
+      <template #left>
+        <a-segmented v-model:value="activeTab" :options="tabOptions" />
+      </template>
+      <template #right>
+        <a-button type="primary" @click="router.push('/contract/list?action=create')">
+          <template #icon><PlusOutlined /></template>新建合同
+        </a-button>
+      </template>
+    </PageHeader>
 
     <!-- KPI 指标条 -->
     <div class="kpi-bar">
@@ -11,114 +20,108 @@
       </div>
     </div>
 
-    <!-- Tab 内容区 -->
-    <a-tabs v-model:activeKey="activeTab" class="dashboard-tabs">
-      <a-tab-pane key="overview" tab="数据概览">
-        <div class="tab-content">
-          <a-row :gutter="16" style="height: 100%">
-            <a-col :span="12" style="height: 100%">
-              <div class="content-panel">
-                <div class="panel-title">合同类型分布</div>
-                <div class="chart-container" ref="pieChartRef"></div>
-              </div>
-            </a-col>
-            <a-col :span="12" style="height: 100%">
-              <div class="content-panel">
-                <div class="panel-title">合同状态分布</div>
-                <div class="chart-container" ref="barChartRef"></div>
-              </div>
-            </a-col>
-          </a-row>
-        </div>
-      </a-tab-pane>
+    <!-- 视图内容区(视图切换在首行段控件) -->
+    <div class="dashboard-content">
+      <div v-show="activeTab === 'overview'" class="tab-content">
+        <a-row :gutter="16" style="height: 100%">
+          <a-col :span="12" style="height: 100%">
+            <div class="content-panel">
+              <div class="panel-title">合同类型分布</div>
+              <div class="chart-container" ref="pieChartRef"></div>
+            </div>
+          </a-col>
+          <a-col :span="12" style="height: 100%">
+            <div class="content-panel">
+              <div class="panel-title">合同状态分布</div>
+              <div class="chart-container" ref="barChartRef"></div>
+            </div>
+          </a-col>
+        </a-row>
+      </div>
 
-      <a-tab-pane key="warning" tab="到期预警">
-        <div class="tab-content">
-          <a-row :gutter="16" style="height: 100%">
-            <a-col :span="12" style="height: 100%">
-              <div class="content-panel">
-                <div class="panel-title">30天内到期合同</div>
-                <a-table
-                  :columns="warningColumns"
-                  :data-source="warningList"
-                  :loading="loading"
-                  :pagination="false"
-                  row-key="id"
-                  :bordered="false"
-                  size="small"
-                  :scroll="{ y: 400 }"
-                >
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.dataIndex === 'remainDays'">
-                      <StatusTag :type="record.remainDays <= 7 ? 'danger' : 'warning'">
-                        {{ record.remainDays }}天
-                      </StatusTag>
-                    </template>
-                    <template v-if="column.dataIndex === 'action'">
-                      <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
-                      <a-button type="link" size="small" @click="handleRenew(record)">续签</a-button>
-                    </template>
-                  </template>
-                  <template #emptyText>
-                    <EmptyState description="暂无到期预警" />
-                  </template>
-                </a-table>
-              </div>
-            </a-col>
-            <a-col :span="12" style="height: 100%">
-              <div class="content-panel">
-                <div class="panel-title">续签待办</div>
-                <a-table
-                  :columns="renewColumns"
-                  :data-source="renewList"
-                  :loading="loading"
-                  :pagination="false"
-                  row-key="id"
-                  :bordered="false"
-                  size="small"
-                  :scroll="{ y: 400 }"
-                >
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.dataIndex === 'status'">
-                      <StatusTag :type="statusTagType(record.status)">
-                        {{ contractStatusText(record.status) }}
-                      </StatusTag>
-                    </template>
-                    <template v-if="column.dataIndex === 'action'">
-                      <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
-                    </template>
-                  </template>
-                  <template #emptyText>
-                    <EmptyState description="暂无续签待办" />
-                  </template>
-                </a-table>
-              </div>
-            </a-col>
-          </a-row>
-        </div>
-      </a-tab-pane>
-
-      <a-tab-pane key="actions" tab="快捷操作">
-        <div class="tab-content">
-          <div class="content-panel" style="max-width: 600px">
-            <div class="panel-title">快捷操作</div>
-            <div class="quick-actions-grid">
-              <div
-                v-for="action in quickActions"
-                :key="action.label"
-                class="quick-action-item"
-                @click="action.handler"
+      <div v-show="activeTab === 'warning'" class="tab-content">
+        <a-row :gutter="16" style="height: 100%">
+          <a-col :span="12" style="height: 100%">
+            <div class="content-panel">
+              <div class="panel-title">30天内到期合同</div>
+              <a-table
+                :columns="warningColumns"
+                :data-source="warningList"
+                :loading="loading"
+                :pagination="false"
+                row-key="id"
+                :bordered="false"
+                size="small"
+                :scroll="{ y: 400 }"
               >
-                <div class="quick-action-icon">
-                  <component :is="action.icon" />
-                </div>
-                <span>{{ action.label }}</span>
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.dataIndex === 'remainDays'">
+                    <StatusTag :type="record.remainDays <= 7 ? 'danger' : 'warning'">
+                      {{ record.remainDays }}天
+                    </StatusTag>
+                  </template>
+                  <template v-if="column.dataIndex === 'action'">
+                    <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+                    <a-button type="link" size="small" @click="handleRenew(record)">续签</a-button>
+                  </template>
+                </template>
+                <template #emptyText>
+                  <EmptyState description="暂无到期预警" />
+                </template>
+              </a-table>
+            </div>
+          </a-col>
+          <a-col :span="12" style="height: 100%">
+            <div class="content-panel">
+              <div class="panel-title">续签待办</div>
+              <a-table
+                :columns="renewColumns"
+                :data-source="renewList"
+                :loading="loading"
+                :pagination="false"
+                row-key="id"
+                :bordered="false"
+                size="small"
+                :scroll="{ y: 400 }"
+              >
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.dataIndex === 'status'">
+                    <StatusTag :type="statusTagType(record.status)">
+                      {{ contractStatusText(record.status) }}
+                    </StatusTag>
+                  </template>
+                  <template v-if="column.dataIndex === 'action'">
+                    <a-button type="link" size="small" @click="handleView(record)">查看</a-button>
+                  </template>
+                </template>
+                <template #emptyText>
+                  <EmptyState description="暂无续签待办" />
+                </template>
+              </a-table>
+            </div>
+          </a-col>
+        </a-row>
+      </div>
+
+      <div v-show="activeTab === 'actions'" class="tab-content">
+        <div class="content-panel" style="max-width: 600px">
+          <div class="panel-title">快捷操作</div>
+          <div class="quick-actions-grid">
+            <div
+              v-for="action in quickActions"
+              :key="action.label"
+              class="quick-action-item"
+              @click="action.handler"
+            >
+              <div class="quick-action-icon">
+                <component :is="action.icon" />
               </div>
+              <span>{{ action.label }}</span>
             </div>
           </div>
         </div>
-      </a-tab-pane>
-    </a-tabs>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -172,8 +175,13 @@ const kpiItems = computed(() => [
   { label: '过期', value: stats.expired, color: 'var(--color-danger)' },
 ])
 
-// Tab
+// 视图切换(段控件,置于首行工具栏)
 const activeTab = ref('overview')
+const tabOptions = [
+  { label: '数据概览', value: 'overview' },
+  { label: '到期预警', value: 'warning' },
+  { label: '快捷操作', value: 'actions' },
+]
 
 // 图表
 const pieChartRef = ref<HTMLElement>()
@@ -411,34 +419,15 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.dashboard-tabs {
+.dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-.dashboard-tabs :deep(.ant-tabs-tab) {
-  font-size: 15px;
-  padding: 12px 16px;
-}
-.dashboard-tabs :deep(.ant-tabs-ink-bar) {
-  height: 3px;
-  border-radius: 2px;
-}
-.dashboard-tabs :deep(.ant-tabs-content) {
-  flex: 1;
-  min-height: 0;
-}
-.dashboard-tabs :deep(.ant-tabs-content-holder) {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-}
-.dashboard-tabs :deep(.ant-tabs-tabpane) {
-  height: 100%;
-}
 .tab-content {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .content-panel {
