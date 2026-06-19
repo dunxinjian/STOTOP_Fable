@@ -262,7 +262,7 @@
           <a-descriptions-item label="结束日期">{{ detailData.endDate || '-' }}</a-descriptions-item>
           <a-descriptions-item label="合同性质">{{ natureText(detailData.contractNature) }}</a-descriptions-item>
           <a-descriptions-item label="状态">
-            <a-tag :color="statusColor(detailData.status)">{{ statusText(detailData.status) }}</a-tag>
+            <StatusTag :type="statusTagType(detailData.status)">{{ statusText(detailData.status) }}</StatusTag>
           </a-descriptions-item>
           <a-descriptions-item label="关联合同" v-if="detailData.relatedContractNo">
             {{ detailData.relatedContractNo }}
@@ -430,17 +430,7 @@ import {
 const { has } = usePermission()
 
 // 枚举映射
-const statusOptions = [
-  { label: '草稿', value: 0 },
-  { label: '审批中', value: 1 },
-  { label: '待签署', value: 2 },
-  { label: '已生效', value: 3 },
-  { label: '已到期', value: 4 },
-  { label: '已终止', value: 5 },
-]
-
 function statusText(s: number) { return ['草稿', '审批中', '待签署', '已生效', '已到期', '已终止'][s] || '未知' }
-function statusColor(s: number) { return ['default', 'processing', 'warning', 'success', 'error', 'default'][s] || 'default' }
 function statusTagType(s: number): 'success' | 'warning' | 'danger' | 'info' | 'default' {
   return (['default', 'info', 'warning', 'success', 'danger', 'default'] as const)[s] || 'default'
 }
