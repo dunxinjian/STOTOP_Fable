@@ -111,6 +111,38 @@ public class StageRouteResolverTests
         Assert.Null(result.NextStage);
     }
 
+    [Fact]
+    public async global::System.Threading.Tasks.Task ResolveNextStage_NonDefaultEmptyCondition_DoesNotBecomeCatchAll()
+    {
+        using var db = TestDbContextFactory.Create(nameof(ResolveNextStage_NonDefaultEmptyCondition_DoesNotBecomeCatchAll));
+        var stages = SeedStages(db);
+        db.Set<CfStageRouteRule>().AddRange(
+            new CfStageRouteRule
+            {
+                FFlowVersionId = 10, FEdgeKey = "empty_rule",
+                FFromStageDefinitionId = stages.Source.FID, FFromStageKey = "manager",
+                FToStageDefinitionId = stages.GeneralManager.FID, FToStageKey = "gm",
+                FRouteName = "空条件", FConditionJson = null, FPriority = 1, FStatus = "active"
+            },
+            new CfStageRouteRule
+            {
+                FFlowVersionId = 10, FEdgeKey = "default_finance",
+                FFromStageDefinitionId = stages.Source.FID, FFromStageKey = "manager",
+                FToStageDefinitionId = stages.Finance.FID, FToStageKey = "finance",
+                FRouteName = "默认", FPriority = 99, FIsDefault = true, FStatus = "active"
+            });
+        await db.SaveChangesAsync();
+
+        var resolver = new StageRouteResolver(db, new ConditionRuleEvaluator(), new ConditionEvaluationContextBuilder(db));
+        var card = new CfCard { FID = 1, FFlowVersionId = 10, FDataJson = """{"amount":6800}""" };
+        var current = new CfStageInstance { FID = 20, FStageDefinitionId = stages.Source.FID, FRound = 1 };
+
+        var result = await resolver.ResolveNextStageAsync(card, current, CancellationToken.None);
+
+        Assert.Equal("default_finance", result.SelectedRoute?.FEdgeKey);
+        Assert.Contains(result.Candidates, c => c.EdgeKey == "empty_rule" && !c.Matched);
+    }
+
     private static (CfStageDefinition Source, CfStageDefinition Finance, CfStageDefinition GeneralManager) SeedStages(STOTOP.Infrastructure.Data.STOTOPDbContext db)
     {
         var source = new CfStageDefinition { FID = 101, FFlowVersionId = 10, FStageKey = "manager", FStageName = "主管审批", FSortOrder = 1 };

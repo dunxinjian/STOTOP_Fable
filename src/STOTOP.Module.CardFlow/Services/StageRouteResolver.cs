@@ -64,6 +64,22 @@ public sealed class StageRouteResolver : IStageRouteResolver
         CfStageRouteRule? selected = null;
         foreach (var rule in outgoing.Where(rule => !rule.FIsDefault))
         {
+            if (string.IsNullOrWhiteSpace(rule.FConditionJson))
+            {
+                result.Candidates.Add(new StageRouteCandidateResult
+                {
+                    RouteRuleId = rule.FID,
+                    EdgeKey = rule.FEdgeKey,
+                    RouteName = rule.FRouteName,
+                    ToStageKey = rule.FToStageKey,
+                    Priority = rule.FPriority,
+                    IsDefault = rule.FIsDefault,
+                    Matched = false,
+                    Explanation = "非默认分支缺条件，不命中",
+                    TypeErrors = new List<string> { "非默认分支未配置条件" }
+                });
+                continue;
+            }
             var evaluation = _conditionRuleEvaluator.Evaluate(rule.FConditionJson, context);
             result.Candidates.Add(new StageRouteCandidateResult
             {
