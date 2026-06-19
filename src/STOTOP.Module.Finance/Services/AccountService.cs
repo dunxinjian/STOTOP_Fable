@@ -374,10 +374,11 @@ public class AccountService : IAccountService
         // 校验科目归属与末级状态，不信任客户端提交的数据
         var accounts = await _accountRepository.Query()
             .Where(a => a.FAccountSetId == request.AccountSetId)
-            .Select(a => new { a.FID, a.FParentId })
+            .Select(a => new { a.FID, a.FParentId, a.FCategory, a.FCode })
             .ToListAsync();
         var accountIds = accounts.Select(a => a.FID).ToHashSet();
         var parentIds = accounts.Where(a => a.FParentId > 0).Select(a => a.FParentId).ToHashSet();
+        var accountInfoMap = accounts.ToDictionary(a => a.FID, a => (a.FCategory, a.FCode));
 
         foreach (var item in request.Items)
         {
@@ -388,6 +389,13 @@ public class AccountService : IAccountService
             if (parentIds.Contains(item.AccountId))
             {
                 throw new InvalidOperationException("仅末级科目可录入期初余额");
+            }
+            // 损益类科目年初余额恒 0，禁止录入非 0 期初（0 期初允许跳过）
+            if ((item.DebitBalance != 0 || item.CreditBalance != 0)
+                && accountInfoMap.TryGetValue(item.AccountId, out var info)
+                && FinAccountCategory.IsProfitLoss(info.FCategory))
+            {
+                throw new InvalidOperationException($"损益类科目（{info.FCode}）不可录入期初余额");
             }
         }
 
