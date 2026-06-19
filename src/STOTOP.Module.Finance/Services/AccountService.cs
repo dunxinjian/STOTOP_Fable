@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
+using STOTOP.Module.Finance.Constants;
 using STOTOP.Module.Finance.Dtos;
 using STOTOP.Module.Finance.Entities;
 using STOTOP.Module.Finance.Services.Interfaces;
@@ -83,8 +84,8 @@ public class AccountService : IAccountService
             "负债" => new[] { "流动负债", "非流动负债" },
             "权益" => new[] { "所有者权益" },
             "成本" => new[] { "成本" },
-            // 包含 "损益" 本身：早期创建的损益科目 FCategory 直接存大类名
-            "损益" => new[] { "损益", "营业收入", "营业成本", "期间费用", "其他收益", "其他损失", "所得税费用", "以前年度损益调整", "营业税金及附加" },
+            // 损益子类（含大类名"损益"兼容早期数据）统一收敛到 FinAccountCategory 单一真源
+            "损益" => FinAccountCategory.ProfitLossCategories,
             _ => Array.Empty<string>()
         };
     }
