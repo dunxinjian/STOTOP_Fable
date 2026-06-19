@@ -593,9 +593,9 @@ function addCatalogItem(item: CatalogItem) {
   display: grid;
   grid-template-columns: 46px minmax(0, 1fr);
   min-height: 100%;
-  border: 1px solid #e5e9e7;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-card);
   overflow: hidden;
 }
 
@@ -605,8 +605,8 @@ function addCatalogItem(item: CatalogItem) {
   align-items: stretch;
   gap: 3px;
   padding: 8px 5px;
-  border-right: 1px solid #edf1ef;
-  background: #fbfcfc;
+  border-right: 1px solid var(--border);
+  background: var(--bg-muted);
 }
 
 .cf-component-catalog__tab {
@@ -618,7 +618,7 @@ function addCatalogItem(item: CatalogItem) {
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #5e6b65;
+  color: var(--text-2);
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
 
@@ -640,8 +640,8 @@ function addCatalogItem(item: CatalogItem) {
 
   &:hover,
   &.is-active {
-    background: #eef7f3;
-    color: #0f6b54;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
   }
 }
 
@@ -656,17 +656,17 @@ function addCatalogItem(item: CatalogItem) {
   display: grid;
   gap: 2px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eef1ef;
+  border-bottom: 1px solid var(--border);
 
   strong {
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 16px;
     line-height: 22px;
     font-weight: 800;
   }
 
   span {
-    color: #75827c;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 16px;
   }
@@ -676,7 +676,7 @@ function addCatalogItem(item: CatalogItem) {
   display: grid;
   gap: 6px;
   padding: 10px 0;
-  border-bottom: 1px solid #f0f3f1;
+  border-bottom: 1px solid var(--border);
 
   &:last-child {
     border-bottom: 0;
@@ -688,21 +688,21 @@ function addCatalogItem(item: CatalogItem) {
     align-items: center;
     gap: 8px;
     margin: 0;
-    color: #273730;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 800;
     line-height: 18px;
   }
 
   h4 i {
-    color: #7b8782;
+    color: var(--text-2);
     font-style: normal;
     font-size: 14px;
   }
 
   p {
     margin: 0;
-    color: #74817a;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 16px;
   }
@@ -725,18 +725,18 @@ function addCatalogItem(item: CatalogItem) {
 .cf-component-catalog__relation-card {
   position: relative;
   width: 100%;
-  border: 1px solid #e3e8e6;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
-  color: #24352e;
+  background: var(--bg-card);
+  color: var(--text-1);
   text-align: left;
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
 
   &:hover {
-    border-color: #1f6f5f;
-    background: #f6fbf8;
-    box-shadow: 0 4px 10px rgba(31, 111, 95, .07);
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
   }
 }
@@ -757,7 +757,7 @@ function addCatalogItem(item: CatalogItem) {
 
   strong {
     overflow: hidden;
-    color: #23342d;
+    color: var(--text-1);
     font-size: 12px;
     line-height: 16px;
     text-overflow: ellipsis;
@@ -767,7 +767,7 @@ function addCatalogItem(item: CatalogItem) {
   em {
     display: none;
     overflow: hidden;
-    color: #74817a;
+    color: var(--text-2);
     font-size: 12px;
     font-style: normal;
     line-height: 17px;
@@ -780,10 +780,10 @@ function addCatalogItem(item: CatalogItem) {
     top: -7px;
     right: 8px;
     padding: 1px 5px;
-    border: 1px solid #ffd8a8;
+    border: 1px solid var(--color-warning);
     border-radius: 999px;
     background: var(--color-warning-light);
-    color: #d46b08;
+    color: var(--color-warning-text);
     font-size: 10px;
     line-height: 14px;
     white-space: nowrap;
@@ -804,7 +804,7 @@ function addCatalogItem(item: CatalogItem) {
   top: 50%;
   left: 3px;
   transform: translateY(-50%);
-  color: #a7b0ab;
+  color: var(--text-3);
   cursor: grab;
   font-style: normal;
   font-size: 10px;
@@ -824,8 +824,8 @@ function addCatalogItem(item: CatalogItem) {
   min-width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: #f1f6f4;
-  color: #1f3029;
+  background: var(--bg-muted);
+  color: var(--text-1);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
@@ -833,7 +833,7 @@ function addCatalogItem(item: CatalogItem) {
 
 .cf-component-catalog__drag-clone {
   opacity: .64;
-  background: #ecf7f1 !important;
+  background: var(--color-primary-light) !important;
 }
 
 .cf-component-catalog__relation-help {
@@ -843,7 +843,7 @@ function addCatalogItem(item: CatalogItem) {
   margin-top: 10px;
   padding: 10px 34px 10px 10px;
   border-radius: 8px;
-  background: #e8f4ff;
+  background: var(--color-info-light);
 
   button {
     position: absolute;
@@ -854,14 +854,14 @@ function addCatalogItem(item: CatalogItem) {
     border: 0;
     border-radius: 5px;
     background: transparent;
-    color: #7d8993;
+    color: var(--text-2);
     font-size: 18px;
     line-height: 18px;
     cursor: pointer;
   }
 
   strong {
-    color: #142235;
+    color: var(--text-1);
     font-size: 13px;
     line-height: 18px;
     font-weight: 800;
@@ -869,7 +869,7 @@ function addCatalogItem(item: CatalogItem) {
 
   p {
     margin: 0;
-    color: #536371;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
@@ -880,12 +880,12 @@ function addCatalogItem(item: CatalogItem) {
   grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
   margin-top: 10px;
-  border: 1px solid #e0e5e3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-card);
 
   span {
-    color: #9aa3a0;
+    color: var(--text-3);
     text-align: center;
     font-size: 15px;
   }
@@ -895,7 +895,7 @@ function addCatalogItem(item: CatalogItem) {
     min-width: 0;
     border: 0;
     padding: 7px 8px 7px 0;
-    color: #23342d;
+    color: var(--text-1);
     font-size: 12px;
     outline: none;
   }
@@ -911,8 +911,8 @@ function addCatalogItem(item: CatalogItem) {
     border: 0;
     border-radius: 7px;
     padding: 5px 9px;
-    background: #f1f3f2;
-    color: #26362f;
+    background: var(--bg-muted);
+    color: var(--text-1);
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
@@ -921,7 +921,7 @@ function addCatalogItem(item: CatalogItem) {
     &.is-active {
       background: var(--bg-card);
       color: var(--text-1);
-      box-shadow: 0 1px 3px rgba(18, 31, 53, 0.12);
+      box-shadow: var(--shadow-sm);
     }
   }
 }
@@ -936,7 +936,7 @@ function addCatalogItem(item: CatalogItem) {
 
   span {
     overflow: hidden;
-    color: #24352e;
+    color: var(--text-1);
     font-size: 12px;
     font-weight: 700;
     line-height: 16px;
@@ -945,7 +945,7 @@ function addCatalogItem(item: CatalogItem) {
   }
 
   em {
-    color: #8b9692;
+    color: var(--text-3);
     font-size: 11px;
     font-style: normal;
     white-space: nowrap;
