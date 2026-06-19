@@ -152,4 +152,40 @@ public class VoucherServiceTransactionTests
         Assert.All(entries, e => Assert.True(e.FDebitAmount == 100m || e.FCreditAmount == 100m));
         Assert.DoesNotContain(entries, e => e.FDebitAmount == 999m || e.FCreditAmount == 999m);
     }
+
+    // CardFlow 审批流(FlowEngineService)在自己的事务内经 Bridge→CreateAsync 生成凭证：
+    // WithTransactionAsync 必须复用外层事务、不得嵌套 BeginTransactionAsync（EF 不支持→否则抛错）。
+    [Fact]
+    public async Task Create_joins_existing_outer_transaction_without_nesting()
+    {
+        using var conn = new SqliteConnection("DataSource=:memory:");
+        conn.Open();
+        await using var db = CreateSqliteDb(conn);
+
+        db.Set<FinAccount>().AddRange(
+            VoucherServiceTestHarness.Account(1, "1001", "库存现金", AcctSet, Org),
+            VoucherServiceTestHarness.Account(2, "3001", "实收资本", AcctSet, Org));
+        db.Set<FinAccountPeriod>().Add(VoucherServiceTestHarness.Period(11, 2026, 6, AcctSet));
+        await db.SaveChangesAsync();
+
+        var http = VoucherServiceTestHarness.HttpContext(Org, AcctSet);
+        var service = VoucherServiceTestHarness.Build(db, http);
+
+        // 模拟外层事务（如 FlowEngineService）：在其中创建凭证不应因嵌套 BeginTransaction 抛错
+        await using var outer = await db.Database.BeginTransactionAsync();
+        var dto = await service.CreateAsync(new CreateVoucherRequest
+        {
+            VoucherWord = "记", Date = new DateTime(2026, 6, 15), PeriodId = 0,
+            Entries =
+            {
+                new CreateVoucherEntryRequest { LineNo = 1, Summary = "t", AccountId = 1, DebitAmount = 100m },
+                new CreateVoucherEntryRequest { LineNo = 2, Summary = "t", AccountId = 2, CreditAmount = 100m },
+            }
+        }, "tester", AcctSet);
+        await outer.CommitAsync(); // 由外层提交
+
+        Assert.True(dto.Id > 0);
+        await using var verify = CreateSqliteDb(conn);
+        Assert.Single(verify.Set<FinVoucher>()); // 外层提交后凭证落库
+    }
 }

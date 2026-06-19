@@ -52,12 +52,14 @@ public class VoucherService : IVoucherService
     }
 
     /// <summary>
-    /// 把一组写操作包进事务：关系型 provider 真正开事务，失败整体回滚；
+    /// 把一组写操作包进事务：关系型 provider 且当前无外层事务时，自开事务、失败整体回滚；
+    /// 已存在外层事务（如 CardFlow FlowEngineService 审批流在事务内经 Bridge 生成凭证）时，
+    /// 直接复用外层事务、由外层统一提交/回滚——避免 EF 不支持的嵌套 BeginTransaction 抛错；
     /// 非关系型(InMemory) provider 不支持事务，退化为直接执行（行为不变）。
     /// </summary>
     private async Task WithTransactionAsync(Func<Task> writes)
     {
-        if (!_context.Database.IsRelational())
+        if (!_context.Database.IsRelational() || _context.Database.CurrentTransaction != null)
         {
             await writes();
             return;
