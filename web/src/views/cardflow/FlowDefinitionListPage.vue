@@ -21,6 +21,8 @@ import {
   FileAddOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { FLOW_STATUS_META, FLOW_STATUS_OPTIONS, type FlowStatus } from './flowStatusMeta'
 import {
   getFlowDefinitions,
   publishFlowDefinition,
@@ -42,29 +44,6 @@ import { useOrgContextStore } from '@/stores/orgContext'
 
 const router = useRouter()
 const orgContextStore = useOrgContextStore()
-
-// ==================== 状态定义 ====================
-
-type FlowStatus = 'draft' | 'published' | 'disabled' | 'archived'
-
-interface StatusMeta {
-  text: string
-  color: string
-}
-
-const STATUS_META: Record<FlowStatus, StatusMeta> = {
-  draft: { text: '草稿', color: '#8c8c8c' },
-  published: { text: '已发布', color: 'var(--color-success)' },
-  disabled: { text: '已停用', color: 'var(--color-warning)' },
-  archived: { text: '已归档', color: '#bfbfbf' },
-}
-
-const STATUS_OPTIONS: Array<{ label: string; value: FlowStatus }> = [
-  { label: '草稿', value: 'draft' },
-  { label: '已发布', value: 'published' },
-  { label: '已停用', value: 'disabled' },
-  { label: '已归档', value: 'archived' },
-]
 
 // ==================== 数据/分页/筛选 ====================
 
@@ -484,7 +463,7 @@ onMounted(async () => {
               placeholder="状态"
               allow-clear
               :max-tag-count="2"
-              :options="STATUS_OPTIONS"
+              :options="FLOW_STATUS_OPTIONS"
               style="width: 140px"
               @change="handleSearch"
             />
@@ -542,10 +521,9 @@ onMounted(async () => {
 
         <!-- 状态 -->
         <template v-else-if="column.key === 'status'">
-          <span class="status-indicator">
-            <span class="status-dot" :style="{ backgroundColor: STATUS_META[statusOf(rawRecord as FlowDefinitionDto)]?.color }" />
-            <span class="status-text">{{ STATUS_META[statusOf(rawRecord as FlowDefinitionDto)]?.text || rawRecord.status }}</span>
-          </span>
+          <StatusTag :type="FLOW_STATUS_META[statusOf(rawRecord as FlowDefinitionDto) as FlowStatus]?.tagType ?? 'default'">
+            {{ FLOW_STATUS_META[statusOf(rawRecord as FlowDefinitionDto) as FlowStatus]?.text ?? rawRecord.status }}
+          </StatusTag>
         </template>
 
         <!-- 当前版本 -->
@@ -812,26 +790,6 @@ onMounted(async () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 280px;
-}
-
-// 状态指示器
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-
-  .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .status-text {
-    color: #595959;
-    white-space: nowrap;
-  }
 }
 
 // 版本标签

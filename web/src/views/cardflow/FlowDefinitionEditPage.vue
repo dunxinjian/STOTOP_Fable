@@ -66,6 +66,8 @@ import {
   parseCardSchemaPayload,
   parseDetailSchemaFields,
 } from '@/utils/cardflowSchema'
+import StatusTag from '@/components/StatusTag.vue'
+import { FLOW_STATUS_META, type FlowStatus } from './flowStatusMeta'
 
 // ==================== 状态形态 ====================
 
@@ -1805,9 +1807,9 @@ function goBack() {
             </div>
             <div class="fdef-fc-item">
               <div class="fdef-fc-item__label">状态</div>
-              <a-tag :color="state.basic.status === 'published' ? 'success' : state.basic.status === 'archived' ? 'error' : 'default'">
-                {{ state.basic.status === 'published' ? '已发布' : state.basic.status === 'archived' ? '已停用' : '草稿' }}
-              </a-tag>
+              <StatusTag :type="FLOW_STATUS_META[state.basic.status as FlowStatus]?.tagType ?? 'default'">
+                {{ FLOW_STATUS_META[state.basic.status as FlowStatus]?.text ?? '草稿' }}
+              </StatusTag>
             </div>
             <div class="fdef-fc-item">
               <div class="fdef-fc-item__label">描述</div>
