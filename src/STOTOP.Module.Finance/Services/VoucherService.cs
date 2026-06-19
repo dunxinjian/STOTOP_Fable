@@ -66,6 +66,26 @@ public class VoucherService : IVoucherService
         return 0;
     }
 
+    private long GetCurrentAccountSetId()
+    {
+        var header = _httpContextAccessor.HttpContext?.Request.Headers["X-AccountSet-Id"].FirstOrDefault();
+        return long.TryParse(header, out var id) ? id : 0;
+    }
+
+    /// <summary>
+    /// 按 id 取凭证（可含分录），并施加组织/账套归属过滤。无权或不存在均返回 null。
+    /// </summary>
+    private async Task<FinVoucher?> GetOwnedVoucherAsync(long id, bool includeEntries = false)
+    {
+        var query = _voucherRepository.Query();
+        if (includeEntries) query = query.Include(v => v.Entries);
+        var voucher = await query.AsTracking().FirstOrDefaultAsync(v => v.FID == id);
+        if (voucher == null) return null;
+        var orgId = GetCurrentOrgId();
+        var accountSetId = GetCurrentAccountSetId();
+        return VoucherPostingRules.IsAccessible(voucher, orgId, accountSetId) ? voucher : null;
+    }
+
     public async Task<VoucherPagedResult> GetPagedListAsync(VoucherQueryRequest request, long accountSetId = 0)
     {
         var currentOrgId = GetCurrentOrgId();
@@ -207,10 +227,8 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto?> GetByIdAsync(long id)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == id);
-        
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
+
         if (voucher == null) return null;
 
         var period = await _periodRepository.GetByIdAsync(voucher.FPeriodId);
@@ -358,11 +376,8 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier, bool enforceAuxContract = false)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .AsTracking()
-            .FirstOrDefaultAsync(v => v.FID == id);
-        
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
+
         if (voucher == null) return null;
         
         if (voucher.FStatus == 2)
@@ -469,7 +484,7 @@ public class VoucherService : IVoucherService
 
     public async Task<bool> DeleteAsync(long id)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
         
         if (voucher.FStatus == 2)
@@ -499,7 +514,7 @@ public class VoucherService : IVoucherService
 
     public async Task<bool> AuditAsync(long id, string auditor)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
 
         voucher.FStatus = 2; // 已审核
@@ -515,7 +530,7 @@ public class VoucherService : IVoucherService
 
     public async Task<bool> UnAuditAsync(long id)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
 
         voucher.FStatus = 1; // 待审核
@@ -683,9 +698,7 @@ public class VoucherService : IVoucherService
 
     public async Task<ApiResult<object>> CopyAsync(long voucherId)
     {
-        var source = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == voucherId);
+        var source = await GetOwnedVoucherAsync(voucherId, includeEntries: true);
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
@@ -752,9 +765,7 @@ public class VoucherService : IVoucherService
 
     public async Task<ApiResult<object>> ReverseAsync(long voucherId)
     {
-        var source = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == voucherId);
+        var source = await GetOwnedVoucherAsync(voucherId, includeEntries: true);
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
@@ -827,7 +838,7 @@ public class VoucherService : IVoucherService
 
         foreach (var id in voucherIds)
         {
-            var voucher = await _voucherRepository.GetByIdAsync(id);
+            var voucher = await GetOwnedVoucherAsync(id);
             if (voucher == null) continue;
 
             if (voucher.FStatus == 2)
@@ -1001,10 +1012,7 @@ public class VoucherService : IVoucherService
     /// </summary>
     public async Task<ApiResult> CompleteRecordAsync(long id)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .AsTracking()
-            .FirstOrDefaultAsync(v => v.FID == id);
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
 
         if (voucher == null)
             return ApiResult.Fail("凭证不存在");
