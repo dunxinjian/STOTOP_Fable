@@ -1,8 +1,8 @@
 <template>
-  <div class="page-container">
+  <div class="page-container page-container--flush">
     <PageHeader title="合同类型管理" description="管理合同类型信息">
-      <template #actions>
-        <a-button v-if="has(ContractPermissions.TypeManage)" type="primary" @click="handleAdd">
+      <template #right>
+        <a-button v-if="has(ContractPermissions.TypeManage)" type="primary" size="middle" @click="handleAdd">
           <template #icon><PlusOutlined /></template>新增类型
         </a-button>
       </template>
@@ -15,45 +15,30 @@
       style="margin-bottom: 16px"
     />
 
-    <a-card :bordered="false">
-      <a-table
-        :columns="tableColumns"
-        :data-source="tableData"
-        :loading="loading"
-        :pagination="paginationConfig"
-        row-key="id"
-        bordered
-        :scroll="{ x: 900 }"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record, index }">
-          <template v-if="column.dataIndex === 'index'">
-            {{ (pagination.pageIndex - 1) * pagination.pageSize + index + 1 }}
-          </template>
-          <template v-if="column.dataIndex === 'status'">
-            <a-tag :color="record.status === 1 ? 'success' : 'error'">
-              {{ record.status === 1 ? '启用' : '停用' }}
-            </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'action'">
-            <a-button v-if="has(ContractPermissions.TypeManage)" type="link" size="small" @click="handleEdit(record)">
-              <EditOutlined />编辑
-            </a-button>
-            <a-button
-              v-if="has(ContractPermissions.TypeManage)"
-              type="link"
-              size="small"
-              @click="handleToggleStatus(record)"
-            >
-              {{ record.status === 1 ? '停用' : '启用' }}
-            </a-button>
-          </template>
+    <DataTable
+      v-model:pagination="pagination"
+      :columns="tableColumns"
+      :data-source="tableData"
+      :loading="loading"
+      :scroll="{ x: 900 }"
+      row-key="id"
+      empty-text="暂无合同类型数据"
+      @change="fetchList"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'status'">
+          <StatusTag :type="record.status === 1 ? 'success' : 'default'">{{ record.status === 1 ? '启用' : '停用' }}</StatusTag>
         </template>
-        <template #emptyText>
-          <EmptyState description="暂无合同类型数据" />
+        <template v-if="column.dataIndex === 'action'">
+          <a-button v-if="has(ContractPermissions.TypeManage)" type="link" size="small" @click="handleEdit(record)">
+            <EditOutlined />编辑
+          </a-button>
+          <a-button v-if="has(ContractPermissions.TypeManage)" type="link" size="small" @click="handleToggleStatus(record)">
+            {{ record.status === 1 ? '停用' : '启用' }}
+          </a-button>
         </template>
-      </a-table>
-    </a-card>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
@@ -92,13 +77,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { PlusOutlined, EditOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import DataTable from '@/components/DataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { usePermission, ContractPermissions } from '@/utils/permission'
 import {
   getContractTypeList,
@@ -111,7 +97,6 @@ import {
 const { has } = usePermission()
 
 const tableColumns = [
-  { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
   { title: '编码', dataIndex: 'code', key: 'code', width: 120 },
   { title: '说明', dataIndex: 'description', key: 'description', ellipsis: true },
@@ -122,22 +107,7 @@ const tableColumns = [
 
 const loading = ref(false)
 const tableData = ref<ContractTypeDto[]>([])
-const pagination = reactive({ pageIndex: 1, pageSize: 20, total: 0 })
-
-const paginationConfig = computed(() => ({
-  current: pagination.pageIndex,
-  pageSize: pagination.pageSize,
-  total: pagination.total,
-  showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
-  showTotal: (t: number) => `共 ${t} 条`,
-}))
-
-function handleTableChange(pag: any) {
-  pagination.pageIndex = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchList()
-}
+const pagination = ref({ pageIndex: 1, pageSize: 20, total: 0 })
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
@@ -162,12 +132,12 @@ async function fetchList() {
   loading.value = true
   try {
     const res = await getContractTypeList({
-      pageIndex: pagination.pageIndex,
-      pageSize: pagination.pageSize,
+      pageIndex: pagination.value.pageIndex,
+      pageSize: pagination.value.pageSize,
     }) as any
     if (res) {
       tableData.value = res?.items || res || []
-      pagination.total = res?.total || res?.length || 0
+      pagination.value.total = res?.total || res?.length || 0
     }
   } finally {
     loading.value = false
