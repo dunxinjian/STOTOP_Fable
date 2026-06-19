@@ -761,6 +761,8 @@ public class FlowDefinitionService : IFlowDefinitionService
                     throw new InvalidOperationException($"条件流转目标节点不存在：{rule.FToStageKey}");
                 if (rule.FIsDefault && !string.IsNullOrWhiteSpace(rule.FConditionJson))
                     throw new InvalidOperationException($"默认分支不能配置条件：{rule.FEdgeKey}");
+                if (!rule.FIsDefault && string.IsNullOrWhiteSpace(rule.FConditionJson))
+                    throw new InvalidOperationException($"非默认分支必须配置条件：{rule.FEdgeKey}");
             }
         }
     }
