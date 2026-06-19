@@ -332,9 +332,9 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'signStatus'">
-                  <a-tag :color="['processing', 'success', 'error'][record.signStatus]">
+                  <StatusTag :type="(['info', 'success', 'danger'] as const)[record.signStatus] || 'default'">
                     {{ ['待签', '已签', '已拒签'][record.signStatus] }}
-                  </a-tag>
+                  </StatusTag>
                 </template>
               </template>
               <template #emptyText><EmptyState description="暂无签署记录" /></template>
@@ -351,9 +351,9 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'isHandled'">
-                  <a-tag :color="record.isHandled ? 'success' : 'warning'">
+                  <StatusTag :type="record.isHandled ? 'success' : 'warning'">
                     {{ record.isHandled ? '已处理' : '未处理' }}
-                  </a-tag>
+                  </StatusTag>
                 </template>
               </template>
               <template #emptyText><EmptyState description="暂无提醒" /></template>
