@@ -110,6 +110,17 @@ export interface ContractListItemDto {
   createdTime: string
 }
 
+export interface ContractStatusGroupDto {
+  status: number
+  statusName: string
+  count: number
+}
+
+export interface ContractStatisticsDto {
+  totalCount: number
+  byStatus: ContractStatusGroupDto[]
+}
+
 export interface ContractDto extends ContractListItemDto {
   templateId?: number
   templateName?: string
@@ -308,6 +319,10 @@ export function publishContractTemplate(id: number) {
 
 export function getContractList(params: ContractQueryRequest) {
   return get('/contract/contracts', params)
+}
+
+export function getContractStatistics() {
+  return get('/contract/contracts/statistics')
 }
 
 export function getContractById(id: number) {
