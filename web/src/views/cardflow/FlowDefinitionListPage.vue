@@ -19,6 +19,7 @@ import {
   AppstoreOutlined,
   ExclamationCircleOutlined,
   FileAddOutlined,
+  DownOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatusTag from '@/components/StatusTag.vue'
@@ -432,7 +433,7 @@ onMounted(async () => {
               <a-button>
                 <template #icon><AppstoreOutlined /></template>
                 批量操作
-                <span class="caret">▾</span>
+                <DownOutlined class="caret" />
               </a-button>
               <template #overlay>
                 <a-menu>
