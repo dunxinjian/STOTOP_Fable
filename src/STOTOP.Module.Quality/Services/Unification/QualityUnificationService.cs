@@ -71,6 +71,11 @@ public class QualityUnificationService : IQualityUnificationService
             netUpserts += r.NetworkMetricUpserts;
             netUnmatched += r.NetworkUnmatched;
             empUnmatched += r.EmployeeUnmatched;
+
+            // 规模化内存加固：每处理完一个源即清空变更跟踪，避免整轮 29 源的 tracked 实体累积。
+            // 安全：每源方法返回前已 SaveChanges；跨源网点指标合并靠"查库找已保存行"而非跟踪器；
+            // 每源 dedup 缓存是方法内局部变量。故此处 Clear 不丢数据、不破合并/幂等。
+            _db.ChangeTracker.Clear();
         }
 
         return new UnifyResult(events, empUpserts, netUpserts, netUnmatched, empUnmatched);
