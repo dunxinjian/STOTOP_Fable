@@ -348,7 +348,6 @@ const accountColumns = [
   { title: '类别', dataIndex: 'category', key: 'category', width: 120 },
   { title: '余额方向', dataIndex: 'balanceDirection', key: 'balanceDirection', width: 100, align: 'center' as const },
   { title: '辅助核算', dataIndex: 'auxiliary', key: 'auxiliary' },
-  { title: '外币', dataIndex: 'currency', key: 'currency', width: 80 },
   { title: '计算单位', dataIndex: 'unit', key: 'unit', width: 90, align: 'center' as const },
   { title: '启/停用', dataIndex: 'isEnabled', key: 'isEnabled', width: 100, align: 'center' as const, fixed: 'right' as const },
 ]
@@ -390,7 +389,6 @@ interface AccountNode {
   isEnabled: boolean
   parentId: number | null
   auxiliaryAccounting: any
-  foreignCurrency: string
   unit: string
   level: number
   children?: AccountNode[]
@@ -449,7 +447,6 @@ const formData = reactive({
   parentId: null as number | null,
   // 后端存储为逗号分隔的编码字符串（如 "customer,supplier"），表单不编辑、仅透传，避免更新时被清空
   auxiliary: null as string | null,
-  currency: '',
   unit: '',
   enableQuantity: false,
 })
@@ -640,7 +637,6 @@ async function handleEdit(row: any) {
       balanceDirection: data.balanceDirection,
       parentId: data.parentId || null,
       auxiliary: data.auxiliary ?? null,
-      currency: data.currency || '',
       unit: data.unit || '',
       enableQuantity: !!data.unit,
     })
@@ -659,7 +655,6 @@ function buildPayload() {
     balanceDirection: formData.balanceDirection,
     parentId: formData.parentId ?? 0,
     auxiliary: formData.auxiliary,
-    currency: formData.currency || null,
     unit: formData.enableQuantity ? formData.unit : null,
   }
 }
@@ -837,7 +832,6 @@ function resetForm() {
   formData.balanceDirection = '借'
   formData.parentId = null
   formData.auxiliary = null
-  formData.currency = ''
   formData.unit = ''
   formData.enableQuantity = false
   formRef.value?.resetFields()
