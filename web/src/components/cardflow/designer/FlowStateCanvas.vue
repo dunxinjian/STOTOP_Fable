@@ -1,4 +1,14 @@
 <script setup lang="ts">
+// SVG豁免区：vue-flow edge/handle stroke不解析var()，用真hex收口
+const CANVAS_COLORS = {
+  accent: '#E85E00',       // 选中边 → 橙化主色
+  condition: '#2878a8',    // 条件分支边 → 图论语义蓝，保留
+  defaultEdge: '#475569',  // 默认分支边 → 图论语义灰，保留
+  muted: '#9aa7a1',        // 线性边/拖动标签 → 中性灰，保留
+  labelBg: '#ffffff',      // edge label背景 → SVG fill必须真hex
+  linearLabel: '#66736d',  // 线性边 label文字 → 中性绿灰，保留
+}
+
 import { computed, ref, watch } from 'vue'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -57,9 +67,9 @@ const linearEdges = computed(() =>
       label: '默认顺序',
       data: { kind: 'linear' },
       class: 'cf-flow-graph-edge cf-flow-graph-edge--linear',
-      style: { stroke: '#9aa7a1', strokeWidth: 2 },
-      labelBgStyle: { fill: '#ffffff', fillOpacity: 0.9 },
-      labelStyle: { fill: '#66736d', fontWeight: 600, fontSize: 12 },
+      style: { stroke: CANVAS_COLORS.muted, strokeWidth: 2 },
+      labelBgStyle: { fill: CANVAS_COLORS.labelBg, fillOpacity: 0.9 },
+      labelStyle: { fill: CANVAS_COLORS.linearLabel, fontWeight: 600, fontSize: 12 },
     } satisfies Edge
   }),
 )
@@ -70,7 +80,7 @@ const routeEdges = computed(() =>
     .map(route => {
       const selected = props.selectedType === 'edge' && props.selectedKey === route.edgeKey
       const isDefault = route.isDefault
-      const stroke = selected ? '#1f6f5f' : isDefault ? '#475569' : '#2878a8'
+      const stroke = selected ? CANVAS_COLORS.accent : isDefault ? CANVAS_COLORS.defaultEdge : CANVAS_COLORS.condition
       return {
         id: route.edgeKey,
         source: route.fromStageKey,
@@ -87,7 +97,7 @@ const routeEdges = computed(() =>
           selected ? 'cf-flow-graph-edge--selected' : '',
         ].filter(Boolean).join(' '),
         style: { stroke, strokeWidth: selected ? 3 : 2.5 },
-        labelBgStyle: { fill: '#ffffff', fillOpacity: 0.94 },
+        labelBgStyle: { fill: CANVAS_COLORS.labelBg, fillOpacity: 0.94 },
         labelStyle: { fill: stroke, fontWeight: 700, fontSize: 12 },
       } satisfies Edge
     }),
@@ -313,8 +323,8 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   flex-direction: column;
   min-height: 620px;
   overflow: hidden;
-  border: 1px solid #dfe4e8;
-  background: #f8faf9;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
 }
 
 .cf-flow-canvas__head {
@@ -323,19 +333,19 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   justify-content: space-between;
   gap: 14px;
   padding: 14px 16px;
-  border-bottom: 1px solid #e4e8e6;
-  background: rgba(255, 255, 255, .96);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent);
 
   strong {
     display: block;
-    color: #17251f;
+    color: var(--text-1);
     font-size: 15px;
   }
 
   span {
     display: block;
     margin-top: 4px;
-    color: #6b7771;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -347,7 +357,7 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   gap: 12px;
 
   span {
-    color: #6e7a74;
+    color: var(--text-2);
     font-size: 12px;
     white-space: nowrap;
   }
@@ -357,7 +367,7 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   display: grid;
   place-items: center;
   min-height: 520px;
-  color: #7b8781;
+  color: var(--text-3);
   font-size: 13px;
 }
 
@@ -372,9 +382,9 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   height: 100%;
   min-height: 560px;
   background:
-    linear-gradient(90deg, rgba(38, 70, 83, .06) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(38, 70, 83, .06) 1px, transparent 1px),
-    #fbfcfb;
+    linear-gradient(90deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--text-3) 10%, transparent) 1px, transparent 1px),
+    var(--bg-page);
   background-size: 28px 28px;
 }
 
@@ -382,17 +392,17 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   position: relative;
   width: 340px;
   min-height: 96px;
-  border: 1px solid #dce5e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(23, 37, 31, .08);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
   cursor: grab;
   transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
 
   &:focus-visible,
   &:hover {
-    border-color: #1f6f5f;
-    box-shadow: 0 14px 32px rgba(31, 111, 95, .14);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
     outline: none;
   }
 
@@ -402,8 +412,8 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
 }
 
 .cf-flow-node--selected {
-  border-color: #1f6f5f;
-  box-shadow: 0 0 0 3px rgba(31, 111, 95, .16), 0 14px 32px rgba(31, 111, 95, .12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent), var(--shadow-md);
 }
 
 .cf-flow-node__stripe {
@@ -411,11 +421,11 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   inset: 0 auto 0 0;
   width: 5px;
   border-radius: 8px 0 0 8px;
-  background: #2c6e9f;
+  background: var(--color-info);
 }
 
 .cf-flow-node--auto .cf-flow-node__stripe {
-  background: #9a6a16;
+  background: var(--color-warning);
 }
 
 .cf-flow-node__body {
@@ -431,8 +441,8 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #edf4f2;
-  color: #1f6f5f;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 800;
 }
@@ -449,14 +459,14 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   }
 
   strong {
-    color: #1d2b25;
+    color: var(--text-1);
     font-size: 15px;
     line-height: 22px;
   }
 
   small {
     margin-top: 3px;
-    color: #75827c;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -482,20 +492,20 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
 }
 
 .cf-flow-node__badge--policy {
-  background: #fff4d8;
-  color: #8a5a00;
+  background: var(--color-warning-light);
+  color: var(--color-warning-text);
 }
 
 .cf-flow-node__badge--route {
-  background: #eaf4fb;
-  color: #216b98;
+  background: var(--color-info-light);
+  color: var(--color-info);
 }
 
 .cf-flow-node__drag {
   position: absolute;
   right: 14px;
   bottom: 10px;
-  color: #9aa7a1;
+  color: var(--text-3);
   font-size: 12px;
 }
 
@@ -503,7 +513,7 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   position: absolute;
   top: 34px;
   right: -34px;
-  color: #2878a8;
+  color: var(--color-info);
   font-size: 12px;
   font-weight: 700;
 }
@@ -511,17 +521,17 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
 :deep(.cf-flow-node__branch-handle) {
   width: 11px;
   height: 11px;
-  border: 2px solid #fff;
-  background: #2878a8;
-  box-shadow: 0 0 0 2px rgba(40, 120, 168, .28);
+  border: 2px solid var(--bg-card);
+  background: var(--color-info);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-info) 28%, transparent);
 }
 
 :deep(.vue-flow__handle) {
   width: 10px;
   height: 10px;
-  border: 2px solid #fff;
-  background: #1f6f5f;
-  box-shadow: 0 0 0 2px rgba(31, 111, 95, .22);
+  border: 2px solid var(--bg-card);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 :deep(.cf-flow-graph-edge--linear .vue-flow__edge-path) {
@@ -529,15 +539,15 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
 }
 
 :deep(.cf-flow-graph-edge--conditional .vue-flow__edge-path) {
-  stroke: #2878a8;
+  stroke: var(--color-info);
 }
 
 :deep(.cf-flow-graph-edge--default .vue-flow__edge-path) {
-  stroke: #475569;
+  stroke: var(--text-2);
 }
 
 :deep(.cf-flow-graph-edge--selected .vue-flow__edge-path) {
-  filter: drop-shadow(0 3px 5px rgba(31, 111, 95, .25));
+  filter: drop-shadow(0 3px 5px color-mix(in srgb, var(--color-primary) 25%, transparent));
 }
 
 :deep(.vue-flow__edge-textbg) {
@@ -553,11 +563,11 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
-  border: 1px solid rgba(220, 229, 225, .9);
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
   border-radius: 8px;
-  background: rgba(255, 255, 255, .92);
-  box-shadow: 0 8px 22px rgba(23, 37, 31, .08);
-  color: #52615a;
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-2);
   font-size: 12px;
 }
 
@@ -575,15 +585,15 @@ function resolveFlowPayload(args: any[], key: 'node' | 'edge') {
 }
 
 .cf-flow-canvas__dot--linear {
-  background: #9aa7a1;
+  background: var(--text-3);
 }
 
 .cf-flow-canvas__dot--conditional {
-  background: #2878a8;
+  background: var(--color-info);
 }
 
 .cf-flow-canvas__dot--policy {
-  background: #c48813;
+  background: var(--color-warning);
 }
 
 @media (max-width: 900px) {
