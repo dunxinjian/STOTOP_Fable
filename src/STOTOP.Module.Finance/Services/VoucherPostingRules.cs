@@ -25,4 +25,14 @@ public static class VoucherPostingRules
                 $"未找到账套 {accountSetId} 在 {date:yyyy-MM-dd} 对应的账期，请先建立该期间");
         return period;
     }
+
+    /// <summary>
+    /// 校验期间未结账，已结账则拒绝落库（FIsClosed: 1=已结账）。
+    /// </summary>
+    public static void EnsureOpenForPosting(FinAccountPeriod period)
+    {
+        if (period.FIsClosed == 1)
+            throw new InvalidOperationException(
+                $"{period.FYear}年第{period.FPeriodNo}期已结账，不能在该期间登记/修改凭证");
+    }
 }

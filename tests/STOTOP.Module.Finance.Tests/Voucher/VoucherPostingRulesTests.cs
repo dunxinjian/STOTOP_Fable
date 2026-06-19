@@ -37,4 +37,20 @@ public class VoucherPostingRulesTests
             () => VoucherPostingRules.ResolvePeriod(Periods(), new DateTime(2026, 7, 1), accountSetId: 1));
         Assert.Contains("未找到", ex.Message);
     }
+
+    [Fact]
+    public void EnsureOpenForPosting_throws_when_period_closed()
+    {
+        var closed = new FinAccountPeriod { FID = 10, FIsClosed = 1, FYear = 2026, FPeriodNo = 5 };
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => VoucherPostingRules.EnsureOpenForPosting(closed));
+        Assert.Contains("已结账", ex.Message);
+    }
+
+    [Fact]
+    public void EnsureOpenForPosting_passes_when_period_open()
+    {
+        var open = new FinAccountPeriod { FID = 11, FIsClosed = 0 };
+        Assert.Null(Record.Exception(() => VoucherPostingRules.EnsureOpenForPosting(open)));
+    }
 }
