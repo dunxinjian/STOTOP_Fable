@@ -350,7 +350,7 @@ public class AccountSetService
                     sourceId = industryCode.ToLower() switch
                     {
                         "standard" => 0,           // 小企业会计准则（默认科目表）
-                        "express-delivery" => -2,  // 快递行业模板
+                        "express-delivery" => 2,  // 快递行业模板：取账套2(太仓美申)科目，与 FID3 模板数据源口径一致
                         _ => throw new InvalidOperationException($"不支持的行业模板编码: {industryCode}")
                     };
                     break;
