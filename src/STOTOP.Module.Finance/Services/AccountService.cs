@@ -391,6 +391,25 @@ public class AccountService : IAccountService
             }
         }
 
+        // 试算平衡校验（全量快照：末级科目期初取 提交值→库中现值→0，Σ借 必须 == Σ贷）
+        var leafAccountIds = accountIds.Where(id => !parentIds.Contains(id)).ToList();
+        var existingBalanceRows = await _balanceRepository.Query()
+            .Where(b => b.FPeriodId == 0 && b.FAccountSetId == request.AccountSetId)
+            .ToListAsync();
+        var existingMap = existingBalanceRows
+            .GroupBy(b => b.FAccountId)
+            .ToDictionary(g => g.Key, g => (g.Sum(b => b.FBeginDebit), g.Sum(b => b.FBeginCredit)));
+        var submittedMap = request.Items
+            .GroupBy(i => i.AccountId)
+            .ToDictionary(g => g.Key, g => (g.Sum(i => i.DebitBalance), g.Sum(i => i.CreditBalance)));
+        var (totalDebit, totalCredit) = InitialBalanceValidator.ComputeTotals(leafAccountIds, existingMap, submittedMap);
+        var difference = totalDebit - totalCredit;
+        if (!InitialBalanceValidator.IsBalanced(difference))
+        {
+            throw new InvalidOperationException(
+                $"期初借贷不平衡，借方合计 {totalDebit:F2}，贷方合计 {totalCredit:F2}，差额 {difference:F2}");
+        }
+
         foreach (var item in request.Items)
         {
             // 期初余额使用 PeriodId=0 存储
