@@ -105,7 +105,10 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
             result.Steps.Add(step);
 
             var outgoing = routes
-                .Where(route => string.Equals(route.FFromStageKey, currentKey, StringComparison.OrdinalIgnoreCase))
+                .Where(route =>
+                    (!string.IsNullOrWhiteSpace(currentKey)
+                        && string.Equals(route.FFromStageKey, currentKey, StringComparison.OrdinalIgnoreCase))
+                    || (route.FFromStageDefinitionId != null && route.FFromStageDefinitionId == current.FID))
                 .OrderBy(route => route.FPriority)
                 .ThenBy(route => route.FID)
                 .ToList();
@@ -159,9 +162,25 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
     {
         foreach (var route in outgoing.Where(route => !route.FIsDefault))
         {
+            if (string.IsNullOrWhiteSpace(route.FConditionJson))
+            {
+                step.Candidates.Add(new CardFlowPathPreviewCandidateDto
+                {
+                    EdgeKey = route.FEdgeKey,
+                    RouteName = route.FRouteName,
+                    ToStageKey = route.FToStageKey,
+                    Priority = route.FPriority,
+                    IsDefault = route.FIsDefault,
+                    Matched = false,
+                    Explanation = "非默认分支缺条件，不命中",
+                    TypeErrors = new List<string> { "非默认分支未配置条件" }
+                });
+                continue;
+            }
+
             var evaluation = _conditionRuleEvaluator.Evaluate(route.FConditionJson, context);
             step.Candidates.Add(ToCandidate(route, evaluation));
-            if (evaluation.Matched && evaluation.TypeErrors.Count == 0)
+            if (evaluation.Matched)
                 return route;
         }
 

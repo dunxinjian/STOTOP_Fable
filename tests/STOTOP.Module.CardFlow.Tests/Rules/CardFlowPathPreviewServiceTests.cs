@@ -158,4 +158,95 @@ public class CardFlowPathPreviewServiceTests
             new CfStageRouteRule { FFlowVersionId = 311, FEdgeKey = "ds_default", FFromStageKey = "begin", FToStageKey = "other", FRouteName = "其他", FPriority = 99, FIsDefault = true, FStatus = "active" });
         // empty / other 终端
     }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task PreviewDraftVersion_EmptyConditionNonDefault_NotTreatedAsCatchAll()
+    {
+        using var db = TestDbContextFactory.Create(nameof(PreviewDraftVersion_EmptyConditionNonDefault_NotTreatedAsCatchAll));
+        SeedEmptyConditionFlow(db);
+        await db.SaveChangesAsync();
+
+        var service = new CardFlowPathPreviewService(db, new ConditionRuleEvaluator(), new AuditSnapshotPolicyService());
+
+        var result = await service.PreviewDraftVersionAsync(400, new CardFlowPathPreviewRequest { DataJson = "{}" });
+
+        // 空条件非默认规则不再被当 catch-all；落默认分支
+        Assert.Equal("to_default", result.Steps[0].SelectedEdgeKey);
+    }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task PreviewDraftVersion_FollowsEdgeMatchedByDefinitionIdOnly()
+    {
+        using var db = TestDbContextFactory.Create(nameof(PreviewDraftVersion_FollowsEdgeMatchedByDefinitionIdOnly));
+        SeedDefinitionIdEdgeFlow(db);
+        await db.SaveChangesAsync();
+
+        var service = new CardFlowPathPreviewService(db, new ConditionRuleEvaluator(), new AuditSnapshotPolicyService());
+
+        var result = await service.PreviewDraftVersionAsync(410, new CardFlowPathPreviewRequest { DataJson = "{}" });
+
+        // 仅靠 FFromStageDefinitionId 关联的边，预演也能跟随
+        Assert.Equal(new[] { "n1", "n2" }, result.Steps.Select(step => step.StageKey));
+    }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task PreviewDraftVersion_TypeErrorInOrGroup_StillSelected()
+    {
+        using var db = TestDbContextFactory.Create(nameof(PreviewDraftVersion_TypeErrorInOrGroup_StillSelected));
+        SeedTypeErrorFlow(db);
+        await db.SaveChangesAsync();
+
+        var service = new CardFlowPathPreviewService(db, new ConditionRuleEvaluator(), new AuditSnapshotPolicyService());
+
+        var result = await service.PreviewDraftVersionAsync(420, new CardFlowPathPreviewRequest
+        {
+            // amount 存在但非数值比较对象 → gt 叶产生 TypeError；flag 叶为真 → or 组整体命中
+            DataJson = """{"flag":true,"amount":100}"""
+        });
+
+        // or 组含一个类型错子条件但整体真命中 → 与运行时一致地选中(不再因 TypeErrors 跳过)
+        Assert.Equal("typed_hit", result.Steps[0].SelectedEdgeKey);
+    }
+
+    private static void SeedEmptyConditionFlow(STOTOP.Infrastructure.Data.STOTOPDbContext db)
+    {
+        db.Set<CfFlowDefinition>().Add(new CfFlowDefinition { FID = 400, FFlowName = "空条件", FFlowCode = "EC", FStatus = "draft", FOrgId = 1, FCreatedTime = DateTime.Now });
+        db.Set<CfFlowVersion>().Add(new CfFlowVersion { FID = 401, FFlowDefinitionId = 400, FVersionNumber = 1, FStatus = "draft", FCreatedTime = DateTime.Now });
+        db.Set<CfStageDefinition>().AddRange(
+            new CfStageDefinition { FID = 30, FFlowVersionId = 401, FStageKey = "s0", FStageName = "起", FType = "human", FSortOrder = 1 },
+            new CfStageDefinition { FID = 31, FFlowVersionId = 401, FStageKey = "trap", FStageName = "陷阱", FType = "human", FSortOrder = 2 },
+            new CfStageDefinition { FID = 32, FFlowVersionId = 401, FStageKey = "safe", FStageName = "默认", FType = "human", FSortOrder = 3 });
+        db.Set<CfStageRouteRule>().AddRange(
+            // 非默认规则，条件为空(null) —— 修复前被当 catch-all
+            new CfStageRouteRule { FFlowVersionId = 401, FEdgeKey = "empty_trap", FFromStageKey = "s0", FToStageKey = "trap", FRouteName = "空条件", FConditionJson = null, FPriority = 1, FStatus = "active" },
+            new CfStageRouteRule { FFlowVersionId = 401, FEdgeKey = "to_default", FFromStageKey = "s0", FToStageKey = "safe", FRouteName = "默认", FPriority = 99, FIsDefault = true, FStatus = "active" });
+        // trap / safe 终端：修复后 s0→safe(to_default)，修复前 s0→trap(empty_trap)
+    }
+
+    private static void SeedDefinitionIdEdgeFlow(STOTOP.Infrastructure.Data.STOTOPDbContext db)
+    {
+        db.Set<CfFlowDefinition>().Add(new CfFlowDefinition { FID = 410, FFlowName = "DefId边", FFlowCode = "DID", FStatus = "draft", FOrgId = 1, FCreatedTime = DateTime.Now });
+        db.Set<CfFlowVersion>().Add(new CfFlowVersion { FID = 411, FFlowDefinitionId = 410, FVersionNumber = 1, FStatus = "draft", FCreatedTime = DateTime.Now });
+        db.Set<CfStageDefinition>().AddRange(
+            new CfStageDefinition { FID = 40, FFlowVersionId = 411, FStageKey = "n1", FStageName = "节点1", FType = "human", FSortOrder = 1 },
+            new CfStageDefinition { FID = 41, FFlowVersionId = 411, FStageKey = "n2", FStageName = "节点2", FType = "human", FSortOrder = 2 });
+        db.Set<CfStageRouteRule>().Add(
+            // FFromStageKey 为空，仅靠 FFromStageDefinitionId=40 关联到 n1；n2 终端
+            new CfStageRouteRule { FFlowVersionId = 411, FEdgeKey = "by_defid", FFromStageKey = "", FFromStageDefinitionId = 40, FToStageKey = "n2", FRouteName = "按DefId", FPriority = 99, FIsDefault = true, FStatus = "active" });
+    }
+
+    private static void SeedTypeErrorFlow(STOTOP.Infrastructure.Data.STOTOPDbContext db)
+    {
+        db.Set<CfFlowDefinition>().Add(new CfFlowDefinition { FID = 420, FFlowName = "类型错", FFlowCode = "TE", FStatus = "draft", FOrgId = 1, FCreatedTime = DateTime.Now });
+        db.Set<CfFlowVersion>().Add(new CfFlowVersion { FID = 421, FFlowDefinitionId = 420, FVersionNumber = 1, FStatus = "draft", FCreatedTime = DateTime.Now });
+        db.Set<CfStageDefinition>().AddRange(
+            new CfStageDefinition { FID = 50, FFlowVersionId = 421, FStageKey = "t0", FStageName = "起", FType = "human", FSortOrder = 1 },
+            new CfStageDefinition { FID = 51, FFlowVersionId = 421, FStageKey = "hit", FStageName = "命中", FType = "human", FSortOrder = 2 },
+            new CfStageDefinition { FID = 52, FFlowVersionId = 421, FStageKey = "miss", FStageName = "默认", FType = "human", FSortOrder = 3 });
+        db.Set<CfStageRouteRule>().AddRange(
+            // or 组：一个类型错叶(amount gt "x"，amount 存在但与字符串不可比) + 一个真叶(flag eq true) → Matched=true 且 TypeErrors 非空
+            new CfStageRouteRule { FFlowVersionId = 421, FEdgeKey = "typed_hit", FFromStageKey = "t0", FToStageKey = "hit", FRouteName = "含类型错命中", FConditionJson = """{"logic":"or","conditions":[{"field":"card.amount","operator":"gt","value":"x"},{"field":"card.flag","operator":"eq","value":true}]}""", FPriority = 1, FStatus = "active" },
+            new CfStageRouteRule { FFlowVersionId = 421, FEdgeKey = "te_default", FFromStageKey = "t0", FToStageKey = "miss", FRouteName = "默认", FPriority = 99, FIsDefault = true, FStatus = "active" });
+        // hit / miss 终端
+    }
 }
