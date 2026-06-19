@@ -6,7 +6,7 @@
       </template>
       <template #right>
         <a-input v-model:value="searchForm.keyword" size="middle" placeholder="合同号/标题" style="width: 200px" allow-clear @keyup.enter="handleSearch" />
-        <a-select v-model:value="searchForm.typeId" size="middle" placeholder="类型" style="width: 140px" allow-clear :options="typeOptions" />
+        <a-select v-model:value="searchForm.typeId" size="middle" placeholder="类型" style="width: 140px" allow-clear :options="typeOptions" @change="handleSearch" />
         <a-range-picker v-model:value="searchForm.dateRange" size="middle" style="width: 240px" />
         <a-button size="middle" @click="handleReset">
           <template #icon><ReloadOutlined /></template>重置
