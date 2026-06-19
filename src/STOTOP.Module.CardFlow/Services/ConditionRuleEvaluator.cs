@@ -71,7 +71,11 @@ public sealed class ConditionRuleEvaluator : IConditionRuleEvaluator
             .Select(child => EvaluateElement(child, context))
             .ToList();
         if (childResults.Count == 0)
-            return ConditionRuleEvaluationResult.Match("空条件组默认匹配");
+            return new ConditionRuleEvaluationResult
+            {
+                Matched = false,
+                Explanation = "空条件组，不匹配"
+            };
 
         var matched = logic == "or"
             ? childResults.Any(result => result.Matched)
