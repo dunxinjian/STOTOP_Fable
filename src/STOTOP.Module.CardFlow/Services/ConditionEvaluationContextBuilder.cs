@@ -25,33 +25,27 @@ public sealed class ConditionEvaluationContextBuilder : IConditionEvaluationCont
             .Where(detail => detail.FCardId == card.FID)
             .ToListAsync(cancellationToken);
 
-        var context = new ConditionEvaluationContext
+        var detailData = details
+            .Select(detail => (IReadOnlyDictionary<string, object?>)ParseObject(detail.FDataJson))
+            .ToList();
+
+        var context = ConditionContextFactory.Build(new ConditionContextInputs
         {
             CardData = ParseObject(card.FDataJson),
-            SourceContext = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["sourceModule"] = card.FSourceModule,
-                ["sourceType"] = card.FSourceType,
-                ["sourceId"] = card.FSourceId,
-                ["returnUrl"] = card.FReturnUrl,
-                ["sourceTitle"] = card.FSourceTitle
-            },
-            Initiator = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["id"] = card.FInitiatorId,
-                ["name"] = card.FInitiatorName
-            },
-            InitiatorOrg = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["id"] = card.FOrgId
-            },
-            CurrentStageResult = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["round"] = card.FCurrentRound,
-                ["stageInstanceId"] = currentStage?.FID,
-                ["action"] = currentStage?.FFinalAction
-            }
-        };
+            DetailData = detailData,
+            SourceModule = card.FSourceModule,
+            SourceType = card.FSourceType,
+            SourceId = card.FSourceId,
+            ReturnUrl = card.FReturnUrl,
+            SourceTitle = card.FSourceTitle,
+            InitiatorId = card.FInitiatorId,
+            InitiatorName = card.FInitiatorName,
+            OrgId = card.FOrgId,
+            CurrentRound = card.FCurrentRound,
+            CurrentStageInstanceId = currentStage?.FID,
+            CurrentStageAction = currentStage?.FFinalAction,
+            HasCurrentStage = true
+        });
 
         if (currentStage?.FStageDefinitionId != null)
         {
@@ -62,41 +56,7 @@ public sealed class ConditionEvaluationContextBuilder : IConditionEvaluationCont
             context.CurrentStageResult["completedStageKey"] = stageKey;
         }
 
-        context.DetailSummary = BuildDetailSummary(details);
         return context;
-    }
-
-    private static Dictionary<string, object?> BuildDetailSummary(IEnumerable<CfCardDetail> details)
-    {
-        var rowCount = 0;
-        var amount = 0m;
-        var tax = 0m;
-        var actualPayAmount = 0m;
-        foreach (var detail in details)
-        {
-            rowCount++;
-            var data = ParseObject(detail.FDataJson);
-            amount += ReadDecimal(data, "amount");
-            tax += ReadDecimal(data, "tax");
-            actualPayAmount += ReadDecimal(data, "actualPayAmount")
-                + ReadDecimal(data, "payAmount")
-                + ReadDecimal(data, "实付金额");
-        }
-
-        return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["rowCount"] = rowCount,
-            ["amount"] = amount,
-            ["tax"] = tax,
-            ["actualPayAmount"] = actualPayAmount == 0m ? amount : actualPayAmount
-        };
-    }
-
-    private static decimal ReadDecimal(IReadOnlyDictionary<string, object?> data, string key)
-    {
-        if (!data.TryGetValue(key, out var value) || value == null)
-            return 0m;
-        return decimal.TryParse(value.ToString(), out var result) ? result : 0m;
     }
 
     private static Dictionary<string, object?> ParseObject(string? json)
