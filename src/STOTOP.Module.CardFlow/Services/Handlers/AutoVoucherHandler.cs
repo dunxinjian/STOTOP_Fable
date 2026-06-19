@@ -489,6 +489,8 @@ public partial class AutoVoucherHandler : IClassificationHandler
                     "SELECT TOP 1 FID FROM [FIN凭证] WHERE [F数据作用域ID] = @Key", new { Key = scopeId });
                 if (exists.HasValue) continue;   // 去重：重跑不重复建草稿
                 var draftReq = BuildDraftRequest(config, dateRows, voucherDate, period.FID, ctx.BatchId, scopeId);
+                if (draftReq.Entries[0].DebitAmount == 0m)
+                    warnings.Add($"待补录草稿金额为0(批次{ctx.BatchId} 日期{(dateKey?.ToString("yyyyMMdd") ?? "nodate")})，请确认数据源金额列名");
                 var draft = await _voucherService.SaveDraftAsync(draftReq, "数据导入系统", accountSetId);
                 generatedVoucherIds.Add(draft.Id);
                 _logger.LogInformation("AutoVoucher V2: 生成待补录草稿凭证 {VoucherId}, 日期={Date}, 未匹配行数={Count}",
@@ -708,6 +710,11 @@ public partial class AutoVoucherHandler : IClassificationHandler
     /// 金额逐行累加(收入列+支出列，一行只一列非0)；借贷两行用占位科目同额，
     /// Source="费用支出"、Remark含[待补录]，配合 SaveDraftAsync 写 FStatus=0 草稿(允许 AccountId=0)。
     /// </summary>
+    /// <remarks>
+    /// 金额列名 <c>F发生额收入</c> / <c>F发生额支出</c> 与申通总部交易明细(StgShentongHqTx / 规则21)数据源硬绑定。
+    /// 若 createDraft 推广到其它 STG 数据源，必须将金额列名参数化（如新增 <c>amountColumns</c> 参数），
+    /// 否则 TryGetValue 永远不命中、金额累加为 0，草稿凭证静默生成但金额全为 0（漏记风险）。
+    /// </remarks>
     internal static CreateVoucherRequest BuildDraftRequest(
         RulesBasedVoucherConfigV2 config, List<IDictionary<string, object>> rows,
         DateTime voucherDate, long periodId, long batchId, string scopeId)
