@@ -16,7 +16,7 @@
     <a-card v-if="buildingInfo" :bordered="false" style="margin-bottom: 12px">
       <a-descriptions :column="3" size="small">
         <a-descriptions-item label="楼栋编码">{{ buildingInfo.code }}</a-descriptions-item>
-        <a-descriptions-item label="总楼层">{{ buildingInfo.floorCount }} 层</a-descriptions-item>
+        <a-descriptions-item label="总楼层">{{ buildingInfo.totalFloors }} 层</a-descriptions-item>
         <a-descriptions-item label="地址">{{ buildingInfo.address || '-' }}</a-descriptions-item>
       </a-descriptions>
     </a-card>
@@ -101,7 +101,7 @@
               <a-input-number
                 v-model:value="roomFormData.floor"
                 :min="1"
-                :max="buildingInfo?.floorCount || 100"
+                :max="buildingInfo?.totalFloors || 100"
                 style="width: 100%"
                 placeholder="请输入楼层"
               />

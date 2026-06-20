@@ -144,13 +144,12 @@
             :disabled="dialogMode === 'edit'"
           />
         </a-form-item>
-        <a-form-item label="报修人ID" name="reporterId">
-          <a-input-number
-            v-model:value="formData.reporterId"
-            placeholder="请输入报修人ID"
-            style="width: 100%"
-            :min="1"
+        <a-form-item label="报修人" name="reporterId">
+          <EmployeeSelect
+            v-model="formData.reporterId"
+            :initial-label="formData.reporterName"
             :disabled="dialogMode === 'edit'"
+            placeholder="搜索报修人姓名/工号"
           />
         </a-form-item>
         <a-form-item label="问题描述" name="description">
@@ -191,13 +190,8 @@
         :label-col="{ style: { width: '100px' } }"
         style="padding: 10px 20px"
       >
-        <a-form-item label="处理人ID" name="handlerId">
-          <a-input-number
-            v-model:value="processFormData.handlerId"
-            placeholder="请输入处理人ID"
-            style="width: 100%"
-            :min="1"
-          />
+        <a-form-item label="处理人" name="handlerId">
+          <EmployeeSelect v-model="processFormData.handlerId" placeholder="搜索处理人姓名/工号" />
         </a-form-item>
         <a-form-item label="处理结果" name="result">
           <a-textarea
@@ -232,6 +226,7 @@ import type { Rule } from 'ant-design-vue/es/form'
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import EmployeeSelect from '@/components/EmployeeSelect.vue'
 import {
   getRepairOrderList,
   createRepairOrder,
@@ -325,6 +320,7 @@ const currentOrderId = ref<number | null>(null)
 const formData = reactive({
   roomId: undefined as number | undefined,
   reporterId: undefined as number | undefined,
+  reporterName: '',
   description: '',
   priority: undefined as number | undefined,
 })
@@ -438,6 +434,7 @@ function handleReset() {
 function resetForm() {
   formData.roomId = undefined
   formData.reporterId = undefined
+  formData.reporterName = ''
   formData.description = ''
   formData.priority = undefined
   currentOrderId.value = null
@@ -456,6 +453,7 @@ function handleEdit(record: any) {
   currentOrderId.value = record.id
   formData.roomId = record.roomId
   formData.reporterId = record.reporterId
+  formData.reporterName = record.reporterName || ''
   formData.description = record.description
   formData.priority = record.priority
   formDialogVisible.value = true

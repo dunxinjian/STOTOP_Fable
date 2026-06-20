@@ -147,12 +147,11 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="被访人ID">
-              <a-input-number
-                v-model:value="formData.visitedPersonId"
-                :min="1"
-                placeholder="请输入被访人员工ID"
-                style="width: 100%"
+            <a-form-item label="被访人">
+              <EmployeeSelect
+                v-model="formData.visitedPersonId"
+                :initial-label="formData.visitedPersonName"
+                placeholder="搜索被访人姓名/工号"
               />
             </a-form-item>
           </a-col>
@@ -201,6 +200,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutli
 import dayjs from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import EmployeeSelect from '@/components/EmployeeSelect.vue'
 import {
   getVisitorList,
   createVisitor,
@@ -282,6 +282,7 @@ const formData = reactive({
   visitorIdCard: '',
   visitReason: '',
   visitedPersonId: undefined as number | undefined,
+  visitedPersonName: '',
   arrivalTimeValue: null as any,
   remark: '',
 })
@@ -359,6 +360,7 @@ function resetForm() {
   formData.visitorIdCard = ''
   formData.visitReason = ''
   formData.visitedPersonId = undefined
+  formData.visitedPersonName = ''
   formData.arrivalTimeValue = dayjs()
   formData.remark = ''
 }
@@ -383,6 +385,7 @@ function handleEdit(record: any) {
   formData.visitorIdCard = record.visitorIdCard || ''
   formData.visitReason = record.visitReason || ''
   formData.visitedPersonId = record.visitedPersonId
+  formData.visitedPersonName = record.visitedPersonName || ''
   formData.arrivalTimeValue = record.arrivalTime ? dayjs(record.arrivalTime) : dayjs()
   formData.remark = record.remark || ''
 
