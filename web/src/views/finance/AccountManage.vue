@@ -5,13 +5,13 @@
         <AccountSetSelector style="width: 200px;" />
       </template>
       <template #right>
-        <a-button v-if="accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" type="primary" @click="handleAdd">
+        <a-button v-if="currentCategory !== 'initial' && accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" type="primary" @click="handleAdd">
           <PlusOutlined />新增
         </a-button>
-        <a-button v-if="accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
+        <a-button v-if="currentCategory !== 'initial' && accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
           <DeleteOutlined />删除
         </a-button>
-        <a-dropdown :trigger="['click']">
+        <a-dropdown v-if="currentCategory !== 'initial'" :trigger="['click']">
           <a-button>
             更多<DownOutlined />
           </a-button>
@@ -50,6 +50,7 @@
         :bordered="false"
         :loading="loading"
         :pagination="false"
+        :scroll="{ x: 'max-content' }"
         :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectionChange }"
         :rowClassName="(record: any) => 'tree-row' + (record._hasChildren ? ' has-children' : '')"
       >
@@ -99,13 +100,13 @@
             <a class="aux-set-link" @click="router.push({ name: 'AuxiliarySetting' })">设置</a>
           </template>
           <template v-if="column.dataIndex === 'unit'">
-            <span v-if="record.unit">{{ record.unit }}<SettingOutlined class="unit-icon" /></span>
+            <span v-if="record.unit">{{ record.unit }}</span>
             <span v-else>-</span>
           </template>
-          <template v-if="column.dataIndex === 'isEnabled'">
+          <template v-if="column.dataIndex === 'enableStatus'">
             <a-switch
               size="small"
-              :checked="record.isEnabled"
+              :checked="record.enableStatus"
               :disabled="!canEdit"
               @change="(val: any) => handleStatusChange(record, !!val)"
             />
@@ -304,7 +305,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
-import { PlusOutlined, DownOutlined, UpOutlined, RightOutlined, SettingOutlined, EditOutlined, DeleteOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DownOutlined, UpOutlined, RightOutlined, EditOutlined, DeleteOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
 import AccountSetSelector from '@/components/AccountSetSelector.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -352,7 +353,7 @@ const accountColumns = [
   { title: '余额方向', dataIndex: 'balanceDirection', key: 'balanceDirection', width: 100, align: 'center' as const },
   { title: '辅助核算', dataIndex: 'auxiliary', key: 'auxiliary' },
   { title: '计算单位', dataIndex: 'unit', key: 'unit', width: 90, align: 'center' as const },
-  { title: '启/停用', dataIndex: 'isEnabled', key: 'isEnabled', width: 100, align: 'center' as const, fixed: 'right' as const },
+  { title: '启/停用', dataIndex: 'enableStatus', key: 'enableStatus', width: 100, align: 'center' as const, fixed: 'right' as const },
 ]
 
 // 期初值表格 columns
@@ -389,7 +390,7 @@ interface AccountNode {
   category: string
   categoryName: string
   balanceDirection: string
-  isEnabled: boolean
+  enableStatus: boolean
   parentId: number | null
   auxiliaryAccounting: any
   unit: string
@@ -794,10 +795,11 @@ async function doToggleStatus(row: any, val: boolean) {
   try {
     await toggleAccountStatus(row.id)
     message.success(val ? '已启用' : '已停用')
-    loadData()
   } catch (error) {
     // 失败原因由请求拦截器统一弹后端消息（如"该科目已被凭证引用，无法停用"）
     console.error('状态切换失败:', error)
+  } finally {
+    loadData() // 成功失败都刷新，保证开关视觉与后端真实状态一致
   }
 }
 
@@ -1077,12 +1079,6 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   &:hover {
     text-decoration: underline;
   }
-}
-
-.unit-icon {
-  font-size: 12px;
-  margin-left: 4px;
-  color: $text-secondary;
 }
 
 .aux-set-link {

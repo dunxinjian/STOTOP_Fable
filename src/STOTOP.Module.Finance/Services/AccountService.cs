@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Module.Finance.Constants;
@@ -14,27 +13,17 @@ public class AccountService : IAccountService
     private readonly IRepository<FinAccountBalance> _balanceRepository;
     private readonly IRepository<FinVoucherEntry> _voucherEntryRepository;
     private readonly ChangeTrackingService _changeTrackingService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AccountService(
         IRepository<FinAccount> accountRepository,
         IRepository<FinAccountBalance> balanceRepository,
         IRepository<FinVoucherEntry> voucherEntryRepository,
-        ChangeTrackingService changeTrackingService,
-        IHttpContextAccessor httpContextAccessor)
+        ChangeTrackingService changeTrackingService)
     {
         _accountRepository = accountRepository;
         _balanceRepository = balanceRepository;
         _voucherEntryRepository = voucherEntryRepository;
         _changeTrackingService = changeTrackingService;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    private long GetCurrentOrgId()
-    {
-        var orgIdObj = _httpContextAccessor.HttpContext?.Items["CurrentOrgId"];
-        if (orgIdObj is long orgId) return orgId;
-        return 0;
     }
 
     public async Task<List<AccountTreeDto>> GetTreeAsync(string? category = null, long accountSetId = 0)
@@ -90,10 +79,13 @@ public class AccountService : IAccountService
         };
     }
 
-    public async Task<AccountDto?> GetByIdAsync(long id)
+    public async Task<AccountDto?> GetByIdAsync(long id, long accountSetId)
     {
         var account = await LoadAccountAsync(id);
-        return account == null ? null : MapToDto(account);
+        // 科目 id 全局唯一、LoadAccount 不按账套过滤；校验科目所属账套==请求账套，
+        // 不符按"不存在"返回，避免跨账套读取单条科目详情(F2)。
+        if (account == null || account.FAccountSetId != accountSetId) return null;
+        return MapToDto(account);
     }
 
     /// <summary>
@@ -119,6 +111,16 @@ public class AccountService : IAccountService
         if (string.IsNullOrWhiteSpace(request.Category) || !ValidCategories.Contains(request.Category))
         {
             throw new InvalidOperationException($"科目类别 {request.Category} 无效");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new InvalidOperationException("科目名称不能为空");
+        }
+
+        if (request.BalanceDirection != "借" && request.BalanceDirection != "贷")
+        {
+            throw new InvalidOperationException("科目余额方向只能为「借」或「贷」");
         }
 
         var existing = await _accountRepository.Query()
@@ -202,6 +204,11 @@ public class AccountService : IAccountService
     {
         var account = await LoadAccountAsync(id);
         if (account == null) return null;
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new InvalidOperationException("科目名称不能为空");
+        }
 
         // 记录变更前的快照，用于字段级变更追踪
         var oldSnapshot = new FinAccount
@@ -484,7 +491,7 @@ public class AccountService : IAccountService
         var accounts = await _accountRepository.Query()
             .Where(a => a.FAccountSetId == accountSetId
                 && a.FAuxiliary != null
-                && a.FAuxiliary.Contains(auxType)
+                && ("," + a.FAuxiliary + ",").Contains("," + auxType + ",")
                 && a.FEnableStatus == 1)
             .OrderBy(a => a.FCode)
             .ToListAsync();

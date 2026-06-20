@@ -12,11 +12,11 @@ namespace STOTOP.Module.Finance.Filters;
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
 public class RequireAccountSetPermissionAttribute : Attribute, IAsyncActionFilter
 {
-    private readonly string _permissionCode;
+    private readonly string[] _permissionCodes;
 
-    public RequireAccountSetPermissionAttribute(string permissionCode)
+    public RequireAccountSetPermissionAttribute(params string[] permissionCodes)
     {
-        _permissionCode = permissionCode;
+        _permissionCodes = permissionCodes;
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -62,13 +62,21 @@ public class RequireAccountSetPermissionAttribute : Attribute, IAsyncActionFilte
             return;
         }
 
-        // 4. 检查权限
+        // 4. 检查权限（任一权限码命中即放行）
         var authService = context.HttpContext.RequestServices.GetRequiredService<IAccountSetAuthorizationService>();
-        var hasPermission = await authService.HasPermissionAsync(userId, accountSetId, _permissionCode);
+        var hasPermission = false;
+        foreach (var code in _permissionCodes)
+        {
+            if (await authService.HasPermissionAsync(userId, accountSetId, code))
+            {
+                hasPermission = true;
+                break;
+            }
+        }
 
         if (!hasPermission)
         {
-            context.Result = new ObjectResult(new { code = 403, message = $"无账套操作权限：{_permissionCode}" })
+            context.Result = new ObjectResult(new { code = 403, message = $"无账套操作权限：{string.Join("/", _permissionCodes)}" })
             {
                 StatusCode = 403
             };

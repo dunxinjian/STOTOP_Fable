@@ -12,7 +12,7 @@ public class AccountServiceToggleStatusTests
             new Repository<FinAccount>(db),
             new Repository<FinAccountBalance>(db),
             new Repository<FinVoucherEntry>(db),
-            null!, null!);
+            null!);
 
     private static async Task SeedAccountAsync(STOTOP.Infrastructure.Data.STOTOPDbContext db, long id, long parentId = 0, int enableStatus = 1)
     {

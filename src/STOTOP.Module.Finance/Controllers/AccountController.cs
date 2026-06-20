@@ -20,6 +20,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("tree")]
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult<List<AccountTreeDto>>> GetTree([FromQuery] string? category, [FromQuery] long accountSetId = 0)
     {
         var result = await _accountService.GetTreeAsync(category, accountSetId);
@@ -30,6 +31,7 @@ public class AccountController : ControllerBase
     /// 平铺科目列表（用于选择器）
     /// </summary>
     [HttpGet]
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult<List<AccountSelectorDto>>> GetSelectorList(
         [FromQuery] long accountSetId = 0,
         [FromQuery] string? keyword = null,
@@ -74,6 +76,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("by-aux-type")]
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult<List<AccountDto>>> GetByAuxType(
         [FromQuery] string auxType,
         [FromQuery] long accountSetId = 0)
@@ -83,9 +86,10 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ApiResult<AccountDto>> GetById(long id)
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
+    public async Task<ApiResult<AccountDto>> GetById(long id, [FromHeader(Name = "X-AccountSet-Id")] long accountSetId = 0)
     {
-        var result = await _accountService.GetByIdAsync(id);
+        var result = await _accountService.GetByIdAsync(id, accountSetId);
         if (result == null)
         {
             return ApiResult<AccountDto>.Fail("科目不存在");
@@ -159,6 +163,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("initial-balances")]
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
     public async Task<ApiResult<List<InitialBalanceDto>>> GetInitialBalances([FromQuery] long accountSetId = 0)
     {
         var result = await _accountService.GetInitialBalancesAsync(accountSetId);

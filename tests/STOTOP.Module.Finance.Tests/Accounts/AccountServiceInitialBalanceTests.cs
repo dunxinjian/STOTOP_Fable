@@ -12,7 +12,7 @@ public class AccountServiceInitialBalanceTests
         => new AccountService(
             new Repository<FinAccount>(db),
             new Repository<FinAccountBalance>(db),
-            null!, null!, null!);
+            null!, null!);
 
     private static async Task SeedTwoLeafAccountsAsync(STOTOP.Infrastructure.Data.STOTOPDbContext db, long accountSetId)
     {
