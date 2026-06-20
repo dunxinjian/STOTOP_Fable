@@ -51,7 +51,7 @@ public static class OrgRoleContextResolver
         {
             var roles = await db.Set<SysUserRole>()
                 .Where(ur => ur.FUserId == uid)
-                .Join(db.Set<SysRole>(), ur => ur.FRoleId, r => r.FID, (ur, r) => new { r.FCode, r.FName })
+                .Join(db.Set<SysRole>().Where(r => r.FStatus == 1), ur => ur.FRoleId, r => r.FID, (ur, r) => new { r.FCode, r.FName })
                 .ToListAsync(cancellationToken);
             roleCodes = roles.Select(x => x.FCode).Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
             roleNames = roles.Select(x => x.FName).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();

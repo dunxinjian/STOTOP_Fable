@@ -94,4 +94,28 @@ public class ConditionEvaluationContextBuilderTests
         Assert.Contains("FIN", context.RoleCodes);
         Assert.Contains("财务", context.RoleNames);
     }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task BuildAsync_ExcludesDisabledRoles()
+    {
+        using var db = TestDbContextFactory.Create(nameof(BuildAsync_ExcludesDisabledRoles));
+        db.Set<SysRole>().AddRange(
+            new SysRole { FID = 200, FCode = "ACTIVE", FName = "在用角色", FStatus = 1 },
+            new SysRole { FID = 201, FCode = "DISABLED", FName = "停用角色", FStatus = 0 });
+        db.Set<SysUserRole>().AddRange(
+            new SysUserRole { FID = 10, FUserId = 8, FRoleId = 200 },
+            new SysUserRole { FID = 11, FUserId = 8, FRoleId = 201 });
+        db.Set<CfCard>().Add(new CfCard
+        {
+            FID = 610, FOrgId = 1, FInitiatorId = 8, FCurrentRound = 1, FDataJson = "{}"
+        });
+        await db.SaveChangesAsync();
+
+        var builder = new ConditionEvaluationContextBuilder(db);
+        var context = await builder.BuildAsync(db.Set<CfCard>().Find(610L)!);
+
+        Assert.Contains("ACTIVE", context.RoleCodes);
+        Assert.DoesNotContain("DISABLED", context.RoleCodes);   // 停用角色不参与路由
+        Assert.DoesNotContain("停用角色", context.RoleNames);
+    }
 }
