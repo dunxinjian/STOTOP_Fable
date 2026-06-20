@@ -36,6 +36,10 @@ export interface WorkItem {
   id: string
   source: 'oa' | 'quality' | 'task' | 'datacenter' | 'cardflow' | 'contract' | 'points' | 'finance' | 'system' | 'workflow'
   category: 'approval' | 'task' | 'alert' | 'notification' | 'reminder' | 'initiated'
+  /** 业务类型键（后端派生，用于上色/分组，如 'voucher' | 'quality' | 'flow:费用报销'） */
+  bizTypeKey: string
+  /** 业务类型中文标签（用户可见，如 '凭证复核' | '质量异常' | '费用报销'） */
+  bizTypeLabel: string
   priority: 'urgent' | 'high' | 'normal' | 'low'
   title: string
   summary: string
