@@ -26,6 +26,7 @@ import type { ConditionGroup, FieldOption } from './ConditionBuilder.vue'
 import type { CardComponentDefinition, SchemaFieldDefinition, AutoPluginRegistryDto, AutoPluginRuleDto } from '@/types/cardflow'
 import { getRoleList, getUserList } from '@/api/system'
 import { getPluginRegistry, getPluginRules } from '@/api/cardflow'
+import { Modal } from 'ant-design-vue'
 
 // ==================== 类型 ====================
 
@@ -195,6 +196,17 @@ function addStage(type: StageNodeType) {
 }
 
 function removeStage(idx: number) {
+  Modal.confirm({
+    title: '删除节点',
+    content: `确定删除节点「${stages.value[idx]?.name || '未命名节点'}」？该节点的路由/配置将一并移除。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: () => doRemoveStage(idx),
+  })
+}
+
+function doRemoveStage(idx: number) {
   stages.value.splice(idx, 1)
   if (selectedIndex.value === idx) {
     selectedIndex.value = -1
