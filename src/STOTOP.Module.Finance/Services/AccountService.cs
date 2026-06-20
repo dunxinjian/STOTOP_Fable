@@ -79,10 +79,13 @@ public class AccountService : IAccountService
         };
     }
 
-    public async Task<AccountDto?> GetByIdAsync(long id)
+    public async Task<AccountDto?> GetByIdAsync(long id, long accountSetId)
     {
         var account = await LoadAccountAsync(id);
-        return account == null ? null : MapToDto(account);
+        // 科目 id 全局唯一、LoadAccount 不按账套过滤；校验科目所属账套==请求账套，
+        // 不符按"不存在"返回，避免跨账套读取单条科目详情(F2)。
+        if (account == null || account.FAccountSetId != accountSetId) return null;
+        return MapToDto(account);
     }
 
     /// <summary>

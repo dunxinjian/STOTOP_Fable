@@ -6,7 +6,7 @@ namespace STOTOP.Module.Finance.Services.Interfaces;
 public interface IAccountService
 {
     Task<List<AccountTreeDto>> GetTreeAsync(string? category = null, long accountSetId = 0);
-    Task<AccountDto?> GetByIdAsync(long id);
+    Task<AccountDto?> GetByIdAsync(long id, long accountSetId);
     Task<AccountDto> CreateAsync(CreateAccountRequest request, long accountSetId = 0);
     Task<AccountDto?> UpdateAsync(long id, UpdateAccountRequest request);
     Task<bool> DeleteAsync(long id);

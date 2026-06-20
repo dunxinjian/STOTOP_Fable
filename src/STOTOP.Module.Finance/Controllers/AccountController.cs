@@ -83,9 +83,10 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ApiResult<AccountDto>> GetById(long id)
+    [RequireAccountSetPermission(AccountSetPermissions.SubjectView, AccountSetPermissions.SubjectEdit)]
+    public async Task<ApiResult<AccountDto>> GetById(long id, [FromHeader(Name = "X-AccountSet-Id")] long accountSetId = 0)
     {
-        var result = await _accountService.GetByIdAsync(id);
+        var result = await _accountService.GetByIdAsync(id, accountSetId);
         if (result == null)
         {
             return ApiResult<AccountDto>.Fail("科目不存在");
