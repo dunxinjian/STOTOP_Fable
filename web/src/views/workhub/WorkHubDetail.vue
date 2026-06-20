@@ -14,14 +14,7 @@ import {
   CloseOutlined,
   ExpandAltOutlined,
   ShrinkOutlined,
-  AuditOutlined,
-  WarningOutlined,
-  CheckSquareOutlined,
-  ImportOutlined,
   FileTextOutlined,
-  TrophyOutlined,
-  DollarOutlined,
-  SettingOutlined,
   LinkOutlined,
   ClockCircleOutlined,
   BellOutlined,
@@ -33,6 +26,7 @@ import 'dayjs/locale/zh-cn'
 import { executeWorkItemAction } from '@/api/workhub'
 import type { WorkItem, WorkItemAction } from '@/api/workhub'
 import { useWorkHub } from '@/composables/useWorkHub'
+import { bizTypeStyle } from './bizType'
 import CardActivityTimeline from '@/components/workhub/CardActivityTimeline.vue'
 
 dayjs.extend(relativeTimePlugin)
@@ -91,19 +85,7 @@ function collapseExpand() {
 // ===== 操作按钮状态 =====
 const actionLoading = ref<Record<string, boolean>>({})
 
-// ===== 来源配置 =====
-const sourceConfig: Record<string, { label: string; color: string; icon: any }> = {
-  oa: { label: 'OA审批', color: 'var(--biz-approval)', icon: AuditOutlined },
-  cardflow: { label: 'CardFlow审批', color: 'var(--biz-approval)', icon: AuditOutlined },
-  quality: { label: '质量异常', color: '#fa541c', icon: WarningOutlined },
-  task: { label: '任务', color: '#52c41a', icon: CheckSquareOutlined },
-  datacenter: { label: 'CardFlow', color: 'var(--biz-waybill)', icon: ImportOutlined },
-  contract: { label: '合同', color: '#7B5B3A', icon: FileTextOutlined },
-  points: { label: '积分', color: 'var(--biz-points)', icon: TrophyOutlined },
-  finance: { label: '财务', color: 'var(--biz-finance)', icon: DollarOutlined },
-  system: { label: '系统', color: '#595959', icon: SettingOutlined },
-  workflow: { label: '工作流', color: 'var(--color-info)', icon: CheckSquareOutlined },
-}
+// ===== 业务类型配置（由后端 bizTypeKey/bizTypeLabel 驱动） =====
 
 // ===== 优先级配置 =====
 const priorityConfig = {
@@ -135,9 +117,12 @@ const cardId = computed<number | null>(() => {
   return Number.isFinite(n) && n > 0 ? n : null
 })
 
-const workItemSourceConfig = computed(() => {
+const workItemBizConfig = computed(() => {
   if (!workItem.value) return null
-  return sourceConfig[workItem.value.source] ?? { label: workItem.value.source, color: '#595959', icon: SettingOutlined }
+  return {
+    label: workItem.value.bizTypeLabel || '审批',
+    ...bizTypeStyle(workItem.value.bizTypeKey),
+  }
 })
 
 const workItemPriorityConfig = computed(() => {
@@ -328,12 +313,12 @@ function goToDetailRoute() {
               <span
                 class="wi-source-tag"
                 :style="{
-                  background: (workItemSourceConfig?.color ?? '#595959') + '18',
-                  color: workItemSourceConfig?.color ?? '#595959'
+                  background: (workItemBizConfig?.color ?? 'var(--biz-approval)') + '18',
+                  color: workItemBizConfig?.color ?? 'var(--biz-approval)'
                 }"
               >
-                <component :is="workItemSourceConfig?.icon ?? SettingOutlined" class="wi-source-icon" />
-                {{ workItemSourceConfig?.label }}
+                <component :is="workItemBizConfig?.icon" class="wi-source-icon" />
+                {{ workItemBizConfig?.label }}
               </span>
               <a-tag
                 :color="workItemPriorityConfig?.tagColor ?? 'default'"
