@@ -5,13 +5,13 @@
         <AccountSetSelector style="width: 200px;" />
       </template>
       <template #right>
-        <a-button v-if="accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" type="primary" @click="handleAdd">
+        <a-button v-if="currentCategory !== 'initial' && accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" type="primary" @click="handleAdd">
           <PlusOutlined />新增
         </a-button>
-        <a-button v-if="accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
+        <a-button v-if="currentCategory !== 'initial' && accountSetStore.hasAccountSetPermission(AccountSetPermissions.SubjectEdit)" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
           <DeleteOutlined />删除
         </a-button>
-        <a-dropdown :trigger="['click']">
+        <a-dropdown v-if="currentCategory !== 'initial'" :trigger="['click']">
           <a-button>
             更多<DownOutlined />
           </a-button>
@@ -50,6 +50,7 @@
         :bordered="false"
         :loading="loading"
         :pagination="false"
+        :scroll="{ x: 'max-content' }"
         :rowSelection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectionChange }"
         :rowClassName="(record: any) => 'tree-row' + (record._hasChildren ? ' has-children' : '')"
       >
@@ -99,7 +100,7 @@
             <a class="aux-set-link" @click="router.push({ name: 'AuxiliarySetting' })">设置</a>
           </template>
           <template v-if="column.dataIndex === 'unit'">
-            <span v-if="record.unit">{{ record.unit }}<SettingOutlined class="unit-icon" /></span>
+            <span v-if="record.unit">{{ record.unit }}</span>
             <span v-else>-</span>
           </template>
           <template v-if="column.dataIndex === 'enableStatus'">
@@ -304,7 +305,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
-import { PlusOutlined, DownOutlined, UpOutlined, RightOutlined, SettingOutlined, EditOutlined, DeleteOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DownOutlined, UpOutlined, RightOutlined, EditOutlined, DeleteOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
 import AccountSetSelector from '@/components/AccountSetSelector.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -1078,12 +1079,6 @@ watch(() => accountSetStore.currentAccountSetId, () => {
   &:hover {
     text-decoration: underline;
   }
-}
-
-.unit-icon {
-  font-size: 12px;
-  margin-left: 4px;
-  color: $text-secondary;
 }
 
 .aux-set-link {
