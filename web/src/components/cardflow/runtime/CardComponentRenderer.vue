@@ -469,17 +469,17 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   grid-template-columns: minmax(92px, 140px) minmax(0, 1fr);
   gap: 10px;
   align-items: center;
-  border-bottom: 1px solid #eef1ef;
+  border-bottom: 1px solid var(--border);
   padding: 7px 0;
 
   label {
-    color: #637068;
+    color: var(--text-2);
     font-size: 13px;
     line-height: 20px;
   }
 
   strong {
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
@@ -491,16 +491,16 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   textarea {
     width: 100%;
     min-width: 0;
-    border: 1px solid #d9dfdc;
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 6px 8px;
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     outline: none;
 
     &:focus {
-      border-color: #3d7d5c;
-      box-shadow: 0 0 0 2px rgba(61, 125, 92, 0.12);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 12%, transparent);
     }
   }
 
@@ -511,7 +511,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   }
 
   &__required {
-    color: #b23b3b;
+    color: var(--color-danger-text);
     margin-right: 2px;
   }
 
@@ -538,17 +538,17 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   display: grid;
   gap: 3px;
   padding: 10px 0 6px;
-  border-bottom: 1px solid #dfe7e3;
+  border-bottom: 1px solid var(--border);
 
   strong {
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 15px;
     line-height: 22px;
     font-weight: 700;
   }
 
   span {
-    color: #7a8781;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
@@ -556,21 +556,21 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 
 .cf-runtime-text-block {
   padding: 10px 12px;
-  border: 1px solid #e3eae6;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #f8fbfa;
+  background: var(--bg-muted);
 
   strong {
     display: block;
     margin-bottom: 4px;
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 13px;
     line-height: 19px;
   }
 
   p {
     margin: 0;
-    color: #5f6f67;
+    color: var(--text-3);
     font-size: 13px;
     line-height: 20px;
     white-space: pre-wrap;
@@ -584,17 +584,17 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   gap: 10px;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #eef1ef;
+  border-bottom: 1px solid var(--border);
 
   label {
-    color: #637068;
+    color: var(--text-2);
     font-size: 13px;
     line-height: 20px;
   }
 
   strong,
   span {
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
@@ -609,7 +609,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 }
 
 .cf-runtime-rating__star {
-  color: #d1d5db;
+  color: var(--text-3);
   font-style: normal;
   margin-right: 3px;
 
@@ -625,7 +625,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   align-items: center;
 
   span {
-    color: #7a8781;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
@@ -640,11 +640,11 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   button,
   span {
     min-height: 28px;
-    border: 1px solid #dfe7e3;
+    border: 1px solid var(--border);
     border-radius: 5px;
     padding: 4px 9px;
-    background: #fff;
-    color: #314139;
+    background: var(--bg-card);
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
@@ -654,14 +654,14 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 
     &:hover,
     &.is-selected {
-      border-color: #3d7d5c;
-      background: #eef8f4;
-      color: #165b47;
+      border-color: var(--color-primary);
+      background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+      color: var(--color-primary);
     }
   }
 
   strong {
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
@@ -686,8 +686,8 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   flex: 0 0 auto;
   width: 14px;
   height: 14px;
-  border: 1.5px solid #91a49b;
-  background: #fff;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-card);
 }
 
 .cf-runtime-choice-control--radio .cf-runtime-choice-dot {
@@ -699,8 +699,8 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 }
 
 .cf-runtime-choice-control.is-selected .cf-runtime-choice-dot {
-  border-color: #1f6f5f;
-  background: #1f6f5f;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 .cf-runtime-choice-control--radio.is-selected .cf-runtime-choice-dot::after {
@@ -708,7 +708,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   position: absolute;
   inset: 3px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--text-on-accent);
 }
 
 .cf-runtime-choice-control--checkbox.is-selected .cf-runtime-choice-dot::after {
@@ -718,7 +718,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   top: 1px;
   width: 5px;
   height: 8px;
-  border: solid #fff;
+  border: solid var(--text-on-accent);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -738,11 +738,11 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 
   li {
     min-width: 0;
-    border: 1px solid #e3eae6;
+    border: 1px solid var(--border);
     border-radius: 5px;
     padding: 5px 8px;
-    background: #fbfcfb;
-    color: #2f3f38;
+    background: var(--bg-muted);
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
     word-break: break-word;
@@ -753,18 +753,18 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   display: grid;
   gap: 6px;
   padding: 12px;
-  border: 1px dashed #cfdcd6;
+  border: 1px dashed var(--border);
   border-radius: 6px;
-  background: #f8fbfa;
+  background: var(--bg-muted);
 
   strong {
-    color: #23322c;
+    color: var(--text-1);
     font-size: 13px;
     line-height: 18px;
   }
 
   span {
-    color: #7a8781;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
@@ -773,17 +773,17 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 .cf-runtime-media-placeholder--signature {
   min-height: 72px;
   background:
-    linear-gradient(135deg, transparent 47%, rgba(31, 111, 95, .18) 48%, rgba(31, 111, 95, .18) 52%, transparent 53%),
-    #fbfdfc;
+    linear-gradient(135deg, transparent 47%, color-mix(in srgb, var(--color-primary) 18%, transparent) 48%, color-mix(in srgb, var(--color-primary) 18%, transparent) 52%, transparent 53%),
+    var(--bg-muted);
 }
 
 .cf-runtime-suite {
   display: grid;
   gap: 8px;
   padding: 12px;
-  border: 1px solid #dfe9e4;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #f8fbfa;
+  background: var(--bg-muted);
 
   header {
     display: flex;
@@ -793,14 +793,14 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   }
 
   strong {
-    color: #1f3029;
+    color: var(--text-1);
     font-size: 14px;
     line-height: 20px;
     font-weight: 700;
   }
 
   span {
-    color: #7a8781;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
     white-space: nowrap;
@@ -808,7 +808,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 
   p {
     margin: 0;
-    color: #53645c;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 19px;
   }
@@ -820,10 +820,10 @@ function formatBusinessValue(component: CardComponentRuntime): string {
   gap: 10px;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #eef1ef;
+  border-bottom: 1px solid var(--border);
 
   label {
-    color: #637068;
+    color: var(--text-2);
     font-size: 13px;
     line-height: 20px;
   }
@@ -837,7 +837,7 @@ function formatBusinessValue(component: CardComponentRuntime): string {
 
   strong {
     min-width: 0;
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
@@ -848,18 +848,18 @@ function formatBusinessValue(component: CardComponentRuntime): string {
     flex: 0 0 auto;
     border-radius: 999px;
     padding: 1px 6px;
-    background: #eef4ff;
-    color: #1d4ed8;
+    background: var(--color-info-light);
+    color: var(--color-info);
     font-size: 11px;
     line-height: 17px;
   }
 }
 
 .cf-runtime-unknown {
-  border: 1px dashed #d6dcd8;
+  border: 1px dashed var(--border);
   border-radius: 6px;
   padding: 10px 12px;
-  color: #7c8781;
+  color: var(--text-3);
   font-size: 12px;
 }
 </style>
