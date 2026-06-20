@@ -18,6 +18,7 @@ import {
 import draggable from 'vuedraggable'
 import type { SchemaFieldDefinition, SchemaFieldType } from '@/types/cardflow'
 import { getFlowDefinitions } from '@/api/cardflow'
+import { message } from 'ant-design-vue'
 
 const props = defineProps<{
   modelValue: SchemaFieldDefinition[]
@@ -131,12 +132,12 @@ function cancelEditor() {
 }
 
 function commitEditor() {
-  if (editingIndex.value < 0 || !draft.value) return
+  if (editingIndex.value < 0 || !draft.value) return   // 内部不变量，静默
   // 校验 key 唯一
   const key = (draft.value.key || '').trim()
-  if (!key) { return }
+  if (!key) { message.warning('请填写字段标识（key）'); return }
   const dup = fields.value.some((f, i) => i !== editingIndex.value && f.key === key)
-  if (dup) { return }
+  if (dup) { message.warning(`字段标识「${key}」已存在`); return }
   fields.value[editingIndex.value] = clone(draft.value)
   emitUpdate()
   cancelEditor()
