@@ -84,13 +84,6 @@
 
     <!-- 个人区 -->
     <div class="topbar-personal">
-      <button class="topbar-icon-btn topbar-refresh-btn" @click="refreshPage" title="刷新当前页面">
-        <ReloadOutlined />
-      </button>
-      <button class="topbar-icon-btn topbar-fullscreen-btn" @click="toggleFullscreen" :title="isFullscreen ? '退出全屏' : '全屏'">
-        <FullscreenExitOutlined v-if="isFullscreen" />
-        <FullscreenOutlined v-else />
-      </button>
       <a-dropdown>
         <div
           class="user-identity"
@@ -103,6 +96,15 @@
         </div>
         <template #overlay>
           <a-menu>
+            <a-menu-item key="refresh" @click="refreshPage">
+              <template #icon><ReloadOutlined /></template>
+              刷新页面
+            </a-menu-item>
+            <a-menu-item key="fullscreen" @click="toggleFullscreen">
+              <template #icon><FullscreenExitOutlined v-if="isFullscreen" /><FullscreenOutlined v-else /></template>
+              {{ isFullscreen ? '退出全屏' : '全屏' }}
+            </a-menu-item>
+            <a-menu-divider />
             <a-menu-item @click="goPersonalSettings">个人设置</a-menu-item>
             <a-menu-item v-if="hasAdminPermission" @click="goAdmin">
               <SettingOutlined /> 系统管理
