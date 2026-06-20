@@ -10,6 +10,8 @@
 
     <!-- 左栏 -->
     <div class="app-main">
+      <!-- 模块轨 -->
+      <ModuleRail />
       <!-- 左栏 -->
       <SmartSidebar />
 
@@ -34,6 +36,7 @@
 
 <script setup lang="ts">
 import TopBar from './TopBar.vue'
+import ModuleRail from './ModuleRail.vue'
 import SmartSidebar from '@/layouts/SmartSidebar.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import ShortcutHelp from '@/components/ShortcutHelp.vue'

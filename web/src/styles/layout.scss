@@ -1,5 +1,10 @@
 @use './variables' as *;
 
+// ========== 全局布局变量 ==========
+:root {
+  --rail-width: 46px;
+}
+
 // ========== 整体布局 ==========
 .app-layout {
   display: flex;
@@ -33,8 +38,8 @@
   gap: 0;
   align-items: center;
   flex-shrink: 0;
-  // 宽度与侧栏右对齐
-  width: calc(var(--sidebar-width, 168px) - 29px);
+  // 宽度与「模块轨 + 侧栏」右对齐
+  width: calc(var(--rail-width, 46px) + var(--sidebar-width, 168px) - 29px);
   min-width: 148px;
 }
 
