@@ -110,6 +110,16 @@ public class AccountService : IAccountService
             throw new InvalidOperationException($"科目类别 {request.Category} 无效");
         }
 
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new InvalidOperationException("科目名称不能为空");
+        }
+
+        if (request.BalanceDirection != "借" && request.BalanceDirection != "贷")
+        {
+            throw new InvalidOperationException("科目余额方向只能为「借」或「贷」");
+        }
+
         var existing = await _accountRepository.Query()
             .FirstOrDefaultAsync(a => a.FCode == code && a.FAccountSetId == accountSetId);
 
@@ -191,6 +201,11 @@ public class AccountService : IAccountService
     {
         var account = await LoadAccountAsync(id);
         if (account == null) return null;
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new InvalidOperationException("科目名称不能为空");
+        }
 
         // 记录变更前的快照，用于字段级变更追踪
         var oldSnapshot = new FinAccount
