@@ -82,7 +82,7 @@ defineExpose({ validate })
 <style scoped lang="scss">
 .stage-input-fields {
   margin-top: 16px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 8px;
   padding: 16px;
 
@@ -94,13 +94,13 @@ defineExpose({ validate })
     margin: 0 0 8px;
     font-size: 14px;
     font-weight: 500;
-    color: #595959;
+    color: var(--text-2);
     line-height: 1.5;
   }
 
   &__divider {
     height: 1px;
-    background: #e8e8e8;
+    background: var(--border);
   }
 }
 </style>

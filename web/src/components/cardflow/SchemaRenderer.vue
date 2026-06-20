@@ -304,11 +304,11 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
           >
             <template v-if="formData[field.key]?.voucherNumber">
               {{ formData[field.key].voucherNumber }}
-              <span v-if="formData[field.key]?.period" style="color: #999">
+              <span v-if="formData[field.key]?.period" style="color: var(--text-3)">
                 ({{ formData[field.key].period }})
               </span>
             </template>
-            <span v-else style="color: #bbb">-</span>
+            <span v-else style="color: var(--text-3)">-</span>
           </a>
         </a-form-item>
       </a-form>
@@ -377,7 +377,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
             <template v-else-if="field.type === 'bankAccount'">
               <span v-if="formData[field.key]">
                 {{ formData[field.key]?.accountNo }}
-                <span v-if="formData[field.key]?.bankName" style="color: #999">
+                <span v-if="formData[field.key]?.bankName" style="color: var(--text-3)">
                   ({{ formData[field.key].bankName }})
                 </span>
               </span>
@@ -434,7 +434,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
             @update:model-value="(v: string) => updateField(field.key, Number(v))"
           >
             <template #left-icon>
-              <span style="color: #ee0a24; font-weight: bold">¥</span>
+              <span style="color: var(--color-danger); font-weight: bold">¥</span>
             </template>
           </VanField>
 
@@ -591,13 +591,13 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
     align-items: flex-start;
     line-height: 1.6;
     padding: 6px 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
   }
 
   &__label {
     flex-shrink: 0;
     width: 100px;
-    color: #666;
+    color: var(--text-2);
     font-size: 13px;
   }
 
@@ -608,7 +608,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
 
   &__value {
     flex: 1;
-    color: #333;
+    color: var(--text-1);
     font-size: 14px;
     word-break: break-all;
   }
@@ -624,7 +624,7 @@ const hasRuntimeComponents = computed(() => (props.components?.length ?? 0) > 0)
     height: 48px;
     object-fit: cover;
     border-radius: 4px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border);
   }
 
   &__file-link {
