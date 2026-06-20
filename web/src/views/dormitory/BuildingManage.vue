@@ -148,12 +148,11 @@
         </a-row>
         <a-row :gutter="20">
           <a-col :span="12">
-            <a-form-item label="管理员ID">
-              <a-input-number
-                v-model:value="formData.managerId"
-                :min="1"
-                style="width: 100%"
-                placeholder="请输入管理员员工ID"
+            <a-form-item label="管理员">
+              <EmployeeSelect
+                v-model="formData.managerId"
+                :initial-label="formData.managerName"
+                placeholder="搜索管理员姓名/工号"
               />
             </a-form-item>
           </a-col>
@@ -199,6 +198,7 @@ import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import EmployeeSelect from '@/components/EmployeeSelect.vue'
 import DataTable from '@/components/DataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import {
@@ -256,6 +256,7 @@ const formData = reactive({
   totalFloors: 1,
   dormitoryType: 'male' as 'male' | 'female' | 'mixed',
   managerId: undefined as number | undefined,
+  managerName: '',
   remark: '',
 })
 
@@ -330,6 +331,7 @@ function resetForm() {
   formData.totalFloors = 1
   formData.dormitoryType = 'male'
   formData.managerId = undefined
+  formData.managerName = ''
   formData.remark = ''
 }
 
@@ -357,6 +359,7 @@ async function handleEdit(row: any) {
       formData.totalFloors = detail.totalFloors
       formData.dormitoryType = (detail.dormitoryType as 'male' | 'female' | 'mixed') || 'male'
       formData.managerId = detail.managerId
+      formData.managerName = detail.managerName || ''
       formData.remark = detail.remark || ''
     }
   } catch (error) {

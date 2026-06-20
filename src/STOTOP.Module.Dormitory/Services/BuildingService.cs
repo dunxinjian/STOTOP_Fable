@@ -5,16 +5,21 @@ using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
+using STOTOP.Module.HR.Entities;
 
 namespace STOTOP.Module.Dormitory.Services;
 
 public class BuildingService : IBuildingService
 {
     private readonly IRepository<DorBuilding> _buildingRepository;
+    private readonly IRepository<HrEmployee> _employeeRepository;
 
-    public BuildingService(IRepository<DorBuilding> buildingRepository)
+    public BuildingService(
+        IRepository<DorBuilding> buildingRepository,
+        IRepository<HrEmployee> employeeRepository)
     {
         _buildingRepository = buildingRepository;
+        _employeeRepository = employeeRepository;
     }
 
     #region Building CRUD
@@ -70,7 +75,16 @@ public class BuildingService : IBuildingService
             .ThenInclude(r => r.Beds)
             .FirstOrDefaultAsync(b => b.FID == id);
 
-        return building == null ? null : MapToDto(building);
+        if (building == null) return null;
+        var dto = MapToDto(building);
+        if (building.FManagerId.HasValue)
+        {
+            dto.ManagerName = await _employeeRepository.Query()
+                .Where(e => e.FID == building.FManagerId.Value)
+                .Select(e => e.FName)
+                .FirstOrDefaultAsync();
+        }
+        return dto;
     }
 
     public async Task<BuildingDto> CreateBuildingAsync(CreateBuildingRequest request)

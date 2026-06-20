@@ -28,6 +28,7 @@ export interface BuildingListItemDto {
 }
 
 export interface BuildingDto extends BuildingListItemDto {
+  managerName?: string
   remark?: string
   updatedTime?: string
 }

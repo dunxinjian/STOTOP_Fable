@@ -3,6 +3,7 @@ using STOTOP.Infrastructure.Data;
 using STOTOP.Infrastructure.Repositories;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
+using STOTOP.Module.HR.Entities;
 using STOTOP.Module.Dormitory.Services;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace STOTOP.Module.Dormitory.Tests.Buildings;
 public class BuildingServiceTests
 {
     private static BuildingService CreateService(STOTOPDbContext db)
-        => new BuildingService(new Repository<DorBuilding>(db));
+        => new BuildingService(new Repository<DorBuilding>(db), new Repository<HrEmployee>(db));
 
     // 坐实事实：SaveChanges 对新 IOrgScoped 实体自动注入当前组织（反驳"FOrgId 未初始化=P0漏洞"误报）
     [Fact]

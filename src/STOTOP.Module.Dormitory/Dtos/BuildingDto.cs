@@ -12,6 +12,7 @@ public class BuildingDto
     public string? Address { get; set; }
     public int TotalFloors { get; set; }
     public long? ManagerId { get; set; }
+    public string? ManagerName { get; set; }
     public string? DormitoryType { get; set; }
     public string? Remark { get; set; }
     public int Status { get; set; }
