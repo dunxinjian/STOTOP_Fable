@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -41,7 +42,7 @@ public class StatisticsService : IStatisticsService
 
         // 已入住床位数（床位状态 2=已入住，入住/退宿时联动维护）
         var occupiedBeds = await _bedRepository.Query()
-            .CountAsync(b => b.FStatus == 2);
+            .CountAsync(b => b.FStatus == DorStatus.Bed.Occupied);
 
         var availableBeds = totalBeds - occupiedBeds;
 
@@ -58,7 +59,7 @@ public class StatisticsService : IStatisticsService
 
         // 待处理报修工单数
         var pendingRepairOrders = await _repairOrderRepository.Query()
-            .CountAsync(ro => ro.FStatus == 1);
+            .CountAsync(ro => ro.FStatus == DorStatus.Repair.Pending);
 
         // 今日访客数
         var today = DateTime.Today;
@@ -67,14 +68,14 @@ public class StatisticsService : IStatisticsService
 
         // 总楼栋数
         var totalBuildings = await _buildingRepository.Query()
-            .CountAsync(b => b.FStatus == 1);
+            .CountAsync(b => b.FStatus == DorStatus.Enable.Enabled);
 
         // 总房间数
         var totalRooms = await _roomRepository.Query().CountAsync();
 
         // 待缴费用总额（费用状态 0=待缴）
         var pendingExpenses = await _expenseRepository.Query()
-            .Where(e => e.FStatus == 0)
+            .Where(e => e.FStatus == DorStatus.Expense.Unpaid)
             .SumAsync(e => e.FAmount);
 
         return new DormitoryStatisticsDto
@@ -98,7 +99,7 @@ public class StatisticsService : IStatisticsService
     {
         // 一次性取楼栋/房间/床位，内存聚合，避免 N+1
         var buildings = await _buildingRepository.Query()
-            .Where(b => b.FStatus == 1)
+            .Where(b => b.FStatus == DorStatus.Enable.Enabled)
             .Select(b => new { b.FID, b.FName })
             .ToListAsync();
         if (buildings.Count == 0) return new List<BuildingOccupancyDto>();
@@ -122,7 +123,7 @@ public class StatisticsService : IStatisticsService
         {
             if (!roomToBuilding.TryGetValue(bed.FRoomId, out var bId)) continue;
             totalByBuilding[bId] = totalByBuilding.GetValueOrDefault(bId) + 1;
-            if (bed.FStatus == 2) // 2=已入住
+            if (bed.FStatus == DorStatus.Bed.Occupied)
                 occupiedByBuilding[bId] = occupiedByBuilding.GetValueOrDefault(bId) + 1;
         }
 

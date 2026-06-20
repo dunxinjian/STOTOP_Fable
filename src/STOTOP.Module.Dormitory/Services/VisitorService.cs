@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -144,7 +145,7 @@ public class VisitorService : IVisitorService
         if (visitor == null) return null;
 
         visitor.FDepartureTime = departureTime ?? DateTime.Now;
-        visitor.FStatus = 2; // 2 = 已离开
+        visitor.FStatus = DorStatus.Visitor.Left;
 
         await _visitorRepository.UpdateAsync(visitor);
         return await GetVisitorByIdAsync(id);

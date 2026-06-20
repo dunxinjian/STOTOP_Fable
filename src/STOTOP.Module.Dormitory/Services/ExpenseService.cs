@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -114,7 +115,7 @@ public class ExpenseService : IExpenseService
             FMonth = request.Month,
             FShareMethod = request.ShareMethod,
             FRemark = request.Remark,
-            FStatus = 0, // 0=待缴（新建默认未缴），1=已缴，2=减免
+            FStatus = DorStatus.Expense.Unpaid, // 待缴
             FCreatedTime = DateTime.Now,
             FUpdatedTime = DateTime.Now
         };

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -202,7 +203,7 @@ public class BuildingService : IBuildingService
             RoomCount = entity.Rooms.Count,
             BedCount = entity.Rooms.Sum(r => r.Beds.Count),
             // 床位状态 2=已入住（入住/退宿时联动维护），据此统计占用
-            OccupiedBeds = entity.Rooms.Sum(r => r.Beds.Count(b => b.FStatus == 2))
+            OccupiedBeds = entity.Rooms.Sum(r => r.Beds.Count(b => b.FStatus == DorStatus.Bed.Occupied))
         };
     }
 

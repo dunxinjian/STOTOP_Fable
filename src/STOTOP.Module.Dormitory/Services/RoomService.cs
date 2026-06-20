@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -214,7 +215,7 @@ public class RoomService : IRoomService
             RoomType = entity.FRoomType,
             Status = entity.FStatus,
             CreatedTime = entity.FCreatedTime,
-            OccupiedBeds = entity.Beds.Count(b => b.FStatus == 2)
+            OccupiedBeds = entity.Beds.Count(b => b.FStatus == DorStatus.Bed.Occupied)
         };
     }
 

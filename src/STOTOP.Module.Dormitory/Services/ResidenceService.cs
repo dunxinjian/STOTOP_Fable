@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -134,7 +135,7 @@ public class ResidenceService : IResidenceService
             FEmployeeId = request.EmployeeId,
             FCheckInDate = request.CheckInDate,
             FRemark = request.Remark,
-            FStatus = 1,
+            FStatus = DorStatus.Residence.CheckedIn,
             FCreatedTime = DateTime.Now,
             FUpdatedTime = DateTime.Now
         };
@@ -147,7 +148,7 @@ public class ResidenceService : IResidenceService
             .FirstOrDefaultAsync(b => b.FID == request.BedId);
         if (bedToUpdate != null)
         {
-            bedToUpdate.FStatus = 2; // 2 = 已入住
+            bedToUpdate.FStatus = DorStatus.Bed.Occupied;
             bedToUpdate.FUpdatedTime = DateTime.Now;
             await _bedRepository.UpdateAsync(bedToUpdate);
         }
@@ -180,7 +181,7 @@ public class ResidenceService : IResidenceService
 
         residence.FCheckOutDate = request.CheckOutDate;
         residence.FRemark = request.Remark;
-        residence.FStatus = 2; // 2 = 已退宿
+        residence.FStatus = DorStatus.Residence.CheckedOut;
         residence.FUpdatedTime = DateTime.Now;
 
         await _residenceRepository.UpdateAsync(residence);
@@ -191,7 +192,7 @@ public class ResidenceService : IResidenceService
             .FirstOrDefaultAsync(b => b.FID == residence.FBedId);
         if (bedToUpdate != null)
         {
-            bedToUpdate.FStatus = 1; // 1 = 空闲
+            bedToUpdate.FStatus = DorStatus.Bed.Free;
             bedToUpdate.FUpdatedTime = DateTime.Now;
             await _bedRepository.UpdateAsync(bedToUpdate);
         }
@@ -211,7 +212,7 @@ public class ResidenceService : IResidenceService
     public async Task<bool> IsBedOccupiedAsync(long bedId)
     {
         return await _residenceRepository.Query()
-            .AnyAsync(r => r.FBedId == bedId && r.FStatus == 1 && r.FCheckOutDate == null);
+            .AnyAsync(r => r.FBedId == bedId && r.FStatus == DorStatus.Residence.CheckedIn && r.FCheckOutDate == null);
     }
 
     #region Mapping
