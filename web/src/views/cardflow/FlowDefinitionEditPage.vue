@@ -16,7 +16,7 @@
  */
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import draggable from 'vuedraggable'
 import {
   ArrowLeftOutlined,
@@ -221,13 +221,14 @@ const { silently } = useAutoCommit(() => state, history, 500)
 // ==================== 自动保存 ====================
 
 const dirty = ref(false)
-watch(() => state, () => { dirty.value = true }, { deep: true })
 
 const auto = useAutoSave({
   intervalMs: 30_000,
   isDirty: () => dirty.value,
   save: () => silentSave(),
 })
+
+watch(() => state, () => { dirty.value = true; auto.markDirty() }, { deep: true })
 
 const saveStateText = computed(() => {
   if (auto.saveState.value === 'saving') return '保存中...'
@@ -1672,11 +1673,18 @@ function removePrerequisite(i: number) {
 }
 
 function goBack() {
-  if (dirty.value) {
-    const ok = window.confirm('有未保存的更改，确定离开？')
-    if (!ok) return
+  if (!dirty.value) {
+    router.push('/cardflow/definitions')
+    return
   }
-  router.push('/cardflow/definitions')
+  Modal.confirm({
+    title: '有未保存的更改',
+    content: '离开将丢失未保存的更改，确定离开吗？',
+    okText: '确定离开',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: () => router.push('/cardflow/definitions'),
+  })
 }
 </script>
 
