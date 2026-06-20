@@ -49,7 +49,7 @@ function iconOf(mod: ModuleTab) {
 
 const visibleModules = computed(() => {
   const vis = permissionStore.getModuleVisibility(userStore.permissions) as Record<string, boolean>
-  return MODULE_TABS.filter((m) => m.code === 'workhub' || vis[m.code])
+  return MODULE_TABS.filter((m) => m.code === 'workhub' || m.alwaysShow || vis[m.code])
 })
 
 function goModule(mod: ModuleTab) {
