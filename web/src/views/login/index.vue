@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <!-- 左右分栏容器 -->
-    <div class="login-split" :class="{ 'is-transitioning': transitioning }">
+    <div class="login-split">
 
       <!-- 左侧：品牌区 -->
       <div class="login-brand">
@@ -70,7 +70,7 @@
                 autocomplete="username"
                 aria-label="账号"
                 allow-clear
-                :disabled="loading || transitioning"
+                :disabled="loading"
               >
                 <template #prefix><UserOutlined /></template>
               </a-input>
@@ -82,7 +82,7 @@
                 placeholder="请输入密码"
                 autocomplete="current-password"
                 aria-label="密码"
-                :disabled="loading || transitioning"
+                :disabled="loading"
               >
                 <template #prefix><LockOutlined /></template>
               </a-input-password>
@@ -90,7 +90,7 @@
 
             <a-form-item>
               <div class="remember-row">
-                <a-checkbox v-model:checked="rememberAccount" :disabled="loading || transitioning">记住账号</a-checkbox>
+                <a-checkbox v-model:checked="rememberAccount" :disabled="loading">记住账号</a-checkbox>
                 <a class="forgot-password" @click="handleForgotPassword">忘记密码？</a>
               </div>
             </a-form-item>
@@ -100,7 +100,7 @@
                 type="primary"
                 class="login-btn"
                 :loading="loading"
-                :disabled="!dbConfigured || loading || transitioning"
+                :disabled="!dbConfigured || loading"
                 html-type="button"
                 @click="handleLogin"
               >
@@ -115,7 +115,6 @@
               <a-button
                 type="link"
                 :loading="dingtalkCallbackLoading"
-                :disabled="transitioning"
                 @click="handleDingtalkLogin"
               >
                 <template v-if="!dingtalkCallbackLoading">
@@ -143,53 +142,6 @@
       </div>
     </div>
 
-    <Transition name="screen-fade">
-      <div v-if="transitioning" class="login-transition-screen">
-        <div class="login-transition-content">
-          <img
-            v-if="enterpriseInfoStore.hasLogo"
-            :src="enterpriseInfoStore.logoUrl"
-            :alt="enterpriseInfoStore.displayName"
-            class="transition-logo-img"
-          />
-          <div v-else class="transition-logo-text">{{ enterpriseInfoStore.displayName }}</div>
-
-          <div class="transition-ring" />
-
-          <Transition name="step-fade" mode="out-in">
-            <p :key="currentTransitionStep" class="transition-step-text">{{ currentTransitionStep }}</p>
-          </Transition>
-
-          <div class="transition-stage-list">
-            <div
-              v-for="(text, i) in TRANSITION_STEP_TEXTS"
-              :key="text"
-              class="transition-stage-item"
-              :class="{
-                active: i === transitionStepIndex,
-                done: i < transitionStepIndex
-              }"
-            >
-              <span class="transition-stage-dot"></span>
-              <span>{{ text }}</span>
-            </div>
-          </div>
-
-          <div class="transition-dots" aria-hidden="true">
-            <div
-              v-for="(_, i) in TRANSITION_STEP_TEXTS"
-              :key="i"
-              class="dot"
-              :class="{
-                active: i === transitionStepIndex,
-                done: i < transitionStepIndex
-              }"
-            />
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <OrgSelectModal
       v-model="orgSelectVisible"
       :organizations="orgList"
@@ -199,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
@@ -221,22 +173,12 @@ const orgContextStore = useOrgContextStore()
 const enterpriseInfoStore = useEnterpriseInfoStore()
 const securityStore = useSecurityStore()
 
-const TRANSITION_STEP_TEXTS = [
-  '已加载组织与权限',
-  '已恢复网点、仓库与快捷入口',
-  '正在同步今日运单与待办',
-  '即将进入工作台',
-] as const
-const TRANSITION_STEP_DELAYS = [0, 700, 1400, 2100] as const
-const MIN_TRANSITION_DURATION = 2300
-
 type LoginNextAction =
   | { type: 'redirect'; redirect: string }
   | { type: 'org-selection' }
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
-const transitioning = ref(false)
 const rememberAccount = ref(false)
 const dbConfigured = ref(true)
 const orgSelectVisible = ref(false)
@@ -245,12 +187,6 @@ const dingtalkEnabled = ref(false)
 const dingtalkCallbackLoading = ref(false)
 const dingtalkAppKey = ref('')
 const dingtalkRedirectUri = ref('')
-const transitionStepIndex = ref(0)
-let transitionStepTimers: Array<ReturnType<typeof window.setTimeout>> = []
-
-const currentTransitionStep = computed(
-  () => TRANSITION_STEP_TEXTS[transitionStepIndex.value] ?? TRANSITION_STEP_TEXTS[0],
-)
 
 const form = reactive({
   username: 'admin',
@@ -310,10 +246,6 @@ onMounted(async () => {
   }
 })
 
-onBeforeUnmount(() => {
-  clearTransitionStepPlayback()
-})
-
 const rules: Record<string, Rule[]> = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [
@@ -324,27 +256,6 @@ const rules: Record<string, Rule[]> = {
 
 function getRedirectTarget() {
   return (route.query.redirect as string) || '/'
-}
-
-function wait(ms: number) {
-  return new Promise<void>(resolve => {
-    window.setTimeout(resolve, ms)
-  })
-}
-
-function clearTransitionStepPlayback() {
-  transitionStepTimers.forEach(timer => window.clearTimeout(timer))
-  transitionStepTimers = []
-}
-
-function startTransitionStepPlayback() {
-  clearTransitionStepPlayback()
-  transitionStepIndex.value = 0
-  transitionStepTimers = TRANSITION_STEP_DELAYS.slice(1).map((delay, index) => {
-    return window.setTimeout(() => {
-      transitionStepIndex.value = index + 1
-    }, delay)
-  })
 }
 
 async function loadOrgsAndRedirect(): Promise<LoginNextAction> {
@@ -373,16 +284,9 @@ async function loadOrgsAndRedirect(): Promise<LoginNextAction> {
 }
 
 async function runPostLoginTransition() {
-  loading.value = false
-  transitioning.value = true
-  startTransitionStepPlayback()
-
+  loading.value = true
   try {
-    const [nextAction] = await Promise.all([
-      loadOrgsAndRedirect(),
-      wait(MIN_TRANSITION_DURATION),
-    ])
-
+    const nextAction = await loadOrgsAndRedirect()
     if (nextAction.type === 'redirect') {
       // 登录成功后启动空闲检测（进入主界面前初始化）
       await securityStore.fetchSecurityConfig()
@@ -390,18 +294,14 @@ async function runPostLoginTransition() {
       await router.push(nextAction.redirect)
       return
     }
-
-    transitioning.value = false
-    clearTransitionStepPlayback()
-  } catch (error) {
-    transitioning.value = false
-    clearTransitionStepPlayback()
-    throw error
+    // org-selection：内联组织选择面板由 orgSelectVisible 触发，留在本页
+  } finally {
+    loading.value = false
   }
 }
 
 async function handleLogin() {
-  if (!formRef.value || loading.value || transitioning.value) return
+  if (!formRef.value || loading.value) return
   try {
     await formRef.value.validate()
   } catch {
@@ -491,13 +391,6 @@ async function handleDingtalkLogin() {
   display: flex;
   width: 100%;
   min-height: 100vh;
-  transition: opacity 0.4s ease, transform 0.4s ease;
-
-  &.is-transitioning {
-    opacity: 0;
-    transform: scale(0.98);
-    pointer-events: none;
-  }
 }
 
 // ======================================================
@@ -788,201 +681,6 @@ async function handleDingtalkLogin() {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.08em;
-}
-
-// ======================================================
-// 登录过渡层
-// ======================================================
-.login-transition-screen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--topbar-ink, #1F2430);
-  z-index: 9999;
-  overflow: hidden;
-}
-
-.login-transition-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 48px 32px;
-  text-align: center;
-}
-
-.transition-logo-img {
-  max-width: 240px;
-  max-height: 64px;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.18));
-}
-
-.transition-logo-text {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 300;
-  letter-spacing: 4px;
-  margin-bottom: 32px;
-  animation: transition-fade-in 0.4s ease both;
-}
-
-@keyframes transition-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.transition-ring {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  position: relative;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    var(--color-primary, #E85E00) 315deg,
-    transparent 360deg
-  );
-  animation: ring-spin 1s linear infinite;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-}
-
-.transition-step-text {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.08em;
-  margin-bottom: 20px;
-  height: 20px;
-}
-
-.transition-stage-list {
-  width: min(420px, calc(100vw - 48px));
-  padding: 16px 18px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.065);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-}
-
-.transition-stage-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 30px;
-  color: rgba(255, 255, 255, 0.52);
-  font-size: 13px;
-  text-align: left;
-  transition: color 0.25s ease;
-
-  &.done {
-    color: rgba(255, 255, 255, 0.62);
-  }
-
-  &.active {
-    color: rgba(255, 255, 255, 0.92);
-    font-weight: 600;
-  }
-}
-
-.transition-stage-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  flex: 0 0 auto;
-  position: relative;
-}
-
-.transition-stage-item.done .transition-stage-dot {
-  border-color: var(--color-success, #2BA471);
-  background: var(--color-success-light, #E7F5EF);
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    background: var(--color-success, #2BA471);
-  }
-}
-
-.transition-stage-item.active .transition-stage-dot {
-  border-color: var(--color-primary, #E85E00);
-  background: var(--color-primary-light, #FFF3EA);
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    background: var(--color-primary, #E85E00);
-  }
-}
-
-.transition-dots {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-top: 8px;
-
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-
-    &.active {
-      background: var(--color-primary, #E85E00);
-      transform: scale(1.3);
-    }
-
-    &.done {
-      background: var(--color-primary, #E85E00);
-      opacity: 0.5;
-    }
-  }
-}
-
-// ======================================================
-// 过渡动画
-// ======================================================
-.screen-fade-enter-active {
-  transition: opacity 0.35s ease;
-}
-
-.screen-fade-leave-active {
-  transition: opacity 0.6s ease;
-}
-
-.screen-fade-enter-from,
-.screen-fade-leave-to {
-  opacity: 0;
-}
-
-.step-fade-enter-active,
-.step-fade-leave-active {
-  transition: opacity 0.28s ease, transform 0.28s ease;
-}
-
-.step-fade-enter-from,
-.step-fade-leave-to {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-@keyframes ring-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 // 响应式：小屏幕隐藏品牌区
