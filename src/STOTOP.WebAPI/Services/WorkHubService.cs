@@ -212,6 +212,9 @@ public class WorkHubService : IWorkHubService
         var results = await Task.WhenAll(tasks);
         var allItems = results.SelectMany(r => r).ToList();
 
+        // 回填业务类型（BizTypeKey / BizTypeLabel）
+        EnrichBizTypes(allItems);
+
         // 按优先级筛�?
         if (!string.IsNullOrEmpty(priority))
         {
@@ -263,6 +266,9 @@ public class WorkHubService : IWorkHubService
 
         var results = await Task.WhenAll(tasks);
         var allItems = results.SelectMany(r => r).ToList();
+
+        // 回填业务类型（BizTypeKey / BizTypeLabel）
+        EnrichBizTypes(allItems);
 
         // 计算统计（基于全量数据）
         var statsResult = new WorkHubStatsDto
@@ -692,6 +698,17 @@ public class WorkHubService : IWorkHubService
     }
 
     // ===== 辅助方法 =====
+
+    /// <summary>对合并后的工作项批量回填业务类型字段。</summary>
+    private static void EnrichBizTypes(IEnumerable<DtoWorkItemDto> items)
+    {
+        foreach (var item in items)
+        {
+            var (key, label) = ResolveBizType(item);
+            item.BizTypeKey = key;
+            item.BizTypeLabel = label;
+        }
+    }
 
     private static string MapCardFlowPriority(int priority) => priority switch
     {
