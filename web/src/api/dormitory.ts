@@ -11,18 +11,18 @@ export interface PagedResult<T = any> {
   pageSize: number
 }
 
-// 楼栋
+// 楼栋（字段对齐后端：totalFloors/managerId/dormitoryType；roomCount/bedCount/occupiedBeds 由后端实时统计）
 export interface BuildingListItemDto {
   id: number
   code: string
   name: string
   address?: string
-  floorCount: number
+  totalFloors: number
+  managerId?: number
+  dormitoryType?: string
   roomCount: number
   bedCount: number
   occupiedBeds: number
-  managerName?: string
-  managerPhone?: string
   status: number
   createdTime?: string
 }
@@ -36,15 +36,15 @@ export interface CreateBuildingRequest {
   code: string
   name: string
   address?: string
-  floorCount: number
-  managerName?: string
-  managerPhone?: string
+  totalFloors: number
+  managerId?: number
+  dormitoryType?: string
   remark?: string
 }
 
 export interface UpdateBuildingRequest extends CreateBuildingRequest {}
 
-// 房间
+// 房间（occupiedBeds 由后端按床位状态统计）
 export interface RoomDto {
   id: number
   buildingId: number
@@ -53,7 +53,6 @@ export interface RoomDto {
   roomNumber: string
   roomType: string
   bedsCount: number
-  bedCount: number
   occupiedBeds: number
   status: number
   remark?: string
@@ -90,15 +89,15 @@ export interface CreateBedRequest {
   remark?: string
 }
 
-export interface UpdateBedRequest extends CreateBedRequest {}
+export interface UpdateBedRequest extends CreateBedRequest {
+  status?: number
+}
 
-// 入住记录
+// 入住记录（字段对齐后端：仅 checkInDate/checkOutDate，无预计/部门/工号等）
 export interface ResidenceDto {
   id: number
   employeeId: number
   employeeName?: string
-  employeeCode?: string
-  departmentName?: string
   buildingId: number
   buildingName?: string
   roomId: number
@@ -106,9 +105,7 @@ export interface ResidenceDto {
   bedId: number
   bedNumber?: string
   checkInDate: string
-  expectedCheckOutDate?: string
   checkOutDate?: string
-  actualCheckOutDate?: string
   status: number
   remark?: string
   createdTime?: string
@@ -119,7 +116,6 @@ export interface CreateResidenceRequest {
   employeeId: number
   bedId: number
   checkInDate: string
-  expectedCheckOutDate?: string
   remark?: string
 }
 
@@ -129,9 +125,6 @@ export interface CheckOutRequest {
 }
 
 export interface UpdateResidenceRequest {
-  bedId: number
-  checkInDate: string
-  expectedCheckOutDate?: string
   remark?: string
 }
 
@@ -182,17 +175,14 @@ export interface ExpenseAllocationDto {
   shares: ExpenseShareDto[]
 }
 
-// 设施
+// 设施（字段对齐后端：仅 facilityName/quantity/status/remark）
 export interface FacilityDto {
   id: number
   roomId: number
   roomNumber?: string
   facilityName: string
-  facilityType: string
   quantity: number
   status: number
-  purchaseDate?: string
-  warrantyDate?: string
   remark?: string
   createdTime?: string
   updatedTime?: string
@@ -200,14 +190,13 @@ export interface FacilityDto {
 
 export interface CreateFacilityRequest {
   facilityName: string
-  facilityType: string
   quantity: number
-  purchaseDate?: string
-  warrantyDate?: string
   remark?: string
 }
 
-export interface UpdateFacilityRequest extends CreateFacilityRequest {}
+export interface UpdateFacilityRequest extends CreateFacilityRequest {
+  status?: number
+}
 
 // 报修工单（字段对齐后端：description/priority/result/handledTime）
 export interface RepairOrderDto {
@@ -246,7 +235,7 @@ export interface HandleRepairOrderRequest {
   status: number
 }
 
-// 访客
+// 访客（字段对齐后端：visitReason/visitedPersonId/arrivalTime/departureTime）
 export interface VisitorDto {
   id: number
   roomId: number
@@ -255,14 +244,14 @@ export interface VisitorDto {
   visitorName: string
   visitorPhone?: string
   visitorIdCard?: string
-  visitPurpose?: string
-  visitTime: string
-  expectedLeaveTime?: string
-  actualLeaveTime?: string
+  visitReason?: string
+  visitedPersonId?: number
+  visitedPersonName?: string
+  arrivalTime: string
+  departureTime?: string
   status: number
   remark?: string
   createdTime?: string
-  updatedTime?: string
 }
 
 export interface CreateVisitorRequest {
@@ -270,13 +259,20 @@ export interface CreateVisitorRequest {
   visitorName: string
   visitorPhone?: string
   visitorIdCard?: string
-  visitPurpose?: string
-  visitTime: string
-  expectedLeaveTime?: string
+  visitReason?: string
+  visitedPersonId?: number
+  arrivalTime: string
   remark?: string
 }
 
-export interface UpdateVisitorRequest extends CreateVisitorRequest {}
+export interface UpdateVisitorRequest {
+  visitorName: string
+  visitorPhone?: string
+  visitorIdCard?: string
+  visitReason?: string
+  visitedPersonId?: number
+  remark?: string
+}
 
 // 卫生检查（字段对齐后端：inspectorId/inspectorName）
 export interface HygieneCheckDto {

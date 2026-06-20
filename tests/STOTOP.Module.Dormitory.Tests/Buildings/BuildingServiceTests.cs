@@ -38,6 +38,26 @@ public class BuildingServiceTests
             () => service.CreateBuildingAsync(new CreateBuildingRequest { Code = "B1", Name = "重复编码" }));
     }
 
+    // 楼栋列表实时统计房间数/床位数/已占用床位（床位状态=2 已入住）
+    [Fact]
+    public async Task GetBuildings_统计房间床位与占用数()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(GetBuildings_统计房间床位与占用数), orgId: 1);
+        db.Set<DorBuilding>().Add(new DorBuilding { FID = 1, FCode = "B1", FName = "1号楼" });
+        db.Set<DorRoom>().Add(new DorRoom { FID = 1, FBuildingId = 1, FRoomNumber = "101" });
+        db.Set<DorRoom>().Add(new DorRoom { FID = 2, FBuildingId = 1, FRoomNumber = "102" });
+        db.Set<DorBed>().Add(new DorBed { FID = 1, FRoomId = 1, FBedNumber = "1", FStatus = 2 }); // 已入住
+        db.Set<DorBed>().Add(new DorBed { FID = 2, FRoomId = 1, FBedNumber = "2", FStatus = 1 }); // 空闲
+        db.Set<DorBed>().Add(new DorBed { FID = 3, FRoomId = 2, FBedNumber = "1", FStatus = 1 }); // 空闲
+        await db.SaveChangesAsync();
+
+        var page = await CreateService(db).GetBuildingsAsync(new BuildingQueryRequest { PageIndex = 1, PageSize = 10 });
+        var b = Assert.Single(page.Items);
+        Assert.Equal(2, b.RoomCount);
+        Assert.Equal(3, b.BedCount);
+        Assert.Equal(1, b.OccupiedBeds);
+    }
+
     // 组织隔离：192 创建的楼栋，193 看不到，192 看得到
     [Fact]
     public async Task GetBuildings_按组织隔离()

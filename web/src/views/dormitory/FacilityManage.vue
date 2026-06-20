@@ -58,7 +58,7 @@
         :loading="loading"
         row-key="id"
         bordered
-        :scroll="{ x: 800 }"
+        :scroll="{ x: 700 }"
       >
         <template #bodyCell="{ column, record, index }">
           <template v-if="column.dataIndex === 'index'">
@@ -67,9 +67,6 @@
           <template v-if="column.dataIndex === 'facilityName'">
             <a-tooltip :title="record.facilityName">{{ record.facilityName }}</a-tooltip>
           </template>
-          <template v-if="column.dataIndex === 'facilityType'">
-            {{ record.facilityType }}
-          </template>
           <template v-if="column.dataIndex === 'quantity'">
             {{ record.quantity }}
           </template>
@@ -77,9 +74,6 @@
             <a-tag :color="getStatusColor(record.status)">
               {{ getStatusLabel(record.status) }}
             </a-tag>
-          </template>
-          <template v-if="column.dataIndex === 'purchaseDate'">
-            {{ formatDate(record.purchaseDate) }}
           </template>
           <template v-if="column.dataIndex === 'action'">
             <a-button type="link" size="small" @click="handleEdit(record)">
@@ -125,13 +119,6 @@
             :maxlength="100"
           />
         </a-form-item>
-        <a-form-item label="设施类型" name="facilityType">
-          <a-input
-            v-model:value="formData.facilityType"
-            placeholder="请输入设施类型，如家具、电器等"
-            :maxlength="50"
-          />
-        </a-form-item>
         <a-form-item label="数量" name="quantity">
           <a-input-number
             v-model:value="formData.quantity"
@@ -141,31 +128,11 @@
             :precision="0"
           />
         </a-form-item>
-        <a-form-item label="状态" name="status">
+        <a-form-item v-if="dialogType === 'edit'" label="状态" name="status">
           <a-select
             v-model:value="formData.status"
             placeholder="请选择状态"
-            :options="[
-              { label: '正常', value: 0 },
-              { label: '损坏', value: 1 },
-              { label: '报废', value: 2 },
-            ]"
-          />
-        </a-form-item>
-        <a-form-item label="购买日期">
-          <a-date-picker
-            v-model:value="formData.purchaseDate"
-            placeholder="请选择购买日期"
-            style="width: 100%"
-            value-format="YYYY-MM-DD"
-          />
-        </a-form-item>
-        <a-form-item label="保修日期">
-          <a-date-picker
-            v-model:value="formData.warrantyDate"
-            placeholder="请选择保修截止日期"
-            style="width: 100%"
-            value-format="YYYY-MM-DD"
+            :options="statusOptions"
           />
         </a-form-item>
         <a-form-item label="备注">
@@ -206,14 +173,19 @@ import {
   type RoomDto,
 } from '@/api/dormitory'
 
+// 设施状态选项（0=正常/1=损坏/2=报废）
+const statusOptions = [
+  { label: '正常', value: 0 },
+  { label: '损坏', value: 1 },
+  { label: '报废', value: 2 },
+]
+
 // 表格列配置
 const tableColumns = [
   { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
-  { title: '设施名称', dataIndex: 'facilityName', key: 'facilityName', width: 150 },
-  { title: '设施类型', dataIndex: 'facilityType', key: 'facilityType', width: 120 },
-  { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 80, align: 'center' as const },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90, align: 'center' as const },
-  { title: '购买日期', dataIndex: 'purchaseDate', key: 'purchaseDate', width: 120 },
+  { title: '设施名称', dataIndex: 'facilityName', key: 'facilityName', width: 200 },
+  { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 100, align: 'center' as const },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 100, align: 'center' as const },
   { title: '操作', dataIndex: 'action', key: 'action', width: 150, align: 'center' as const, fixed: 'right' as const },
 ]
 
@@ -241,17 +213,13 @@ const currentFacilityId = ref<number | null>(null)
 
 const formData = reactive({
   facilityName: '',
-  facilityType: '',
   quantity: 1,
   status: 0,
-  purchaseDate: '',
-  warrantyDate: '',
   remark: '',
 })
 
 const formRules: Record<string, Rule[]> = {
   facilityName: [{ required: true, message: '请输入设施名称', trigger: 'blur' }],
-  facilityType: [{ required: true, message: '请输入设施类型', trigger: 'blur' }],
   quantity: [{ required: true, message: '请输入数量', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 }
@@ -325,11 +293,8 @@ function handleReset() {
 // 重置表单
 function resetForm() {
   formData.facilityName = ''
-  formData.facilityType = ''
   formData.quantity = 1
   formData.status = 0
-  formData.purchaseDate = ''
-  formData.warrantyDate = ''
   formData.remark = ''
   currentFacilityId.value = null
 }
@@ -350,11 +315,8 @@ function handleEdit(row: any) {
   dialogType.value = 'edit'
   currentFacilityId.value = row.id
   formData.facilityName = row.facilityName
-  formData.facilityType = row.facilityType
   formData.quantity = row.quantity
   formData.status = row.status
-  formData.purchaseDate = row.purchaseDate || ''
-  formData.warrantyDate = row.warrantyDate || ''
   formData.remark = row.remark || ''
   dialogVisible.value = true
 }
@@ -375,20 +337,20 @@ async function handleSubmit() {
 
   submitLoading.value = true
   try {
-    const data = {
-      facilityName: formData.facilityName,
-      facilityType: formData.facilityType,
-      quantity: formData.quantity,
-      purchaseDate: formData.purchaseDate || undefined,
-      warrantyDate: formData.warrantyDate || undefined,
-      remark: formData.remark || undefined,
-    }
-
     if (dialogType.value === 'add') {
-      await createFacility(selectedRoomId.value, data)
+      await createFacility(selectedRoomId.value, {
+        facilityName: formData.facilityName,
+        quantity: formData.quantity,
+        remark: formData.remark || undefined,
+      })
       message.success('新增成功')
     } else {
-      await updateFacility(selectedRoomId.value, currentFacilityId.value!, data)
+      await updateFacility(selectedRoomId.value, currentFacilityId.value!, {
+        facilityName: formData.facilityName,
+        quantity: formData.quantity,
+        remark: formData.remark || undefined,
+        status: formData.status,
+      })
       message.success('更新成功')
     }
     dialogVisible.value = false
@@ -420,13 +382,6 @@ const roomTypeMap: Record<string, string> = {
 
 function getRoomTypeText(type: string): string {
   return roomTypeMap[type] || type
-}
-
-// 格式化日期
-function formatDate(dateStr: string | undefined) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN')
 }
 
 // 获取状态标签

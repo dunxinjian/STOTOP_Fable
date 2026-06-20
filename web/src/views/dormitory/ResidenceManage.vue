@@ -175,14 +175,6 @@
             value-format="YYYY-MM-DD"
           />
         </a-form-item>
-        <a-form-item label="预计退宿">
-          <a-date-picker
-            v-model:value="formData.expectedCheckOutDate"
-            placeholder="请选择预计退宿日期"
-            style="width: 100%"
-            value-format="YYYY-MM-DD"
-          />
-        </a-form-item>
         <a-form-item label="备注">
           <a-textarea
             v-model:value="formData.remark"
@@ -270,7 +262,6 @@ const tableColumns = [
   { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '员工ID', dataIndex: 'employeeId', key: 'employeeId', width: 80 },
   { title: '员工姓名', dataIndex: 'employeeName', key: 'employeeName', width: 120 },
-  { title: '部门', dataIndex: 'departmentName', key: 'departmentName', width: 120 },
   { title: '床位信息', dataIndex: 'bedInfo', key: 'bedInfo', width: 200 },
   { title: '入住日期', dataIndex: 'checkInDate', key: 'checkInDate', width: 120 },
   { title: '退宿日期', dataIndex: 'checkOutDate', key: 'checkOutDate', width: 120 },
@@ -330,7 +321,6 @@ const formData = reactive({
   roomId: undefined as number | undefined,
   bedId: undefined as number | undefined,
   checkInDate: '',
-  expectedCheckOutDate: '',
   remark: '',
 })
 
@@ -409,7 +399,6 @@ function resetForm() {
   formData.roomId = undefined
   formData.bedId = undefined
   formData.checkInDate = ''
-  formData.expectedCheckOutDate = ''
   formData.remark = ''
   roomOptions.value = []
   bedOptions.value = []
@@ -435,9 +424,9 @@ function getRoomTypeText(type: string): string {
 
 // 床位状态中文映射
 const bedStatusMap: Record<number, string> = {
-  0: '空闲',
-  1: '已入住',
-  2: '维修中',
+  1: '空闲',
+  2: '已入住',
+  3: '维修中',
 }
 
 function getBedStatusText(status: number): string {
@@ -537,7 +526,6 @@ async function handleSubmit() {
       employeeId: formData.employeeId!,
       bedId: formData.bedId!,
       checkInDate: formData.checkInDate,
-      expectedCheckOutDate: formData.expectedCheckOutDate || undefined,
       remark: formData.remark || undefined,
     }
     await createResidence(data)

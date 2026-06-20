@@ -35,6 +35,10 @@ public class BuildingListItemDto
     public string? DormitoryType { get; set; }
     public int Status { get; set; }
     public DateTime CreatedTime { get; set; }
+    // 统计（由楼栋下房间/床位实时计算）
+    public int RoomCount { get; set; }
+    public int BedCount { get; set; }
+    public int OccupiedBeds { get; set; }
 }
 
 /// <summary>

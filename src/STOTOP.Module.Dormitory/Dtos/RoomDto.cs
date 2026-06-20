@@ -33,6 +33,8 @@ public class RoomListItemDto
     public string? RoomType { get; set; }
     public int Status { get; set; }
     public DateTime CreatedTime { get; set; }
+    /// <summary>已占用床位数（床位状态=2 已入住）</summary>
+    public int OccupiedBeds { get; set; }
 }
 
 /// <summary>

@@ -128,6 +128,7 @@ public class BedService : IBedService
         bed.FBedNumber = request.BedNumber;
         bed.FBedType = request.BedType;
         bed.FRemark = request.Remark;
+        if (request.Status.HasValue) bed.FStatus = request.Status.Value;
         bed.FUpdatedTime = DateTime.Now;
 
         await _bedRepository.UpdateAsync(bed);

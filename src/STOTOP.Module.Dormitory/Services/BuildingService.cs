@@ -36,6 +36,8 @@ public class BuildingService : IBuildingService
         var total = await query.CountAsync();
 
         var items = await query
+            .Include(b => b.Rooms)
+            .ThenInclude(r => r.Beds)
             .OrderByDescending(b => b.FCreatedTime)
             .Skip((request.PageIndex - 1) * request.PageSize)
             .Take(request.PageSize)
@@ -196,7 +198,11 @@ public class BuildingService : IBuildingService
             ManagerId = entity.FManagerId,
             DormitoryType = entity.FDormitoryType,
             Status = entity.FStatus,
-            CreatedTime = entity.FCreatedTime
+            CreatedTime = entity.FCreatedTime,
+            RoomCount = entity.Rooms.Count,
+            BedCount = entity.Rooms.Sum(r => r.Beds.Count),
+            // 床位状态 2=已入住（入住/退宿时联动维护），据此统计占用
+            OccupiedBeds = entity.Rooms.Sum(r => r.Beds.Count(b => b.FStatus == 2))
         };
     }
 

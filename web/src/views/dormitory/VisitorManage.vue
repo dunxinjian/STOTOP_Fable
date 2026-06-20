@@ -143,14 +143,15 @@
         <a-row :gutter="20">
           <a-col :span="12">
             <a-form-item label="来访事由">
-              <a-input v-model:value="formData.visitPurpose" placeholder="请输入来访事由" :maxlength="200" />
+              <a-input v-model:value="formData.visitReason" placeholder="请输入来访事由" :maxlength="200" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="被访人ID">
               <a-input-number
-                v-model:value="formData.visiteeId"
-                placeholder="请输入被访人ID"
+                v-model:value="formData.visitedPersonId"
+                :min="1"
+                placeholder="请输入被访人员工ID"
                 style="width: 100%"
               />
             </a-form-item>
@@ -158,23 +159,12 @@
         </a-row>
         <a-row :gutter="20">
           <a-col :span="12">
-            <a-form-item label="到访时间" name="visitTime">
+            <a-form-item label="到访时间" name="arrivalTime">
               <a-date-picker
-                v-model:value="formData.visitTimeValue"
+                v-model:value="formData.arrivalTimeValue"
                 show-time
                 format="YYYY-MM-DD HH:mm:ss"
                 placeholder="请选择到访时间"
-                style="width: 100%"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="预计离开">
-              <a-date-picker
-                v-model:value="formData.expectedLeaveTimeValue"
-                show-time
-                format="YYYY-MM-DD HH:mm:ss"
-                placeholder="请选择预计离开时间"
                 style="width: 100%"
               />
             </a-form-item>
@@ -231,9 +221,10 @@ const tableColumns = [
   { title: '电话', dataIndex: 'visitorPhone', key: 'visitorPhone', width: 130 },
   { title: '身份证', dataIndex: 'visitorIdCard', key: 'visitorIdCard', width: 180 },
   { title: '来访房间', dataIndex: 'roomInfo', key: 'roomInfo', width: 160 },
-  { title: '来访事由', dataIndex: 'visitPurpose', key: 'visitPurpose', width: 150, ellipsis: true },
-  { title: '到访时间', dataIndex: 'visitTime', key: 'visitTime', width: 160 },
-  { title: '离开时间', dataIndex: 'actualLeaveTime', key: 'actualLeaveTime', width: 160 },
+  { title: '来访事由', dataIndex: 'visitReason', key: 'visitReason', width: 150, ellipsis: true },
+  { title: '被访人', dataIndex: 'visitedPersonName', key: 'visitedPersonName', width: 100 },
+  { title: '到访时间', dataIndex: 'arrivalTime', key: 'arrivalTime', width: 160 },
+  { title: '离开时间', dataIndex: 'departureTime', key: 'departureTime', width: 160 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 90, align: 'center' as const },
   { title: '操作', dataIndex: 'action', key: 'action', width: 200, align: 'center' as const, fixed: 'right' as const },
 ]
@@ -289,17 +280,16 @@ const formData = reactive({
   visitorName: '',
   visitorPhone: '',
   visitorIdCard: '',
-  visitPurpose: '',
-  visiteeId: undefined as number | undefined,
-  visitTimeValue: null as any,
-  expectedLeaveTimeValue: null as any,
+  visitReason: '',
+  visitedPersonId: undefined as number | undefined,
+  arrivalTimeValue: null as any,
   remark: '',
 })
 
 const formRules: Record<string, Rule[]> = {
   roomId: [{ required: true, message: '请选择房间', trigger: 'change' }],
   visitorName: [{ required: true, message: '请输入访客姓名', trigger: 'blur' }],
-  visitTime: [{ required: true, message: '请选择到访时间', trigger: 'change' }],
+  arrivalTime: [{ required: true, message: '请选择到访时间', trigger: 'change' }],
 }
 
 // 筛选选项
@@ -367,10 +357,9 @@ function resetForm() {
   formData.visitorName = ''
   formData.visitorPhone = ''
   formData.visitorIdCard = ''
-  formData.visitPurpose = ''
-  formData.visiteeId = undefined
-  formData.visitTimeValue = dayjs()
-  formData.expectedLeaveTimeValue = null
+  formData.visitReason = ''
+  formData.visitedPersonId = undefined
+  formData.arrivalTimeValue = dayjs()
   formData.remark = ''
 }
 
@@ -387,16 +376,16 @@ function handleEdit(record: any) {
   dialogType.value = 'edit'
   currentVisitorId.value = record.id
   resetForm()
-  
+
   formData.roomId = record.roomId
   formData.visitorName = record.visitorName
   formData.visitorPhone = record.visitorPhone || ''
   formData.visitorIdCard = record.visitorIdCard || ''
-  formData.visitPurpose = record.visitPurpose || ''
-  formData.visitTimeValue = record.visitTime ? dayjs(record.visitTime) : dayjs()
-  formData.expectedLeaveTimeValue = record.expectedLeaveTime ? dayjs(record.expectedLeaveTime) : null
+  formData.visitReason = record.visitReason || ''
+  formData.visitedPersonId = record.visitedPersonId
+  formData.arrivalTimeValue = record.arrivalTime ? dayjs(record.arrivalTime) : dayjs()
   formData.remark = record.remark || ''
-  
+
   dialogVisible.value = true
 }
 
@@ -411,22 +400,31 @@ async function handleSubmit() {
 
   submitLoading.value = true
   try {
-    const data: CreateVisitorRequest | UpdateVisitorRequest = {
-      roomId: formData.roomId!,
-      visitorName: formData.visitorName,
-      visitorPhone: formData.visitorPhone || undefined,
-      visitorIdCard: formData.visitorIdCard || undefined,
-      visitPurpose: formData.visitPurpose || undefined,
-      visitTime: formData.visitTimeValue ? formData.visitTimeValue.format('YYYY-MM-DD HH:mm:ss') : dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      expectedLeaveTime: formData.expectedLeaveTimeValue ? formData.expectedLeaveTimeValue.format('YYYY-MM-DD HH:mm:ss') : undefined,
-      remark: formData.remark || undefined,
-    }
-
     if (dialogType.value === 'add') {
-      await createVisitor(data as CreateVisitorRequest)
+      const data: CreateVisitorRequest = {
+        roomId: formData.roomId!,
+        visitorName: formData.visitorName,
+        visitorPhone: formData.visitorPhone || undefined,
+        visitorIdCard: formData.visitorIdCard || undefined,
+        visitReason: formData.visitReason || undefined,
+        visitedPersonId: formData.visitedPersonId,
+        arrivalTime: formData.arrivalTimeValue
+          ? formData.arrivalTimeValue.format('YYYY-MM-DD HH:mm:ss')
+          : dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        remark: formData.remark || undefined,
+      }
+      await createVisitor(data)
       message.success('新增成功')
     } else {
-      await updateVisitor(currentVisitorId.value!, data as UpdateVisitorRequest)
+      const data: UpdateVisitorRequest = {
+        visitorName: formData.visitorName,
+        visitorPhone: formData.visitorPhone || undefined,
+        visitorIdCard: formData.visitorIdCard || undefined,
+        visitReason: formData.visitReason || undefined,
+        visitedPersonId: formData.visitedPersonId,
+        remark: formData.remark || undefined,
+      }
+      await updateVisitor(currentVisitorId.value!, data)
       message.success('更新成功')
     }
     dialogVisible.value = false

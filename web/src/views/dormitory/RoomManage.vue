@@ -258,9 +258,9 @@
             v-model:value="bedFormData.status"
             placeholder="请选择状态"
             :options="[
-              { label: '空闲', value: 0 },
-              { label: '已入住', value: 1 },
-              { label: '维修中', value: 2 },
+              { label: '空闲', value: 1 },
+              { label: '已入住', value: 2 },
+              { label: '维修中', value: 3 },
             ]"
           />
         </a-form-item>
@@ -397,7 +397,7 @@ const currentBedId = ref<number | null>(null)
 const bedFormData = reactive({
   bedNumber: '',
   bedType: 'lower' as 'upper' | 'lower' | 'single',
-  status: 0 as 0 | 1 | 2,
+  status: 1 as number,
   remark: '',
 })
 
@@ -561,9 +561,9 @@ async function fetchBedList(roomId: number) {
 // 获取床位状态颜色
 function getBedStatusColor(status: number): string {
   const colorMap: Record<number, string> = {
-    0: 'green',   // 空闲
-    1: 'blue',    // 已入住
-    2: 'orange',  // 维修中
+    1: 'green',   // 空闲
+    2: 'blue',    // 已入住
+    3: 'orange',  // 维修中
   }
   return colorMap[status] || 'default'
 }
@@ -571,9 +571,9 @@ function getBedStatusColor(status: number): string {
 // 获取床位状态文本
 function getBedStatusText(status: number): string {
   const textMap: Record<number, string> = {
-    0: '空闲',
-    1: '已入住',
-    2: '维修中',
+    1: '空闲',
+    2: '已入住',
+    3: '维修中',
   }
   return textMap[status] || '未知'
 }
@@ -592,7 +592,7 @@ function getBedTypeText(type: string): string {
 function resetBedForm() {
   bedFormData.bedNumber = ''
   bedFormData.bedType = 'lower'
-  bedFormData.status = 0
+  bedFormData.status = 1
   bedFormData.remark = ''
 }
 
@@ -611,7 +611,7 @@ function handleEditBed(row: any) {
   resetBedForm()
   bedFormData.bedNumber = row.bedNumber
   bedFormData.bedType = row.bedType as 'upper' | 'lower' | 'single'
-  bedFormData.status = row.status as 0 | 1 | 2
+  bedFormData.status = row.status
   bedFormData.remark = row.remark || ''
   bedEditDialogVisible.value = true
 }
@@ -627,17 +627,20 @@ async function handleBedSubmit() {
 
   bedSubmitLoading.value = true
   try {
-    const data = {
-      bedNumber: bedFormData.bedNumber,
-      bedType: bedFormData.bedType,
-      remark: bedFormData.remark || undefined,
-    }
-
     if (bedDialogType.value === 'add') {
-      await createBed(currentRoom.value.id, data)
+      await createBed(currentRoom.value.id, {
+        bedNumber: bedFormData.bedNumber,
+        bedType: bedFormData.bedType,
+        remark: bedFormData.remark || undefined,
+      })
       message.success('新增成功')
     } else {
-      await updateBed(currentRoom.value.id, currentBedId.value!, data)
+      await updateBed(currentRoom.value.id, currentBedId.value!, {
+        bedNumber: bedFormData.bedNumber,
+        bedType: bedFormData.bedType,
+        remark: bedFormData.remark || undefined,
+        status: bedFormData.status,
+      })
       message.success('更新成功')
     }
     bedEditDialogVisible.value = false
