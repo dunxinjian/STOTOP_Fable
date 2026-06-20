@@ -154,7 +154,6 @@ public class WorkHubService : IWorkHubService
         switch (item.Source)
         {
             case "cardflow":
-            case "datacenter":
                 var flow = Meta("flowName");
                 return string.IsNullOrWhiteSpace(flow) ? ("approval", "审批") : ("flow:" + flow, flow!);
             case "finance":

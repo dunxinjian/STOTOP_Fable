@@ -57,4 +57,22 @@ public class ResolveBizTypeTests
         Assert.Equal("approval", key);
         Assert.Equal("审批", label);
     }
+
+    [Fact]
+    public void Datacenter_WithBizType_UsesBizTypeMetadata()
+    {
+        var (key, label) = WorkHubService.ResolveBizType(
+            Item("datacenter", "approval", new() { ["bizType"] = "总部交易" }));
+        Assert.Equal("wf:总部交易", key);
+        Assert.Equal("总部交易", label);
+    }
+
+    [Fact]
+    public void NullMetadata_FallsBackToApproval()
+    {
+        var item = new WorkItemDto { Source = "oa", Category = "approval", Metadata = null! };
+        var (key, label) = WorkHubService.ResolveBizType(item);
+        Assert.Equal("approval", key);
+        Assert.Equal("审批", label);
+    }
 }
