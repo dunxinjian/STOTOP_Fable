@@ -57,7 +57,7 @@ const sidebarStore = useSidebarStore()
 function updateCurrentModuleFromRoute() {
   const path = route.path
 
-  if (path === '/' || path === '/workhub' || path.startsWith('/workhub/')) {
+  if (path === '/' || path === '/home' || path === '/workhub' || path.startsWith('/workhub/')) {
     appStore.setCurrentModule('workhub')
     return
   }
