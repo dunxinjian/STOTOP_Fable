@@ -473,7 +473,7 @@ public class AccountService : IAccountService
         var accounts = await _accountRepository.Query()
             .Where(a => a.FAccountSetId == accountSetId
                 && a.FAuxiliary != null
-                && a.FAuxiliary.Contains(auxType)
+                && ("," + a.FAuxiliary + ",").Contains("," + auxType + ",")
                 && a.FEnableStatus == 1)
             .OrderBy(a => a.FCode)
             .ToListAsync();
