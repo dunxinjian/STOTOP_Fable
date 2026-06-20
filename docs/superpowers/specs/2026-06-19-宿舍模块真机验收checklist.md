@@ -9,6 +9,15 @@
 - [ ] 确认 baseline 种子已灌（宿舍菜单 FID 700-708 在库；侧栏可见"宿舍管理"）。
 - [ ] 切到有宿舍数据的组织（如 org 192）。登录成功、无控制台报错。
 
+### 0.1 本地 LocalDB 启动配方（**已实测：迁移建表可行**）
+远程库不可达时可用本机 SQL Server LocalDB。本会话实测：**迁移成功创建全部 324 张表（含 9 张 DOR 表）**。要点：
+1. `src/STOTOP.WebAPI/db-connections.json` 指向 LocalDB：`"server":"(localdb)\\MSSQLLocalDB"`、`"windowsAuth":true`、`"databaseName":"stotop_dorm_dev"`（文件 gitignored）。
+2. **迁移器不自动建库**，须先手动建空库：`sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "CREATE DATABASE stotop_dorm_dev"`。
+3. `dotnet run --project src/STOTOP.WebAPI`：建 324 表（约 1-2 分钟，已验证）→ 灌 24 模块 baseline 种子。
+4. **注意**：baseline 种子在 LocalDB 上**很慢**（本会话等 16+ 分钟仍未监听）。**真实 SQL Server 上会快**；用 LocalDB 须耐心等或精简种子。
+5. 登录默认管理员凭证见 `baseline-reference-data.json` 用户表。
+> 结论：本地 DB 真机**技术上可行**（迁移已验证），完整种子+走查更适合在可达的真实 SQL Server 上做。
+
 ## 1. 路由 / 集成（修复重点）
 - [ ] 侧栏"宿舍管理"展开 8 子菜单，**逐个点进无 404**（楼栋/入住/费用/设施/报修/访客/卫生/统计）。
 - [ ] 楼栋列表"管理床位"→ RoomManage（带 buildingId），**返回**回到楼栋列表（原按 name 跳转必 404，已修）。
