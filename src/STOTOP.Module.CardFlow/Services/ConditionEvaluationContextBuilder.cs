@@ -56,6 +56,12 @@ public sealed class ConditionEvaluationContextBuilder : IConditionEvaluationCont
             context.CurrentStageResult["completedStageKey"] = stageKey;
         }
 
+        var orgRole = await OrgRoleContextResolver.ResolveAsync(
+            _dbContext, card.FOrgId, card.FInitiatorId, cancellationToken);
+        context.OrgChain = orgRole.OrgChain;
+        context.RoleCodes = orgRole.RoleCodes;
+        context.RoleNames = orgRole.RoleNames;
+
         return context;
     }
 
