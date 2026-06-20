@@ -206,8 +206,8 @@ function filterOption(input: string, option: any) {
   gap: 8px;
   flex-wrap: wrap;
   padding: 8px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 </style>

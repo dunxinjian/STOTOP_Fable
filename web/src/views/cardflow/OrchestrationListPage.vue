@@ -41,7 +41,7 @@ const router = useRouter()
 
 interface StatusMeta { text: string; color: string }
 const STATUS_META: Record<OrchestrationTemplateStatus, StatusMeta> = {
-  draft: { text: '草稿', color: '#8c8c8c' },
+  draft: { text: '草稿', color: 'var(--text-3)' },
   published: { text: '已发布', color: 'var(--color-success)' },
   disabled: { text: '已停用', color: 'var(--color-warning)' },
 }
@@ -460,16 +460,16 @@ onMounted(loadData)
 }
 
 .status-tag {
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   font-weight: 500;
 }
 
-.text-muted { color: #bfbfbf; }
+.text-muted { color: var(--text-3); }
 
 .form-tip {
   margin-top: 4px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
 }
 </style>

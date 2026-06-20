@@ -40,9 +40,9 @@ interface StatusMeta { text: string; color: string }
 const STATUS_META: Record<OrchestrationInstanceStatus, StatusMeta> = {
   running: { text: '运行中', color: 'var(--color-info)' },
   completed: { text: '已完成', color: 'var(--color-success)' },
-  terminated: { text: '已终止', color: '#8c8c8c' },
+  terminated: { text: '已终止', color: 'var(--text-3)' },
   failed: { text: '失败', color: 'var(--color-danger)' },
-  cancelled: { text: '已取消', color: '#bfbfbf' },
+  cancelled: { text: '已取消', color: 'var(--text-3)' },
   paused: { text: '已暂停', color: 'var(--color-warning)' },
 }
 const STATUS_OPTIONS = (Object.keys(STATUS_META) as OrchestrationInstanceStatus[]).map(k => ({
@@ -349,7 +349,7 @@ onMounted(async () => {
 }
 
 .status-tag {
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   font-weight: 500;
 }

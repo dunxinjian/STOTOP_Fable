@@ -249,7 +249,7 @@ function onAuxConfigsChange(configs: AuxiliaryConfig[]) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .editor-collapse {

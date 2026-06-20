@@ -745,7 +745,7 @@ onMounted(() => {
   &:hover {
     border-color: $color-primary;
     box-shadow: $shadow-sm;
-    background: #f0f7ff;
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   }
 
   &:active {
@@ -760,7 +760,7 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     border-radius: $border-radius-sm;
-    background: rgba(0, 0, 0, 0.04);
+    background: color-mix(in srgb, var(--text-1) 4%, transparent);
   }
 
   &__info {
@@ -786,7 +786,7 @@ onMounted(() => {
 .canvas-wrapper {
   flex: 1;
   position: relative;
-  background: #fafbfc;
+  background: var(--bg-page);
 }
 
 .vue-flow-canvas {
@@ -808,7 +808,7 @@ onMounted(() => {
 
   &.selected {
     border-color: var(--node-color);
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2), $shadow-md;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent), $shadow-md;
   }
 
   &__stripe {
@@ -913,7 +913,7 @@ onMounted(() => {
   width: 10px;
   height: 10px;
   border: 2px solid $color-primary;
-  background: white;
+  background: var(--bg-card);
 }
 
 :deep(.vue-flow__edge-path) {

@@ -32,7 +32,7 @@ const displayScore = computed(() => props.score ?? 0)
 const displayText = computed(() => props.score != null ? `${props.score}%` : '--')
 
 const ringColor = computed(() => {
-  if (props.score == null) return '#d9d9d9'
+  if (props.score == null) return 'var(--border)'
   if (props.score >= 80) return 'var(--color-success)'
   if (props.score >= 50) return 'var(--color-warning)'
   return 'var(--color-danger)'
@@ -54,13 +54,13 @@ const ringColor = computed(() => {
 
 .ring-bg {
   fill: none;
-  stroke: #f0f0f0;
+  stroke: var(--border);
   stroke-width: 3;
 }
 
 .ring-fg {
   fill: none;
-  stroke: var(--ring-color, #d9d9d9);
+  stroke: var(--ring-color, var(--border));
   stroke-width: 3;
   stroke-linecap: round;
   transition: stroke-dasharray 0.3s ease;
@@ -68,7 +68,7 @@ const ringColor = computed(() => {
 
 .ring-label {
   font-size: 12px;
-  color: var(--ring-color, #999);
+  color: var(--ring-color, var(--text-3));
   font-weight: 500;
   min-width: 28px;
 }

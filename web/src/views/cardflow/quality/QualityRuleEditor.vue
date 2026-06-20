@@ -491,10 +491,10 @@ async function handleSubmit() {
 .section-title {
   font-weight: 600;
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
   margin: 16px 0 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 
   &:first-child {
     margin-top: 0;

@@ -158,7 +158,7 @@ function statusText(status: unknown): string {
 
 function statusColor(status: unknown): string {
   const map: Record<number, string> = { 0: 'var(--color-info)', 1: 'var(--color-success)', 2: 'var(--color-warning)', 3: 'var(--color-danger)' }
-  return map[Number(status)] ?? '#999'
+  return map[Number(status)] ?? 'var(--text-3)'
 }
 
 function formatDate(s: string): string {

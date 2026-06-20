@@ -166,7 +166,7 @@ export function getStatusActions(batch: BatchItem, role: RoleType, currentUserNa
 /** 线性进度条信息 */
 export function getProgressBarInfo(batch: BatchItem): ProgressBarInfo {
   let percent = 0
-  let color = '#d9d9d9'
+  let color = 'var(--border)'
 
   if (batch.status === 'uploading') {
     percent = batch.uploadProgress || 0
@@ -194,7 +194,7 @@ export function getProgressBarInfo(batch: BatchItem): ProgressBarInfo {
  */
 export function getProgressRing(batch: BatchItem): ProgressRingInfo {
   let percent = 0
-  let color = '#d9d9d9'
+  let color = 'var(--border)'
   let cssClass = ''
 
   if (batch.status === 'uploading') {

@@ -323,7 +323,7 @@ const acceptTypes = computed(() => triggerConfig.value?.fileUpload?.accept || '.
 
   &__label {
     width: 76px;
-    color: #555;
+    color: var(--text-2);
     font-size: 14px;
     flex-shrink: 0;
   }
@@ -334,7 +334,7 @@ const acceptTypes = computed(() => triggerConfig.value?.fileUpload?.accept || '.
 
   &__mapping-title {
     font-size: 14px;
-    color: #333;
+    color: var(--text-1);
     margin-bottom: 8px;
     font-weight: 500;
   }

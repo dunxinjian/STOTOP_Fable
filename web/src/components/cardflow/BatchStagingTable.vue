@@ -292,12 +292,12 @@ function handleConfirm() {
     background-color: var(--color-danger-light);
 
     &:hover > td {
-      background-color: #ffd9d6 !important;
+      background-color: color-mix(in srgb, var(--color-danger-light) 80%, var(--color-danger) 20%) !important;
     }
   }
 
   :deep(.cf-staging__row--excluded) {
-    color: #999;
+    color: var(--text-3);
     text-decoration: line-through;
   }
 }

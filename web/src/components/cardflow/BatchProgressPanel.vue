@@ -176,14 +176,14 @@ const stageEntries = computed(() =>
 
   &__stat-label {
     width: 64px;
-    color: #888;
+    color: var(--text-2);
     font-size: 13px;
   }
 
   &__stat-value {
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-1);
 
     &--ok { color: var(--color-success); }
     &--fail { color: var(--color-danger); }
@@ -198,7 +198,7 @@ const stageEntries = computed(() =>
 
   &__section-title {
     font-size: 14px;
-    color: #333;
+    color: var(--text-1);
     font-weight: 500;
     margin-bottom: 8px;
   }
@@ -212,7 +212,7 @@ const stageEntries = computed(() =>
 
   &__stage-name {
     width: 120px;
-    color: #555;
+    color: var(--text-2);
     font-size: 13px;
   }
 }

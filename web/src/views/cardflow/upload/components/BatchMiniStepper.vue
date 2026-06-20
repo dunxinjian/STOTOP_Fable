@@ -105,7 +105,7 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
   flex: 1;
   height: 2px;
   min-width: 12px;
-  background-color: #d9d9d9;
+  background-color: var(--border);
   align-self: flex-start;
   margin-top: 3px; /* 让连线垂直对齐圆点中心 */
 }
@@ -148,7 +148,7 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
 
 .dot--pending {
   background-color: transparent;
-  border: 1.5px solid #d9d9d9;
+  border: 1.5px solid var(--border);
 }
 
 /* Pulse 动画 */
@@ -181,7 +181,7 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
   cursor: default;
 }
 .step-label--pending {
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 /* 进度子标签 */
@@ -206,7 +206,7 @@ function dataProgressText(plugin: AutoPluginTrailItemDto): string {
 
 .plugin-data-progress__text {
   font-size: 10px;
-  color: #6b7280;
+  color: var(--text-2);
   white-space: nowrap;
 }
 </style>

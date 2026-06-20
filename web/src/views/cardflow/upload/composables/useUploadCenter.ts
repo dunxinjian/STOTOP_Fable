@@ -45,6 +45,10 @@ export type { RoleType, ViewMode, FilterState, KpiItem, WorkItemStats } from './
 
 // ===== 常量 =====
 
+// 头像色板——豁免令牌化：传给 CSS inline background，每色为人员身份标识色，不解析 var()
+const AVATAR_COLORS = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E'] as const
+const AVATAR_COLOR_FALLBACK = '#8c8c8c' // 无名称时的中性占位头像背景色（豁免）
+
 const STATUS_TEXT_MAP: Record<string, string> = {
   uploading: '上传中',
   processing: '处理中',
@@ -344,13 +348,12 @@ export function useUploadCenter() {
   }
 
   function avatarColor(name: string | undefined): string {
-    if (!name) return '#8c8c8c'
-    const colors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
+    if (!name) return AVATAR_COLOR_FALLBACK
     let hash = 0
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash)
     }
-    return colors[Math.abs(hash) % colors.length]
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
   }
 
   function cardClasses(batch: any): string[] {

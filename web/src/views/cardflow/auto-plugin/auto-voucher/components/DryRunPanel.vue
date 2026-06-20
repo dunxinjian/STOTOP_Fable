@@ -241,7 +241,7 @@ async function executeDryRun() {
 
   .label {
     white-space: nowrap;
-    color: #595959;
+    color: var(--text-2);
     font-weight: 500;
   }
 }
@@ -255,9 +255,9 @@ async function executeDryRun() {
 .stat-card {
   flex: 1;
   padding: 12px 16px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   text-align: center;
 }
 
@@ -268,7 +268,7 @@ async function executeDryRun() {
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
   margin-bottom: 10px;
 }
 </style>

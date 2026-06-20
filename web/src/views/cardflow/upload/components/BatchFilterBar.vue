@@ -96,8 +96,8 @@ const statusTags = [
   font-size: 12px;
   line-height: 20px;
   cursor: pointer;
-  border: 1px solid #d9d9d9;
-  color: rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--border);
+  color: var(--text-2);
   transition: all 0.2s;
   user-select: none;
 
@@ -110,7 +110,7 @@ const statusTags = [
     background: var(--bg-card);
     color: var(--text-1);
     border-color: var(--border-strong);
-    box-shadow: 0 1px 2px rgba(18, 31, 53, 0.08);
+    box-shadow: var(--shadow-sm);
   }
 }
 
@@ -141,7 +141,7 @@ const statusTags = [
 
 .view-toggle {
   display: flex;
-  background: #f0f0f0;
+  background: var(--bg-muted);
   border-radius: 4px;
   padding: 2px;
 }
@@ -153,13 +153,13 @@ const statusTags = [
   background: transparent;
   cursor: pointer;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-2);
   transition: all 0.2s;
 
   &.active {
-    background: #fff;
+    background: var(--bg-card);
     color: var(--text-1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 }
 </style>

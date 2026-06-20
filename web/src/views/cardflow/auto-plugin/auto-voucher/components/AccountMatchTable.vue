@@ -28,7 +28,7 @@
           class="hint-tag"
           @click="addRowForValue(hint)"
         >{{ hint }}</a-tag>
-        <span v-if="unmappedHints.length > 5" style="color: #8c8c8c;">
+        <span v-if="unmappedHints.length > 5" style="color: var(--text-3);">
           等 {{ unmappedHints.length }} 项
         </span>
       </template>
@@ -86,7 +86,7 @@
       ok-text="导入"
       cancel-text="取消"
     >
-      <p style="color: #8c8c8c; font-size: 12px; margin-bottom: 8px;">
+      <p style="color: var(--text-3); font-size: 12px; margin-bottom: 8px;">
         每行一条规则，格式：匹配值,科目编码（如：顺丰,1001）
       </p>
       <a-textarea
