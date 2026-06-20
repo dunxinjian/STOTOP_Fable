@@ -285,6 +285,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--color-info', c.colorInfo || '#5B7290')
     s.setProperty('--color-info-light', '#EBEFF4')
     s.setProperty('--color-info-text', '#34455A')
+    s.setProperty('--color-info-border', 'rgba(91, 114, 144, 0.30)') // 信息态描边(对齐 --color-danger-border .30 口径)
     // —— 静态：文字
     s.setProperty('--text-1', '#1F2329')
     s.setProperty('--text-2', '#5A6068')

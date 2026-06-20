@@ -168,7 +168,7 @@
             </thead>
             <tbody>
               <template v-if="currentSections.length === 0">
-                <tr><td :colspan="totalColumns" style="text-align:center;color:#999;padding:24px;">当前方向暂无数据</td></tr>
+                <tr><td :colspan="totalColumns" style="text-align:center;color:var(--text-3);padding:24px;">当前方向暂无数据</td></tr>
               </template>
               <template v-for="(section, sIdx) in currentSections" :key="`s-${sIdx}`">
                 <!-- 利润合计行（边际/合计分区）：不合并列 -->
@@ -1185,7 +1185,8 @@ function buildExportHtml(): string {
   const ph = periodLabels.value
   let h = '<table border="1" style="border-collapse:collapse;font-family:Arial,微软雅黑;font-size:12px;">'
   // 第一行表头
-  h += '<thead><tr style="background:#f0f0f0;font-weight:bold;">'
+  // 以下导出文档内联样式使用字面量 hex：CSS 变量在独立 XLS 文件中无法解析，属导出格式豁免色
+  h += '<thead><tr style="background:#f0f0f0;font-weight:bold;">' // 导出文档内联样式豁免色
   h += '<th rowspan="2">项目</th><th rowspan="2">单位</th>'
   for (let i = 0; i < ph.length; i++) {
     const tag = i === 0 ? '当期' : i === 1 ? '环比期' : '同比期'
@@ -1194,7 +1195,7 @@ function buildExportHtml(): string {
   h += '<th rowspan="2">环比</th>'
   if (includeYoy.value) h += '<th rowspan="2">同比</th>'
   h += '<th rowspan="2">数据来源</th><th rowspan="2">逻辑说明</th>'
-  h += '</tr><tr style="background:#f0f0f0;font-weight:bold;">'
+  h += '</tr><tr style="background:#f0f0f0;font-weight:bold;">' // 导出文档内联样式豁免色
   for (let i = 0; i < ph.length; i++) {
     h += '<th>金额</th><th>单票均</th>'
   }
@@ -1202,7 +1203,7 @@ function buildExportHtml(): string {
   for (const section of sections.value) {
     if (isMarginSection(section)) {
       const norm = normalizedPeriodValues(section.sectionTotals)
-      h += '<tr style="background:#d9edf7;font-weight:bold;">'
+      h += '<tr style="background:#d9edf7;font-weight:bold;">' // 导出文档内联样式豁免色
       h += `<td>${escapeHtml(section.sectionName)}</td><td>元</td>`
       for (const pv of norm) {
         h += `<td style="text-align:right;">${formatAmount(pv.amount)}</td><td style="text-align:right;">${formatPerUnit(pv.perUnitValue)}</td>`
@@ -1211,10 +1212,10 @@ function buildExportHtml(): string {
       if (includeYoy.value) h += `<td>${renderChangeText(computeYoyFromTotals(section.sectionTotals))}</td>`
       h += '<td></td><td></td></tr>'
     } else {
-      h += `<tr style="background:#f0ad4e;color:#fff;font-weight:bold;"><td colspan="${cols}">${escapeHtml(section.sectionName)}</td></tr>`
+      h += `<tr style="background:#f0ad4e;color:#fff;font-weight:bold;"><td colspan="${cols}">${escapeHtml(section.sectionName)}</td></tr>` // 导出文档内联样式豁免色
       for (const item of flattenItems(section.items)) {
         const isSub = item.nodeRole === 'group' && (item.depth || 0) > 0
-        const rowStyle = isSub ? 'font-weight:bold;background:#fafafa;' : ''
+        const rowStyle = isSub ? 'font-weight:bold;background:#fafafa;' : '' // 导出文档内联样式豁免色
         const indent = '&nbsp;'.repeat((item.depth || 0) * 4)
         h += `<tr style="${rowStyle}">`
         h += `<td>${indent}${escapeHtml(item.name)}</td><td>${escapeHtml(item.unit || '元')}</td>`
@@ -1272,7 +1273,7 @@ function escapeHtml(s: string): string {
 
   .yoy-checkbox {
     margin-left: 4px;
-    color: #555;
+    color: var(--text-2);
     font-size: 13px;
   }
 }
@@ -1280,9 +1281,9 @@ function escapeHtml(s: string): string {
 .report-body {
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--bg-card);
   padding: 4px 16px 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -1305,7 +1306,7 @@ function escapeHtml(s: string): string {
   align-items: center;
   justify-content: center;
   padding: 80px 0;
-  color: #909399;
+  color: var(--text-3);
 
   .empty-icon {
     font-size: 48px;
@@ -1315,7 +1316,7 @@ function escapeHtml(s: string): string {
 
   .empty-title {
     font-size: 15px;
-    color: #606266;
+    color: var(--text-2);
     margin-bottom: 16px;
   }
 
@@ -1324,10 +1325,10 @@ function escapeHtml(s: string): string {
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: #909399;
+    color: var(--text-3);
 
     .step-arrow {
-      color: #c0c4cc;
+      color: var(--text-3);
     }
   }
 }
@@ -1343,7 +1344,7 @@ function escapeHtml(s: string): string {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e6eaee;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 0;
 }
 
@@ -1359,7 +1360,7 @@ function escapeHtml(s: string): string {
   display: flex;
   align-items: center;
   gap: 16px;
-  color: #1f3a5f;
+  color: var(--text-1);
   font-size: 14px;
 
   .global-summary-item {
@@ -1388,9 +1389,9 @@ function escapeHtml(s: string): string {
     margin: 0 4px 0 0 !important;
     font-size: 14px;
     font-weight: 500;
-    background: #fafafa;
-    color: #595959;
-    border: 1px solid #e6eaee;
+    background: var(--bg-muted);
+    color: var(--text-2);
+    border: 1px solid var(--border);
     border-bottom: none;
     border-radius: 4px 4px 0 0;
     transition: background 0.2s ease, color 0.2s ease,
@@ -1398,7 +1399,7 @@ function escapeHtml(s: string): string {
   }
   // Hover 态：淡蓝底 + 主题文字
   :deep(.ant-tabs-tab:hover) {
-    background: #f0f7ff;
+    background: var(--color-info-light);
     color: var(--color-primary);
   }
   // 激活态：四重视觉强化（浅蓝底 + 蓝边 + 主题文字加粗 + 顶部 3px 蓝色内阴影）
@@ -1433,11 +1434,11 @@ function escapeHtml(s: string): string {
   border-collapse: collapse;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  background: #fff;
+  background: var(--bg-card);
 
   th,
   td {
-    border: 1px solid #e6eaee;
+    border: 1px solid var(--border);
     padding: 6px 10px;
     height: 32px;
     box-sizing: border-box;
@@ -1447,15 +1448,15 @@ function escapeHtml(s: string): string {
 
   thead {
     th {
-      background: #f5f7fa;
-      color: #303133;
+      background: var(--bg-muted);
+      color: var(--text-1);
       font-weight: 600;
       text-align: center;
       position: sticky;
       top: 0;
       z-index: 3;
       // 滚动时表头底部阴影
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      box-shadow: var(--shadow-sm);
     }
 
     // 第二行表头需要粘在第一行（高度 32px）之下，
@@ -1485,7 +1486,7 @@ function escapeHtml(s: string): string {
     .th-amount,
     .th-perunit {
       font-weight: 500;
-      background: #fafbfc;
+      background: var(--bg-muted);
     }
   }
 
@@ -1515,7 +1516,7 @@ function escapeHtml(s: string): string {
 
   .cell-name {
     text-align: left;
-    color: #303133;
+    color: var(--text-1);
 
     .indent {
       display: inline-flex;
@@ -1526,7 +1527,7 @@ function escapeHtml(s: string): string {
     .expand-icon {
       width: 12px;
       font-size: 10px;
-      color: #909399;
+      color: var(--text-3);
       display: inline-block;
       transition: transform 0.2s ease;
 
@@ -1546,28 +1547,28 @@ function escapeHtml(s: string): string {
 
   .cell-unit {
     text-align: center;
-    color: #606266;
+    color: var(--text-2);
     font-size: 12px;
   }
 
   .cell-amount {
     text-align: right;
-    color: #303133;
+    color: var(--text-1);
 
     // 零值灰化
     &.zero-amount {
-      color: #c0c4cc;
+      color: var(--text-3);
     }
   }
 
   .cell-perunit {
     text-align: right;
-    color: #606266;
+    color: var(--text-2);
   }
 
   .cell-rate {
     text-align: center;
-    color: #606266;
+    color: var(--text-2);
     font-size: 12px;
 
     // 趋势 badge 样式
@@ -1582,17 +1583,17 @@ function escapeHtml(s: string): string {
       border-radius: 3px;
     }
     &.change-zero {
-      color: #999;
+      color: var(--text-3);
     }
     &.change-null {
-      color: #d9d9d9;
+      color: var(--text-3);
     }
   }
 
   .cell-source,
   .cell-logic {
     text-align: center;
-    color: #606266;
+    color: var(--text-2);
     font-size: 12px;
     padding-left: 4px;
     padding-right: 4px;
@@ -1612,16 +1613,16 @@ function escapeHtml(s: string): string {
   }
 
   .source-icon-btn {
-    color: #13a8a8;
+    color: var(--color-info);
 
     &:hover {
-      color: #08979c;
-      background: #e6fffb;
+      color: var(--color-info);
+      background: var(--color-info-light);
     }
   }
 
   .detail-empty {
-    color: #c0c4cc;
+    color: var(--text-3);
   }
 
   // 行类型
@@ -1630,18 +1631,18 @@ function escapeHtml(s: string): string {
     user-select: none;
 
     .section-title-cell {
-      background: #fffbf0;
-      color: #5a3e00;
+      background: var(--color-warning-light);
+      color: var(--color-warning-text);
       font-weight: 600;
       letter-spacing: 0.5px;
       padding: 8px 12px;
       text-align: left;
-      border-left: 3px solid #f0ad4e;
+      border-left: 3px solid var(--color-primary);
 
       .section-toggle-icon {
         display: inline-block;
         font-size: 10px;
-        color: #a06400;
+        color: var(--color-primary);
         transition: transform 0.2s ease;
         margin-right: 6px;
 
@@ -1652,36 +1653,36 @@ function escapeHtml(s: string): string {
     }
 
     &:hover .section-title-cell {
-      background: #fff2d4;
+      background: var(--color-warning-light);
     }
   }
 
   .row-margin-total {
-    background: #f6fbff;
+    background: var(--color-info-light);
     font-weight: 700;
     border-top: 2px solid var(--color-info);
 
     .margin-name {
-      color: #1f3a5f;
+      color: var(--text-1);
     }
 
     .cell-amount {
-      color: #1f3a5f;
+      color: var(--text-1);
     }
   }
 
   .row-tab-formula {
-    background: #f0f7ff;
+    background: var(--color-info-light);
     font-weight: 700;
     border-top: 2px solid var(--color-info);
 
     .formula-name {
-      color: #003a8c;
+      color: var(--text-1);
       font-size: 14px;
     }
 
     .formula-amount {
-      color: #003a8c;
+      color: var(--text-1);
       font-size: 14px;
     }
 
@@ -1692,39 +1693,39 @@ function escapeHtml(s: string): string {
 
   // 斑马纹：明细行奇偶交替
   .row-item:nth-child(even) {
-    background: #fafbfc;
+    background: var(--bg-muted);
   }
 
   .row-section-subtotal {
-    background: #fafbfc;
+    background: var(--bg-muted);
     font-weight: 600;
 
     .cell-name {
-      color: #303133;
+      color: var(--text-1);
     }
   }
 
   .row-formula {
-    background: #f0f7ff;
+    background: var(--color-info-light);
     font-weight: 700;
 
     .cell-name {
-      color: #003a8c;
+      color: var(--text-1);
     }
 
     .cell-amount {
-      color: #003a8c;
+      color: var(--text-1);
     }
   }
 
   .row-indicator {
     .cell-name {
-      color: #999;
+      color: var(--text-3);
       font-style: italic;
     }
 
     td {
-      color: #999;
+      color: var(--text-3);
       font-style: italic;
     }
   }
@@ -1740,7 +1741,7 @@ function escapeHtml(s: string): string {
 
   .row-detail {
     .cell-name {
-      color: #595959;
+      color: var(--text-2);
     }
   }
 
@@ -1753,7 +1754,7 @@ function escapeHtml(s: string): string {
     }
 
     &:hover {
-      background: #f5faff;
+      background: var(--color-primary-light);
 
       td:first-child {
         border-left-color: var(--color-primary);
@@ -1768,7 +1769,7 @@ function escapeHtml(s: string): string {
       padding: 1px 5px;
       background: var(--color-warning-light);
       color: var(--color-warning);
-      border: 1px solid #ffe58f;
+      border: 1px solid var(--color-warning-border);
       border-radius: 3px;
       font-size: 11px;
       font-weight: normal;
@@ -1777,20 +1778,20 @@ function escapeHtml(s: string): string {
   }
 
   .row-drill {
-    background: #f5f5f5;
+    background: var(--bg-muted);
 
     .cell-name {
-      color: #888;
+      color: var(--text-3);
       font-size: 12px;
 
       .drill-tag {
-        color: #bbb;
+        color: var(--text-3);
         margin-right: 4px;
       }
     }
 
     .cell-amount {
-      color: #555;
+      color: var(--text-2);
     }
   }
 
@@ -1828,7 +1829,7 @@ function escapeHtml(s: string): string {
 .indicator-panel {
   flex: 0 0 360px;
   min-width: 300px;
-  border-right: 1px solid #ebeef5;
+  border-right: 1px solid var(--border);
   padding-right: 16px;
   overflow-y: auto;
 }
@@ -1858,10 +1859,10 @@ function escapeHtml(s: string): string {
     padding: 6px 8px;
     text-align: right;
     font-weight: 500;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--border);
     white-space: nowrap;
-    background: #f5f7fa;
-    color: #303133;
+    background: var(--bg-muted);
+    color: var(--text-1);
   }
 
   th.indicator-name-col {
@@ -1875,11 +1876,11 @@ function escapeHtml(s: string): string {
 
 .indicator-group-row {
   font-weight: 600;
-  background-color: #f5f7fa;
+  background-color: var(--bg-muted);
 }
 
 .indicator-item-row td {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .num-cell {
@@ -1889,13 +1890,13 @@ function escapeHtml(s: string): string {
 
 .change-cell {
   font-size: 12px;
-  color: #606266;
+  color: var(--text-2);
 }
 
 .info-icon {
   margin-left: 4px;
   font-size: 12px;
-  color: #909399;
+  color: var(--text-3);
   cursor: help;
 }
 
@@ -1903,34 +1904,34 @@ function escapeHtml(s: string): string {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #303133;
+  color: var(--text-1);
 
   &__label {
     margin-top: 8px;
-    color: #8c8c8c;
+    color: var(--text-3);
     font-size: 12px;
   }
 
   &__title {
-    color: #1f1f1f;
+    color: var(--text-1);
     font-size: 16px;
     font-weight: 600;
     line-height: 1.4;
   }
 
   &__meta {
-    color: #595959;
+    color: var(--text-2);
     line-height: 1.5;
   }
 
   &__content {
     padding: 12px;
-    color: #303133;
+    color: var(--text-1);
     line-height: 1.7;
     white-space: pre-wrap;
     word-break: break-word;
-    background: #f8fafc;
-    border: 1px solid #e6eaee;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
     border-radius: 4px;
   }
 }

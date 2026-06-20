@@ -18,16 +18,16 @@
         <SearchOutlined />
       </template>
       <template #notFoundContent>
-        <div style="padding: 8px 12px; color: #8c8c8c; font-size: 12px;">
+        <div style="padding: 8px 12px; color: var(--text-3); font-size: 12px;">
           <div>未找到匹配科目</div>
           <div style="margin-top: 4px;">
-            提示：输入 <code style="background:#f0f0f0;padding:1px 4px;">5001*</code> 一键选中所有 5001 开头的科目
+            提示：输入 <code style="background:var(--border);padding:1px 4px;">5001*</code> 一键选中所有 5001 开头的科目
           </div>
         </div>
       </template>
     </a-select>
     <div v-if="hint" class="account-code-picker__hint">
-      <InfoCircleOutlined style="color: #8c8c8c;" />
+      <InfoCircleOutlined style="color: var(--text-3);" />
       <span>{{ hint }}</span>
       <span v-if="groupedSummary" class="account-code-picker__summary">{{ groupedSummary }}</span>
     </div>
@@ -145,7 +145,7 @@ watch(() => props.options, () => {
     gap: 6px;
     margin-top: 4px;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     line-height: 1.5;
     flex-wrap: wrap;
   }
