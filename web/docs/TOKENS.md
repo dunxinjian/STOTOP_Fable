@@ -16,6 +16,8 @@
 | `--color-primary-light` | `#FFF3EA` | 主色浅底 |
 | `--color-primary-border` | `rgba(232,94,0,0.30)` | 主色描边 |
 | `--color-danger-border` | `rgba(214,88,78,0.30)` | 危险态焦点环/描边（对齐 --color-primary-border .30 口径） |
+| `--color-success-border` | `rgba(62,158,110,0.30)` | 成功态描边（对齐 .30 口径） |
+| `--color-warning-border` | `rgba(212,154,46,0.30)` | 警告态描边（对齐 .30 口径） |
 
 ## 状态色（成功/警告/危险/信息，各带 -light/-text）
 
