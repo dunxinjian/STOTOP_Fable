@@ -25,6 +25,18 @@ public class VoucherController : ControllerBase
         _voucherExcelService = voucherExcelService;
     }
 
+    /// <summary>
+    /// 解析当前账套：请求头 X-AccountSet-Id 优先，其次回退 query 参数。
+    /// 与权限过滤器(RequireAccountSetPermission 头优先)、服务层读回(GetCurrentAccountSetId 仅读头)保持同一口径，
+    /// 避免「落库账套用 query、鉴权/读回用头」三者背离 → 已提交却读回失败(500) 或落到非预期账套。
+    /// </summary>
+    private long ResolveAccountSetId(long accountSetId)
+    {
+        var header = Request.Headers["X-AccountSet-Id"].FirstOrDefault();
+        if (long.TryParse(header, out var id) && id > 0) return id;
+        return accountSetId;
+    }
+
     [HttpGet]
     [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<VoucherPagedResult>> GetPagedList([FromQuery] VoucherQueryRequest request, [FromQuery] long accountSetId = 0)
@@ -52,8 +64,9 @@ public class VoucherController : ControllerBase
         try
         {
             var creator = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
+            var effectiveAccountSetId = ResolveAccountSetId(accountSetId);
             // 手动录入凭证：强校验科目辅助核算契约(声明的维度必须带齐, E2)
-            var result = await _voucherService.CreateAsync(request, creator, accountSetId, enforceAuxContract: true);
+            var result = await _voucherService.CreateAsync(request, creator, effectiveAccountSetId, enforceAuxContract: true);
             return ApiResult<VoucherDto>.Success(result, "创建凭证成功");
         }
         catch (InvalidOperationException ex)
@@ -128,14 +141,16 @@ public class VoucherController : ControllerBase
     }
 
     [HttpPost("draft")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherCreate)]
     public async Task<ApiResult<VoucherDto>> SaveDraft([FromBody] CreateVoucherRequest request, [FromQuery] long accountSetId = 0)
     {
         var creator = User.FindFirst(ClaimTypes.Name)?.Value ?? "system";
-        var result = await _voucherService.SaveDraftAsync(request, creator, accountSetId);
+        var result = await _voucherService.SaveDraftAsync(request, creator, ResolveAccountSetId(accountSetId));
         return ApiResult<VoucherDto>.Success(result, "保存草稿成功");
     }
 
     [HttpGet("drafts")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<List<VoucherListDto>>> GetDrafts([FromQuery] long accountSetId = 0)
     {
         var result = await _voucherService.GetDraftsAsync(accountSetId);
@@ -143,6 +158,7 @@ public class VoucherController : ControllerBase
     }
 
     [HttpPost("reorder/{periodId}")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherEdit)]
     public async Task<ApiResult> ReorderNumbers(long periodId, [FromQuery] long accountSetId = 0)
     {
         var result = await _voucherService.ReorderNumbersAsync(periodId, accountSetId);
@@ -150,6 +166,7 @@ public class VoucherController : ControllerBase
     }
 
     [HttpGet("next-number")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<int>> GetNextNumber([FromQuery] string word, [FromQuery] long periodId, [FromQuery] long accountSetId = 0)
     {
         var result = await _voucherService.GetNextNumberAsync(word, periodId, accountSetId);
@@ -157,6 +174,7 @@ public class VoucherController : ControllerBase
     }
 
     [HttpGet("pending-count")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<int>> GetPendingAuditCount([FromQuery] long accountSetId = 0)
     {
         var result = await _voucherService.GetPendingAuditCountAsync(accountSetId);
@@ -164,12 +182,14 @@ public class VoucherController : ControllerBase
     }
 
     [HttpPost("copy/{id}")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherCreate)]
     public async Task<ApiResult<object>> Copy(long id)
     {
         return await _voucherService.CopyAsync(id);
     }
 
     [HttpPost("reverse/{id}")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherCreate)]
     public async Task<ApiResult<object>> Reverse(long id)
     {
         return await _voucherService.ReverseAsync(id);
@@ -186,6 +206,7 @@ public class VoucherController : ControllerBase
     }
 
     [HttpGet("check-gap")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public async Task<ApiResult<object>> CheckGap([FromQuery] long accountSetId, [FromQuery] int year, [FromQuery] int periodNo)
     {
         return await _voucherService.CheckGapAsync(accountSetId, year, periodNo);
@@ -224,6 +245,7 @@ public class VoucherController : ControllerBase
     }
 
     [HttpGet("export-template")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherView)]
     public IActionResult ExportTemplate()
     {
         var bytes = _voucherExcelService.ExportTemplate();
@@ -234,6 +256,7 @@ public class VoucherController : ControllerBase
     /// 完成凭证补录：将草稿凭证提交为待审核状态
     /// </summary>
     [HttpPost("{id}/complete-record")]
+    [RequireAccountSetPermission(AccountSetPermissions.VoucherCreate)]
     public async Task<ApiResult> CompleteRecord(long id)
     {
         return await _voucherService.CompleteRecordAsync(id);

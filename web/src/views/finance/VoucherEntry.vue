@@ -788,6 +788,13 @@ watch(() => form.value.date, (newDate) => {
     const date = new Date(newDate)
     currentYear.value = date.getFullYear()
     currentPeriod.value = date.getMonth() + 1
+    // 按日期在已加载的期间列表中定位并回写 periodId（用于取号预览与"期"显示；后端仍会按日期权威解析）
+    const matched = periodList.value.find(p => {
+      const start = new Date(p.startDate)
+      const end = new Date(p.endDate)
+      return date >= start && date <= end
+    })
+    form.value.periodId = matched ? matched.id : null
   }
 }, { immediate: true })
 

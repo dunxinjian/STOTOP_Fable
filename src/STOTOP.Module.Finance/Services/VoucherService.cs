@@ -51,6 +51,32 @@ public class VoucherService : IVoucherService
         _context = context;
     }
 
+    /// <summary>
+    /// 把一组写操作包进事务：关系型 provider 且当前无外层事务时，自开事务、失败整体回滚；
+    /// 已存在外层事务（如 CardFlow FlowEngineService 审批流在事务内经 Bridge 生成凭证）时，
+    /// 直接复用外层事务、由外层统一提交/回滚——避免 EF 不支持的嵌套 BeginTransaction 抛错；
+    /// 非关系型(InMemory) provider 不支持事务，退化为直接执行（行为不变）。
+    /// </summary>
+    private async Task WithTransactionAsync(Func<Task> writes)
+    {
+        if (!_context.Database.IsRelational() || _context.Database.CurrentTransaction != null)
+        {
+            await writes();
+            return;
+        }
+        await using var tx = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            await writes();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    }
+
     private long GetCurrentOrgId()
     {
         var orgIdObj = _httpContextAccessor.HttpContext?.Items["CurrentOrgId"];
@@ -64,6 +90,26 @@ public class VoucherService : IVoucherService
         if (claim != null && long.TryParse(claim.Value, out var userId))
             return userId;
         return 0;
+    }
+
+    private long GetCurrentAccountSetId()
+    {
+        var header = _httpContextAccessor.HttpContext?.Request.Headers["X-AccountSet-Id"].FirstOrDefault();
+        return long.TryParse(header, out var id) ? id : 0;
+    }
+
+    /// <summary>
+    /// 按 id 取凭证（可含分录），并施加组织/账套归属过滤。无权或不存在均返回 null。
+    /// </summary>
+    private async Task<FinVoucher?> GetOwnedVoucherAsync(long id, bool includeEntries = false)
+    {
+        var query = _voucherRepository.Query();
+        if (includeEntries) query = query.Include(v => v.Entries);
+        var voucher = await query.AsTracking().FirstOrDefaultAsync(v => v.FID == id);
+        if (voucher == null) return null;
+        var orgId = GetCurrentOrgId();
+        var accountSetId = GetCurrentAccountSetId();
+        return VoucherPostingRules.IsAccessible(voucher, orgId, accountSetId) ? voucher : null;
     }
 
     public async Task<VoucherPagedResult> GetPagedListAsync(VoucherQueryRequest request, long accountSetId = 0)
@@ -207,10 +253,8 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto?> GetByIdAsync(long id)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == id);
-        
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
+
         if (voucher == null) return null;
 
         var period = await _periodRepository.GetByIdAsync(voucher.FPeriodId);
@@ -256,7 +300,24 @@ public class VoucherService : IVoucherService
         foreach (var entry in request.Entries)
             ValidateAuxiliaryJson(entry.AuxiliaryJson);
 
-        var nextNo = await GetNextNumberAsync(request.VoucherWord, request.PeriodId, accountSetId);
+        // 期间解析 + 结账校验（后端权威：PeriodId<=0 时按日期解析；无论来源，已结账期一律拒绝）
+        long periodId = request.PeriodId;
+        if (periodId <= 0)
+        {
+            var period = await ResolvePeriodAsync(request.Date, accountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(period);
+            periodId = period.FID;
+        }
+        else
+        {
+            // 调用方直接传入 periodId（如 CardFlow 桥接/导入）：若该期间存在且已结账，同样拒绝。
+            // 期间不存在时不在此处中断（保持对历史/特殊调用方的兼容），由后续落库与外键约束兜底。
+            var period = await _periodRepository.GetByIdAsync(periodId);
+            if (period != null)
+                VoucherPostingRules.EnsureOpenForPosting(period);
+        }
+
+        var nextNo = await GetNextNumberAsync(request.VoucherWord, periodId, accountSetId);
 
         // 确定组织ID：优先从HttpContext获取，后台任务无HttpContext时从账套反查
         long orgId = GetCurrentOrgId();
@@ -273,7 +334,7 @@ public class VoucherService : IVoucherService
             FVoucherWord = request.VoucherWord,
             FVoucherNo = nextNo,
             FDate = request.Date,
-            FPeriodId = request.PeriodId,
+            FPeriodId = periodId,
             FAttachmentCount = request.AttachmentCount,
             FCreator = creator,
             FStatus = 1, // 待审核
@@ -286,38 +347,43 @@ public class VoucherService : IVoucherService
             FUpdatedTime = DateTime.Now
         };
 
-        await _voucherRepository.AddAsync(voucher);
-
-        foreach (var entryRequest in request.Entries)
+        await WithTransactionAsync(async () =>
         {
-            var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
-            
-            var entry = new FinVoucherEntry
+            await _voucherRepository.AddAsync(voucher);
+
+            foreach (var entryRequest in request.Entries)
             {
-                FVoucherId = voucher.FID,
-                FLineNo = entryRequest.LineNo,
-                FSummary = entryRequest.Summary,
-                FAccountId = entryRequest.AccountId,
-                FAccountCode = account?.FCode ?? "",
-                FAccountName = account?.FName ?? "",
-                FAuxiliaryJson = entryRequest.AuxiliaryJson,
-                FDebitAmount = entryRequest.DebitAmount,
-                FCreditAmount = entryRequest.CreditAmount,
-                FDataScopeId = request.DataScopeId,
-                FOrgId = orgId,
-                FCreatedTime = DateTime.Now,
-                FUpdatedTime = DateTime.Now
-            };
-            
-            await _entryRepository.AddAsync(entry);
-        }
+                var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
 
-        var createdVoucher = await GetByIdAsync(voucher.FID) ?? throw new InvalidOperationException("创建凭证失败");
+                var entry = new FinVoucherEntry
+                {
+                    FVoucherId = voucher.FID,
+                    FLineNo = entryRequest.LineNo,
+                    FSummary = entryRequest.Summary,
+                    FAccountId = entryRequest.AccountId,
+                    FAccountCode = account?.FCode ?? "",
+                    FAccountName = account?.FName ?? "",
+                    FAuxiliaryJson = entryRequest.AuxiliaryJson,
+                    FDebitAmount = entryRequest.DebitAmount,
+                    FCreditAmount = entryRequest.CreditAmount,
+                    FDataScopeId = request.DataScopeId,
+                    FOrgId = orgId,
+                    FCreatedTime = DateTime.Now,
+                    FUpdatedTime = DateTime.Now
+                };
 
+                await _entryRepository.AddAsync(entry);
+            }
+        });
+
+        // 操作日志为 fire-and-forget（内部吞异常），放到事务提交之后，只记录已提交的操作、不占事务连接/锁
         await _operationLogService.LogAsync(
             accountSetId, "凭证", "新增",
             $"新增凭证 {voucher.FVoucherWord}{voucher.FVoucherNo}",
             voucher.FID, $"{voucher.FVoucherWord}{voucher.FVoucherNo}");
+
+        // 读回与事件发布放到事务提交之后
+        var createdVoucher = await GetByIdAsync(voucher.FID) ?? throw new InvalidOperationException("创建凭证失败");
 
         // 凭证状态为待审核时发布事件
         if (voucher.FStatus == 1)
@@ -341,11 +407,8 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto?> UpdateAsync(long id, CreateVoucherRequest request, string modifier, bool enforceAuxContract = false)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .AsTracking()
-            .FirstOrDefaultAsync(v => v.FID == id);
-        
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
+
         if (voucher == null) return null;
         
         if (voucher.FStatus == 2)
@@ -389,53 +452,73 @@ public class VoucherService : IVoucherService
             FAccountSetId = voucher.FAccountSetId
         };
 
+        // 期间随日期重解析（后端权威），并校验目标期间未结账（无论 PeriodId 来源）
+        long newPeriodId = request.PeriodId;
+        if (newPeriodId <= 0)
+        {
+            var newPeriod = await ResolvePeriodAsync(request.Date, voucher.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(newPeriod);
+            newPeriodId = newPeriod.FID;
+        }
+        else
+        {
+            var newPeriod = await _periodRepository.GetByIdAsync(newPeriodId);
+            if (newPeriod != null)
+                VoucherPostingRules.EnsureOpenForPosting(newPeriod);
+        }
+
         voucher.FDate = request.Date;
-        voucher.FPeriodId = request.PeriodId;
+        voucher.FPeriodId = newPeriodId;
         voucher.FAttachmentCount = request.AttachmentCount;
         voucher.FModifier = modifier;
         voucher.FRemark = request.Remark;
         voucher.FUpdatedTime = DateTime.Now;
 
-        await _voucherRepository.UpdateAsync(voucher);
-
-        // 记录凭证字段级变更
-        await _changeTrackingService.TrackChangesAsync("凭证", voucher.FID, oldSnapshot, voucher, voucher.FAccountSetId);
-
-        // 删除旧分录
-        foreach (var entry in voucher.Entries)
+        await WithTransactionAsync(async () =>
         {
-            await _entryRepository.DeleteAsync(entry.FID);
-        }
+            await _voucherRepository.UpdateAsync(voucher);
 
-        // 添加新分录
-        foreach (var entryRequest in request.Entries)
-        {
-            var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
-            
-            var entry = new FinVoucherEntry
+            // 记录凭证字段级变更
+            await _changeTrackingService.TrackChangesAsync("凭证", voucher.FID, oldSnapshot, voucher, voucher.FAccountSetId);
+
+            // 删除旧分录（先快照分录ID，避免删除时修改正在枚举的导航集合）
+            foreach (var entryId in voucher.Entries.Select(e => e.FID).ToList())
             {
-                FVoucherId = voucher.FID,
-                FLineNo = entryRequest.LineNo,
-                FSummary = entryRequest.Summary,
-                FAccountId = entryRequest.AccountId,
-                FAccountCode = account?.FCode ?? "",
-                FAccountName = account?.FName ?? "",
-                FAuxiliaryJson = entryRequest.AuxiliaryJson,
-                FDebitAmount = entryRequest.DebitAmount,
-                FCreditAmount = entryRequest.CreditAmount,
-                FCreatedTime = DateTime.Now,
-                FUpdatedTime = DateTime.Now
-            };
-            
-            await _entryRepository.AddAsync(entry);
-        }
+                await _entryRepository.DeleteAsync(entryId);
+            }
+
+            // 添加新分录
+            foreach (var entryRequest in request.Entries)
+            {
+                var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
+
+                var entry = new FinVoucherEntry
+                {
+                    FVoucherId = voucher.FID,
+                    FLineNo = entryRequest.LineNo,
+                    FSummary = entryRequest.Summary,
+                    FAccountId = entryRequest.AccountId,
+                    FAccountCode = account?.FCode ?? "",
+                    FAccountName = account?.FName ?? "",
+                    FAuxiliaryJson = entryRequest.AuxiliaryJson,
+                    FDebitAmount = entryRequest.DebitAmount,
+                    FCreditAmount = entryRequest.CreditAmount,
+                    FOrgId = voucher.FOrgId,
+                    FDataScopeId = request.DataScopeId,
+                    FCreatedTime = DateTime.Now,
+                    FUpdatedTime = DateTime.Now
+                };
+
+                await _entryRepository.AddAsync(entry);
+            }
+        });
 
         return await GetByIdAsync(id);
     }
 
     public async Task<bool> DeleteAsync(long id)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
         
         if (voucher.FStatus == 2)
@@ -465,7 +548,7 @@ public class VoucherService : IVoucherService
 
     public async Task<bool> AuditAsync(long id, string auditor)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
 
         voucher.FStatus = 2; // 已审核
@@ -481,7 +564,7 @@ public class VoucherService : IVoucherService
 
     public async Task<bool> UnAuditAsync(long id)
     {
-        var voucher = await _voucherRepository.GetByIdAsync(id);
+        var voucher = await GetOwnedVoucherAsync(id);
         if (voucher == null) return false;
 
         voucher.FStatus = 1; // 待审核
@@ -493,7 +576,14 @@ public class VoucherService : IVoucherService
 
     public async Task<VoucherDto> SaveDraftAsync(CreateVoucherRequest request, string creator, long accountSetId = 0)
     {
-        var nextNo = await GetNextNumberAsync(request.VoucherWord, request.PeriodId, accountSetId);
+        // 草稿按日期解析期间（不做结账硬拒绝，草稿允许暂存）
+        long periodId = request.PeriodId;
+        if (periodId <= 0)
+        {
+            var period = await ResolvePeriodAsync(request.Date, accountSetId);
+            periodId = period.FID;
+        }
+        var nextNo = await GetNextNumberAsync(request.VoucherWord, periodId, accountSetId);
 
         // 确定组织ID：优先从HttpContext获取，后台任务无HttpContext时从账套反查
         long orgId = GetCurrentOrgId();
@@ -510,7 +600,7 @@ public class VoucherService : IVoucherService
             FVoucherWord = request.VoucherWord,
             FVoucherNo = nextNo,
             FDate = request.Date,
-            FPeriodId = request.PeriodId,
+            FPeriodId = periodId,
             FAttachmentCount = request.AttachmentCount,
             FCreator = creator,
             FStatus = 0, // 草稿
@@ -523,31 +613,34 @@ public class VoucherService : IVoucherService
             FUpdatedTime = DateTime.Now
         };
 
-        await _voucherRepository.AddAsync(voucher);
-
-        foreach (var entryRequest in request.Entries)
+        await WithTransactionAsync(async () =>
         {
-            var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
-            
-            var entry = new FinVoucherEntry
+            await _voucherRepository.AddAsync(voucher);
+
+            foreach (var entryRequest in request.Entries)
             {
-                FVoucherId = voucher.FID,
-                FLineNo = entryRequest.LineNo,
-                FSummary = entryRequest.Summary,
-                FAccountId = entryRequest.AccountId,
-                FAccountCode = account?.FCode ?? "",
-                FAccountName = account?.FName ?? "",
-                FAuxiliaryJson = entryRequest.AuxiliaryJson,
-                FDebitAmount = entryRequest.DebitAmount,
-                FCreditAmount = entryRequest.CreditAmount,
-                FDataScopeId = request.DataScopeId,
-                FOrgId = orgId,
-                FCreatedTime = DateTime.Now,
-                FUpdatedTime = DateTime.Now
-            };
-            
-            await _entryRepository.AddAsync(entry);
-        }
+                var account = await _accountRepository.GetByIdAsync(entryRequest.AccountId);
+
+                var entry = new FinVoucherEntry
+                {
+                    FVoucherId = voucher.FID,
+                    FLineNo = entryRequest.LineNo,
+                    FSummary = entryRequest.Summary,
+                    FAccountId = entryRequest.AccountId,
+                    FAccountCode = account?.FCode ?? "",
+                    FAccountName = account?.FName ?? "",
+                    FAuxiliaryJson = entryRequest.AuxiliaryJson,
+                    FDebitAmount = entryRequest.DebitAmount,
+                    FCreditAmount = entryRequest.CreditAmount,
+                    FDataScopeId = request.DataScopeId,
+                    FOrgId = orgId,
+                    FCreatedTime = DateTime.Now,
+                    FUpdatedTime = DateTime.Now
+                };
+
+                await _entryRepository.AddAsync(entry);
+            }
+        });
 
         return await GetByIdAsync(voucher.FID) ?? throw new InvalidOperationException("保存草稿失败");
     }
@@ -619,8 +712,19 @@ public class VoucherService : IVoucherService
         var maxNo = await _voucherRepository.Query()
             .Where(v => v.FVoucherWord == voucherWord && v.FPeriodId == periodId && v.FAccountSetId == accountSetId)
             .MaxAsync(v => (int?)v.FVoucherNo) ?? 0;
-        
+
         return maxNo + 1;
+    }
+
+    /// <summary>
+    /// 解析凭证期间：按 日期+账套 定位；查不到抛错。复用 VoucherPostingRules 纯规则。
+    /// </summary>
+    private async Task<FinAccountPeriod> ResolvePeriodAsync(DateTime date, long accountSetId)
+    {
+        var candidates = await _periodRepository.Query()
+            .Where(p => p.FAccountSetId == accountSetId)
+            .ToListAsync();
+        return VoucherPostingRules.ResolvePeriod(candidates, date, accountSetId);
     }
 
     public async Task<int> GetPendingAuditCountAsync(long accountSetId = 0)
@@ -631,20 +735,29 @@ public class VoucherService : IVoucherService
 
     public async Task<ApiResult<object>> CopyAsync(long voucherId)
     {
-        var source = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == voucherId);
+        var source = await GetOwnedVoucherAsync(voucherId, includeEntries: true);
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var nextNo = await GetNextNumberAsync(source.FVoucherWord, source.FPeriodId, source.FAccountSetId);
+        // 复制单落当前开放期：今日无对应期间或已结账则拒绝（转 Fail，避免端点 500）
+        FinAccountPeriod targetPeriod;
+        try
+        {
+            targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult<object>.Fail(ex.Message);
+        }
+        var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
         {
             FVoucherWord = source.FVoucherWord,
             FVoucherNo = nextNo,
             FDate = DateTime.Today,
-            FPeriodId = source.FPeriodId,
+            FPeriodId = targetPeriod.FID,
             FAttachmentCount = 0,
             FCreator = source.FCreator,
             FStatus = 1, // 待审核
@@ -656,27 +769,33 @@ public class VoucherService : IVoucherService
             FUpdatedTime = DateTime.Now
         };
 
-        await _voucherRepository.AddAsync(newVoucher);
-
-        foreach (var entry in source.Entries.OrderBy(e => e.FLineNo))
+        await WithTransactionAsync(async () =>
         {
-            var newEntry = new FinVoucherEntry
-            {
-                FVoucherId = newVoucher.FID,
-                FLineNo = entry.FLineNo,
-                FSummary = entry.FSummary,
-                FAccountId = entry.FAccountId,
-                FAccountCode = entry.FAccountCode,
-                FAccountName = entry.FAccountName,
-                FAuxiliaryJson = entry.FAuxiliaryJson,
-                FDebitAmount = entry.FDebitAmount,
-                FCreditAmount = entry.FCreditAmount,
-                FCreatedTime = DateTime.Now,
-                FUpdatedTime = DateTime.Now
-            };
-            await _entryRepository.AddAsync(newEntry);
-        }
+            await _voucherRepository.AddAsync(newVoucher);
 
+            foreach (var entry in source.Entries.OrderBy(e => e.FLineNo))
+            {
+                var newEntry = new FinVoucherEntry
+                {
+                    FVoucherId = newVoucher.FID,
+                    FLineNo = entry.FLineNo,
+                    FSummary = entry.FSummary,
+                    FAccountId = entry.FAccountId,
+                    FAccountCode = entry.FAccountCode,
+                    FAccountName = entry.FAccountName,
+                    FAuxiliaryJson = entry.FAuxiliaryJson,
+                    FDebitAmount = entry.FDebitAmount,
+                    FCreditAmount = entry.FCreditAmount,
+                    FOrgId = source.FOrgId,
+                    FDataScopeId = entry.FDataScopeId,
+                    FCreatedTime = DateTime.Now,
+                    FUpdatedTime = DateTime.Now
+                };
+                await _entryRepository.AddAsync(newEntry);
+            }
+        });
+
+        // 操作日志 fire-and-forget，放到事务提交之后
         await _operationLogService.LogAsync(
             source.FAccountSetId, "凭证", "复制",
             $"复制凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
@@ -687,20 +806,29 @@ public class VoucherService : IVoucherService
 
     public async Task<ApiResult<object>> ReverseAsync(long voucherId)
     {
-        var source = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .FirstOrDefaultAsync(v => v.FID == voucherId);
+        var source = await GetOwnedVoucherAsync(voucherId, includeEntries: true);
         if (source == null)
             return ApiResult<object>.Fail("凭证不存在");
 
-        var nextNo = await GetNextNumberAsync(source.FVoucherWord, source.FPeriodId, source.FAccountSetId);
+        // 红字冲销落当前开放期：今日无对应期间或已结账则拒绝（转 Fail，避免端点 500）
+        FinAccountPeriod targetPeriod;
+        try
+        {
+            targetPeriod = await ResolvePeriodAsync(DateTime.Today, source.FAccountSetId);
+            VoucherPostingRules.EnsureOpenForPosting(targetPeriod);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiResult<object>.Fail(ex.Message);
+        }
+        var nextNo = await GetNextNumberAsync(source.FVoucherWord, targetPeriod.FID, source.FAccountSetId);
 
         var newVoucher = new FinVoucher
         {
             FVoucherWord = source.FVoucherWord,
             FVoucherNo = nextNo,
             FDate = DateTime.Today,
-            FPeriodId = source.FPeriodId,
+            FPeriodId = targetPeriod.FID,
             FAttachmentCount = 0,
             FCreator = source.FCreator,
             FStatus = 1, // 待审核
@@ -712,27 +840,33 @@ public class VoucherService : IVoucherService
             FUpdatedTime = DateTime.Now
         };
 
-        await _voucherRepository.AddAsync(newVoucher);
-
-        foreach (var entry in source.Entries.OrderBy(e => e.FLineNo))
+        await WithTransactionAsync(async () =>
         {
-            var newEntry = new FinVoucherEntry
-            {
-                FVoucherId = newVoucher.FID,
-                FLineNo = entry.FLineNo,
-                FSummary = $"冲销{entry.FSummary}",
-                FAccountId = entry.FAccountId,
-                FAccountCode = entry.FAccountCode,
-                FAccountName = entry.FAccountName,
-                FAuxiliaryJson = entry.FAuxiliaryJson,
-                FDebitAmount = -entry.FDebitAmount,
-                FCreditAmount = -entry.FCreditAmount,
-                FCreatedTime = DateTime.Now,
-                FUpdatedTime = DateTime.Now
-            };
-            await _entryRepository.AddAsync(newEntry);
-        }
+            await _voucherRepository.AddAsync(newVoucher);
 
+            foreach (var entry in source.Entries.OrderBy(e => e.FLineNo))
+            {
+                var newEntry = new FinVoucherEntry
+                {
+                    FVoucherId = newVoucher.FID,
+                    FLineNo = entry.FLineNo,
+                    FSummary = $"冲销{entry.FSummary}",
+                    FAccountId = entry.FAccountId,
+                    FAccountCode = entry.FAccountCode,
+                    FAccountName = entry.FAccountName,
+                    FAuxiliaryJson = entry.FAuxiliaryJson,
+                    FDebitAmount = -entry.FDebitAmount,
+                    FCreditAmount = -entry.FCreditAmount,
+                    FOrgId = source.FOrgId,
+                    FDataScopeId = entry.FDataScopeId,
+                    FCreatedTime = DateTime.Now,
+                    FUpdatedTime = DateTime.Now
+                };
+                await _entryRepository.AddAsync(newEntry);
+            }
+        });
+
+        // 操作日志 fire-and-forget，放到事务提交之后
         await _operationLogService.LogAsync(
             source.FAccountSetId, "凭证", "冲销",
             $"冲销凭证 {source.FVoucherWord}{source.FVoucherNo} → {newVoucher.FVoucherWord}{newVoucher.FVoucherNo}",
@@ -749,7 +883,7 @@ public class VoucherService : IVoucherService
 
         foreach (var id in voucherIds)
         {
-            var voucher = await _voucherRepository.GetByIdAsync(id);
+            var voucher = await GetOwnedVoucherAsync(id);
             if (voucher == null) continue;
 
             if (voucher.FStatus == 2)
@@ -923,10 +1057,7 @@ public class VoucherService : IVoucherService
     /// </summary>
     public async Task<ApiResult> CompleteRecordAsync(long id)
     {
-        var voucher = await _voucherRepository.Query()
-            .Include(v => v.Entries)
-            .AsTracking()
-            .FirstOrDefaultAsync(v => v.FID == id);
+        var voucher = await GetOwnedVoucherAsync(id, includeEntries: true);
 
         if (voucher == null)
             return ApiResult.Fail("凭证不存在");
@@ -941,6 +1072,11 @@ public class VoucherService : IVoucherService
         var incompleteEntries = voucher.Entries.Where(e => e.FAccountId == 0).ToList();
         if (incompleteEntries.Any())
             return ApiResult.Fail($"尚有 {incompleteEntries.Count} 条分录未填写科目，请先完善科目信息");
+
+        // 补录提交=过账动作：若草稿创建后所在期间已结账，禁止补录提交（不入已结账期）
+        var period = await _periodRepository.GetByIdAsync(voucher.FPeriodId);
+        if (period != null && period.FIsClosed == 1)
+            return ApiResult.Fail($"{period.FYear}年第{period.FPeriodNo}期已结账，不能补录提交该凭证");
 
         // 将状态从草稿(0)改为待审核(1)
         voucher.FStatus = 1;
