@@ -68,4 +68,14 @@ public class ExpenseServiceCrudTests
         Assert.Equal(1, after.FStatus);
         Assert.Equal("Electricity", after.FExpenseType);
     }
+
+    [Fact]
+    public async Task 创建费用金额为负被拒()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(创建费用金额为负被拒), orgId: 1);
+        await SeedRoomAsync(db);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateService(db).CreateExpenseAsync(new CreateExpenseRequest
+            { RoomId = 1, ExpenseType = "Water", Amount = -5m, Month = "2026-06" }));
+    }
 }
