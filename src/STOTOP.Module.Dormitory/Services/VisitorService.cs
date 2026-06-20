@@ -109,7 +109,7 @@ public class VisitorService : IVisitorService
             FVisitedPersonId = request.VisitedPersonId,
             FArrivalTime = request.ArrivalTime,
             FRemark = request.Remark,
-            FStatus = 1,
+            FStatus = DorStatus.Visitor.Visiting,
             FCreatedTime = DateTime.Now
         };
 

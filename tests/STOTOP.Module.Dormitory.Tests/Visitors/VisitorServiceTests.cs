@@ -1,5 +1,6 @@
 using STOTOP.Infrastructure.Data;
 using STOTOP.Infrastructure.Repositories;
+using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services;
 using Xunit;
@@ -66,5 +67,34 @@ public class VisitorServiceTests
     {
         await using var db = TestDbContextFactory.Create(nameof(DepartureAsync_记录不存在返回null));
         Assert.Null(await CreateService(db).DepartureAsync(999));
+    }
+
+    [Fact]
+    public async Task CreateVisitorAsync_置来访中并记录到访时间被访人()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(CreateVisitorAsync_置来访中并记录到访时间被访人));
+        db.Set<DorBuilding>().Add(new DorBuilding { FID = 1, FCode = "B1", FName = "1号楼" });
+        db.Set<DorRoom>().Add(new DorRoom { FID = 1, FBuildingId = 1, FRoomNumber = "101" });
+        await db.SaveChangesAsync();
+
+        var t = new DateTime(2026, 6, 19, 10, 0, 0);
+        var dto = await CreateService(db).CreateVisitorAsync(new CreateVisitorRequest
+        {
+            RoomId = 1, VisitorName = "李四", VisitReason = "探亲", VisitedPersonId = 5, ArrivalTime = t
+        });
+
+        var e = db.Set<DorVisitor>().Single(v => v.FID == dto.Id);
+        Assert.Equal(1, e.FStatus); // 来访中
+        Assert.Equal(t, e.FArrivalTime);
+        Assert.Equal(5, e.FVisitedPersonId);
+    }
+
+    [Fact]
+    public async Task CreateVisitorAsync_房间不存在抛异常()
+    {
+        await using var db = TestDbContextFactory.Create(nameof(CreateVisitorAsync_房间不存在抛异常));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateService(db).CreateVisitorAsync(new CreateVisitorRequest
+            { RoomId = 999, VisitorName = "无", ArrivalTime = new DateTime(2026, 6, 19) }));
     }
 }
