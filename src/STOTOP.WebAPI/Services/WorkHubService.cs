@@ -142,6 +142,37 @@ public class WorkHubService : IWorkHubService
         _ => "normal",
     };
 
+    /// <summary>
+    /// 由统一 DTO 派生「业务类型」（用户可见标签 + 上色键），不依赖 source 框架黑话。
+    /// 纯函数，便于单测。
+    /// </summary>
+    internal static (string Key, string Label) ResolveBizType(DtoWorkItemDto item)
+    {
+        string? Meta(string k) =>
+            item.Metadata != null && item.Metadata.TryGetValue(k, out var v) ? v?.ToString() : null;
+
+        switch (item.Source)
+        {
+            case "cardflow":
+            case "datacenter":
+                var flow = Meta("flowName");
+                return string.IsNullOrWhiteSpace(flow) ? ("approval", "审批") : ("flow:" + flow, flow!);
+            case "finance":
+                return ("voucher", "凭证复核");
+            case "quality":
+                return ("quality", "质量异常");
+            case "contract":
+                return ("contract", "合同到期");
+            case "points":
+                return ("points", "积分审批");
+            case "task":
+                return item.Category == "notification" ? ("notification", "通知") : ("task", "任务");
+            default:
+                var biz = Meta("bizType");
+                return string.IsNullOrWhiteSpace(biz) ? ("approval", "审批") : ("wf:" + biz, biz!);
+        }
+    }
+
     public async Task<PagedResult<DtoWorkItemDto>> GetWorkItemsAsync(long userId, long orgId, string? category, string? priority, int page, int pageSize)
     {
         // 并行获取各模块数据（每个查询在独立 scope 中执行，避免 DbContext 并发问题）
