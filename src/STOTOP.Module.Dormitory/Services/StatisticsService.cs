@@ -39,9 +39,9 @@ public class StatisticsService : IStatisticsService
         // 获取总床位数
         var totalBeds = await _bedRepository.Query().CountAsync();
 
-        // 获取已入住床位数（状态为入住中且未退宿的记录）
-        var occupiedBeds = await _residenceRepository.Query()
-            .CountAsync(r => r.FStatus == 1 && r.FCheckOutDate == null);
+        // 已入住床位数（床位状态 2=已入住，入住/退宿时联动维护）
+        var occupiedBeds = await _bedRepository.Query()
+            .CountAsync(b => b.FStatus == 2);
 
         var availableBeds = totalBeds - occupiedBeds;
 
@@ -72,9 +72,9 @@ public class StatisticsService : IStatisticsService
         // 总房间数
         var totalRooms = await _roomRepository.Query().CountAsync();
 
-        // 待缴费用总额（状态为1表示未支付）
+        // 待缴费用总额（费用状态 0=待缴）
         var pendingExpenses = await _expenseRepository.Query()
-            .Where(e => e.FStatus == 1)
+            .Where(e => e.FStatus == 0)
             .SumAsync(e => e.FAmount);
 
         return new DormitoryStatisticsDto
@@ -96,47 +96,50 @@ public class StatisticsService : IStatisticsService
 
     private async Task<List<BuildingOccupancyDto>> GetBuildingOccupanciesAsync()
     {
+        // 一次性取楼栋/房间/床位，内存聚合，避免 N+1
         var buildings = await _buildingRepository.Query()
             .Where(b => b.FStatus == 1)
+            .Select(b => new { b.FID, b.FName })
+            .ToListAsync();
+        if (buildings.Count == 0) return new List<BuildingOccupancyDto>();
+
+        var buildingIds = buildings.Select(b => b.FID).ToList();
+        var rooms = await _roomRepository.Query()
+            .Where(r => buildingIds.Contains(r.FBuildingId))
+            .Select(r => new { r.FID, r.FBuildingId })
+            .ToListAsync();
+        var roomToBuilding = rooms.ToDictionary(r => r.FID, r => r.FBuildingId);
+        var roomIds = rooms.Select(r => r.FID).ToList();
+
+        var beds = await _bedRepository.Query()
+            .Where(b => roomIds.Contains(b.FRoomId))
+            .Select(b => new { b.FRoomId, b.FStatus })
             .ToListAsync();
 
-        var result = new List<BuildingOccupancyDto>();
-
-        foreach (var building in buildings)
+        var totalByBuilding = new Dictionary<long, int>();
+        var occupiedByBuilding = new Dictionary<long, int>();
+        foreach (var bed in beds)
         {
-            // 获取该楼栋所有房间ID
-            var roomIds = await _roomRepository.Query()
-                .Where(r => r.FBuildingId == building.FID)
-                .Select(r => r.FID)
-                .ToListAsync();
-
-            // 获取该楼栋所有床位ID
-            var bedIds = await _bedRepository.Query()
-                .Where(b => roomIds.Contains(b.FRoomId))
-                .Select(b => b.FID)
-                .ToListAsync();
-
-            var totalBeds = bedIds.Count;
-
-            // 获取已入住床位数
-            var occupiedBeds = await _residenceRepository.Query()
-                .CountAsync(r => bedIds.Contains(r.FBedId) && r.FStatus == 1 && r.FCheckOutDate == null);
-
-            var availableBeds = totalBeds - occupiedBeds;
-            var occupancyRate = totalBeds > 0 ? Math.Round((decimal)occupiedBeds / totalBeds * 100, 2) : 0;
-
-            result.Add(new BuildingOccupancyDto
-            {
-                BuildingId = building.FID,
-                BuildingName = building.FName,
-                TotalBeds = totalBeds,
-                OccupiedBeds = occupiedBeds,
-                AvailableBeds = availableBeds,
-                OccupancyRate = occupancyRate
-            });
+            if (!roomToBuilding.TryGetValue(bed.FRoomId, out var bId)) continue;
+            totalByBuilding[bId] = totalByBuilding.GetValueOrDefault(bId) + 1;
+            if (bed.FStatus == 2) // 2=已入住
+                occupiedByBuilding[bId] = occupiedByBuilding.GetValueOrDefault(bId) + 1;
         }
 
-        return result;
+        return buildings.Select(b =>
+        {
+            var total = totalByBuilding.GetValueOrDefault(b.FID);
+            var occupied = occupiedByBuilding.GetValueOrDefault(b.FID);
+            return new BuildingOccupancyDto
+            {
+                BuildingId = b.FID,
+                BuildingName = b.FName,
+                TotalBeds = total,
+                OccupiedBeds = occupied,
+                AvailableBeds = total - occupied,
+                OccupancyRate = total > 0 ? Math.Round((decimal)occupied / total * 100, 2) : 0
+            };
+        }).ToList();
     }
 
     private async Task<List<MonthlyExpenseSummaryDto>> GetMonthlyExpenseSummariesAsync(string month)

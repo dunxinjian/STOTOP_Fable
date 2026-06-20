@@ -101,6 +101,11 @@ public class ExpenseService : IExpenseService
             throw new InvalidOperationException("房间不存在");
         }
 
+        if (request.Amount < 0)
+        {
+            throw new InvalidOperationException("费用金额不能为负");
+        }
+
         var expense = new DorExpense
         {
             FRoomId = request.RoomId,

@@ -298,7 +298,7 @@ onMounted(() => {
   :deep(.ant-card) {
     .ant-statistic-title {
       font-size: 14px;
-      color: #666;
+      color: var(--text-2);
     }
     .ant-statistic-content {
       font-size: 28px;
@@ -318,7 +318,7 @@ onMounted(() => {
 }
 
 .expense-card {
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 8px;
   padding: 16px;
   text-align: center;
@@ -326,14 +326,14 @@ onMounted(() => {
   
   .expense-type {
     font-size: 14px;
-    color: #666;
+    color: var(--text-2);
     margin-bottom: 8px;
   }
   
   .expense-amount {
     font-size: 24px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-1);
     margin-bottom: 4px;
     
     .currency {
@@ -348,7 +348,7 @@ onMounted(() => {
   
   .expense-count {
     font-size: 12px;
-    color: #999;
+    color: var(--text-3);
   }
 }
 </style>

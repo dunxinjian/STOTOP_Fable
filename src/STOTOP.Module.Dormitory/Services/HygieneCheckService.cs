@@ -106,6 +106,11 @@ public class HygieneCheckService : IHygieneCheckService
             throw new InvalidOperationException("房间不存在");
         }
 
+        if (request.Score is < 0 or > 100)
+        {
+            throw new InvalidOperationException("评分需在 0-100 之间");
+        }
+
         var hygieneCheck = new DorHygieneCheck
         {
             FRoomId = request.RoomId,
