@@ -22,16 +22,16 @@
     <div class="priority-bar" :style="{ background: priorityColor }"></div>
 
     <!-- 来源图标区域 -->
-    <div class="source-icon-wrap" :style="{ background: `color-mix(in srgb, ${sourceColor} 9%, transparent)` }">
-      <component :is="sourceIcon" class="source-icon" :style="{ color: sourceColor }" />
+    <div class="source-icon-wrap" :style="{ background: `color-mix(in srgb, ${bizColor} 9%, transparent)` }">
+      <component :is="bizIcon" class="source-icon" :style="{ color: bizColor }" />
     </div>
 
     <!-- 卡片内容 -->
     <div class="card-content" @click="handleCardClick">
       <!-- 标题行：来源标签 + 标题 + 时间 -->
       <div class="card-header">
-        <span class="source-tag" :style="{ background: `color-mix(in srgb, ${sourceColor} 12%, transparent)`, color: sourceColor }">
-          {{ sourceLabel }}
+        <span class="source-tag" :style="{ background: `color-mix(in srgb, ${bizColor} 12%, transparent)`, color: bizColor }">
+          {{ bizLabel }}
         </span>
         <a-tag
           :color="priorityTagColor"
@@ -284,18 +284,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ClockCircleOutlined,
-  AuditOutlined,
-  WarningOutlined,
-  CheckSquareOutlined,
-  ImportOutlined,
-  FileTextOutlined,
-  TrophyOutlined,
-  DollarOutlined,
-  SettingOutlined,
   DatabaseOutlined,
   ExclamationCircleOutlined,
   EllipsisOutlined,
@@ -306,6 +298,7 @@ import relativeTimePlugin from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 import type { WorkItem, WorkItemAction, RelatedLink } from '@/api/workhub'
 import { useWorkHub } from '@/composables/useWorkHub'
+import { bizTypeStyle } from './bizType'
 
 const hub = useWorkHub()
 
@@ -322,25 +315,11 @@ defineEmits<{
 
 const router = useRouter()
 
-// ===== 来源配置 =====
-type SourceEntry = { label: string; color: string; icon: ReturnType<typeof h> }
-
-const sourceConfig: Record<WorkItem['source'], { label: string; color: string; icon: any }> = {
-  oa: { label: 'OA审批', color: 'var(--biz-approval)', icon: AuditOutlined },
-  quality: { label: '质量异常', color: 'var(--biz-quality)', icon: WarningOutlined },
-  task: { label: '任务', color: 'var(--color-success)', icon: CheckSquareOutlined },
-  datacenter: { label: '运单', color: 'var(--biz-waybill)', icon: ImportOutlined },
-  cardflow: { label: 'CardFlow审批', color: 'var(--biz-approval)', icon: AuditOutlined },
-  contract: { label: '合同', color: 'var(--biz-contract)', icon: FileTextOutlined },
-  points: { label: '积分', color: 'var(--biz-points)', icon: TrophyOutlined },
-  finance: { label: '财务', color: 'var(--biz-finance)', icon: DollarOutlined },
-  system: { label: '系统', color: 'var(--text-3)', icon: SettingOutlined },
-  workflow: { label: '工作流', color: 'var(--color-success)', icon: CheckSquareOutlined },
-}
-
-const sourceLabel = computed(() => sourceConfig[props.item.source]?.label ?? props.item.source)
-const sourceColor = computed(() => sourceConfig[props.item.source]?.color ?? 'var(--text-3)')
-const sourceIcon = computed(() => sourceConfig[props.item.source]?.icon ?? SettingOutlined)
+// ===== 业务类型标签（由后端 bizTypeKey/bizTypeLabel 驱动） =====
+const bizLabel = computed(() => props.item.bizTypeLabel || '审批')
+const bizStyle = computed(() => bizTypeStyle(props.item.bizTypeKey))
+const bizColor = computed(() => bizStyle.value.color)
+const bizIcon = computed(() => bizStyle.value.icon)
 
 // ===== 优先级配置 =====
 const priorityConfig = {
