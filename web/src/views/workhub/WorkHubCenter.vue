@@ -29,6 +29,7 @@ import type { WorkItem } from '@/api/workhub'
 import WorkItemCard from './WorkItemCard.vue'
 import WorkItemSkeleton from './WorkItemSkeleton.vue'
 import QualityAlertBar from './QualityAlertBar.vue'
+import { bizTypeStyle } from './bizType'
 
 // ===== Emits =====
 const emit = defineEmits<{
@@ -175,27 +176,7 @@ function getNotificationIcon(type: number) {
   }
 }
 
-// 工作项来源颜色映射（用于混合列表）
-const sourceColorMap: Record<string, string> = {
-  oa: 'var(--biz-approval)',
-  quality: 'var(--biz-quality)',
-  task: 'var(--color-success)',
-  datacenter: 'var(--biz-waybill)',
-  contract: 'var(--biz-contract)',
-  points: 'var(--biz-points)',
-  finance: 'var(--biz-finance)',
-  system: 'var(--text-3)',
-}
-const sourceLabelMap: Record<string, string> = {
-  oa: 'OA',
-  quality: '异常',
-  task: '任务',
-  datacenter: '运单',
-  contract: '合同',
-  points: '积分',
-  finance: '财务',
-  system: '系统',
-}
+// 混合列表 avatar 颜色/标签由后端 bizTypeKey/bizTypeLabel 驱动（通过 bizTypeStyle 真源）
 
 // ===== 通知 API =====
 async function loadNotifications() {
@@ -447,9 +428,9 @@ onUnmounted(() => {
               <template v-if="item.type === 'workitem'">
                 <div
                   class="mixed-avatar workitem-avatar"
-                  :style="{ backgroundColor: `color-mix(in srgb, ${sourceColorMap[item.data.source] || 'var(--text-3)'} 12%, transparent)`, color: sourceColorMap[item.data.source] || 'var(--text-3)' }"
+                  :style="{ backgroundColor: `color-mix(in srgb, ${bizTypeStyle(item.data.bizTypeKey).color} 12%, transparent)`, color: bizTypeStyle(item.data.bizTypeKey).color }"
                 >
-                  {{ sourceLabelMap[item.data.source] ?? item.data.source }}
+                  {{ item.data.bizTypeLabel || '审批' }}
                 </div>
                 <div class="mixed-body">
                   <div class="mixed-title">{{ item.data.title }}</div>
