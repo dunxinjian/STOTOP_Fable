@@ -16,8 +16,7 @@
         "src/styles/variables.scss",
         "src/styles/ant-override.scss",
         "src/styles/layout.scss",
-        "src/styles/button-styles.scss",
-        "src/views/finance/AmoebaPLTemplate/tokens.scss"
+        "src/styles/button-styles.scss"
       ],
       "rules": { "color-no-hex": null }
     }
