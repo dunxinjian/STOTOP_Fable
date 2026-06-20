@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Module.Finance.Constants;
@@ -14,27 +13,17 @@ public class AccountService : IAccountService
     private readonly IRepository<FinAccountBalance> _balanceRepository;
     private readonly IRepository<FinVoucherEntry> _voucherEntryRepository;
     private readonly ChangeTrackingService _changeTrackingService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AccountService(
         IRepository<FinAccount> accountRepository,
         IRepository<FinAccountBalance> balanceRepository,
         IRepository<FinVoucherEntry> voucherEntryRepository,
-        ChangeTrackingService changeTrackingService,
-        IHttpContextAccessor httpContextAccessor)
+        ChangeTrackingService changeTrackingService)
     {
         _accountRepository = accountRepository;
         _balanceRepository = balanceRepository;
         _voucherEntryRepository = voucherEntryRepository;
         _changeTrackingService = changeTrackingService;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    private long GetCurrentOrgId()
-    {
-        var orgIdObj = _httpContextAccessor.HttpContext?.Items["CurrentOrgId"];
-        if (orgIdObj is long orgId) return orgId;
-        return 0;
     }
 
     public async Task<List<AccountTreeDto>> GetTreeAsync(string? category = null, long accountSetId = 0)
