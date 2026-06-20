@@ -282,7 +282,7 @@ onMounted(() => {
 /* ===== 全局重置（打印页面独占） ===== */
 .print-root {
   min-height: 100vh;
-  background: #e8e8e8;
+  background: var(--bg-page);
   font-family: 'SimSun', '宋体', serif;
 }
 
@@ -292,9 +292,9 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 32px;
-  background: #2c3e50;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: var(--topbar-ink);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-md);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -314,7 +314,7 @@ onMounted(() => {
 
 .voucher-count {
   font-size: 13px;
-  color: #bdc3c7;
+  color: var(--text-3);
   font-family: -apple-system, 'Microsoft YaHei', sans-serif;
 }
 
@@ -335,31 +335,31 @@ onMounted(() => {
 
 .btn-back {
   background: transparent;
-  color: #ecf0f1;
-  border: 1px solid #7f8c8d;
+  color: var(--text-on-accent);
+  border: 1px solid var(--border);
 }
 
 .btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #bdc3c7;
+  background: color-mix(in srgb, var(--text-on-accent) 10%, transparent);
+  border-color: var(--border-strong);
 }
 
 .btn-pdf {
-  background: #27ae60;
-  color: #fff;
+  background: var(--color-success);
+  color: var(--text-on-accent);
 }
 
 .btn-pdf:hover {
-  background: #2ecc71;
+  background: color-mix(in srgb, var(--color-success) 88%, #000);
 }
 
 .btn-print {
-  background: #2980b9;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--text-on-accent);
 }
 
 .btn-print:hover {
-  background: #3498db;
+  background: var(--color-primary-hover);
 }
 
 /* ===== 加载/错误状态 ===== */
@@ -370,15 +370,15 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 80px 0;
-  color: #666;
+  color: var(--text-2);
   font-family: -apple-system, 'Microsoft YaHei', sans-serif;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #ddd;
-  border-top-color: #2980b9;
+  border: 4px solid var(--border);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 16px;
@@ -401,9 +401,9 @@ onMounted(() => {
 .voucher-page {
   width: 210mm;
   min-height: 140mm;
-  background: #fff;
+  background: var(--bg-card);
   padding: 12mm 14mm;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   box-sizing: border-box;
 }
 
@@ -424,7 +424,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 4mm;
   font-size: 13px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-strong);
   padding-bottom: 3mm;
 }
 
@@ -434,7 +434,7 @@ onMounted(() => {
 }
 
 .meta-label {
-  color: #444;
+  color: var(--text-2);
 }
 
 .meta-value {
@@ -451,13 +451,13 @@ onMounted(() => {
 
 .voucher-table th,
 .voucher-table td {
-  border: 1px solid #333;
+  border: 1px solid var(--border-strong);
   padding: 4px 6px;
   vertical-align: middle;
 }
 
 .voucher-table thead th {
-  background: #f5f5f5;
+  background: var(--bg-muted);
   font-weight: bold;
   text-align: center;
   font-size: 13px;
@@ -490,11 +490,11 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #333;
+  border: 1px solid var(--border-strong);
   border-top: none;
   padding: 4px 6px;
   font-size: 12px;
-  background: #fafafa;
+  background: var(--bg-muted);
 }
 
 .total-left {
@@ -510,7 +510,7 @@ onMounted(() => {
 }
 
 .total-chinese {
-  color: #333;
+  color: var(--text-1);
 }
 
 .total-right {
@@ -523,7 +523,7 @@ onMounted(() => {
 .voucher-sign {
   display: flex;
   justify-content: space-between;
-  border: 1px solid #333;
+  border: 1px solid var(--border-strong);
   border-top: none;
   padding: 5px 6px;
   font-size: 12px;
@@ -537,12 +537,12 @@ onMounted(() => {
 
 .sign-label {
   white-space: nowrap;
-  color: #444;
+  color: var(--text-2);
 }
 
 .sign-value {
   min-width: 48px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .sign-blank {
@@ -552,7 +552,7 @@ onMounted(() => {
 
 /* ===== 备注行 ===== */
 .voucher-remark {
-  border: 1px solid #333;
+  border: 1px solid var(--border-strong);
   border-top: none;
   padding: 4px 6px;
   font-size: 12px;
@@ -560,7 +560,7 @@ onMounted(() => {
 }
 
 .remark-label {
-  color: #444;
+  color: var(--text-2);
   font-weight: bold;
 }
 

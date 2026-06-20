@@ -113,7 +113,7 @@
               v-else-if="field.fieldType === 'custom' && field.component === 'columnMapping'"
               class="column-mapping-editor"
             >
-              <div v-if="!configForm.sourceTable" style="color: #999;">
+              <div v-if="!configForm.sourceTable" style="color: var(--text-3);">
                 请先选择数据源暂存表
               </div>
               <div v-else>
@@ -160,7 +160,7 @@
             />
 
             <template #extra v-if="field.description">
-              <span style="color: #999; font-size: 12px;">{{ field.description }}</span>
+              <span style="color: var(--text-3); font-size: 12px;">{{ field.description }}</span>
             </template>
           </a-form-item>
         </template>

@@ -641,7 +641,7 @@ onMounted(() => loadGroups(false))
   border-right: 1px solid $border-color;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #fbfcfe 0%, #ffffff 64%);
+  background: linear-gradient(180deg, var(--bg-muted) 0%, var(--bg-card) 64%);
 }
 
 .fg-sidebar-head {
@@ -663,7 +663,7 @@ onMounted(() => loadGroups(false))
 .fg-sidebar-count {
   font-size: 12px;
   color: $text-secondary;
-  background: #f0f3f8;
+  background: var(--bg-muted);
   padding: 1px 8px;
   border-radius: 10px;
 }
@@ -681,7 +681,7 @@ onMounted(() => loadGroups(false))
 
   .fg-sidebar-empty-icon {
     font-size: 28px;
-    color: #c8d1dc;
+    color: var(--text-3);
     margin-bottom: 8px;
   }
   .fg-sidebar-empty-text {
@@ -834,7 +834,7 @@ onMounted(() => loadGroups(false))
   .fg-empty-arrow {
     font-size: 28px;
     margin-bottom: 12px;
-    color: #cdd5e0;
+    color: var(--text-3);
     transform: rotate(180deg);
   }
   .fg-empty-text {
@@ -883,7 +883,7 @@ onMounted(() => loadGroups(false))
 .fg-detail-code {
   font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   font-size: 11px;
-  background: #f5f7fa;
+  background: var(--bg-muted);
   padding: 1px 6px;
   border-radius: 3px;
   color: $text-regular;
@@ -945,7 +945,7 @@ onMounted(() => loadGroups(false))
   padding: 24px 16px;
   border: 1px dashed $border-color-lighter;
   border-radius: $border-radius-md;
-  background: #fafbfc;
+  background: var(--bg-muted);
 }
 
 .fg-flow-tags {
@@ -969,7 +969,7 @@ onMounted(() => loadGroups(false))
   .fg-flow-tag-code {
     font-size: 11px;
     color: $text-placeholder;
-    border-left: 1px solid #d6e4ff;
+    border-left: 1px solid var(--color-info-light);
     padding-left: 6px;
     margin-left: 4px;
   }
@@ -978,7 +978,7 @@ onMounted(() => loadGroups(false))
 /* ===== 连接表 ===== */
 .fg-conn-table {
   :deep(.ant-table-thead > tr > th) {
-    background: #fafbfc;
+    background: var(--bg-muted);
     font-size: 12px;
     color: $text-secondary;
     font-weight: 500;
@@ -1015,7 +1015,7 @@ onMounted(() => loadGroups(false))
   border: 1px solid $border-color-lighter;
   border-radius: $border-radius-md;
   padding: 4px 0;
-  background: #fafbfc;
+  background: var(--bg-muted);
 }
 
 .fg-link-cbgroup {
@@ -1030,7 +1030,7 @@ onMounted(() => loadGroups(false))
 
   &:last-child { border-bottom: none; }
   &:hover { background: var(--color-primary-light); }
-  &.disabled { background: #fafafa; }
+  &.disabled { background: var(--bg-muted); }
 
   :deep(.ant-checkbox-wrapper) {
     width: 100%;

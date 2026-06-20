@@ -46,7 +46,7 @@ defineProps<{
     top: 22px;
     bottom: 0;
     width: 1px;
-    background: #e8e8e8;
+    background: var(--border);
   }
 
   &.last {
@@ -79,9 +79,9 @@ defineProps<{
   }
 
   &.waiting {
-    background: #f5f5f5;
-    border: 1px solid #d9d9d9;
-    color: #d9d9d9;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    color: var(--text-3);
   }
 }
 
@@ -92,20 +92,20 @@ defineProps<{
 
 .timeline-text {
   font-size: 13px;
-  color: #262626;
+  color: var(--text-1);
   line-height: 16px;
 }
 
 .timeline-duration {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-left: 8px;
 }
 
 .timeline-meta {
   margin-top: 4px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   display: flex;
   gap: 8px;
 }
@@ -115,6 +115,6 @@ defineProps<{
 }
 
 .timeline-time {
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-3);
 }
 </style>

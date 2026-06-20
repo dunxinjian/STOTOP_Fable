@@ -597,17 +597,17 @@ onMounted(() => {
 $tone-info-fg: var(--color-info);
 $tone-info-bg: var(--color-info-light);
 $tone-success-fg: var(--color-success-text);
-$tone-success-bg: rgba(56, 158, 13, 0.08);
-$tone-warn-fg: #d4651a;
-$tone-warn-bg: rgba(212, 101, 26, 0.10);
-$tone-mute-fg: #8c8c8c;
-$tone-mute-bg: rgba(140, 140, 140, 0.10);
-$tone-draft-fg: #595959;
-$tone-draft-bg: rgba(89, 89, 89, 0.08);
+$tone-success-bg: color-mix(in srgb, var(--color-success) 8%, transparent);
+$tone-warn-fg: var(--color-warning);
+$tone-warn-bg: color-mix(in srgb, var(--color-warning) 10%, transparent);
+$tone-mute-fg: var(--text-3);
+$tone-mute-bg: color-mix(in srgb, var(--text-3) 10%, transparent);
+$tone-draft-fg: var(--text-2);
+$tone-draft-bg: color-mix(in srgb, var(--text-2) 8%, transparent);
 
 .cd-page {
   padding: 16px;
-  background: linear-gradient(180deg, #fafbfc 0%, #f5f6f8 220px, #f5f6f8 100%);
+  background: linear-gradient(180deg, var(--bg-muted) 0%, var(--bg-muted) 220px, var(--bg-muted) 100%);
   min-height: calc(100vh - 96px);
 }
 
@@ -640,10 +640,10 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.04em;
-    color: #1f1f1f;
+    color: var(--text-1);
     padding: 2px 8px;
-    background: #fff;
-    border: 1px solid #e8e8eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     line-height: 22px;
   }
@@ -651,7 +651,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   &__sub {
     font-size: 13px;
     font-weight: 400;
-    color: #595959;
+    color: var(--text-2);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -682,28 +682,28 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 .pill--info {
   color: $tone-info-fg;
   background: $tone-info-bg;
-  box-shadow: inset 0 0 0 1px rgba(58, 111, 176, 0.18);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-info) 18%, transparent);
   .pill__dot { animation: pulse 1.6s ease-in-out infinite; }
 }
 .pill--success {
   color: $tone-success-fg;
   background: $tone-success-bg;
-  box-shadow: inset 0 0 0 1px rgba(56, 158, 13, 0.18);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-success) 18%, transparent);
 }
 .pill--warn {
   color: $tone-warn-fg;
   background: $tone-warn-bg;
-  box-shadow: inset 0 0 0 1px rgba(212, 101, 26, 0.20);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-warning) 20%, transparent);
 }
 .pill--mute {
   color: $tone-mute-fg;
   background: $tone-mute-bg;
-  box-shadow: inset 0 0 0 1px rgba(140, 140, 140, 0.20);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-3) 20%, transparent);
 }
 .pill--draft {
   color: $tone-draft-fg;
   background: $tone-draft-bg;
-  box-shadow: inset 0 0 0 1px rgba(89, 89, 89, 0.18);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-2) 18%, transparent);
 }
 
 @keyframes pulse {
@@ -713,8 +713,8 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
 // ===== Section blocks =====
 .cd-section {
-  background: #fff;
-  border: 1px solid #ececef;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   position: relative;
 
@@ -729,7 +729,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
     font-size: 11px;
     font-weight: 600;
-    color: #b3b3b8;
+    color: var(--text-3);
     letter-spacing: 0.1em;
   }
 
@@ -737,22 +737,22 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     margin: 0;
     font-size: 14px;
     font-weight: 600;
-    color: #1f1f1f;
+    color: var(--text-1);
     letter-spacing: 0.01em;
   }
 
   &__line {
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, #e6e6ea 0%, transparent 100%);
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
   }
 
   &__count {
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
     font-size: 11px;
-    color: #8c8c8c;
+    color: var(--text-3);
     padding: 1px 8px;
-    background: #f5f5f7;
+    background: var(--bg-muted);
     border-radius: 8px;
   }
 
@@ -795,10 +795,10 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   padding: 12px 16px;
   background: linear-gradient(
     135deg,
-    rgba(58, 111, 176, 0.06) 0%,
-    rgba(58, 111, 176, 0.02) 100%
+    color-mix(in srgb, var(--color-info) 6%, transparent) 0%,
+    color-mix(in srgb, var(--color-info) 2%, transparent) 100%
   );
-  border: 1px solid rgba(58, 111, 176, 0.18);
+  border: 1px solid color-mix(in srgb, var(--color-info) 18%, transparent);
   border-left: 3px solid var(--color-info);
   border-radius: 6px;
   position: relative;
@@ -813,8 +813,8 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
       -45deg,
       transparent 0,
       transparent 6px,
-      rgba(58, 111, 176, 0.04) 6px,
-      rgba(58, 111, 176, 0.04) 7px
+      color-mix(in srgb, var(--color-info) 4%, transparent) 6px,
+      color-mix(in srgb, var(--color-info) 4%, transparent) 7px
     );
     pointer-events: none;
   }
@@ -827,13 +827,13 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   &__text {
     font-size: 13px;
-    color: #1f1f1f;
+    color: var(--text-1);
     flex: 1;
     z-index: 1;
   }
 
   &__lead {
-    color: #595959;
+    color: var(--text-2);
   }
 
   &__link {
@@ -850,7 +850,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__sep {
-    color: #8c8c8c;
+    color: var(--text-3);
     margin: 0 2px;
   }
 }
@@ -870,14 +870,14 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: #fafbfc;
+  background: var(--bg-muted);
   border: 1px solid transparent;
   border-radius: 4px;
   cursor: pointer;
   transition: all 160ms ease;
 
   &:hover {
-    background: #fff;
+    background: var(--bg-card);
     border-color: var(--color-primary-border);
     transform: translateX(2px);
 
@@ -888,30 +888,30 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__icon {
-    color: #8c8c8c;
+    color: var(--text-3);
     font-size: 13px;
   }
 
   &__num {
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
     font-weight: 600;
-    color: #1f1f1f;
+    color: var(--text-1);
     font-size: 13px;
     letter-spacing: 0.02em;
   }
 
   &__type {
     padding: 1px 6px;
-    background: #fff;
-    border: 1px solid #e8e8eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 3px;
     font-size: 11px;
-    color: #595959;
+    color: var(--text-2);
   }
 
   &__desc {
     flex: 1;
-    color: #8c8c8c;
+    color: var(--text-3);
     font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -920,7 +920,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   &__arrow {
     margin-left: auto;
-    color: #b3b3b8;
+    color: var(--text-3);
     font-size: 14px;
     transition: all 160ms ease;
   }
@@ -934,7 +934,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb {
-      background: #d9d9d9;
+      background: var(--border);
       border-radius: 2px;
     }
   }
@@ -953,7 +953,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     top: 8px;
     bottom: 8px;
     width: 1px;
-    background: #f0f0f0;
+    background: var(--border);
   }
 }
 
@@ -973,8 +973,8 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     top: 14px;
     width: 5px;
     height: 5px;
-    background: #fff;
-    border: 1px solid #bfbfbf;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 50%;
   }
 
@@ -984,7 +984,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__time {
-    color: #8c8c8c;
+    color: var(--text-3);
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
     font-size: 11px;
     text-align: right;
@@ -992,7 +992,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__op {
-    color: #1f1f1f;
+    color: var(--text-1);
     font-weight: 500;
     padding-left: 12px;
   }
@@ -1002,7 +1002,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   &__opinion {
-    color: #8c8c8c;
+    color: var(--text-3);
     font-style: italic;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1029,7 +1029,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
 
   /* Full width left content */
   .cd-page {
-    background: #fff !important;
+    background: var(--bg-card) !important;
     padding: 0 !important;
   }
 
@@ -1051,20 +1051,20 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
   }
 
   .cd-section {
-    border: 1px solid #d9d9d9 !important;
+    border: 1px solid var(--border) !important;
     box-shadow: none !important;
     page-break-inside: avoid;
   }
 
   .cd-trigger-banner {
-    background: #f5f5f7 !important;
+    background: var(--bg-muted) !important;
   }
 }
 
 // ==================== Modal helpers ====================
 .void-modal-body {
   .void-modal-warn {
-    color: #d4651a;
+    color: var(--color-warning);
     margin: 0 0 8px;
     font-weight: 500;
   }
@@ -1073,7 +1073,7 @@ $tone-draft-bg: rgba(89, 89, 89, 0.08);
     margin: 0;
     padding-left: 18px;
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
 
     li {
       line-height: 1.8;

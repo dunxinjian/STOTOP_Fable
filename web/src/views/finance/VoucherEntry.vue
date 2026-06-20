@@ -1830,7 +1830,7 @@ function formatDate(dateStr: string): string {
 <style scoped lang="scss">
 .voucher-entry-page {
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   min-height: calc(100vh - 100px);
 }
 
@@ -1868,19 +1868,19 @@ function formatDate(dateStr: string): string {
   }
 
   .label {
-    color: #666;
+    color: var(--text-2);
     font-size: 14px;
   }
 
   .voucher-title {
     font-size: 26px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-1);
   }
 
   .voucher-period {
     font-size: 15px;
-    color: #999;
+    color: var(--text-3);
     letter-spacing: 1px;
   }
 
@@ -1937,7 +1937,7 @@ function formatDate(dateStr: string): string {
 
 // 凭证表格
 .voucher-table-wrapper {
-  border: 2px solid #333;
+  border: 2px solid var(--text-1);
   margin-bottom: 16px;
   overflow-x: auto;
 }
@@ -1947,14 +1947,14 @@ function formatDate(dateStr: string): string {
   border-collapse: collapse;
   
   th, td {
-    border: 1px solid #d9d9d9;
+    border: 1px solid var(--border);
     padding: 0;
     text-align: center;
     vertical-align: middle;
   }
   
   th {
-    background: #fafafa;
+    background: var(--bg-muted);
     font-weight: normal;
     height: 50px;
   }
@@ -1966,8 +1966,8 @@ function formatDate(dateStr: string): string {
   .col-action {
     width: 40px;
     min-width: 40px;
-    background: #fafafa;
-    
+    background: var(--bg-muted);
+
     .row-action-btns {
       display: flex;
       flex-direction: column;
@@ -1986,9 +1986,9 @@ function formatDate(dateStr: string): string {
         cursor: pointer;
         font-size: 14px;
         font-weight: bold;
-        border: 1px solid #999;
-        color: #999;
-        background: #fff;
+        border: 1px solid var(--text-3);
+        color: var(--text-3);
+        background: var(--bg-card);
         transition: all 0.2s;
         
         &:hover {
@@ -2030,22 +2030,22 @@ function formatDate(dateStr: string): string {
         min-height: 60px;
         padding: 8px;
         border: 1px solid transparent;
-        background: #f5f7fa;
+        background: var(--bg-muted);
         resize: none;
         font-size: 14px;
         font-family: inherit;
-        color: #333;
+        color: var(--text-1);
         outline: none;
         box-sizing: border-box;
         line-height: 1.5;
 
         &:hover {
-          border-color: #dcdfe6;
+          border-color: var(--border);
         }
 
         &:focus {
-          background: #fff;
-          border-color: #333;
+          background: var(--bg-card);
+          border-color: var(--text-1);
           resize: vertical;
         }
       }
@@ -2055,15 +2055,15 @@ function formatDate(dateStr: string): string {
         right: 8px;
         bottom: 6px;
         font-size: 12px;
-        color: #c0c4cc;
+        color: var(--text-3);
         pointer-events: none;
         user-select: none;
       }
 
       &.is-editing {
         .summary-textarea {
-          background: #fff;
-          border-color: #333;
+          background: var(--bg-card);
+          border-color: var(--text-1);
           resize: vertical;
         }
       }
@@ -2089,7 +2089,7 @@ function formatDate(dateStr: string): string {
       display: flex;
       justify-content: space-around;
       font-size: 12px;
-      color: #666;
+      color: var(--text-2);
       
       span {
         flex: 1;
@@ -2108,7 +2108,7 @@ function formatDate(dateStr: string): string {
   }
 
   .total-row {
-    background: #fafafa;
+    background: var(--bg-muted);
     font-weight: bold;
     
     .total-label {
@@ -2128,8 +2128,8 @@ function formatDate(dateStr: string): string {
         justify-content: center;
         font-size: 14px;
         font-weight: 600;
-        color: #333;
-        border-right: 1px solid #e0e0e0;
+        color: var(--text-1);
+        border-right: 1px solid var(--border);
         min-width: 20px;
         height: 100%;
         
@@ -2156,11 +2156,11 @@ function formatDate(dateStr: string): string {
   gap: 24px;
   padding: 10px 16px;
   margin-bottom: 8px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 14px;
-  color: #333;
+  color: var(--text-1);
 
   b {
     font-weight: 600;
@@ -2191,14 +2191,14 @@ function formatDate(dateStr: string): string {
 
 .balance-warning {
   background: var(--color-danger-light);
-  border: 1px solid #ffccc7;
+  border: 1px solid var(--color-danger-border);
   color: var(--color-danger);
 }
 
 .closed-period-warning {
   background: var(--color-warning-light);
-  border: 1px solid #ffd591;
-  color: #d46b08;
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning);
 }
 
 // 底部信息
@@ -2207,18 +2207,18 @@ function formatDate(dateStr: string): string {
   justify-content: space-between;
   padding: 12px 0;
   margin-bottom: 16px;
-  color: #666;
+  color: var(--text-2);
   font-size: 14px;
 }
 
 // 附件区域
 .attachment-section {
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--border);
   padding-top: 16px;
-  
+
   .attachment-title {
     font-size: 14px;
-    color: #666;
+    color: var(--text-2);
     margin-bottom: 12px;
   }
   
@@ -2237,7 +2237,7 @@ function formatDate(dateStr: string): string {
         align-items: center;
         justify-content: center;
         gap: 4px;
-        border: 1px dashed #d9d9d9;
+        border: 1px dashed var(--border);
         border-radius: 4px;
         cursor: pointer;
         padding: 16px;
@@ -2246,7 +2246,7 @@ function formatDate(dateStr: string): string {
         }
         .upload-icon {
           font-size: 28px;
-          color: #c0c4cc;
+          color: var(--text-3);
         }
         .upload-text {
           font-size: 13px;
@@ -2254,13 +2254,13 @@ function formatDate(dateStr: string): string {
         }
         .upload-tip {
           font-size: 11px;
-          color: #999;
+          color: var(--text-3);
         }
       }
     }
 
     .attachment-tips {
-      color: #999;
+      color: var(--text-3);
       font-size: 12px;
       align-self: center;
       
@@ -2281,9 +2281,9 @@ function formatDate(dateStr: string): string {
       align-items: center;
       gap: 8px;
       padding: 6px 10px;
-      background: #f5f7fa;
+      background: var(--bg-muted);
       border-radius: 4px;
-      border: 1px solid #e4e7ed;
+      border: 1px solid var(--border);
 
       &.pending {
         border-color: var(--color-warning);
@@ -2302,12 +2302,12 @@ function formatDate(dateStr: string): string {
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: 13px;
-        color: #333;
+        color: var(--text-1);
       }
 
       .att-size {
         font-size: 12px;
-        color: #999;
+        color: var(--text-3);
         flex-shrink: 0;
         min-width: 60px;
         text-align: right;
@@ -2315,7 +2315,7 @@ function formatDate(dateStr: string): string {
 
       .att-time {
         font-size: 12px;
-        color: #999;
+        color: var(--text-3);
         flex-shrink: 0;
       }
 
@@ -2343,11 +2343,11 @@ function formatDate(dateStr: string): string {
       padding: 4px 8px;
       font-size: 12px;
       line-height: 1.4;
-      color: #333;
-      background: #f5f5f5;
-      border: 1px solid #ccc;
+      color: var(--text-1);
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
       border-radius: 3px;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+      box-shadow: var(--shadow-sm);
       margin-right: 8px;
       min-width: 60px;
       text-align: center;
@@ -2377,7 +2377,7 @@ function formatDate(dateStr: string): string {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 14px;
-    color: #333;
+    color: var(--text-1);
   }
 
   .aux-tag {
@@ -2390,14 +2390,14 @@ function formatDate(dateStr: string): string {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    background: #fff3f3;
+    background: var(--color-warning-light);
     color: var(--color-warning);
     border: 1px dashed var(--color-warning);
-    
+
     &.has-value {
-      background: #ecf5ff;
+      background: var(--color-info-light);
       color: var(--color-info);
-      border: 1px solid #b3d8ff;
+      border: 1px solid var(--color-info-border);
     }
     
     &:hover {
@@ -2414,7 +2414,7 @@ function formatDate(dateStr: string): string {
     
     .action-btn {
       font-size: 12px;
-      color: #909399;
+      color: var(--text-3);
       cursor: pointer;
       padding: 2px 6px;
       &:hover {
@@ -2427,7 +2427,7 @@ function formatDate(dateStr: string): string {
 // 科目余额提示
 .account-balance-hint {
   font-size: 11px;
-  color: #999;
+  color: var(--text-3);
   padding: 2px 8px 4px;
   line-height: 1.4;
 }
@@ -2438,12 +2438,12 @@ function formatDate(dateStr: string): string {
     display: flex;
     gap: 30px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
     margin-bottom: 15px;
-    
+
     .tab-item {
       font-size: 15px;
-      color: #999;
+      color: var(--text-3);
       cursor: pointer;
       padding-bottom: 8px;
       position: relative;
@@ -2469,7 +2469,7 @@ function formatDate(dateStr: string): string {
   .account-tree-container {
     height: 400px;
     overflow-y: auto;
-    border: 1px solid #e4e7ed;
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 8px;
     
@@ -2507,7 +2507,7 @@ function formatDate(dateStr: string): string {
       width: 85px;
       flex-shrink: 0;
       text-align: left;
-      color: #333;
+      color: var(--text-1);
       font-size: 14px;
     }
 
@@ -2517,18 +2517,18 @@ function formatDate(dateStr: string): string {
   }
 
   .info-tip {
-    background-color: #f4f7fe;
+    background-color: var(--color-info-light);
     border-left: 3px solid var(--color-info);
     padding: 10px 15px;
     margin: 8px 0 16px 85px;
     font-size: 13px;
-    color: #666;
+    color: var(--text-2);
     line-height: 1.8;
   }
 
   .balance-direction-label {
     margin-left: 10px;
-    color: #333;
+    color: var(--text-1);
     font-size: 14px;
   }
 
@@ -2538,7 +2538,7 @@ function formatDate(dateStr: string): string {
     gap: 20px;
 
     .unit-label {
-      color: #333;
+      color: var(--text-1);
       font-size: 14px;
     }
 
@@ -2557,7 +2557,7 @@ function formatDate(dateStr: string): string {
 // 外币面板样式
 .foreign-currency-panel {
   background: var(--color-warning-light);
-  border: 1px solid #ffe58f;
+  border: 1px solid var(--color-warning-border);
   border-radius: 6px;
   padding: 6px 8px;
   margin-bottom: 4px;
@@ -2577,7 +2577,7 @@ function formatDate(dateStr: string): string {
 
   .foreign-label {
     font-size: 12px;
-    color: #8c6d00;
+    color: var(--color-warning);
     width: 30px;
     flex-shrink: 0;
   }

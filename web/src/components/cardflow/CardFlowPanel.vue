@@ -1359,8 +1359,9 @@ void showDialog
   height: 100vh;
   width: 400px;
   z-index: 1000;
-  background: #f6f7f9;
-  box-shadow: -6px 0 16px rgba(0, 0, 0, 0.08);
+  background: var(--bg-muted);
+  // 右侧滑出抽屉：保留向左投射的边缘阴影方向，仅令牌化颜色
+  box-shadow: -6px 0 16px color-mix(in srgb, var(--text-1) 8%, transparent);
   display: flex;
   flex-direction: column;
 
@@ -1379,24 +1380,24 @@ void showDialog
     align-items: center;
     gap: 8px;
     padding: 16px 20px;
-    border-bottom: 1px solid #e8ecef;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: #fff;
+    background: var(--bg-card);
   }
 
   &__close {
     font-size: 20px;
     cursor: pointer;
-    color: #999;
+    color: var(--text-3);
     margin-right: 4px;
     line-height: 1;
-    &:hover { color: #333; }
+    &:hover { color: var(--text-1); }
   }
 
   &__number {
     font-size: 15px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-1);
   }
 
   &__status {
@@ -1405,7 +1406,7 @@ void showDialog
     border-radius: 4px;
     margin-left: auto;
 
-    &--default { background: #f5f5f5; color: #999; }
+    &--default { background: var(--bg-muted); color: var(--text-3); }
     &--warning { background: var(--color-warning-light); color: var(--color-warning); }
     &--success { background: var(--color-success-light); color: var(--color-success); }
     &--danger  { background: var(--color-danger-light); color: var(--color-danger); }
@@ -1427,17 +1428,17 @@ void showDialog
     justify-content: center;
     padding: 60px 0;
     gap: 12px;
-    color: #999;
+    color: var(--text-3);
 
     p { margin: 0; font-size: 14px; }
   }
 
   &__conflict {
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--border);
     border-radius: 8px;
     margin: 24px 0;
     padding: 36px 24px;
-    background: #fafafa;
+    background: var(--bg-muted);
   }
 
   &__intro {
@@ -1445,9 +1446,9 @@ void showDialog
 
     &--expense {
       padding: 14px;
-      border: 1px solid #dfe7e3;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
+      background: linear-gradient(180deg, var(--bg-card) 0%, color-mix(in srgb, var(--color-success) 5%, var(--bg-card)) 100%);
     }
   }
 
@@ -1456,7 +1457,7 @@ void showDialog
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    color: #666;
+    color: var(--text-2);
     flex-wrap: wrap;
   }
 
@@ -1467,16 +1468,16 @@ void showDialog
     width: 22px;
     height: 22px;
     border-radius: 6px;
-    background: #244d3f;
-    color: #fff;
+    background: color-mix(in srgb, var(--color-success) 60%, black);
+    color: var(--text-on-accent);
     font-size: 12px;
     font-weight: 700;
   }
-  &__name   { font-weight: 500; color: #333; }
-  &__sep    { color: #ccc; }
-  &__flow   { color: #2f4038; font-weight: 600; }
-  &__subtitle { color: #8a948f; font-size: 12px; }
-  &__time   { color: #aaa; font-size: 12px; }
+  &__name   { font-weight: 500; color: var(--text-1); }
+  &__sep    { color: var(--text-3); }
+  &__flow   { color: color-mix(in srgb, var(--color-success) 40%, black); font-weight: 600; }
+  &__subtitle { color: var(--text-3); font-size: 12px; }
+  &__time   { color: var(--text-3); font-size: 12px; }
 
   &__inline-status {
     display: inline-flex;
@@ -1484,8 +1485,8 @@ void showDialog
     height: 20px;
     padding: 0 6px;
     border-radius: 4px;
-    background: #eef5f2;
-    color: #3d6b58;
+    background: var(--color-success-light);
+    color: var(--color-success-text);
     font-size: 11px;
     line-height: 20px;
   }
@@ -1500,17 +1501,17 @@ void showDialog
     gap: 12px;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px dashed #d6e2dd;
+    border-top: 1px dashed var(--border);
   }
 
   &__summary-label {
     font-size: 12px;
-    color: #6b7b73;
+    color: var(--text-2);
     margin-bottom: 2px;
   }
 
   &__amount-value {
-    color: #153b2e;
+    color: var(--color-success-text);
     font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
@@ -1523,7 +1524,7 @@ void showDialog
     align-items: flex-end;
     justify-content: center;
     gap: 4px;
-    color: #5c665f;
+    color: var(--text-2);
     font-size: 12px;
     text-align: right;
     min-width: 0;
@@ -1539,9 +1540,9 @@ void showDialog
   &__form-section {
     margin-bottom: 12px;
     padding: 14px;
-    border: 1px solid #e8ecef;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background: #fff;
+    background: var(--bg-card);
   }
 
   &__form {
@@ -1556,7 +1557,7 @@ void showDialog
     gap: 8px;
     font-size: 14px;
     font-weight: 700;
-    color: #25332e;
+    color: var(--text-1);
     margin-bottom: 10px;
 
     &::before {
@@ -1564,7 +1565,7 @@ void showDialog
       width: 3px;
       height: 14px;
       border-radius: 2px;
-      background: #2f7d5a;
+      background: var(--color-success);
     }
   }
 
@@ -1577,17 +1578,17 @@ void showDialog
   }
 
   &__budget-preview {
-    border-color: #d7e8df;
-    background: #fbfffd;
+    border-color: color-mix(in srgb, var(--color-success) 25%, var(--border));
+    background: color-mix(in srgb, var(--color-success) 3%, var(--bg-card));
 
     &--over {
-      border-color: #ffd2c8;
-      background: #fff8f6;
+      border-color: color-mix(in srgb, var(--color-danger) 30%, var(--border));
+      background: color-mix(in srgb, var(--color-danger) 5%, var(--bg-card));
     }
 
     p {
       margin: 8px 0 0;
-      color: #8c4a2f;
+      color: var(--color-warning-text);
       font-size: 12px;
       line-height: 1.5;
     }
@@ -1599,12 +1600,12 @@ void showDialog
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
-    color: #25332e;
+    color: var(--text-1);
     font-weight: 700;
 
     strong {
       font-size: 12px;
-      color: #d46b08;
+      color: var(--color-warning);
     }
   }
 
@@ -1617,20 +1618,20 @@ void showDialog
       min-width: 0;
       padding: 8px;
       border-radius: 6px;
-      background: #fff;
-      border: 1px solid #edf1ee;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
     }
 
     span {
       display: block;
-      color: #6b7b73;
+      color: var(--text-2);
       font-size: 12px;
       margin-bottom: 4px;
     }
 
     b {
       display: block;
-      color: #20362e;
+      color: var(--text-1);
       font-size: 13px;
       font-weight: 700;
       line-height: 1.2;
@@ -1641,8 +1642,8 @@ void showDialog
   // ===== 底部操作栏 =====
   &__footer {
     flex-shrink: 0;
-    border-top: 1px solid #f0f0f0;
-    background: #fff;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
     position: sticky;
     bottom: 0;
     z-index: 2;
@@ -1676,9 +1677,9 @@ void showDialog
     margin-left: auto;
     cursor: pointer;
     font-size: 18px;
-    color: #999;
+    color: var(--text-3);
     letter-spacing: 2px;
-    &:hover { color: #333; }
+    &:hover { color: var(--text-1); }
   }
 
   // ===== 意见输入区 =====
@@ -1691,7 +1692,7 @@ void showDialog
     &--open {
       max-height: 260px;
       padding: 12px 20px;
-      border-bottom: 1px solid #f5f5f5;
+      border-bottom: 1px solid var(--border);
     }
   }
 

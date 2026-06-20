@@ -1084,14 +1084,14 @@ onMounted(loadDetail)
 <style scoped lang="scss">
 .info-card,
 .section-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   flex: none;
 }
 
 .status-tag {
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   font-weight: 500;
 }
@@ -1121,12 +1121,12 @@ onMounted(loadDetail)
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #595959;
+  color: var(--text-2);
   font-size: 12px;
 }
 
 .mapping-hint {
-  color: #999;
+  color: var(--text-3);
   font-size: 12px;
   font-style: italic;
 }
@@ -1135,17 +1135,17 @@ onMounted(loadDetail)
 .mapping-modal-tip {
   margin-bottom: 12px;
   padding: 8px 10px;
-  background: #f6f8fa;
+  background: var(--bg-muted);
   border-radius: 4px;
   font-size: 12px;
-  color: #595959;
+  color: var(--text-2);
   line-height: 1.6;
 
   code {
-    background: #fff;
+    background: var(--bg-card);
     padding: 1px 6px;
     border-radius: 3px;
-    border: 1px solid #e6e6e6;
+    border: 1px solid var(--border);
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 12px;
     color: var(--color-danger-text);
@@ -1166,7 +1166,7 @@ onMounted(loadDetail)
   .mapping-arrow {
     width: 24px;
     text-align: center;
-    color: #999;
+    color: var(--text-3);
   }
 
   .mapping-action {
@@ -1176,7 +1176,7 @@ onMounted(loadDetail)
 
   &--head {
     margin-bottom: 6px;
-    color: #8c8c8c;
+    color: var(--text-3);
     font-size: 12px;
 
     .mapping-col {
@@ -1196,17 +1196,17 @@ onMounted(loadDetail)
   width: 100%;
   overflow: auto;
   background:
-    radial-gradient(circle, #ececec 1px, transparent 1px) 0 0/16px 16px,
-    #fafafa;
+    radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0/16px 16px,
+    var(--bg-muted);
   border-radius: 6px;
   padding: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 
 .dag-empty {
   padding: 24px;
   text-align: center;
-  color: #8c8c8c;
+  color: var(--text-3);
   font-size: 13px;
 }
 
@@ -1216,23 +1216,23 @@ onMounted(loadDetail)
 }
 
 .dag-node-name {
-  fill: #fff;
+  fill: var(--bg-card);
   font-size: 13px;
   font-weight: 500;
   pointer-events: none;
 }
 
 .dag-node-meta {
-  fill: rgba(255, 255, 255, 0.85);
+  fill: color-mix(in srgb, var(--bg-card) 85%, transparent);
   font-size: 10px;
   pointer-events: none;
 }
 
 .dag-edge-label {
-  fill: #595959;
+  fill: var(--text-2);
   font-size: 11px;
   paint-order: stroke;
-  stroke: #fff;
+  stroke: var(--bg-card);
   stroke-width: 3px;
   stroke-linejoin: round;
 }
@@ -1241,7 +1241,7 @@ onMounted(loadDetail)
 .edge-ref-broken {
   :deep(.ant-select-selector) {
     border-color: var(--color-danger) !important;
-    box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.12) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-danger) 12%, transparent) !important;
   }
 }
 
@@ -1255,10 +1255,10 @@ onMounted(loadDetail)
   flex-direction: column;
   gap: 2px;
   padding: 6px 4px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  border: 1px solid #f0f0f0;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
 
   :deep(.ant-btn) {
     padding: 0 12px;

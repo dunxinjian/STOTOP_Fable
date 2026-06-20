@@ -2220,10 +2220,18 @@ public class FlowEngineService : IFlowEngineService
             return;
         }
 
+        // 卡片级 auto 节点用独立子作用域解析并执行插件（用后随 using 释放）。
+        // 工厂为 Singleton、其根容器解析 Scoped 插件会产生 captive DbContext：应用级近单例、
+        // 跨并发卡片级 auto 共享（DbContext 非线程安全）、ChangeTracker 永不释放。
+        // 改走双参重载 + 子作用域后，插件获得独立于引擎 _dbContext、也独立于根容器的全新 DbContext，
+        // 既消除 captive 与并发共享，又保留下方「插件用独立上下文修改 card → 引擎 ReloadAsync 重读」的既定语义。
+        // 批次级链（见 ProcessBatchStagesAsync）共享引擎 scoped DbContext 且随批次作用域释放，不在此列。
+        using var pluginScope = _scopeFactory.CreateScope();
+
         IAutoPlugin plugin;
         try
         {
-            plugin = _pluginFactory.Create(pluginCode);
+            plugin = _pluginFactory.Create(pluginCode, pluginScope.ServiceProvider);
         }
         catch (Exception ex)
         {
@@ -2237,7 +2245,7 @@ public class FlowEngineService : IFlowEngineService
             CardId = card.FID,
             StageDefinitionId = stageDef.FID,
             PluginRuleId = stageDef.F插件规则ID,
-            Services = _serviceProvider,
+            Services = pluginScope.ServiceProvider,
             CancellationToken = CancellationToken.None
         };
 

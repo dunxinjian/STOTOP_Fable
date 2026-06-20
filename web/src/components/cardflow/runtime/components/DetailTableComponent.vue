@@ -73,10 +73,10 @@ const effectiveMode = computed<'edit' | 'view'>(() =>
 
 <style scoped lang="scss">
 .cf-detail-component {
-  border: 1px solid #e2e6e4;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px;
-  background: #fff;
+  background: var(--bg-card);
 
   &__head {
     display: flex;
@@ -84,12 +84,12 @@ const effectiveMode = computed<'edit' | 'view'>(() =>
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 10px;
-    color: #23322c;
+    color: var(--text-1);
     font-size: 14px;
     font-weight: 600;
 
     b {
-      color: #b23b3b;
+      color: var(--color-danger);
       font-size: 12px;
       font-weight: 500;
     }
@@ -97,7 +97,7 @@ const effectiveMode = computed<'edit' | 'view'>(() =>
 
   &__empty,
   &__warning {
-    color: #8a5f16;
+    color: var(--color-warning);
     font-size: 12px;
     line-height: 18px;
     margin: 8px 0 0;

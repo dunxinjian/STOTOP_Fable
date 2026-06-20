@@ -27,20 +27,20 @@ const amount = computed(() => {
 
 <style scoped lang="scss">
 .cf-amount-summary {
-  border: 1px solid #d7e1dc;
-  background: #f7fbf8;
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
   border-radius: 6px;
   padding: 12px 14px;
   min-width: 0;
 
   &__label {
-    color: #52615a;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }
 
   &__value {
-    color: #14251d;
+    color: var(--text-1);
     font-size: 24px;
     line-height: 32px;
     font-weight: 700;
@@ -48,7 +48,7 @@ const amount = computed(() => {
   }
 
   &__key {
-    color: #7d8a84;
+    color: var(--text-3);
     font-size: 11px;
     margin-top: 4px;
   }

@@ -325,10 +325,10 @@ onMounted(() => {
 }
 
 .notif-tabs {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 8px 24px 24px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 
   :deep(.ant-tabs-tab) {
     font-size: 14px;
@@ -351,7 +351,7 @@ onMounted(() => {
 }
 
 .tab-disabled {
-  color: #bfbfbf;
+  color: var(--text-3);
   font-size: 12px;
   margin-left: 2px;
 }
@@ -366,14 +366,14 @@ onMounted(() => {
 
   :deep(.ant-form-item-label > label) {
     font-weight: 500;
-    color: #262626;
+    color: var(--text-1);
   }
 }
 
 .form-help {
   margin-top: 4px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   line-height: 1.6;
 
   &.inline {
@@ -395,12 +395,12 @@ onMounted(() => {
   &.ok {
     color: var(--color-success-text);
     background: var(--color-success-light);
-    border: 1px solid #b7eb8f;
+    border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
   }
   &.fail {
     color: var(--color-danger-text);
     background: var(--color-danger-light);
-    border: 1px solid #ffa39e;
+    border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
   }
 
   .test-detail {
@@ -415,20 +415,20 @@ onMounted(() => {
 
   .coming-icon {
     font-size: 64px;
-    color: #d9d9d9;
+    color: var(--text-3);
   }
 
   .coming-title {
     margin-top: 12px;
     font-size: 16px;
     font-weight: 600;
-    color: #595959;
+    color: var(--text-2);
   }
 
   .coming-tip {
     margin-top: 4px;
     font-size: 13px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 }
 </style>

@@ -15,6 +15,7 @@ import {
   UpOutlined,
 } from '@ant-design/icons-vue'
 import type { CardFlowRuntimeAuditDto, StageInstanceDto } from '@/types/cardflow'
+import StatusTag from '@/components/StatusTag.vue'
 
 // ==================== Props ====================
 
@@ -33,20 +34,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ==================== 状态色映射 ====================
 
-const statusColorMap: Record<string, string> = {
-  approved: 'var(--color-success)',
-  rejected: '#fa541c',
-  processing: 'var(--color-info)',
-  pending: '#8c8c8c',
-  skipped: '#d9d9d9',
+const statusTypeMap: Record<string, 'success' | 'danger' | 'info' | 'default'> = {
+  approved:   'success',
+  rejected:   'danger',
+  processing: 'info',
+  pending:    'default',
+  skipped:    'default',
 }
 
 const statusLabelMap: Record<string, string> = {
-  approved: '已通过',
-  rejected: '已退回',
+  approved:   '已通过',
+  rejected:   '已退回',
   processing: '处理中',
-  pending: '待处理',
-  skipped: '已跳过',
+  pending:    '待处理',
+  skipped:    '已跳过',
 }
 
 const typeIconMap: Record<string, any> = {
@@ -164,8 +165,22 @@ function getAssigneeNames(stage: StageInstanceDto): string {
   return stage.assignees.map(a => a.userName).join('、')
 }
 
+// 图标/内联样式与 timeline 圆点统一用 CSS var()
+// ant-design Timeline 的 :color 会作为内联 borderColor/color 直接套用，var() 在内联样式中可正常解析
+const statusIconColorMap: Record<string, string> = {
+  approved:   'var(--color-success)',
+  rejected:   'var(--color-danger)',
+  processing: 'var(--color-info)',
+  pending:    'var(--text-3)',
+  skipped:    'var(--border-strong)',
+}
+
 function getStatusColor(status: string): string {
-  return statusColorMap[status] || '#8c8c8c'
+  return statusIconColorMap[status] || 'var(--text-3)'
+}
+
+function getTimelineColor(status: string): string {
+  return statusIconColorMap[status] || 'var(--text-3)'
 }
 
 function getStageAudit(stage: StageInstanceDto): CardFlowRuntimeAuditDto[] {
@@ -276,7 +291,7 @@ function toggleOpinion(id: number) {
               <a-timeline-item
                 v-for="stage in getVisibleStages(group)"
                 :key="stage.id"
-                :color="getStatusColor(stage.status)"
+                :color="getTimelineColor(stage.status)"
               >
                 <template #dot>
                   <component
@@ -312,22 +327,14 @@ function toggleOpinion(id: number) {
                   <!-- 处理人 + 状态 -->
                   <div v-if="stage.assignees && stage.assignees.length > 0" class="timeline-node__assignees">
                     <span class="timeline-node__assignee-names">{{ getAssigneeNames(stage) }}</span>
-                    <a-tag
-                      :color="getStatusColor(stage.status)"
-                      :bordered="false"
-                      size="small"
-                    >
+                    <StatusTag :type="statusTypeMap[stage.status] ?? 'default'">
                       {{ statusLabelMap[stage.status] || stage.status }}
-                    </a-tag>
+                    </StatusTag>
                   </div>
                   <div v-else class="timeline-node__assignees">
-                    <a-tag
-                      :color="getStatusColor(stage.status)"
-                      :bordered="false"
-                      size="small"
-                    >
+                    <StatusTag :type="statusTypeMap[stage.status] ?? 'default'">
                       {{ statusLabelMap[stage.status] || stage.status }}
-                    </a-tag>
+                    </StatusTag>
                   </div>
 
                   <!-- 审批意见 -->
@@ -360,9 +367,7 @@ function toggleOpinion(id: number) {
                         :style="{ color: getAuditColor(audit) }"
                       />
                       <span class="timeline-node__audit-title">{{ audit.title || getAuditLabel(audit) }}</span>
-                      <a-tag :bordered="false" size="small" :color="audit.snapshotType === 'dynamicApprover' ? 'purple' : 'blue'">
-                        {{ getAuditLabel(audit) }}
-                      </a-tag>
+                      <StatusTag type="info">{{ getAuditLabel(audit) }}</StatusTag>
                     </div>
                     <div class="timeline-node__audit-reason">{{ audit.reason }}</div>
                     <div v-if="auditMetaText(audit)" class="timeline-node__audit-meta">
@@ -414,13 +419,9 @@ function toggleOpinion(id: number) {
             />
             <span class="compact-timeline__name">{{ stage.stageName }}</span>
             <span class="compact-timeline__assignee">{{ getAssigneeNames(stage) }}</span>
-            <a-tag
-              :color="getStatusColor(stage.status)"
-              :bordered="false"
-              size="small"
-            >
+            <StatusTag :type="statusTypeMap[stage.status] ?? 'default'">
               {{ statusLabelMap[stage.status] || stage.status }}
-            </a-tag>
+            </StatusTag>
             <DownOutlined
               v-if="stage.opinion || (stage.assignees && stage.assignees.some(a => a.opinion))"
               class="compact-timeline__expand-icon"
@@ -459,12 +460,12 @@ function toggleOpinion(id: number) {
 .round-group {
   margin-bottom: 12px;
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--bg-muted);
   padding: 12px 16px;
 
   &--active {
-    background: #fff;
-    border: 1px solid #f0f0f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
   }
 
   &__header {
@@ -479,18 +480,18 @@ function toggleOpinion(id: number) {
   &__title {
     font-weight: 600;
     font-size: 14px;
-    color: #262626;
+    color: var(--text-1);
   }
 
   &__summary {
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 
   &__toggle {
     margin-left: auto;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 
   &__content {
@@ -499,7 +500,7 @@ function toggleOpinion(id: number) {
 
   &__collapsed-summary {
     font-size: 13px;
-    color: #8c8c8c;
+    color: var(--text-3);
     cursor: pointer;
     padding: 4px 0;
 
@@ -520,11 +521,11 @@ function toggleOpinion(id: number) {
   background: var(--color-success-light);
   border-radius: 6px;
   font-size: 13px;
-  color: #595959;
+  color: var(--text-2);
   cursor: pointer;
 
   &:hover {
-    background: #d9f7be;
+    background: color-mix(in srgb, var(--color-success) 20%, transparent);
   }
 }
 
@@ -541,13 +542,13 @@ function toggleOpinion(id: number) {
   &__name {
     font-weight: 600;
     font-size: 14px;
-    color: #262626;
+    color: var(--text-1);
   }
 
   &__duration {
     margin-left: auto;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 
   &__assignees {
@@ -559,18 +560,18 @@ function toggleOpinion(id: number) {
 
   &__assignee-names {
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
   }
 
   &__opinion {
     margin-top: 6px;
     padding: 8px 12px;
-    border-left: 3px solid #d9d9d9;
-    background: #fafafa;
+    border-left: 3px solid var(--border);
+    background: var(--bg-muted);
     border-radius: 0 4px 4px 0;
     font-style: italic;
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
     line-height: 1.5;
 
     &--sub {
@@ -581,14 +582,14 @@ function toggleOpinion(id: number) {
   &__opinion-author {
     font-style: normal;
     font-weight: 500;
-    color: #434343;
+    color: var(--text-1);
   }
 
   &__audit {
     margin-top: 8px;
     padding: 8px 10px;
     border-left: 3px solid var(--color-info);
-    background: #f7f9fc;
+    background: var(--bg-muted);
     border-radius: 0 4px 4px 0;
   }
 
@@ -607,7 +608,7 @@ function toggleOpinion(id: number) {
   &__audit-title {
     font-size: 13px;
     font-weight: 600;
-    color: #262626;
+    color: var(--text-1);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -617,21 +618,21 @@ function toggleOpinion(id: number) {
   &__audit-reason {
     margin-top: 4px;
     font-size: 12px;
-    color: #434343;
+    color: var(--text-1);
     line-height: 1.5;
   }
 
   &__audit-meta {
     margin-top: 3px;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     line-height: 1.4;
   }
 
   &__time {
     margin-top: 4px;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 }
 
@@ -640,7 +641,7 @@ function toggleOpinion(id: number) {
 .compact-timeline {
   &__item {
     padding: 6px 0;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--border);
 
     &:last-child {
       border-bottom: none;
@@ -656,12 +657,12 @@ function toggleOpinion(id: number) {
   &__name {
     font-size: 13px;
     font-weight: 500;
-    color: #262626;
+    color: var(--text-1);
   }
 
   &__assignee {
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -671,7 +672,7 @@ function toggleOpinion(id: number) {
 
   &__expand-icon {
     font-size: 10px;
-    color: #8c8c8c;
+    color: var(--text-3);
     cursor: pointer;
     transition: transform 200ms;
 
@@ -683,7 +684,7 @@ function toggleOpinion(id: number) {
   &__opinion {
     padding: 6px 8px 6px 22px;
     font-size: 12px;
-    color: #595959;
+    color: var(--text-2);
     font-style: italic;
     overflow: hidden;
   }

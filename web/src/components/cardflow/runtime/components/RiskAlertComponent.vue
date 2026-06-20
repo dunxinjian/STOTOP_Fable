@@ -13,19 +13,19 @@ defineProps<{ component: CardComponentRuntime }>()
 
 <style scoped lang="scss">
 .cf-risk-component {
-  border: 1px solid #ead8b7;
+  border: 1px solid var(--color-warning);
   border-radius: 6px;
   padding: 10px 12px;
-  background: #fffaf0;
+  background: var(--color-warning-light);
 
   strong {
-    color: #8a5f16;
+    color: var(--color-warning-text);
     font-size: 13px;
   }
 
   p {
     margin: 4px 0 0;
-    color: #6f5c39;
+    color: var(--color-warning-text);
     font-size: 12px;
     line-height: 18px;
   }

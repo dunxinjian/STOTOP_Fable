@@ -299,7 +299,7 @@
       @ok="saveMatchRules"
       :destroyOnClose="true"
     >
-      <p style="color: #909399; font-size: 12px; margin-bottom: 12px;">
+      <p style="color: var(--text-3); font-size: 12px; margin-bottom: 12px;">
         当暂存表字段「{{ editingLine?.accountMatchField || '?' }}」的值匹配下列规则时，使用对应的科目
       </p>
       <div v-for="(mr, mrIdx) in editingMatchRules" :key="mrIdx"
@@ -759,26 +759,26 @@ onMounted(async () => {
   gap: 8px;
   margin-bottom: 16px;
   padding: 12px 16px;
-  background: #fafbfc;
+  background: var(--bg-muted);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   flex-wrap: wrap;
 
   .label {
     font-weight: 600;
-    color: #333;
+    color: var(--text-1);
     white-space: nowrap;
   }
 }
 
 .rule-group-card {
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px;
   margin-bottom: 12px;
-  background: #fff;
+  background: var(--bg-card);
   transition: box-shadow 0.2s;
-  &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+  &:hover { box-shadow: var(--shadow-sm); }
 }
 
 .group-header {
@@ -796,7 +796,7 @@ onMounted(async () => {
 }
 
 .entry-lines {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
   overflow-x: auto;
 }
@@ -818,27 +818,27 @@ onMounted(async () => {
 }
 
 .entry-header {
-  background: #e0e0e0;
+  background: var(--bg-muted);
   font-weight: 600;
   font-size: 12px;
-  color: #333;
-  border-bottom: 1px solid #d0d0d0;
+  color: var(--text-1);
+  border-bottom: 1px solid var(--border-strong);
   > span { text-align: center; justify-content: center; }
 }
 
 .entry-row {
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid var(--border);
   &:last-child { border-bottom: none; }
 }
 
-.col-action { width: 42px; flex-shrink: 0; text-align: center; justify-content: center; border-right: 1px solid #d0d0d0; }
-.col-no { width: 36px; text-align: center; flex-shrink: 0; justify-content: center; border-right: 1px solid #d0d0d0; }
-.col-dir { width: 56px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
-.col-account { width: 320px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
-.col-amount { width: 105px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
-.col-agg { width: 80px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
-.col-summary { width: 170px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
-.col-condition { width: 280px; flex-shrink: 0; border-right: 1px solid #d0d0d0; }
+.col-action { width: 42px; flex-shrink: 0; text-align: center; justify-content: center; border-right: 1px solid var(--border-strong); }
+.col-no { width: 36px; text-align: center; flex-shrink: 0; justify-content: center; border-right: 1px solid var(--border-strong); }
+.col-dir { width: 56px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
+.col-account { width: 320px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
+.col-amount { width: 105px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
+.col-agg { width: 80px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
+.col-summary { width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
+.col-condition { width: 280px; flex-shrink: 0; border-right: 1px solid var(--border-strong); }
 .col-aux-btn { width: 110px; flex-shrink: 0; text-align: center; justify-content: center; }
 
 .account-inline {

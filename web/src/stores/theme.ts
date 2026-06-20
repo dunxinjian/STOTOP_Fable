@@ -273,9 +273,11 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--color-success', c.colorSuccess || '#3E9E6E')
     s.setProperty('--color-success-light', '#EAF4EF')
     s.setProperty('--color-success-text', '#2A6B4C')
+    s.setProperty('--color-success-border', 'rgba(62, 158, 110, 0.30)') // 成功态描边(对齐 --color-danger-border .30 口径)
     s.setProperty('--color-warning', c.colorWarning || '#D49A2E')
     s.setProperty('--color-warning-light', '#FAF1DD')
     s.setProperty('--color-warning-text', '#8A6212')
+    s.setProperty('--color-warning-border', 'rgba(212, 154, 46, 0.30)') // 警告态描边(对齐 --color-danger-border .30 口径)
     s.setProperty('--color-danger', c.colorError || '#D6584E')
     s.setProperty('--color-danger-light', '#FBEEEC')
     s.setProperty('--color-danger-text', '#9E332B')
@@ -283,6 +285,7 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--color-info', c.colorInfo || '#5B7290')
     s.setProperty('--color-info-light', '#EBEFF4')
     s.setProperty('--color-info-text', '#34455A')
+    s.setProperty('--color-info-border', 'rgba(91, 114, 144, 0.30)') // 信息态描边(对齐 --color-danger-border .30 口径)
     // —— 静态：文字
     s.setProperty('--text-1', '#1F2329')
     s.setProperty('--text-2', '#5A6068')
@@ -312,6 +315,22 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--biz-finance', '#B8860B')
     s.setProperty('--biz-task', '#4F8A7B')       // 任务：青绿，区别于审批蓝
     s.setProperty('--biz-notification', '#8A8F99') // 通知：中性灰，低调（低优先级语义）
+    // —— 静态：CardFlow 分类色（数据编码枚举，性质同 --biz-*/--avatar-palette-*；不随主色派生）
+    s.setProperty('--cf-node-manual', '#1D4ED8')
+    s.setProperty('--cf-node-auto', '#7C3AED')
+    s.setProperty('--cf-node-batch', '#059669')
+    s.setProperty('--cf-field-text', '#1F2937')
+    s.setProperty('--cf-field-money', '#B45309')
+    s.setProperty('--cf-field-enum', '#7C3AED')
+    s.setProperty('--cf-field-date', '#0891B2')
+    s.setProperty('--cf-field-file', '#475569')
+    s.setProperty('--cf-field-user', '#16A34A')
+    s.setProperty('--cf-field-org', '#2563EB')
+    s.setProperty('--cf-field-cardRef', '#DB2777')
+    s.setProperty('--cf-field-account', '#0F766E')
+    s.setProperty('--cf-field-auxiliary', '#4F46E5')
+    s.setProperty('--cf-field-bankAccount', '#0369A1')
+    s.setProperty('--cf-field-voucherRef', '#9333EA')
     // —— 静态：头像色环（CustomerManage BD 头像等；DOM 元素走 var() 可解析）
     s.setProperty('--avatar-palette-1', '#5B7290')
     s.setProperty('--avatar-palette-2', '#6BA292')

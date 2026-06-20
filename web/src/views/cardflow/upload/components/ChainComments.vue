@@ -58,14 +58,17 @@ function handleSend() {
   newComment.value = ''
 }
 
+// avatar categorical palette — JS 内联 style 不解析 var()，保留真 hex
+const AVATAR_FALLBACK = '#8c8c8c'
+const AVATAR_COLORS = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
+
 function getAvatarColor(name: string): string {
-  if (!name) return '#8c8c8c'
-  const colors = ['#5B7290', '#6BA292', '#C99A6B', '#9B8AB8', '#C77B6B', '#8FB07E']
+  if (!name) return AVATAR_FALLBACK
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return colors[Math.abs(hash) % colors.length]
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 </script>
 
@@ -73,13 +76,13 @@ function getAvatarColor(name: string): string {
 .comment-section {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
 }
 
 .comment-title {
   font-size: 13px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
   margin-bottom: 8px;
 }
 
@@ -93,7 +96,7 @@ function getAvatarColor(name: string): string {
   gap: 8px;
   margin-bottom: 8px;
   padding: 8px 10px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 6px;
 }
 
@@ -105,7 +108,7 @@ function getAvatarColor(name: string): string {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #fff;
+  color: var(--text-on-accent);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -124,24 +127,24 @@ function getAvatarColor(name: string): string {
 .comment-author {
   font-size: 12px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .comment-time {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 
 .comment-text {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-2);
   margin-top: 4px;
   word-break: break-word;
 }
 
 .comment-empty {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-3);
   padding: 8px 0;
 }
 

@@ -178,11 +178,11 @@ const cardClasses = computed(() => ({
 
 <style scoped lang="scss">
 .batch-card {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0 16px;
   margin-bottom: 8px;
-  background: #fff;
+  background: var(--bg-card);
   transition: border-color 0.2s;
 
   &--error { border-left: 3px solid var(--color-danger); }
@@ -200,7 +200,7 @@ const cardClasses = computed(() => ({
 
 .batch-id {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #999;
+  color: var(--text-3);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -221,7 +221,7 @@ const cardClasses = computed(() => ({
   gap: 8px;
   flex-shrink: 0;
   font-size: 12px;
-  color: #999;
+  color: var(--text-3);
 
   .meta-item {
     white-space: nowrap;
@@ -262,8 +262,8 @@ const cardClasses = computed(() => ({
     color: var(--color-warning-text);
   }
   &--pending {
-    background: #f5f5f5;
-    color: #8c8c8c;
+    background: var(--bg-muted);
+    color: var(--text-3);
   }
 }
 
@@ -282,7 +282,7 @@ const cardClasses = computed(() => ({
 
 .progress-text {
   font-size: 12px;
-  color: #666;
+  color: var(--text-2);
   white-space: nowrap;
 }
 

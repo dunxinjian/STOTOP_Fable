@@ -16,6 +16,8 @@
 | `--color-primary-light` | `#FFF3EA` | 主色浅底 |
 | `--color-primary-border` | `rgba(232,94,0,0.30)` | 主色描边 |
 | `--color-danger-border` | `rgba(214,88,78,0.30)` | 危险态焦点环/描边（对齐 --color-primary-border .30 口径） |
+| `--color-success-border` | `rgba(62,158,110,0.30)` | 成功态描边（对齐 .30 口径） |
+| `--color-warning-border` | `rgba(212,154,46,0.30)` | 警告态描边（对齐 .30 口径） |
 
 ## 状态色（成功/警告/危险/信息，各带 -light/-text）
 
@@ -55,6 +57,21 @@
 | `--biz-approval` | `#3A6FB0` | 审批 |
 | `--biz-points` | `#C99A2E` | 积分 |
 | `--biz-finance` | `#B8860B` | 财务 |
+
+## CardFlow 分类色（数据编码枚举，静态常量，不随 themeConfig 派生）
+
+> 性质同 `--biz-*`：枚举绑定的数据编码色，由 `applyDesignTokensCSS()` 注入 `:root`，组件以 `var()` 消费（含 SchemaFieldEditor 的 JS `tone` 内联 `var()`）。**无 `variables.scss` `$` 桥接**（镜像 `--biz-*` 现状）。浅底以 `color-mix(in srgb, var(--cf-node-X) N%, transparent)` 派生。
+
+| 令牌 | 值 | 绑定 | | 令牌 | 值 | 绑定 |
+|---|---|---|---|---|---|---|
+| `--cf-node-manual` | `#1D4ED8` | 人工节点 | | `--cf-field-text` | `#1F2937` | 文本 |
+| `--cf-node-auto` | `#7C3AED` | 自动节点 | | `--cf-field-money` | `#B45309` | 金额 |
+| `--cf-node-batch` | `#059669` | 批次级节点 | | `--cf-field-enum` | `#7C3AED` | 枚举 |
+| `--cf-field-date` | `#0891B2` | 日期 | | `--cf-field-file` | `#475569` | 附件 |
+| `--cf-field-user` | `#16A34A` | 人员 | | `--cf-field-org` | `#2563EB` | 组织 |
+| `--cf-field-cardRef` | `#DB2777` | 卡片引用 | | `--cf-field-account` | `#0F766E` | 会计科目 |
+| `--cf-field-auxiliary` | `#4F46E5` | 辅助核算 | | `--cf-field-bankAccount` | `#0369A1` | 银行账户 |
+| `--cf-field-voucherRef` | `#9333EA` | 凭证引用 | | | | |
 
 ## 圆角
 

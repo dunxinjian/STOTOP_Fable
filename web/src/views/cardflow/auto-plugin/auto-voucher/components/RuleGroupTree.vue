@@ -51,7 +51,7 @@
           <a-badge
             :count="group.lines.length"
             :show-zero="true"
-            :number-style="{ backgroundColor: group.lines.length > 0 ? 'var(--color-info)' : '#d9d9d9', fontSize: '11px' }"
+            :number-style="{ backgroundColor: group.lines.length > 0 ? 'var(--color-info)' : 'var(--border)', fontSize: '11px' }"
           />
           <CompletenessBadge :score="getGroupScore(group)" />
           <HitRateBadge :rate="null" />
@@ -98,7 +98,7 @@
       cancel-text="取消"
       :width="520"
     >
-      <p style="color: #8c8c8c; font-size: 12px; margin-bottom: 8px;">
+      <p style="color: var(--text-3); font-size: 12px; margin-bottom: 8px;">
         粘贴规则组 JSON，可以是单个对象或数组
       </p>
       <a-textarea
@@ -246,14 +246,14 @@ function getGroupScore(group: RuleGroup): number | null {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 
 .tree-toolbar {
   padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -279,7 +279,7 @@ function getGroupScore(group: RuleGroup): number | null {
   border: 1px solid transparent;
 
   &:hover {
-    background: #f5f5f5;
+    background: var(--bg-muted);
     .group-actions { opacity: 1; }
   }
 
@@ -301,12 +301,12 @@ function getGroupScore(group: RuleGroup): number | null {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: #f0f0f0;
+  background: var(--bg-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-3);
   flex-shrink: 0;
 }
 
@@ -314,7 +314,7 @@ function getGroupScore(group: RuleGroup): number | null {
   flex: 1;
   min-width: 0;
   font-size: 13px;
-  color: #262626;
+  color: var(--text-1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -333,9 +333,9 @@ function getGroupScore(group: RuleGroup): number | null {
 .context-menu {
   position: fixed;
   z-index: 1050;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 6px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   padding: 4px 0;
 
   :deep(.ant-menu) {

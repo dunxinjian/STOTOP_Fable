@@ -217,7 +217,7 @@
               <div class="editor-card__head" style="display: flex; justify-content: space-between; align-items: center;">
                 <span><span class="editor-card__title">① 基本信息</span><span class="editor-card__hint">这是什么项目</span></span>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 13px; color: #666; font-weight: normal;">排序:</span>
+                  <span style="font-size: 13px; color: var(--text-2); font-weight: normal;">排序:</span>
                   <a-input-number v-model:value="itemForm.sortOrder" :min="0" :max="9999" style="width: 80px" size="small" />
                 </div>
               </div>
@@ -277,7 +277,7 @@
                       style="width: 160px"
                     />
                     <template v-if="isDecimalUnit(itemForm.unit)">
-                      <span style="color: #666; font-size: 13px;">小数位数:</span>
+                      <span style="color: var(--text-2); font-size: 13px;">小数位数:</span>
                       <a-select v-model:value="itemDecimalPlacesSelectValue" placeholder="默认2位" allow-clear style="width: 100px">
                         <a-select-option :value="1">1位</a-select-option>
                         <a-select-option :value="2">2位</a-select-option>
@@ -317,7 +317,7 @@
               </a-form-item>
               <a-form-item v-if="showManualEntrySwitch" label="手工填报">
                 <a-switch v-model:checked="itemForm.isManualEntry" />
-                <span style="margin-left: 8px; color: #8c8c8c; font-size: 12px;">开启后该项数据在报表页手工录入</span>
+                <span style="margin-left: 8px; color: var(--text-3); font-size: 12px;">开启后该项数据在报表页手工录入</span>
               </a-form-item>
             </div>
 
@@ -3107,8 +3107,8 @@ onMounted(() => {
   max-width: 600px;
   overflow-y: auto;
   padding: 16px;
-  background: #fafafa;
-  border-right: 1px solid #f0f0f0;
+  background: var(--bg-muted);
+  border-right: 1px solid var(--border);
 }
 
 .panel-resizer {
@@ -3117,17 +3117,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
+  background: var(--bg-muted);
   flex-shrink: 0;
   transition: background 0.2s;
 
-  &:hover, &:active { background: #e8e8e8; }
+  &:hover, &:active { background: var(--border); }
 
   .resizer-line {
     width: 2px;
     height: 32px;
     border-radius: 1px;
-    background: #d9d9d9;
+    background: var(--border);
     transition: background 0.2s;
   }
 
@@ -3139,7 +3139,7 @@ onMounted(() => {
   min-width: 0;
   overflow-y: auto;
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .tree-toolbar {
@@ -3163,10 +3163,10 @@ onMounted(() => {
 
 // Tab 横跨容器
 .tab-bar {
-  background: #fff;
+  background: var(--bg-card);
   padding: 4px 12px 0;
   margin-bottom: 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .tabs-and-formulas {
@@ -3186,15 +3186,15 @@ onMounted(() => {
     padding: 6px 16px !important;
     font-size: 14px;
     font-weight: 500;
-    background: #fafafa !important;
-    border: 1px solid #e8e8e8 !important;
+    background: var(--bg-muted) !important;
+    border: 1px solid var(--border) !important;
     border-bottom: none !important;
     border-radius: 6px 6px 0 0 !important;
-    color: #595959;
+    color: var(--text-2);
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   }
   :deep(.ant-tabs-tab:hover) {
-    background: #f0f7ff !important;
+    background: var(--color-info-light) !important;
     color: var(--color-primary) !important;
   }
   :deep(.ant-tabs-tab.ant-tabs-tab-active) {
@@ -3216,7 +3216,7 @@ onMounted(() => {
 
 .indicator-tab {
   font-weight: 600;
-  color: #d46b08; // 琥珀色，与报表"运营指标"呼应
+  color: var(--color-warning); // 琥珀色，与报表"运营指标"呼应
   .anticon {
     margin-right: 2px;
   }
@@ -3226,16 +3226,16 @@ onMounted(() => {
   outline: 2px dashed var(--color-success);
   outline-offset: 2px;
   border-radius: 4px;
-  background: rgba(82, 196, 26, 0.08);
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
 }
 
 .dir-tab-count {
-  color: #999;
+  color: var(--text-3);
   font-size: 12px;
 }
 
 .dir-tab-edit {
-  color: #999;
+  color: var(--text-3);
   font-size: 12px;
   margin-left: 2px;
   cursor: pointer;
@@ -3243,7 +3243,7 @@ onMounted(() => {
 }
 
 .dir-tab-del {
-  color: #bbb;
+  color: var(--text-3);
   font-size: 11px;
   margin-left: 2px;
   cursor: pointer;
@@ -3278,7 +3278,7 @@ onMounted(() => {
   &__fx {
     font-size: 10px;
     background: var(--color-primary);
-    color: #fff;
+    color: var(--text-on-accent);
     padding: 0 4px;
     border-radius: 3px;
     font-style: italic;
@@ -3293,7 +3293,7 @@ onMounted(() => {
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .edit-title {
@@ -3325,8 +3325,8 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   min-height: 32px;
 }
@@ -3335,7 +3335,7 @@ onMounted(() => {
   flex: 1;
   font-family: 'Consolas', monospace;
   font-size: 13px;
-  color: #333;
+  color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3343,12 +3343,12 @@ onMounted(() => {
 
 .formula-preview__empty {
   flex: 1;
-  color: #bbb;
+  color: var(--text-3);
   font-size: 13px;
 }
 
 .field-help-icon {
-  color: #999;
+  color: var(--text-3);
   margin-left: 4px;
   cursor: help;
   transition: color 0.2s;
@@ -3364,15 +3364,15 @@ onMounted(() => {
   text-align: center;
 
   &__icon { font-size: 48px; margin-bottom: 16px; }
-  &__title { font-size: 16px; font-weight: 500; color: #333; margin-bottom: 8px; }
-  &__desc { font-size: 13px; color: #999; max-width: 280px; line-height: 1.6; }
+  &__title { font-size: 16px; font-weight: 500; color: var(--text-1); margin-bottom: 8px; }
+  &__desc { font-size: 13px; color: var(--text-3); max-width: 280px; line-height: 1.6; }
 }
 
 .toolbar-divider {
   display: inline-block;
   width: 1px;
   height: 18px;
-  background: #e8e8e8;
+  background: var(--border);
   margin: 0 4px;
   align-self: center;
 }
@@ -3384,12 +3384,12 @@ onMounted(() => {
 
 // 辅助核算过滤
 .aux-filter {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px;
-  background: #fafafa;
+  background: var(--bg-muted);
 
-  &__empty { font-size: 13px; color: #bbb; text-align: center; padding: 8px 0; }
+  &__empty { font-size: 13px; color: var(--text-3); text-align: center; padding: 8px 0; }
   &__row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
 }
 
@@ -3398,14 +3398,14 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fafafa;
+  background: var(--bg-muted);
   padding: 6px;
 
   &__item {
-    background: #fff;
-    border: 1px solid #e8e8e8;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
   }
@@ -3420,7 +3420,7 @@ onMounted(() => {
     user-select: none;
     transition: background 0.15s;
 
-    &:hover { background: #f5f9ff; }
+    &:hover { background: var(--color-info-light); }
   }
 
   &__title {
@@ -3428,7 +3428,7 @@ onMounted(() => {
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    color: #1f1f1f;
+    color: var(--text-1);
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -3441,7 +3441,7 @@ onMounted(() => {
   }
 
   &__name {
-    color: #595959;
+    color: var(--text-2);
     font-size: 12px;
     overflow: hidden;
     white-space: nowrap;
@@ -3451,27 +3451,27 @@ onMounted(() => {
   &__badge {
     flex-shrink: 0;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     padding: 0 8px;
     line-height: 20px;
     border-radius: 10px;
-    background: #f0f0f0;
+    background: var(--border);
 
     &--active {
-      color: #fff;
+      color: var(--text-on-accent);
       background: var(--color-success);
     }
   }
 
   &__body {
     padding: 8px 10px 10px;
-    border-top: 1px dashed #f0f0f0;
-    background: #fafcff;
+    border-top: 1px dashed var(--border);
+    background: var(--bg-muted);
   }
 
   &__empty-tip {
     font-size: 12px;
-    color: #bbb;
+    color: var(--text-3);
     text-align: center;
     padding: 4px 0 8px;
   }
@@ -3480,12 +3480,12 @@ onMounted(() => {
 // ItemEditor 卡片分组
 .editor-card {
   position: relative;
-  background: #fff;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 14px 16px 6px 18px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s, border-color 0.2s;
 
   &::before {
@@ -3493,11 +3493,11 @@ onMounted(() => {
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 4px;
-    background: #d9d9d9;
+    background: var(--border-strong);
     border-radius: 6px 0 0 6px;
   }
 
-  &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+  &:hover { box-shadow: var(--shadow-md); }
 
   &__head {
     display: flex;
@@ -3505,37 +3505,37 @@ onMounted(() => {
     gap: 10px;
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
   }
 
-  &__title { font-size: 15px; font-weight: 600; color: #1f1f1f; letter-spacing: 0.2px; }
-  &__hint { font-size: 12px; color: #8c8c8c; }
+  &__title { font-size: 15px; font-weight: 600; color: var(--text-1); letter-spacing: 0.2px; }
+  &__hint { font-size: 12px; color: var(--text-3); }
 
   :deep(.ant-form-item) { margin-bottom: 12px; }
 
   &--basic {
-    &::before { background: #6c757d; }
-    .editor-card__head { background: linear-gradient(to right, rgba(108,117,125,0.06), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    &::before { background: var(--border-strong); }
+    .editor-card__head { background: linear-gradient(to right, color-mix(in srgb, var(--border-strong) 6%, transparent), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid var(--border); }
   }
   &--source {
     &::before { background: var(--color-info); }
-    .editor-card__head { background: linear-gradient(to right, rgba(58,111,176,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    .editor-card__head { background: linear-gradient(to right, color-mix(in srgb, var(--color-info) 8%, transparent), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid var(--border); }
     .editor-card__title { color: var(--color-info-text); }
   }
   &--rule {
     &::before { background: var(--color-success); }
-    .editor-card__head { background: linear-gradient(to right, rgba(82,196,26,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    .editor-card__head { background: linear-gradient(to right, color-mix(in srgb, var(--color-success) 8%, transparent), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid var(--border); }
     .editor-card__title { color: var(--color-success-text); }
   }
   &--calc {
     &::before { background: var(--color-primary); }
-    .editor-card__head { background: linear-gradient(to right, rgba(232,94,0,0.08), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
+    .editor-card__head { background: linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid var(--border); }
     .editor-card__title { color: var(--color-primary-active); }
   }
   &--remark {
     &::before { background: var(--color-warning); }
-    .editor-card__head { background: linear-gradient(to right, rgba(250,140,22,0.07), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid #f0f0f0; }
-    .editor-card__title { color: #d46b08; }
+    .editor-card__head { background: linear-gradient(to right, color-mix(in srgb, var(--color-warning) 7%, transparent), transparent 60%); margin: -14px -16px 14px -18px; padding: 14px 16px 10px 18px; border-bottom: 1px solid var(--border); }
+    .editor-card__title { color: var(--color-warning); }
   }
 }
 
@@ -3549,7 +3549,7 @@ onMounted(() => {
   justify-content: space-between;
   padding: 10px 24px;
   background: var(--color-warning-light);
-  border-top: 1px solid #ffe58f;
+  border-top: 1px solid var(--color-warning-border);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
 
   &__hint {
@@ -3557,7 +3557,7 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
   }
   &__dot {
     display: inline-block;
@@ -3591,17 +3591,17 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
-  color: #595959;
+  color: var(--text-2);
 
   li {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 6px 0;
-    border-bottom: 1px dashed #f0f0f0;
+    border-bottom: 1px dashed var(--border);
   }
   li:last-child { border-bottom: none; }
-  span { color: #8c8c8c; font-size: 12px; }
+  span { color: var(--text-3); font-size: 12px; }
 }
 
 kbd {
@@ -3610,9 +3610,9 @@ kbd {
   margin: 0 2px;
   font-family: 'Consolas', monospace;
   font-size: 12px;
-  color: #262626;
-  background: #fafafa;
-  border: 1px solid #d9d9d9;
+  color: var(--text-1);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-bottom-width: 2px;
   border-radius: 3px;
   min-width: 18px;

@@ -35,7 +35,7 @@
         <a-tab-pane key="logic" tab="取数逻辑">
           <div class="amoeba-helper-panel__body amoeba-helper-panel__body--scroll">
             <div class="amoeba-helper-panel__logic-intro">
-              <p style="margin:0 0 8px;color:#595959;font-size:12px">报表聚合时，各数据源按以下流程取数并汇入损益项：</p>
+              <p style="margin:0 0 8px;color:var(--text-2);font-size:12px">报表聚合时，各数据源按以下流程取数并汇入损益项：</p>
             </div>
             <a-collapse :bordered="false" default-active-key="billing">
               <a-collapse-panel key="billing" header="① 计费结果 (billing)">
@@ -48,7 +48,7 @@
                   <li>重量合计 (weight) — 重量指标</li>
                 </ul>
                 <p><strong>范围控制</strong>：已计价 (priced) / 全部 (all)</p>
-                <p style="color:#fa541c;font-size:12px">⚠️ 日期筛选必须用 F运单日期，非 F计费日期</p>
+                <p style="color:var(--color-warning);font-size:12px">⚠️ 日期筛选必须用 F运单日期，非 F计费日期</p>
               </a-collapse-panel>
               <a-collapse-panel key="voucher" header="② 凭证 (voucher)">
                 <p><strong>数据表</strong>：FIN凭证 + FIN凭证分录</p>
@@ -60,7 +60,7 @@
                   <li><strong>人工分类</strong> — 手动归类</li>
                   <li><strong>未匹配池</strong> — 触发报警机制</li>
                 </ol>
-                <div style="background:var(--color-success-light);border-radius:4px;padding:6px 8px;margin-top:8px;font-size:12px;border:1px solid #b7eb8f">
+                <div style="background:var(--color-success-light);border-radius:4px;padding:6px 8px;margin-top:8px;font-size:12px;border:1px solid var(--color-success-border)">
                   <strong>独占规则</strong>：一条凭证只能匹配一个损益项，匹配后自动解除其他历史匹配关系。
                 </div>
               </a-collapse-panel>
@@ -78,12 +78,12 @@
                   <li>出港份额 = 综合池 × (出港件量 / 总件量)</li>
                   <li>进港份额 = 综合池 × (进港件量 / 总件量)</li>
                 </ul>
-                <p style="color:#8c8c8c;font-size:12px">无需配置取数规则，系统自动计算。</p>
+                <p style="color:var(--text-3);font-size:12px">无需配置取数规则，系统自动计算。</p>
               </a-collapse-panel>
               <a-collapse-panel key="formula" header="⑥ 公式 (formula)">
                 <p>纯公式计算项，引用其他损益项进行运算。</p>
                 <p><strong>语法</strong>：<code>${'${项目名称}'}</code> + - 运算符</p>
-                <p style="color:#fa541c;font-size:12px">⚠️ 未配置公式时金额恒为 0</p>
+                <p style="color:var(--color-warning);font-size:12px">⚠️ 未配置公式时金额恒为 0</p>
               </a-collapse-panel>
             </a-collapse>
           </div>
@@ -95,12 +95,12 @@
                 <h4>数据覆盖率</h4>
                 <p>覆盖率反映模板配置对实际财务数据的匹配完整度：已匹配的凭证分录数 ÷ 全部凭证分录数。</p>
                 <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
-                  <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8">覆盖率</th><th style="padding:4px 8px;border:1px solid #e8e8e8">状态</th><th style="padding:4px 8px;border:1px solid #e8e8e8">建议</th></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 95%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-success)">🟢 优秀</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">无需处理</td></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">≥ 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-warning)">🟡 良好</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">检查未匹配项</td></tr>
-                  <tr><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">< 80%</td><td style="padding:4px 8px;border:1px solid #e8e8e8"><span style="color:var(--color-danger)">🔴 需关注</span></td><td style="padding:4px 8px;border:1px solid #e8e8e8">补充关联科目/关键词</td></tr>
+                  <tr style="background:var(--bg-muted)"><th style="padding:4px 8px;border:1px solid var(--border)">覆盖率</th><th style="padding:4px 8px;border:1px solid var(--border)">状态</th><th style="padding:4px 8px;border:1px solid var(--border)">建议</th></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">≥ 95%</td><td style="padding:4px 8px;border:1px solid var(--border)"><span style="color:var(--color-success)">🟢 优秀</span></td><td style="padding:4px 8px;border:1px solid var(--border)">无需处理</td></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">≥ 80%</td><td style="padding:4px 8px;border:1px solid var(--border)"><span style="color:var(--color-warning)">🟡 良好</span></td><td style="padding:4px 8px;border:1px solid var(--border)">检查未匹配项</td></tr>
+                  <tr><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">< 80%</td><td style="padding:4px 8px;border:1px solid var(--border)"><span style="color:var(--color-danger)">🔴 需关注</span></td><td style="padding:4px 8px;border:1px solid var(--border)">补充关联科目/关键词</td></tr>
                 </table>
-                <div style="background:var(--color-success-light);border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:10px 0;font-size:12px">
+                <div style="background:var(--color-success-light);border:1px solid var(--color-success-border);border-radius:4px;padding:8px;margin:10px 0;font-size:12px">
                   <strong>如何提高覆盖率：</strong>
                   <ol style="margin:4px 0 0;padding-left:18px">
                     <li>为 data 节点补充<strong>关联科目</strong>（覆盖更多科目前缀）</li>
@@ -108,7 +108,7 @@
                     <li>使用<strong>人工分类</strong>处理特殊凭证</li>
                   </ol>
                 </div>
-                <p style="color:#8c8c8c;font-size:12px">💡 点击顶栏「覆盖率检查」按钮可实时计算当前模板的覆盖率并查看未匹配科目明细。</p>
+                <p style="color:var(--text-3);font-size:12px">💡 点击顶栏「覆盖率检查」按钮可实时计算当前模板的覆盖率并查看未匹配科目明细。</p>
               </div>
             </slot>
           </div>
@@ -132,13 +132,13 @@
               <div class="amoeba-helper-panel__guide">
                 <h4>公式引用关系</h4>
                 <p>当其他损益项的公式中引用了当前项目名称时，此处会显示引用方列表。</p>
-                <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+                <div style="background:var(--color-info-light);border:1px solid var(--color-info-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
                   <strong>引用示例：</strong>
                   <p style="margin:4px 0 0">若「出港毛利」的公式为：</p>
-                  <code style="display:block;margin:4px 0;background:#fff;padding:4px 6px;border-radius:2px">${'${出港收入合计}'} - ${'${出港直接成本合计}'}</code>
+                  <code style="display:block;margin:4px 0;background:var(--bg-card);padding:4px 6px;border-radius:2px">${'${出港收入合计}'} - ${'${出港直接成本合计}'}</code>
                   <p style="margin:4px 0 0">则选中「出港收入合计」时，此处会显示「出港毛利」作为引用方。</p>
                 </div>
-                <div style="background:var(--color-warning-light);border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+                <div style="background:var(--color-warning-light);border:1px solid var(--color-warning-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
                   <strong>⚠️ 删除保护：</strong>
                   <ul style="margin:4px 0 0;padding-left:18px">
                     <li>被引用的项目<strong>不建议直接删除</strong>，否则引用方公式将求值为 0</li>
@@ -146,7 +146,7 @@
                     <li>选中任意项目即可实时查看其被引用情况</li>
                   </ul>
                 </div>
-                <p style="color:#8c8c8c;font-size:12px">💡 模板内所有项目名称必须全局唯一，以确保公式引用准确无歧义。</p>
+                <p style="color:var(--text-3);font-size:12px">💡 模板内所有项目名称必须全局唯一，以确保公式引用准确无歧义。</p>
               </div>
             </template>
           </div>
@@ -183,13 +183,13 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     content: `
       <p>决定节点在模板树中的行为与计算参与方式：</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
-        <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8;text-align:left">角色</th><th style="padding:4px 8px;border:1px solid #e8e8e8;text-align:left">行为</th><th style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">参与汇总</th></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>分组 (group)</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">分组容器，金额=子项自动求和</td><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">✅</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>数据 (data)</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">实际取数项，需配置数据源</td><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">✅</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>公式 (formula)</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">公式计算项，需配置公式</td><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">❌</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>指标 (indicator)</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">KPI 指标（票量、均重等）</td><td style="padding:4px 8px;border:1px solid #e8e8e8;text-align:center">❌</td></tr>
+        <tr style="background:var(--bg-muted)"><th style="padding:4px 8px;border:1px solid var(--border);text-align:left">角色</th><th style="padding:4px 8px;border:1px solid var(--border);text-align:left">行为</th><th style="padding:4px 8px;border:1px solid var(--border);text-align:center">参与汇总</th></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>分组 (group)</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">分组容器，金额=子项自动求和</td><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">✅</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>数据 (data)</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">实际取数项，需配置数据源</td><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">✅</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>公式 (formula)</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">公式计算项，需配置公式</td><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">❌</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>指标 (indicator)</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">KPI 指标（票量、均重等）</td><td style="padding:4px 8px;border:1px solid var(--border);text-align:center">❌</td></tr>
       </table>
-      <p style="color:#8c8c8c;font-size:12px">💡 汇总规则：group 金额 = Σ子级 data + Σ子级 group（不含 formula 和 indicator）</p>
+      <p style="color:var(--text-3);font-size:12px">💡 汇总规则：group 金额 = Σ子级 data + Σ子级 group（不含 formula 和 indicator）</p>
     `,
   },
   itemType: {
@@ -210,15 +210,15 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     content: `
       <p>data 节点必须配置数据源，决定金额从哪里取：</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
-        <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8;text-align:left">数据源</th><th style="padding:4px 8px;border:1px solid #e8e8e8;text-align:left">说明</th></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>计费结果</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">从出港运单计费表聚合（金额/件量/重量）</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>凭证</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">从凭证分录按科目 + 关键词匹配</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>暂估数据</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">暂估入库数据，支持辅助核算过滤</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>资产折旧</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">固定资产自动折旧，归入综合方向</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>手工填报</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">用户手动录入金额</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8"><strong>计算公式</strong></td><td style="padding:4px 8px;border:1px solid #e8e8e8">通过公式引用其他项目计算</td></tr>
+        <tr style="background:var(--bg-muted)"><th style="padding:4px 8px;border:1px solid var(--border);text-align:left">数据源</th><th style="padding:4px 8px;border:1px solid var(--border);text-align:left">说明</th></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>计费结果</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">从出港运单计费表聚合（金额/件量/重量）</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>凭证</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">从凭证分录按科目 + 关键词匹配</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>暂估数据</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">暂估入库数据，支持辅助核算过滤</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>资产折旧</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">固定资产自动折旧，归入综合方向</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>手工填报</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">用户手动录入金额</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)"><strong>计算公式</strong></td><td style="padding:4px 8px;border:1px solid var(--border)">通过公式引用其他项目计算</td></tr>
       </table>
-      <p style="color:#8c8c8c;font-size:12px">💡 分摊项无需配置数据源，由系统按件量比例自动分配。</p>
+      <p style="color:var(--text-3);font-size:12px">💡 分摊项无需配置数据源，由系统按件量比例自动分配。</p>
     `,
   },
   billingFilter: {
@@ -226,21 +226,21 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     content: `
       <p>当数据源为"计费结果"时，通过聚合参数控制取数方式：</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
-        <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8">聚合方式</th><th style="padding:4px 8px;border:1px solid #e8e8e8">范围</th><th style="padding:4px 8px;border:1px solid #e8e8e8">典型用途</th></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">金额 (amount)</td><td style="padding:4px 8px;border:1px solid #e8e8e8">已计价</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港计费收入</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">件量 (waybill_count)</td><td style="padding:4px 8px;border:1px solid #e8e8e8">已计价</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港计价件量</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">件量 (waybill_count)</td><td style="padding:4px 8px;border:1px solid #e8e8e8">全部</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港全部件量</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">重量 (weight)</td><td style="padding:4px 8px;border:1px solid #e8e8e8">已计价</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港计价总重</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">重量 (weight)</td><td style="padding:4px 8px;border:1px solid #e8e8e8">全部</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港全量总重</td></tr>
+        <tr style="background:var(--bg-muted)"><th style="padding:4px 8px;border:1px solid var(--border)">聚合方式</th><th style="padding:4px 8px;border:1px solid var(--border)">范围</th><th style="padding:4px 8px;border:1px solid var(--border)">典型用途</th></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">金额 (amount)</td><td style="padding:4px 8px;border:1px solid var(--border)">已计价</td><td style="padding:4px 8px;border:1px solid var(--border)">出港计费收入</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">件量 (waybill_count)</td><td style="padding:4px 8px;border:1px solid var(--border)">已计价</td><td style="padding:4px 8px;border:1px solid var(--border)">出港计价件量</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">件量 (waybill_count)</td><td style="padding:4px 8px;border:1px solid var(--border)">全部</td><td style="padding:4px 8px;border:1px solid var(--border)">出港全部件量</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">重量 (weight)</td><td style="padding:4px 8px;border:1px solid var(--border)">已计价</td><td style="padding:4px 8px;border:1px solid var(--border)">出港计价总重</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">重量 (weight)</td><td style="padding:4px 8px;border:1px solid var(--border)">全部</td><td style="padding:4px 8px;border:1px solid var(--border)">出港全量总重</td></tr>
       </table>
-      <p style="color:#fa541c;font-size:12px">⚠️ 日期筛选必须使用 <code>F运单日期</code> 字段，不可用 F计费日期。</p>
+      <p style="color:var(--color-warning);font-size:12px">⚠️ 日期筛选必须使用 <code>F运单日期</code> 字段，不可用 F计费日期。</p>
     `,
   },
   accountCodes: {
     title: '关联科目',
     content: `
       <p>配置凭证分录匹配的科目编码，系统按<strong>最长前缀优先</strong>算法匹配：</p>
-      <div style="background:var(--color-success-light);border:1px solid #b7eb8f;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-success-light);border:1px solid var(--color-success-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <strong>匹配优先级（从高到低）：</strong>
         <ol style="margin:4px 0 0;padding-left:18px">
           <li>数据源天然归属（billing → 出港收入）</li>
@@ -251,7 +251,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
         </ol>
       </div>
       <p><strong>独占规则</strong>：一条凭证只能匹配一个损益项，匹配后自动解除其他历史匹配。</p>
-      <p style="color:#8c8c8c;font-size:12px">💡 输入 <code>5001*</code> 可批量选中所有 5001 开头的科目。</p>
+      <p style="color:var(--text-3);font-size:12px">💡 输入 <code>5001*</code> 可批量选中所有 5001 开头的科目。</p>
     `,
   },
   auxiliaryFilter: {
@@ -267,14 +267,14 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
         <li>部门 (department)</li>
         <li>业务方向 (business_direction)</li>
       </ul>
-      <p style="color:#8c8c8c;font-size:12px">💡 每个关联科目可配置不同的辅助核算过滤，互不影响。</p>
+      <p style="color:var(--text-3);font-size:12px">💡 每个关联科目可配置不同的辅助核算过滤，互不影响。</p>
     `,
   },
   summaryKeywords: {
     title: '摘要关键词',
     content: `
       <p>当凭证的科目编码未匹配到任何损益项时，系统会检查凭证<strong>摘要文本</strong>中是否包含此处的关键词。</p>
-      <div style="background:var(--color-warning-light);border:1px solid #ffd591;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-warning-light);border:1px solid var(--color-warning-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <strong>规则说明：</strong>
         <ul style="margin:4px 0 0;padding-left:18px">
           <li>多个关键词为<strong>"或"</strong>关系，匹配任一即归入本项</li>
@@ -289,26 +289,26 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
     content: `
       <p>损益项的方向由其所属的<strong>顶级 Tab (depth=0 group)</strong> 隐式决定：</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
-        <tr style="background:#f5f5f5"><th style="padding:4px 8px;border:1px solid #e8e8e8">Tab</th><th style="padding:4px 8px;border:1px solid #e8e8e8">含义</th><th style="padding:4px 8px;border:1px solid #e8e8e8">分摊</th></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">🚀 出港</td><td style="padding:4px 8px;border:1px solid #e8e8e8">出港业务的收入与直接成本</td><td style="padding:4px 8px;border:1px solid #e8e8e8">接收分摊份额</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">📦 进港</td><td style="padding:4px 8px;border:1px solid #e8e8e8">进港业务的收入与直接成本</td><td style="padding:4px 8px;border:1px solid #e8e8e8">接收分摊份额</td></tr>
-        <tr><td style="padding:4px 8px;border:1px solid #e8e8e8">🏢 综合</td><td style="padding:4px 8px;border:1px solid #e8e8e8">无法归属的共用成本</td><td style="padding:4px 8px;border:1px solid #e8e8e8">作为分摊池</td></tr>
+        <tr style="background:var(--bg-muted)"><th style="padding:4px 8px;border:1px solid var(--border)">Tab</th><th style="padding:4px 8px;border:1px solid var(--border)">含义</th><th style="padding:4px 8px;border:1px solid var(--border)">分摊</th></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">🚀 出港</td><td style="padding:4px 8px;border:1px solid var(--border)">出港业务的收入与直接成本</td><td style="padding:4px 8px;border:1px solid var(--border)">接收分摊份额</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">📦 进港</td><td style="padding:4px 8px;border:1px solid var(--border)">进港业务的收入与直接成本</td><td style="padding:4px 8px;border:1px solid var(--border)">接收分摊份额</td></tr>
+        <tr><td style="padding:4px 8px;border:1px solid var(--border)">🏢 综合</td><td style="padding:4px 8px;border:1px solid var(--border)">无法归属的共用成本</td><td style="padding:4px 8px;border:1px solid var(--border)">作为分摊池</td></tr>
       </table>
-      <p style="color:#8c8c8c;font-size:12px">💡 综合成本池按「出港件量 : 进港件量」比例自动分摊。</p>
+      <p style="color:var(--text-3);font-size:12px">💡 综合成本池按「出港件量 : 进港件量」比例自动分摊。</p>
     `,
   },
   formula: {
     title: '计算公式',
     content: `
       <p>公式引用其他损益项进行运算，<strong>必须</strong>使用 <code>\${}</code> 包裹项目名称。</p>
-      <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-info-light);border:1px solid var(--color-info-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <p style="margin:0"><strong>✅ 正确写法：</strong></p>
         <code style="display:block;margin-top:4px">\${出港收入合计} - \${出港直接成本合计} - \${分摊出港份额}</code>
       </div>
-      <div style="background:var(--color-danger-light);border:1px solid #ffa39e;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+      <div style="background:var(--color-danger-light);border:1px solid var(--color-danger-border);border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
         <p style="margin:0"><strong>❌ 错误写法：</strong></p>
         <code style="display:block;margin-top:4px">出港收入合计 - 出港直接成本合计</code>
-        <p style="margin:4px 0 0;color:#8c8c8c">裸名称无法解析为项目引用，会导致求值为 0</p>
+        <p style="margin:4px 0 0;color:var(--text-3)">裸名称无法解析为项目引用，会导致求值为 0</p>
       </div>
       <p><strong>关键约束：</strong></p>
       <ul>
@@ -326,7 +326,7 @@ const fieldDocs: Record<string, { title: string; content: string }> = {
         <li><strong>金额 ÷ 票量</strong>：本项金额除以总票数，得出单票均值</li>
         <li><strong>不计算</strong>：不参与单票均列的显示</li>
       </ul>
-      <p style="color:#8c8c8c;font-size:12px">💡 总票数来源于用户手动填报（非自动统计），作为单票均计算的分母。</p>
+      <p style="color:var(--text-3);font-size:12px">💡 总票数来源于用户手动填报（非自动统计），作为单票均计算的分母。</p>
     `,
   },
   unit: {
@@ -363,8 +363,8 @@ watch(
 <style scoped lang="scss">
 .amoeba-helper-panel {
   flex-shrink: 0;
-  background: #fafafa;
-  border-left: 1px solid #f0f0f0;
+  background: var(--bg-muted);
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   transition: width 0.2s;
@@ -372,7 +372,7 @@ watch(
   overflow: hidden;
 
   &--collapsed {
-    background: #f5f7fa;
+    background: var(--bg-muted);
     cursor: pointer;
   }
 
@@ -383,10 +383,10 @@ watch(
     align-items: center;
     padding: 12px 0;
     gap: 12px;
-    color: #595959;
+    color: var(--text-2);
 
     &:hover {
-      background: #f0f5ff;
+      background: var(--color-info-light);
       color: var(--color-primary);
     }
   }
@@ -407,14 +407,14 @@ watch(
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
 
   &__title {
     font-weight: 600;
     font-size: 13px;
-    color: #262626;
+    color: var(--text-1);
   }
 
   &__tabs {
@@ -454,7 +454,7 @@ watch(
       margin: 0 0 8px;
       font-size: 14px;
       font-weight: 600;
-      color: #262626;
+      color: var(--text-1);
     }
 
     :deep(p) {
@@ -468,7 +468,7 @@ watch(
     }
 
     :deep(code) {
-      background: #f0f0f0;
+      background: var(--bg-muted);
       padding: 1px 4px;
       border-radius: 2px;
       font-family: 'Consolas', monospace;
@@ -498,7 +498,7 @@ watch(
       margin: 0 0 10px;
       font-size: 14px;
       font-weight: 600;
-      color: #262626;
+      color: var(--text-1);
     }
 
     p {

@@ -241,8 +241,8 @@ const showStagingForExpand = (b: CfBatch) => b.status === 1 || b.status === 2 ||
         </template>
         <template v-else-if="column.key === 'rowsResult'">
           <span style="color: var(--color-success-text)">{{ record.successRows }}</span>
-          <span style="margin: 0 4px; color: #ccc">/</span>
-          <span :style="{ color: record.failedRows > 0 ? 'var(--color-danger-text)' : '#999' }">
+          <span style="margin: 0 4px; color: var(--text-3)">/</span>
+          <span :style="{ color: record.failedRows > 0 ? 'var(--color-danger-text)' : 'var(--text-3)' }">
             {{ record.failedRows }}
           </span>
         </template>
@@ -300,7 +300,7 @@ const showStagingForExpand = (b: CfBatch) => b.status === 1 || b.status === 2 ||
 <style scoped lang="scss">
 .cf-batch-manage {
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
 
   &__toolbar {
     display: flex;

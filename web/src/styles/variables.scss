@@ -84,6 +84,9 @@ $border-color-light: var(--border, #E6E8EB);
 $border-color-lighter: var(--border, #E6E8EB);
 $border-color-faint: var(--border-faint, #F2F4F6); // 耳语级细线（比 --border 更浅一档）
 $color-danger-border: var(--color-danger-border, rgba(214, 88, 78, 0.30)); // 危险态焦点环/描边
+$color-success-border: var(--color-success-border, rgba(62, 158, 110, 0.30)); // 成功态描边
+$color-warning-border: var(--color-warning-border, rgba(212, 154, 46, 0.30)); // 警告态描边
+$color-info-border: var(--color-info-border, rgba(91, 114, 144, 0.30)); // 信息态描边
 
 // ===== 背景颜色 =====
 $bg-page: var(--bg-page, #F5F6F8);

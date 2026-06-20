@@ -37,7 +37,7 @@ const shortcuts = [
     title: '我的待办',
     description: '处理待审批的卡片',
     icon: ClockCircleOutlined,
-    color: '#fa541c',
+    color: 'var(--color-warning)',
     path: '/workhub',
   },
   {
@@ -173,7 +173,7 @@ onMounted(() => {
                 </template>
               </a-list-item-meta>
               <template #extra>
-                <RightOutlined style="color: #bbb;" />
+                <RightOutlined style="color: var(--text-3);" />
               </template>
             </a-list-item>
           </template>
@@ -193,7 +193,7 @@ onMounted(() => {
   transition: all 0.2s;
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
   }
 }
 
@@ -217,13 +217,13 @@ onMounted(() => {
   .shortcut-title {
     font-size: 15px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-1);
     margin-bottom: 2px;
   }
 
   .shortcut-desc {
     font-size: 12px;
-    color: #999;
+    color: var(--text-3);
   }
 }
 
@@ -231,7 +231,7 @@ onMounted(() => {
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #fafafa;
+    background: var(--bg-muted);
   }
 }
 

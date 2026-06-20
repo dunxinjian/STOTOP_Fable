@@ -42,7 +42,7 @@ defineProps<{
 .kpi-divider {
   width: 1px;
   height: 20px;
-  background: #e8e8e8;
+  background: var(--border);
   flex-shrink: 0;
 }
 
@@ -63,12 +63,12 @@ defineProps<{
 .kpi-value {
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .kpi-label {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-left: 4px;
   white-space: nowrap;
 }

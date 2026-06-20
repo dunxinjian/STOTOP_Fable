@@ -221,7 +221,7 @@ function handleClose() {
 
 .form-label {
   font-size: 14px;
-  color: #595959;
+  color: var(--text-2);
   white-space: nowrap;
   margin-right: 8px;
 }

@@ -47,14 +47,14 @@ interface StatusMeta { text: string; color: string }
 const INSTANCE_STATUS_META: Record<OrchestrationInstanceStatus, StatusMeta> = {
   running: { text: '运行中', color: 'var(--color-info)' },
   completed: { text: '已完成', color: 'var(--color-success)' },
-  terminated: { text: '已终止', color: '#8c8c8c' },
+  terminated: { text: '已终止', color: 'var(--text-3)' },
   failed: { text: '失败', color: 'var(--color-danger)' },
-  cancelled: { text: '已取消', color: '#bfbfbf' },
+  cancelled: { text: '已取消', color: 'var(--text-3)' },
   paused: { text: '已暂停', color: 'var(--color-warning)' },
 }
 
 const NODE_STATUS_META: Record<OrchestrationNodeInstanceStatus, StatusMeta> = {
-  pending: { text: '待执行', color: '#8c8c8c' },
+  pending: { text: '待执行', color: 'var(--text-3)' },
   running: { text: '运行中', color: 'var(--color-info)' },
   completed: { text: '已完成', color: 'var(--color-success)' },
   skipped: { text: '已跳过', color: 'var(--color-warning)' },
@@ -62,7 +62,7 @@ const NODE_STATUS_META: Record<OrchestrationNodeInstanceStatus, StatusMeta> = {
 }
 
 const DISPATCH_STATUS_META: Record<DispatchStatus, StatusMeta> = {
-  pending: { text: '待派发', color: '#8c8c8c' },
+  pending: { text: '待派发', color: 'var(--text-3)' },
   triggered: { text: '已触发', color: 'var(--color-success)' },
   skipped: { text: '已跳过', color: 'var(--color-warning)' },
   failed: { text: '失败', color: 'var(--color-danger)' },
@@ -377,9 +377,9 @@ onMounted(loadAll)
 .info-card,
 .section-card {
   margin: 0 12px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .info-card {
@@ -387,19 +387,19 @@ onMounted(loadAll)
 }
 
 .status-tag {
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   font-weight: 500;
 }
 
 .text-muted {
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 .empty-tip {
   text-align: center;
   padding: 40px 0;
-  color: #999;
+  color: var(--text-3);
 }
 
 .dispatch-timeline {
@@ -407,19 +407,19 @@ onMounted(loadAll)
 
   .time-label {
     font-size: 13px;
-    color: #595959;
+    color: var(--text-2);
     white-space: nowrap;
   }
   .time-label-sub {
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
     margin-top: 2px;
   }
 }
 
 .dispatch-card {
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
 
@@ -433,7 +433,7 @@ onMounted(loadAll)
   &__id {
     margin-left: auto;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--text-3);
   }
 
   &__body {
@@ -442,10 +442,10 @@ onMounted(loadAll)
     flex-wrap: wrap;
     gap: 6px;
     font-size: 13px;
-    color: #262626;
+    color: var(--text-1);
 
     .lbl {
-      color: #8c8c8c;
+      color: var(--text-3);
       margin-right: 2px;
     }
     .arrow {
@@ -454,7 +454,7 @@ onMounted(loadAll)
       margin: 0 4px;
     }
     .muted {
-      color: #8c8c8c;
+      color: var(--text-3);
       margin-left: 2px;
     }
   }

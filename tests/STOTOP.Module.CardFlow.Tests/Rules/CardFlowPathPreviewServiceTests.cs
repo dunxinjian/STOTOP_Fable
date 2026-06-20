@@ -1,6 +1,7 @@
 using STOTOP.Module.CardFlow.Dtos;
 using STOTOP.Module.CardFlow.Entities;
 using STOTOP.Module.CardFlow.Services;
+using STOTOP.Module.System.Entities;
 using Xunit;
 
 namespace STOTOP.Module.CardFlow.Tests.Rules;
@@ -248,5 +249,43 @@ public class CardFlowPathPreviewServiceTests
             new CfStageRouteRule { FFlowVersionId = 421, FEdgeKey = "typed_hit", FFromStageKey = "t0", FToStageKey = "hit", FRouteName = "含类型错命中", FConditionJson = """{"logic":"or","conditions":[{"field":"card.amount","operator":"gt","value":"x"},{"field":"card.flag","operator":"eq","value":true}]}""", FPriority = 1, FStatus = "active" },
             new CfStageRouteRule { FFlowVersionId = 421, FEdgeKey = "te_default", FFromStageKey = "t0", FToStageKey = "miss", FRouteName = "默认", FPriority = 99, FIsDefault = true, FStatus = "active" });
         // hit / miss 终端
+    }
+
+    [Fact]
+    public async global::System.Threading.Tasks.Task PreviewDraftVersion_InOrgChain_MatchesViaResolvedOrgChain()
+    {
+        using var db = TestDbContextFactory.Create(nameof(PreviewDraftVersion_InOrgChain_MatchesViaResolvedOrgChain));
+        // 组织层级：叶 10 → 父 20
+        db.Set<SysOrganization>().AddRange(
+            new SysOrganization { FID = 10, FParentId = 20, FCode = "LEAF", FName = "叶", FStatus = 1 },
+            new SysOrganization { FID = 20, FParentId = 0, FCode = "ROOT", FName = "根", FStatus = 1 });
+        SeedInOrgChainFlow(db);
+        await db.SaveChangesAsync();
+
+        var service = new CardFlowPathPreviewService(db, new ConditionRuleEvaluator(), new AuditSnapshotPolicyService());
+
+        // OrgId=10：org 链含祖先 20 → inOrgChain value=20 命中 vip 分支
+        var hit = await service.PreviewDraftVersionAsync(900, new CardFlowPathPreviewRequest
+        {
+            DataJson = "{}",
+            OrgId = 10
+        });
+
+        Assert.Equal("vip_org", hit.Steps[0].SelectedEdgeKey);
+        Assert.Equal("vip", hit.Steps[1].StageKey);
+    }
+
+    private static void SeedInOrgChainFlow(STOTOP.Infrastructure.Data.STOTOPDbContext db)
+    {
+        db.Set<CfFlowDefinition>().Add(new CfFlowDefinition { FID = 900, FFlowName = "组织链路由", FFlowCode = "ORGCHAIN", FStatus = "draft", FOrgId = 1, FCreatedTime = DateTime.Now });
+        db.Set<CfFlowVersion>().Add(new CfFlowVersion { FID = 901, FFlowDefinitionId = 900, FVersionNumber = 1, FStatus = "draft", FCreatedTime = DateTime.Now });
+        db.Set<CfStageDefinition>().AddRange(
+            new CfStageDefinition { FID = 90, FFlowVersionId = 901, FStageKey = "start", FStageName = "开始", FType = "human", FSortOrder = 1 },
+            new CfStageDefinition { FID = 91, FFlowVersionId = 901, FStageKey = "vip", FStageName = "VIP", FType = "human", FSortOrder = 2 },
+            new CfStageDefinition { FID = 92, FFlowVersionId = 901, FStageKey = "normal", FStageName = "普通", FType = "human", FSortOrder = 3 });
+        db.Set<CfStageRouteRule>().AddRange(
+            new CfStageRouteRule { FFlowVersionId = 901, FEdgeKey = "vip_org", FFromStageKey = "start", FToStageKey = "vip", FRouteName = "属于根组织链", FConditionJson = """{"field":"initiatorOrg.id","operator":"inOrgChain","value":20}""", FPriority = 1, FStatus = "active" },
+            new CfStageRouteRule { FFlowVersionId = 901, FEdgeKey = "normal_default", FFromStageKey = "start", FToStageKey = "normal", FRouteName = "其他", FPriority = 99, FIsDefault = true, FStatus = "active" });
+        // vip / normal 终端
     }
 }

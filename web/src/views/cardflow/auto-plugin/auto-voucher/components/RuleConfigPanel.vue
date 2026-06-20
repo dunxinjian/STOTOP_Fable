@@ -33,9 +33,9 @@
           @click="selectLine(entry.id)"
         >
           <div class="entry-summary">
-            <a-tag :color="entry.direction === '借' ? 'blue' : 'green'" size="small">
+            <StatusTag :type="entry.direction === '借' ? 'info' : 'success'" size="small">
               {{ entry.direction }}
-            </a-tag>
+            </StatusTag>
             <span class="entry-index">行{{ idx + 1 }}</span>
             <span class="entry-account">
               {{ entry.accountMode === 'fixed' ? (entry.accountId ? `科目#${entry.accountId}` : '未设科目') : `动态: ${entry.accountMatchField || '?'}` }}
@@ -106,6 +106,7 @@ import { PlusOutlined, DeleteOutlined, ExperimentOutlined, SendOutlined } from '
 import { useAutoVoucherRuleStore, type EntryLine } from '@/stores/autoVoucherRule'
 import EntryLineEditor from './EntryLineEditor.vue'
 import DistributeLineDialog from './DistributeLineDialog.vue'
+import StatusTag from '@/components/StatusTag.vue'
 
 const store = useAutoVoucherRuleStore()
 
@@ -244,9 +245,9 @@ function applyTemplate(type: string) {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 
 .panel-header {
@@ -254,18 +255,18 @@ function applyTemplate(type: string) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .current-group-name {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .no-group-hint {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--text-3);
 }
 
 .quick-templates {
@@ -273,13 +274,13 @@ function applyTemplate(type: string) {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-muted);
+  border-bottom: 1px solid var(--border);
 }
 
 .template-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
@@ -298,7 +299,7 @@ function applyTemplate(type: string) {
 }
 
 .entry-item {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
   margin-bottom: 8px;
   cursor: pointer;
@@ -342,12 +343,12 @@ function applyTemplate(type: string) {
 .entry-index {
   font-size: 12px;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .entry-account {
   font-size: 11px;
-  color: #595959;
+  color: var(--text-2);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -356,11 +357,11 @@ function applyTemplate(type: string) {
 
 .entry-amount {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-3);
 }
 
 .entry-detail {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   padding: 8px;
 }
 
@@ -369,8 +370,8 @@ function applyTemplate(type: string) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #f0f0f0;
-  background: #fafafa;
+  border-top: 1px solid var(--border);
+  background: var(--bg-muted);
   border-radius: 0 0 8px 8px;
 }
 

@@ -26,6 +26,7 @@ import type { ConditionGroup, FieldOption } from './ConditionBuilder.vue'
 import type { CardComponentDefinition, SchemaFieldDefinition, AutoPluginRegistryDto, AutoPluginRuleDto } from '@/types/cardflow'
 import { getRoleList, getUserList } from '@/api/system'
 import { getPluginRegistry, getPluginRules } from '@/api/cardflow'
+import { Modal } from 'ant-design-vue'
 
 // ==================== 类型 ====================
 
@@ -195,6 +196,17 @@ function addStage(type: StageNodeType) {
 }
 
 function removeStage(idx: number) {
+  Modal.confirm({
+    title: '删除节点',
+    content: `确定删除节点「${stages.value[idx]?.name || '未命名节点'}」？该节点的路由/配置将一并移除。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: () => doRemoveStage(idx),
+  })
+}
+
+function doRemoveStage(idx: number) {
   stages.value.splice(idx, 1)
   if (selectedIndex.value === idx) {
     selectedIndex.value = -1
@@ -1175,8 +1187,8 @@ const stageCount = computed(() => stages.value.length)
 .sde {
   display: flex;
   flex-direction: row;
-  background: #fff;
-  border: 1px solid #e6e6e6;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   height: 100%;
@@ -1188,11 +1200,11 @@ const stageCount = computed(() => stages.value.length)
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .sde__head-left { display: flex; align-items: center; gap: 10px; }
-.sde__title { font-size: 14px; font-weight: 600; color: #1f2937; letter-spacing: 0.4px; }
+.sde__title { font-size: 14px; font-weight: 600; color: var(--text-1); letter-spacing: 0.4px; }
 .sde__count {
   display: inline-flex;
   align-items: center;
@@ -1201,14 +1213,14 @@ const stageCount = computed(() => stages.value.length)
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #111827;
-  color: #fff;
+  background: var(--text-1);
+  color: var(--text-on-accent);
   font-size: 11px;
   font-weight: 600;
 }
 .sde__head-hint {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-3);
   font-style: italic;
 }
 
@@ -1216,10 +1228,10 @@ const stageCount = computed(() => stages.value.length)
 .sde__left {
   width: 280px;
   min-width: 280px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  background: #fafbfc;
+  background: var(--bg-muted);
   overflow-y: auto;
 }
 
@@ -1229,10 +1241,10 @@ const stageCount = computed(() => stages.value.length)
   align-items: center;
   justify-content: center;
   padding: 40px 16px;
-  color: #9ca3af;
+  color: var(--text-3);
   text-align: center;
   flex: 1;
-  p { margin: 0; font-size: 13px; color: #6b7280; }
+  p { margin: 0; font-size: 13px; color: var(--text-2); }
   span { font-size: 12px; margin-top: 4px; }
 }
 
@@ -1255,11 +1267,11 @@ const stageCount = computed(() => stages.value.length)
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #9ca3af;
+  color: var(--text-3);
   text-align: center;
   gap: 8px;
 
-  .sde__right-empty-icon { font-size: 32px; color: #d1d5db; }
+  .sde__right-empty-icon { font-size: 32px; color: var(--text-3); }
   p { margin: 0; font-size: 14px; }
 }
 
@@ -1277,13 +1289,13 @@ const stageCount = computed(() => stages.value.length)
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--bg-muted);
+  color: var(--text-2);
   width: fit-content;
 
-  &--manual { background: #eff6ff; color: #1d4ed8; }
-  &--auto { background: #f5f3ff; color: #7c3aed; }
-  &--batch { background: #ecfdf5; color: #059669; }
+  &--manual { background: color-mix(in srgb, var(--cf-node-manual) 8%, transparent); color: var(--cf-node-manual); }
+  &--auto { background: color-mix(in srgb, var(--cf-node-auto) 8%, transparent); color: var(--cf-node-auto); }
+  &--batch { background: color-mix(in srgb, var(--cf-node-batch) 8%, transparent); color: var(--cf-node-batch); }
 }
 
 /* ============ 时间线节点 ============ */
@@ -1319,22 +1331,22 @@ const stageCount = computed(() => stages.value.length)
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  background: #fff;
-  border: 2px solid #111827;
-  color: #111827;
+  background: var(--bg-card);
+  border: 2px solid var(--text-1);
+  color: var(--text-1);
   font-variant-numeric: tabular-nums;
 
-  &--manual { border-color: #1d4ed8; color: #1d4ed8; }
-  &--auto   { border-color: #7c3aed; color: #7c3aed; }
-  &--batch  { border-color: #059669; color: #059669; }
+  &--manual { border-color: var(--cf-node-manual); color: var(--cf-node-manual); }
+  &--auto   { border-color: var(--cf-node-auto); color: var(--cf-node-auto); }
+  &--batch  { border-color: var(--cf-node-batch); color: var(--cf-node-batch); }
 }
 .sde-line__bar {
   flex: 1;
   width: 2px;
   background: repeating-linear-gradient(
     to bottom,
-    #d1d5db 0,
-    #d1d5db 3px,
+    var(--border) 0,
+    var(--border) 3px,
     transparent 3px,
     transparent 6px
   );
@@ -1353,15 +1365,15 @@ const stageCount = computed(() => stages.value.length)
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #fff;
-  border: 1px solid #ececec;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   transition: border-color .18s, box-shadow .18s;
   font-size: 13px;
 
-  &--manual { border-left: 3px solid #1d4ed8; }
-  &--auto   { border-left: 3px solid #7c3aed; }
-  &--batch  { border-left: 3px solid #059669; }
+  &--manual { border-left: 3px solid var(--cf-node-manual); }
+  &--auto   { border-left: 3px solid var(--cf-node-auto); }
+  &--batch  { border-left: 3px solid var(--cf-node-batch); }
 
   &--selected {
     background: var(--bg-muted);
@@ -1370,7 +1382,7 @@ const stageCount = computed(() => stages.value.length)
   }
 
   &:hover {
-    border-color: #111827;
+    border-color: var(--text-1);
     .sde-node__del { opacity: 1; transform: translateX(0); }
   }
 }
@@ -1378,11 +1390,11 @@ const stageCount = computed(() => stages.value.length)
 .sde-node__icon {
   width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
-  background: #fafafa;
-  border: 1px solid #efefef;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 11px;
-  color: #4b5563;
+  color: var(--text-2);
   flex-shrink: 0;
 }
 
@@ -1397,7 +1409,7 @@ const stageCount = computed(() => stages.value.length)
 .sde-node__name {
   font-size: 12px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1415,21 +1427,21 @@ const stageCount = computed(() => stages.value.length)
   border: 1px solid transparent;
 
   &--ok {
-    color: #047857;
-    background: #ecfdf5;
-    border-color: #bbf7d0;
+    color: var(--color-success-text);
+    background: var(--color-success-light);
+    border-color: var(--color-success-border);
   }
 
   &--warning {
-    color: #b45309;
-    background: #fffbeb;
-    border-color: #fde68a;
+    color: var(--color-warning-text);
+    background: var(--color-warning-light);
+    border-color: var(--color-warning-border);
   }
 
   &--error {
-    color: #b91c1c;
-    background: #fef2f2;
-    border-color: #fecaca;
+    color: var(--color-danger-text);
+    background: var(--color-danger-light);
+    border-color: var(--color-danger-border);
   }
 }
 
@@ -1441,14 +1453,14 @@ const stageCount = computed(() => stages.value.length)
 }
 .sde-node__handle {
   cursor: grab;
-  color: #c4c4c4;
+  color: var(--text-3);
   font-size: 12px;
   &:active { cursor: grabbing; }
 }
 .sde-node__del {
   border: none;
   background: transparent;
-  color: #ef4444;
+  color: var(--color-danger);
   width: 22px; height: 22px;
   border-radius: 4px;
   cursor: pointer;
@@ -1459,7 +1471,7 @@ const stageCount = computed(() => stages.value.length)
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  &:hover { background: #fef2f2; }
+  &:hover { background: var(--color-danger-light); }
 }
 
 /* ============ 添加按钮组 ============ */
@@ -1467,7 +1479,7 @@ const stageCount = computed(() => stages.value.length)
   display: flex;
   gap: 6px;
   padding: 10px 8px;
-  border-top: 1px dashed #ececec;
+  border-top: 1px dashed var(--border);
   margin-top: auto;
 }
 .sde__add {
@@ -1477,16 +1489,16 @@ const stageCount = computed(() => stages.value.length)
   justify-content: center;
   gap: 4px;
   padding: 6px 8px;
-  border: 1px dashed #d1d5db;
+  border: 1px dashed var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
   cursor: pointer;
   font-size: 11px;
-  color: #4b5563;
+  color: var(--text-2);
   transition: all .18s ease;
 
-  &--manual:hover { border-color: #1d4ed8; color: #1d4ed8; background: #eff6ff; }
-  &--auto:hover   { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+  &--manual:hover { border-color: var(--cf-node-manual); color: var(--cf-node-manual); background: color-mix(in srgb, var(--cf-node-manual) 8%, transparent); }
+  &--auto:hover   { border-color: var(--cf-node-auto); color: var(--cf-node-auto); background: color-mix(in srgb, var(--cf-node-auto) 8%, transparent); }
 }
 
 .sde-health {
@@ -1495,25 +1507,25 @@ const stageCount = computed(() => stages.value.length)
   gap: 6px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
 
   &--ok {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    color: #047857;
+    background: var(--color-success-light);
+    border-color: var(--color-success-border);
+    color: var(--color-success-text);
   }
 
   &--warning {
-    background: #fffbeb;
-    border-color: #fde68a;
-    color: #92400e;
+    background: var(--color-warning-light);
+    border-color: var(--color-warning-border);
+    color: var(--color-warning-text);
   }
 
   &--error {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #991b1b;
+    background: var(--color-danger-light);
+    border-color: var(--color-danger-border);
+    color: var(--color-danger-text);
   }
 }
 
@@ -1538,7 +1550,7 @@ const stageCount = computed(() => stages.value.length)
   span {
     padding: 2px 6px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, .7);
+    background: color-mix(in srgb, var(--bg-card) 70%, transparent);
     font-size: 11px;
     color: inherit;
   }
@@ -1567,17 +1579,17 @@ const stageCount = computed(() => stages.value.length)
   flex-direction: column;
   gap: 6px;
 
-  &--block { padding: 12px; background: #fafafa; border-radius: 8px; }
+  &--block { padding: 12px; background: var(--bg-muted); border-radius: 8px; }
 
   &__label-row { display: flex; justify-content: space-between; align-items: center; }
   &__label {
     font-size: 12px;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-2);
     letter-spacing: 0.3px;
   }
-  &__req { color: #ef4444; }
-  &__hint { margin: 0; font-size: 11px; color: #9ca3af; font-style: italic; }
+  &__req { color: var(--color-danger); }
+  &__hint { margin: 0; font-size: 11px; color: var(--text-3); font-style: italic; }
   &__mono :deep(textarea) {
     font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
     font-size: 12px;
@@ -1600,9 +1612,9 @@ const stageCount = computed(() => stages.value.length)
   gap: 8px;
   min-height: 32px;
   padding: 4px 6px;
-  border: 1px solid #edf0f3;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .sde-access__name {
@@ -1611,7 +1623,7 @@ const stageCount = computed(() => stages.value.length)
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
-  color: #374151;
+  color: var(--text-2);
 }
 
 .sde-access__select {
@@ -1623,11 +1635,11 @@ const stageCount = computed(() => stages.value.length)
   display: flex;
   align-items: center;
   padding: 0 8px;
-  border: 1px dashed #d8dde5;
+  border: 1px dashed var(--border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-card);
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-3);
 }
 
 @media (max-width: 1080px) {
@@ -1640,7 +1652,7 @@ const stageCount = computed(() => stages.value.length)
     min-width: 0;
     max-height: 260px;
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border);
   }
 
   .sde__right {

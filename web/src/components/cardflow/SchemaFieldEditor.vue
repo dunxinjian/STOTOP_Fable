@@ -18,6 +18,7 @@ import {
 import draggable from 'vuedraggable'
 import type { SchemaFieldDefinition, SchemaFieldType } from '@/types/cardflow'
 import { getFlowDefinitions } from '@/api/cardflow'
+import { message } from 'ant-design-vue'
 
 const props = defineProps<{
   modelValue: SchemaFieldDefinition[]
@@ -43,18 +44,18 @@ interface TypeMeta {
 }
 
 const TYPE_META: TypeMeta[] = [
-  { value: 'text',        label: '文本',     icon: 'Aa', hint: '单行/多行文本',  tone: '#1f2937' },
-  { value: 'money',       label: '金额',     icon: '¥',  hint: '人民币金额',     tone: '#b45309' },
-  { value: 'enum',        label: '枚举',     icon: '◎',  hint: '下拉选项',       tone: '#7c3aed' },
-  { value: 'date',        label: '日期',     icon: '◈',  hint: '日期/时间',      tone: '#0891b2' },
-  { value: 'file',        label: '附件',     icon: '◰',  hint: '上传文件',       tone: '#475569' },
-  { value: 'user',        label: '人员',     icon: '⊙',  hint: '选择员工',       tone: '#16a34a' },
-  { value: 'org',         label: '组织',     icon: '⊞',  hint: '选择组织',       tone: '#2563eb' },
-  { value: 'cardRef',     label: '卡片引用', icon: '⤳',  hint: '关联其他流程',   tone: '#db2777' },
-  { value: 'account',     label: '会计科目', icon: '科', hint: '选择财务科目',   tone: '#0f766e' },
-  { value: 'auxiliary',   label: '辅助核算', icon: '辅', hint: '员工/部门/项目', tone: '#4f46e5' },
-  { value: 'bankAccount', label: '银行账户', icon: '银', hint: '组织银行账户',   tone: '#0369a1' },
-  { value: 'voucherRef',  label: '凭证引用', icon: '凭', hint: '只读凭证链接',   tone: '#9333ea' },
+  { value: 'text',        label: '文本',     icon: 'Aa', hint: '单行/多行文本',  tone: 'var(--cf-field-text)' },
+  { value: 'money',       label: '金额',     icon: '¥',  hint: '人民币金额',     tone: 'var(--cf-field-money)' },
+  { value: 'enum',        label: '枚举',     icon: '◎',  hint: '下拉选项',       tone: 'var(--cf-field-enum)' },
+  { value: 'date',        label: '日期',     icon: '◈',  hint: '日期/时间',      tone: 'var(--cf-field-date)' },
+  { value: 'file',        label: '附件',     icon: '◰',  hint: '上传文件',       tone: 'var(--cf-field-file)' },
+  { value: 'user',        label: '人员',     icon: '⊙',  hint: '选择员工',       tone: 'var(--cf-field-user)' },
+  { value: 'org',         label: '组织',     icon: '⊞',  hint: '选择组织',       tone: 'var(--cf-field-org)' },
+  { value: 'cardRef',     label: '卡片引用', icon: '⤳',  hint: '关联其他流程',   tone: 'var(--cf-field-cardRef)' },
+  { value: 'account',     label: '会计科目', icon: '科', hint: '选择财务科目',   tone: 'var(--cf-field-account)' },
+  { value: 'auxiliary',   label: '辅助核算', icon: '辅', hint: '员工/部门/项目', tone: 'var(--cf-field-auxiliary)' },
+  { value: 'bankAccount', label: '银行账户', icon: '银', hint: '组织银行账户',   tone: 'var(--cf-field-bankAccount)' },
+  { value: 'voucherRef',  label: '凭证引用', icon: '凭', hint: '只读凭证链接',   tone: 'var(--cf-field-voucherRef)' },
 ]
 
 const typeMetaOf = (t: SchemaFieldType): TypeMeta => TYPE_META.find(m => m.value === t) || TYPE_META[0]
@@ -131,12 +132,12 @@ function cancelEditor() {
 }
 
 function commitEditor() {
-  if (editingIndex.value < 0 || !draft.value) return
+  if (editingIndex.value < 0 || !draft.value) return   // 内部不变量，静默
   // 校验 key 唯一
   const key = (draft.value.key || '').trim()
-  if (!key) { return }
+  if (!key) { message.warning('请填写字段标识（key）'); return }
   const dup = fields.value.some((f, i) => i !== editingIndex.value && f.key === key)
-  if (dup) { return }
+  if (dup) { message.warning(`字段标识「${key}」已存在`); return }
   fields.value[editingIndex.value] = clone(draft.value)
   emitUpdate()
   cancelEditor()
@@ -524,8 +525,8 @@ defineExpose({ fields })
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
-  border: 1px solid #e6e6e6;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -535,15 +536,15 @@ defineExpose({ fields })
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(180deg, #fafafa, #fff);
-  border-bottom: 1px solid #eee;
+  background: linear-gradient(180deg, var(--bg-muted), var(--bg-card));
+  border-bottom: 1px solid var(--border);
 }
 .sfe__head-left { display: flex; align-items: center; gap: 10px; }
 .sfe__title {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.4px;
-  color: #1f2937;
+  color: var(--text-1);
 }
 .sfe__count {
   display: inline-flex;
@@ -553,8 +554,8 @@ defineExpose({ fields })
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #111827;
-  color: #fff;
+  background: var(--text-1);
+  color: var(--text-on-accent);
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -573,17 +574,17 @@ defineExpose({ fields })
   align-items: center;
   justify-content: center;
   padding: 56px 16px;
-  color: #9ca3af;
+  color: var(--text-3);
   text-align: center;
 
   .sfe__empty-mark {
     font-size: 36px;
-    color: #d1d5db;
+    color: var(--text-3);
     line-height: 1;
     margin-bottom: 10px;
   }
-  p { margin: 0; font-size: 13px; color: #4b5563; }
-  .sfe__empty-hint { font-size: 12px; margin-top: 4px; color: #9ca3af; }
+  p { margin: 0; font-size: 13px; color: var(--text-2); }
+  .sfe__empty-hint { font-size: 12px; margin-top: 4px; color: var(--text-3); }
 }
 
 /* ============== 字段卡片 ============== */
@@ -594,15 +595,15 @@ defineExpose({ fields })
   gap: 10px;
   padding: 10px 12px;
   margin-bottom: 8px;
-  background: #fff;
-  border: 1px solid #ececec;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: border-color .18s ease, box-shadow .18s ease, transform .15s ease;
 
   &:hover {
-    border-color: #111827;
-    box-shadow: 0 4px 12px rgba(17, 24, 39, .06);
+    border-color: var(--text-1);
+    box-shadow: 0 4px 12px var(--shadow-sm);
 
     .sfe-card__del { opacity: 1; transform: translateX(0); }
   }
@@ -612,18 +613,18 @@ defineExpose({ fields })
     position: absolute;
     left: 0; top: 10px; bottom: 10px;
     width: 3px;
-    background: #ef4444;
+    background: var(--color-danger);
     border-radius: 0 2px 2px 0;
   }
 
   &--ghost {
     opacity: 0.4;
-    background: #f3f4f6 !important;
+    background: var(--bg-muted) !important;
   }
 }
 
 .sfe-card__handle {
-  color: #c4c4c4;
+  color: var(--text-3);
   cursor: grab;
   font-size: 14px;
   &:active { cursor: grabbing; }
@@ -637,8 +638,8 @@ defineExpose({ fields })
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
-  background: #fafafa;
-  border: 1px solid #efefef;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 6px;
   flex-shrink: 0;
 }
@@ -653,16 +654,16 @@ defineExpose({ fields })
 .sfe-card__key {
   font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   font-size: 12px;
-  color: #6b7280;
-  background: #f8f8f8;
+  color: var(--text-2);
+  background: var(--bg-muted);
   padding: 1px 6px;
   border-radius: 4px;
 }
-.sfe-card__sep { color: #d1d5db; font-size: 12px; }
+.sfe-card__sep { color: var(--text-3); font-size: 12px; }
 .sfe-card__label {
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-1);
 }
 .sfe-card__meta {
   display: flex;
@@ -687,8 +688,8 @@ defineExpose({ fields })
   line-height: 16px;
   padding: 0 6px;
   border-radius: 3px;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--bg-muted);
+  color: var(--text-2);
 }
 
 .sfe-card__right {
@@ -697,14 +698,14 @@ defineExpose({ fields })
   gap: 6px;
 }
 .sfe-card__star {
-  color: #ef4444;
+  color: var(--color-danger);
   font-size: 14px;
   font-weight: 700;
 }
 .sfe-card__del {
   border: none;
   background: transparent;
-  color: #ef4444;
+  color: var(--color-danger);
   width: 26px;
   height: 26px;
   border-radius: 6px;
@@ -712,7 +713,7 @@ defineExpose({ fields })
   opacity: 0;
   transform: translateX(4px);
   transition: opacity .18s, transform .18s, background .18s;
-  &:hover { background: #fef2f2; }
+  &:hover { background: var(--color-danger-light); }
 }
 
 /* ============== 类型选择面板 ============== */
@@ -728,16 +729,16 @@ defineExpose({ fields })
   align-items: center;
   gap: 4px;
   padding: 16px 8px;
-  background: #fff;
-  border: 1px solid #ececec;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: all .18s ease;
 
   &:hover {
-    border-color: #111827;
+    border-color: var(--text-1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(17, 24, 39, .08);
+    box-shadow: 0 6px 14px var(--shadow-md);
   }
 
   &__icon {
@@ -748,12 +749,12 @@ defineExpose({ fields })
   &__label {
     font-size: 13px;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-1);
     margin-top: 4px;
   }
   &__hint {
     font-size: 11px;
-    color: #9ca3af;
+    color: var(--text-3);
   }
 }
 
@@ -766,7 +767,7 @@ defineExpose({ fields })
 }
 .sfe-drawer__title-mark {
   width: 4px; height: 16px;
-  background: #111827;
+  background: var(--text-1);
   border-radius: 2px;
 }
 .sfe-drawer__close {
@@ -776,8 +777,8 @@ defineExpose({ fields })
   width: 24px; height: 24px;
   border-radius: 4px;
   cursor: pointer;
-  color: #6b7280;
-  &:hover { background: #f3f4f6; }
+  color: var(--text-2);
+  &:hover { background: var(--bg-muted); }
 }
 
 .sfe-drawer__body {
@@ -796,20 +797,20 @@ defineExpose({ fields })
     align-items: center;
     justify-content: space-between;
     padding: 6px 0;
-    border-top: 1px dashed #ececec;
+    border-top: 1px dashed var(--border);
   }
-  &--block { padding: 12px; background: #fafafa; border-radius: 8px; }
+  &--block { padding: 12px; background: var(--bg-muted); border-radius: 8px; }
 
   &__label {
     font-size: 12px;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-2);
     letter-spacing: 0.3px;
 
     &--inline { margin: 0; }
   }
-  &__req { color: #ef4444; }
-  &__hint { margin: 0; font-size: 11px; color: #9ca3af; }
+  &__req { color: var(--color-danger); }
+  &__hint { margin: 0; font-size: 11px; color: var(--text-3); }
 }
 
 .sfe-enum {
@@ -827,17 +828,17 @@ defineExpose({ fields })
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #e5e7eb;
-    background: #fff;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
     border-radius: 4px;
     cursor: pointer;
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 12px;
 
-    &:hover { border-color: #111827; color: #111827; }
+    &:hover { border-color: var(--text-1); color: var(--text-1); }
     &:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    &--del:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+    &--del:hover { background: var(--color-danger-light); color: var(--color-danger); border-color: var(--color-danger-border); }
   }
 }
 

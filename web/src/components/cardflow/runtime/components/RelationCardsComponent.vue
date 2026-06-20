@@ -56,20 +56,20 @@ function formatAmount(value?: number | null) {
 
 <style scoped lang="scss">
 .cf-relation-component {
-  border: 1px solid #e2e6e4;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-card);
 
   &__title {
-    color: #26342e;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 6px;
   }
 
   &__empty {
-    color: #7c8781;
+    color: var(--text-2);
     font-size: 12px;
   }
 
@@ -79,10 +79,10 @@ function formatAmount(value?: number | null) {
   }
 
   &__item {
-    border: 1px solid #edf0ee;
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px 10px;
-    background: #fafcfb;
+    background: var(--bg-muted);
   }
 
   &__main {
@@ -90,12 +90,13 @@ function formatAmount(value?: number | null) {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    color: #25342d;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 600;
 
     strong {
-      color: #aa5d18;
+      // 抵销金额的暖色强调（原 #aa5d18 暖棕），取品牌主色而非告警金，避免误导为"警示"语义
+      color: var(--color-primary);
       font-size: 13px;
       font-weight: 700;
     }
@@ -104,7 +105,7 @@ function formatAmount(value?: number | null) {
   &__sub,
   &__desc {
     margin-top: 4px;
-    color: #65746d;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 1.5;
   }

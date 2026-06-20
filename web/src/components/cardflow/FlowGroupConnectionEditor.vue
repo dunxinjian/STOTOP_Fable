@@ -385,7 +385,7 @@ const okDisabled = computed(() =>
   border: 1px solid $border-color;
   border-radius: $border-radius-md;
   padding: 8px 10px;
-  background: #fafafa;
+  background: var(--bg-muted);
 }
 
 .fgce-mapping-header {
@@ -437,7 +437,7 @@ const okDisabled = computed(() =>
 
 .fgce-preview {
   margin-top: 12px;
-  background: #f5f7fa;
+  background: var(--bg-muted);
   border: 1px solid $border-color-lighter;
   border-radius: $border-radius-md;
   padding: 10px 12px;

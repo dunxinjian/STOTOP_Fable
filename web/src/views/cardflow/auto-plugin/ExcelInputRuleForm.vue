@@ -78,7 +78,7 @@
           <template #label>
             <span>关键列标识</span>
             <a-tooltip title="用于管道匹配：上传文件的表头包含这些列名时，自动关联到此规则">
-              <QuestionCircleOutlined style="margin-left: 4px; color: #999;" />
+              <QuestionCircleOutlined style="margin-left: 4px; color: var(--text-3);" />
             </a-tooltip>
           </template>
           <a-input
@@ -100,7 +100,7 @@
           </div>
 
           <!-- 列映射表头 -->
-          <div v-if="columnMappings.length > 0" style="display: flex; gap: 8px; margin-bottom: 6px; align-items: center; font-size: 13px; color: #606266; font-weight: 500;">
+          <div v-if="columnMappings.length > 0" style="display: flex; gap: 8px; margin-bottom: 6px; align-items: center; font-size: 13px; color: var(--text-2); font-weight: 500;">
             <span style="flex: 1;">Excel列名</span>
             <span style="width: 14px;"></span>
             <span style="flex: 1;">数据库字段</span>
@@ -118,7 +118,7 @@
                     <p><strong>示例：</strong>Excel列名"收件人"，别名"收货人, 签收人"，则不同快递公司的Excel都能正确映射</p>
                   </div>
                 </template>
-                <QuestionCircleOutlined style="margin-left: 4px; color: #999; cursor: help;" />
+                <QuestionCircleOutlined style="margin-left: 4px; color: var(--text-3); cursor: help;" />
               </a-tooltip>
             </span>
             <span style="width: 24px;"></span>
@@ -144,7 +144,7 @@
             >
               <template #option="{ value: val, label }">
                 <span>{{ label }}</span>
-                <span style="float: right; color: #909399; font-size: 12px;">{{ getColumnType(val as string) }}</span>
+                <span style="float: right; color: var(--text-3); font-size: 12px;">{{ getColumnType(val as string) }}</span>
               </template>
             </a-auto-complete>
             <a-input v-model:value="item.aliasesStr" placeholder="别名 (逗号分隔)" style="flex: 1;" />
@@ -202,7 +202,7 @@
             </div>
             <div class="hint-text">点击按钮插入占位符，示例：ST-&#123;当年&#125;&#123;当月&#125;&#123;当日&#125;-&#123;流水号&#125;</div>
             <div class="hint-text">
-              预览: <span style="color: #606266;">{{ serialRulePreview }}</span>
+              预览: <span style="color: var(--text-2);">{{ serialRulePreview }}</span>
             </div>
           </div>
         </a-form-item>
@@ -213,7 +213,7 @@
           <template #label>
             <span>业务主键字段</span>
             <a-tooltip title="用于数据去重：相同主键的数据行在同批次内仅保留一条">
-              <QuestionCircleOutlined style="margin-left: 4px; color: #999;" />
+              <QuestionCircleOutlined style="margin-left: 4px; color: var(--text-3);" />
             </a-tooltip>
           </template>
           <a-select
@@ -244,11 +244,11 @@
 
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <span style="font-weight: 600;" :style="formData.outputMode === 'batchRow' ? { color: '#bfbfbf' } : {}">暂存表</span>
+            <span style="font-weight: 600;" :style="formData.outputMode === 'batchRow' ? { color: 'var(--text-3)' } : {}">暂存表</span>
             <span v-if="formData.outputMode !== 'batchRow'" style="color: var(--color-danger); margin-left: 4px; font-size: 14px;">*</span>
           </div>
           <template v-if="formData.outputMode === 'batchRow'">
-            <a-input disabled placeholder="batchRow 模式无需配置暂存表" style="color: #bfbfbf; background: #f5f5f5;" />
+            <a-input disabled placeholder="batchRow 模式无需配置暂存表" style="color: var(--text-3); background: var(--bg-muted);" />
           </template>
           <template v-else>
             <a-select
@@ -278,7 +278,7 @@
       <div v-show="activeStep === 4" class="step-content">
         <a-form-item label="启用合计行过滤">
           <a-switch v-model:checked="totalRowConfig.enabled" />
-          <span style="margin-left: 8px; font-size: 12px; color: #909399;">开启后，匹配的合计行将在写入暂存表时被自动忽略</span>
+          <span style="margin-left: 8px; font-size: 12px; color: var(--text-3);">开启后，匹配的合计行将在写入暂存表时被自动忽略</span>
         </a-form-item>
 
         <template v-if="totalRowConfig.enabled">
@@ -393,7 +393,7 @@
 
           <!-- 表达式模式 -->
           <div v-else>
-            <div style="font-size: 12px; color: #909399; margin-bottom: 4px;">可用变量: <code>row['列名']</code> 访问当前行数据</div>
+            <div style="font-size: 12px; color: var(--text-3); margin-bottom: 4px;">可用变量: <code>row['列名']</code> 访问当前行数据</div>
             <a-textarea
               v-model:value="rule.expression"
               :rows="3"
@@ -1001,7 +1001,7 @@ const extractColumnsFromFile = async (file: File) => {
 .excel-input-steps {
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
 
@@ -1026,21 +1026,21 @@ const extractColumnsFromFile = async (file: File) => {
 /* 辅助提示文字 */
 .hint-text {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-3);
   margin-top: 4px;
 }
 
 /* 转换规则卡片 */
 .transform-rule-card {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px;
   margin-bottom: 12px;
-  background: #fafbfc;
+  background: var(--bg-muted);
   transition: box-shadow 0.2s;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-sm);
   }
 }
 

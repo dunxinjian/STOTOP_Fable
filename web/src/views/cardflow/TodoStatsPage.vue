@@ -223,7 +223,7 @@ const tableColumns: TableColumnsType<FlowTodoStat> = [
       const v = Number(text) || 0
       const danger = v > 20
       return h('span', {
-        style: { color: danger ? 'var(--color-danger-text)' : '#595959', fontWeight: danger ? 600 : 400 },
+        style: { color: danger ? 'var(--color-danger-text)' : 'var(--text-2)', fontWeight: danger ? 600 : 400 },
       }, `${v.toFixed(1)}%`)
     } },
 ]
@@ -371,8 +371,8 @@ watch(() => orgStore.currentOrgId, () => loadStats())
   position: relative;
   flex: 1;
   height: 80px;
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px 16px 12px 22px;
   display: flex;
@@ -393,7 +393,7 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 
   &:hover {
     border-color: var(--stat-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
     .stat-accent { opacity: 1; }
   }
@@ -408,7 +408,7 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 
 .stat-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   letter-spacing: 0.04em;
 }
 
@@ -436,8 +436,8 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 }
 
 .chart-card {
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px 16px 8px;
   height: 320px;
@@ -446,7 +446,7 @@ watch(() => orgStore.currentOrgId, () => loadStats())
   transition: box-shadow 0.18s ease;
 
   &:hover {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
   }
 }
 
@@ -460,12 +460,12 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 .chart-title {
   font-size: 14px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .chart-sub {
   font-size: 12px;
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 .chart-body {
@@ -476,8 +476,8 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 
 /* ===== 明细表 ===== */
 .detail-card {
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
 }
@@ -492,20 +492,20 @@ watch(() => orgStore.currentOrgId, () => loadStats())
 .detail-title {
   font-size: 14px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .detail-tip {
   font-size: 12px;
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 :deep(.ant-table) {
-  background: #ffffff;
+  background: var(--bg-card);
 }
 :deep(.ant-table-thead > tr > th) {
-  background: #fafafa;
+  background: var(--bg-muted);
   font-weight: 500;
-  color: #595959;
+  color: var(--text-2);
 }
 </style>

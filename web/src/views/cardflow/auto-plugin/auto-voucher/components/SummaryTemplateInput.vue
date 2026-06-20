@@ -26,7 +26,7 @@
         class="field-tag"
         @click="insertVariable(f)"
       >{{ '{' + f + '}' }}</a-tag>
-      <span v-if="fields.length > 8" style="color: #8c8c8c;">...</span>
+      <span v-if="fields.length > 8" style="color: var(--text-3);">...</span>
     </div>
     <!-- 实时预览 -->
     <div v-if="previewText !== null" class="preview-box">
@@ -114,7 +114,7 @@ const previewText = computed(() => {
 
 .field-hint {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-3);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -135,7 +135,7 @@ const previewText = computed(() => {
   gap: 4px;
   padding: 6px 10px;
   background: var(--color-success-light);
-  border: 1px solid #b7eb8f;
+  border: 1px solid var(--color-success);
   border-radius: 4px;
   font-size: 12px;
 }
@@ -147,7 +147,7 @@ const previewText = computed(() => {
 }
 
 .preview-text {
-  color: #262626;
+  color: var(--text-1);
   word-break: break-all;
 }
 </style>

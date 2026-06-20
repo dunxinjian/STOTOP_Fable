@@ -692,7 +692,7 @@ function getSummaryText(fieldKey: string): string {
                     @update:model-value="(v: string) => updateRowField(row._id, field.key, v ? Number(v) : null)"
                   >
                     <template #left-icon>
-                      <span style="color: #ee0a24; font-weight: bold">¥</span>
+                      <span style="color: var(--color-danger); font-weight: bold">¥</span>
                     </template>
                   </VanField>
                   <!-- number -->
@@ -842,7 +842,7 @@ function getSummaryText(fieldKey: string): string {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
@@ -853,12 +853,12 @@ function getSummaryText(fieldKey: string): string {
 
   .summary-text {
     font-size: 14px;
-    color: #333;
+    color: var(--text-1);
   }
 
   .summary-dot {
     margin: 0 6px;
-    color: #999;
+    color: var(--text-3);
   }
 
   .summary-amount {
@@ -904,7 +904,7 @@ function getSummaryText(fieldKey: string): string {
   .collapse-title {
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-1);
   }
 
   .collapse-btn {
@@ -943,7 +943,7 @@ function getSummaryText(fieldKey: string): string {
 }
 
 .summary-row {
-  background: #fafafa;
+  background: var(--bg-muted);
 
   .summary-value {
     font-weight: 500;
@@ -955,7 +955,7 @@ function getSummaryText(fieldKey: string): string {
 .add-row-btn {
   margin-top: 8px;
   border-style: dashed;
-  color: #666;
+  color: var(--text-2);
 
   &:hover {
     color: var(--color-primary);
@@ -969,7 +969,7 @@ function getSummaryText(fieldKey: string): string {
   align-items: center;
   justify-content: center;
   min-height: 80px;
-  border: 1px dashed #d9d9d9;
+  border: 1px dashed var(--border);
   border-radius: 6px;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -979,7 +979,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .empty-text {
-    color: #999;
+    color: var(--text-3);
     font-size: 14px;
   }
 }
@@ -997,7 +997,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   .mobile-edit-card {
-    background: #fff;
+    background: var(--bg-card);
   }
 
   .swipe-delete-btn {
@@ -1019,7 +1019,7 @@ function getSummaryText(fieldKey: string): string {
 
   .mobile-add-btn {
     border-style: dashed;
-    color: #666;
+    color: var(--text-2);
   }
 }
 
@@ -1031,14 +1031,14 @@ function getSummaryText(fieldKey: string): string {
 }
 
 .compact-card {
-  background: #fff;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
   transition: border-color 0.2s;
 
   &--editable:hover {
-    border-color: #d0d6de;
+    border-color: var(--border-strong);
   }
 
   &__header {
@@ -1046,14 +1046,14 @@ function getSummaryText(fieldKey: string): string {
     align-items: center;
     justify-content: space-between;
     padding: 6px 10px;
-    background: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border);
     min-height: 28px;
   }
 
   &__index {
     font-size: 12px;
-    color: #888;
+    color: var(--text-3);
     font-weight: 500;
   }
 
@@ -1077,13 +1077,13 @@ function getSummaryText(fieldKey: string): string {
     min-height: 32px;
 
     & + & {
-      border-top: 1px dashed #f5f5f5;
+      border-top: 1px dashed var(--border);
     }
   }
 
   &__label {
     font-size: 13px;
-    color: #666;
+    color: var(--text-2);
     line-height: 1.4;
     word-break: break-all;
   }
@@ -1095,7 +1095,7 @@ function getSummaryText(fieldKey: string): string {
 
   &__value {
     font-size: 13px;
-    color: #333;
+    color: var(--text-1);
     word-break: break-all;
   }
 
@@ -1115,7 +1115,7 @@ function getSummaryText(fieldKey: string): string {
 .compact-summary {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #fafafa;
+  background: var(--bg-muted);
   border-radius: 6px;
 
   &__row {
@@ -1127,7 +1127,7 @@ function getSummaryText(fieldKey: string): string {
   }
 
   &__label {
-    color: #666;
+    color: var(--text-2);
   }
 
   &__value {

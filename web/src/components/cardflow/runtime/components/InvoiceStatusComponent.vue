@@ -16,15 +16,15 @@ defineProps<{ component: CardComponentRuntime }>()
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid #e2e6e4;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
-  background: #fff;
-  color: #52615a;
+  background: var(--bg-card);
+  color: var(--text-2);
   font-size: 13px;
 
   strong {
-    color: #23322c;
+    color: var(--text-1);
     font-weight: 600;
   }
 }

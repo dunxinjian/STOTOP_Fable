@@ -141,7 +141,7 @@ function formatTime(time?: string | null): string {
 .picker-title {
   font-size: 16px;
   font-weight: 600;
-  color: #323233;
+  color: var(--text-1);
 }
 .card-item-title {
   display: flex;
@@ -152,7 +152,7 @@ function formatTime(time?: string | null): string {
   display: flex;
   gap: 12px;
   font-size: 12px;
-  color: #969799;
+  color: var(--text-3);
   margin-top: 4px;
 }
 </style>

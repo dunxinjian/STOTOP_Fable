@@ -95,9 +95,9 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 <style scoped lang="scss">
 .upload-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadow-sm);
   padding: 20px;
   margin-bottom: 16px;
   transition: all 0.3s ease;
@@ -119,7 +119,7 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
   h3 {
     font-size: 15px;
-    color: #262626;
+    color: var(--text-1);
     font-weight: 500;
     margin: 0;
   }
@@ -141,14 +141,14 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-dragger-wrap {
   :deep(.ant-upload-drag) {
-    border: 2px dashed #d9d9d9;
+    border: 2px dashed var(--border);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--bg-muted);
     transition: all 0.3s;
 
     &:hover {
       border-color: var(--color-primary);
-      background: #f0f7ff;
+      background: color-mix(in srgb, var(--color-info) 8%, transparent);
     }
   }
 }
@@ -161,12 +161,12 @@ function handleBeforeUpload(file: File, fileList: File[]) {
 
 .upload-text {
   font-size: 15px;
-  color: #262626;
+  color: var(--text-1);
   margin-bottom: 4px;
 }
 
 .upload-hint {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-2);
 }
 </style>

@@ -23,20 +23,20 @@ defineProps<{
 
 <style scoped lang="scss">
 .cf-dynamic-approver {
-  border: 1px solid #dfe6e2;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-card);
 
   &__title {
-    color: #26342e;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 8px;
   }
 
   &__empty {
-    color: #7c8781;
+    color: var(--text-3);
     font-size: 12px;
   }
 
@@ -46,20 +46,20 @@ defineProps<{
   }
 
   article {
-    border: 1px dashed #cfd8d3;
+    border: 1px dashed var(--border);
     border-radius: 4px;
     padding: 8px;
-    background: #fbfcfb;
+    background: var(--bg-muted);
   }
 
   strong {
-    color: #26342e;
+    color: var(--text-1);
     font-size: 12px;
   }
 
   p {
     margin: 3px 0 0;
-    color: #52615a;
+    color: var(--text-2);
     font-size: 12px;
     line-height: 18px;
   }

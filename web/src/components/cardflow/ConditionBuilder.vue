@@ -454,18 +454,18 @@ defineExpose({ conditionSummary })
 <style scoped lang="scss">
 .condition-builder {
   position: relative;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
   border-left: 3px solid var(--color-info);
 
   &.depth-0 {
-    background: #fafafa;
+    background: var(--bg-muted);
     border-left-color: var(--color-info);
   }
 
   &.depth-1 {
-    background: #f5f5f5;
+    background: var(--bg-muted);
     border-left-color: var(--color-success);
   }
 }
@@ -479,7 +479,7 @@ defineExpose({ conditionSummary })
   text-align: center;
 
   .cb-empty-text {
-    color: #999;
+    color: var(--text-3);
     font-size: 13px;
   }
 }

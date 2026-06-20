@@ -15,30 +15,33 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { searchAuditLogs } from '@/api/cardflow'
 import type { AuditLogItemDto } from '@/types/cardflow'
 
 const router = useRouter()
 
 // ========== 操作类型元数据 ==========
+type StatusTagType = 'success' | 'warning' | 'danger' | 'info' | 'default'
+
 interface ActionMeta {
   label: string
-  color: string // ant-design tag color
+  statusType: StatusTagType // StatusTag type
 }
 
 const ACTION_META: Record<string, ActionMeta> = {
-  submit: { label: '提交', color: 'blue' },
-  approve: { label: '通过', color: 'green' },
-  reject: { label: '退回', color: 'red' },
-  transfer: { label: '转交', color: 'orange' },
-  countersign: { label: '加签', color: 'cyan' },
-  void: { label: '废除', color: 'default' },
-  withdraw: { label: '撤回', color: 'purple' },
-  urge: { label: '催办', color: 'gold' },
-  delegate: { label: '委托', color: 'magenta' },
-  resubmit: { label: '重提', color: 'geekblue' },
-  resume: { label: '恢复', color: 'lime' },
-  cc: { label: '抄送', color: 'default' },
+  submit:      { label: '提交', statusType: 'info' },
+  approve:     { label: '通过', statusType: 'success' },
+  reject:      { label: '退回', statusType: 'danger' },
+  transfer:    { label: '转交', statusType: 'default' },
+  countersign: { label: '加签', statusType: 'info' },
+  void:        { label: '废除', statusType: 'default' },
+  withdraw:    { label: '撤回', statusType: 'default' },
+  urge:        { label: '催办', statusType: 'warning' },
+  delegate:    { label: '委托', statusType: 'default' },
+  resubmit:    { label: '重提', statusType: 'info' },
+  resume:      { label: '恢复', statusType: 'success' },
+  cc:          { label: '抄送', statusType: 'default' },
 }
 
 const ACTION_FILTER_OPTIONS = [
@@ -54,7 +57,7 @@ const ACTION_FILTER_OPTIONS = [
 ]
 
 function actionMeta(type: string): ActionMeta {
-  return ACTION_META[type] || { label: type || '-', color: 'default' }
+  return ACTION_META[type] || { label: type || '-', statusType: 'default' }
 }
 
 // ========== 筛选表单 ==========
@@ -89,7 +92,7 @@ const tableColumns = computed<TableColumnsType<AuditLogItemDto>>(() => [
     title: '操作类型', dataIndex: 'actionType', key: 'actionType', width: 100,
     customRender: ({ text }) => {
       const meta = actionMeta(text)
-      return h('a-tag', { color: meta.color, class: 'action-tag' }, () => meta.label)
+      return h(StatusTag, { type: meta.statusType, class: 'action-tag' }, () => meta.label)
     },
   },
   { title: '操作人', dataIndex: 'operatorName', key: 'operatorName', width: 120, ellipsis: true },
@@ -339,20 +342,20 @@ onMounted(() => {
 
 .audit-table {
   :deep(.ant-table) {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 8px;
   }
   :deep(.ant-table-thead > tr > th) {
-    background: #fafafa;
+    background: var(--bg-muted);
     font-weight: 500;
-    color: #595959;
+    color: var(--text-2);
   }
 }
 
 .mono {
   font-family: 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
   font-size: 13px;
-  color: #595959;
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -369,7 +372,7 @@ onMounted(() => {
 }
 
 .text-muted {
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 .opinion-ellipsis {
@@ -377,6 +380,6 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #595959;
+  color: var(--text-2);
 }
 </style>
