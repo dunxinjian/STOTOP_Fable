@@ -95,8 +95,14 @@ export const layoutRoute: RouteRecordRaw = {
   path: '/',
   name: 'Layout',
   component: () => import('@/layouts/MainLayout.vue'),
-  redirect: '/workhub',
+  redirect: '/home',
   children: [
+    {
+      path: 'home',
+      name: 'TodayHome',
+      component: () => import('@/views/home/TodayHome.vue'),
+      meta: { title: '今天', icon: 'CalendarOutlined', affix: true, module: 'workhub' },
+    },
     {
       path: 'workhub',
       name: 'WorkHub',
