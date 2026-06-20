@@ -34,7 +34,7 @@
 
           <template v-else-if="column.key === 'resultSummary'">
             <span v-if="record.resultSummary" class="result-summary">{{ record.resultSummary }}</span>
-            <span v-else style="color: #999">-</span>
+            <span v-else style="color: var(--text-3)">-</span>
           </template>
 
           <template v-else-if="column.key === 'createTime'">
@@ -188,12 +188,12 @@ watch(() => props.batchId, (val) => {
   font-weight: 600;
   font-size: 13px;
   margin-bottom: 4px;
-  color: #333;
+  color: var(--text-1);
 }
 
 .detail-json {
-  background: #f5f5f5;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 8px 12px;
   font-size: 12px;
@@ -206,7 +206,7 @@ watch(() => props.batchId, (val) => {
 }
 
 .result-summary {
-  color: #606266;
+  color: var(--text-2);
   font-size: 12px;
 }
 </style>

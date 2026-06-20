@@ -223,15 +223,15 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .panel-search {
   padding: 12px 12px 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .empty-state {
@@ -309,7 +309,7 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
   gap: 6px;
 
   &:hover {
-    background: #f5f5f5;
+    background: var(--bg-muted);
     .add-rule-btn { opacity: 1; }
   }
 
@@ -327,7 +327,7 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
   }
 
   &.matched {
-    .value-text { color: #8c8c8c; }
+    .value-text { color: var(--text-3); }
   }
 }
 
@@ -350,7 +350,7 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
 
 .value-count {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-3);
   white-space: nowrap;
   margin-left: 8px;
 }
@@ -358,7 +358,7 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
 .sample-section {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed #e8e8e8;
+  border-top: 1px dashed var(--border);
 }
 
 .sample-list {
@@ -369,7 +369,7 @@ function filteredMatched(layer: LayerAnalysis): FieldValueStat[] {
 
 .sample-item {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-3);
   padding: 2px 4px;
   overflow: hidden;
   text-overflow: ellipsis;

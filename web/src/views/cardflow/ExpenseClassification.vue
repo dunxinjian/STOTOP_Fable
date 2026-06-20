@@ -20,7 +20,7 @@
     <a-card class="section-card" :loading="loading">
       <template #title>
         <span>关键词推荐分类</span>
-        <a-tag color="blue" style="margin-left: 8px">{{ data.matched.length }} 组</a-tag>
+        <StatusTag type="info" style="margin-left: 8px">{{ data.matched.length }} 组</StatusTag>
       </template>
       <template #extra>
         <a-button type="primary" size="small" :disabled="data.matched.length === 0" :loading="confirmAllLoading" @click="handleConfirmAll">
@@ -28,7 +28,7 @@
         </a-button>
       </template>
 
-      <div v-if="data.matched.length === 0" style="color: #999; text-align: center; padding: 24px;">
+      <div v-if="data.matched.length === 0" style="color: var(--text-3); text-align: center; padding: 24px;">
         暂无推荐分类数据
       </div>
 
@@ -72,7 +72,7 @@
     <a-card class="section-card" :loading="loading">
       <template #title>
         <span>未匹配行</span>
-        <a-tag color="orange" style="margin-left: 8px">{{ data.unmatched.length }} 行</a-tag>
+        <StatusTag type="warning" style="margin-left: 8px">{{ data.unmatched.length }} 行</StatusTag>
       </template>
       <template #extra>
         <a-button size="small" :disabled="selectedUnmatchedKeys.length === 0" @click="showBatchCategoryModal">
@@ -80,7 +80,7 @@
         </a-button>
       </template>
 
-      <div v-if="data.unmatched.length === 0" style="color: #999; text-align: center; padding: 24px;">
+      <div v-if="data.unmatched.length === 0" style="color: var(--text-3); text-align: center; padding: 24px;">
         暂无未匹配行
       </div>
 
@@ -138,7 +138,7 @@
     <!-- 底部操作区 -->
     <a-card class="action-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="color: #666">
+        <span style="color: var(--text-2)">
           总计 {{ data.totalRows }} 行，已自动处理 {{ data.autoProcessedRows }} 行，待确认 {{ data.pendingRows }} 行
         </span>
         <a-button type="primary" size="large" :loading="generateLoading" @click="handleGenerateVoucher">
@@ -171,6 +171,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { get, post } from '@/api/request'
 
 const route = useRoute()
@@ -445,22 +446,22 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #fff;
+  background: var(--bg-card);
 }
 .summary-bar {
   display: flex;
   align-items: center;
   gap: 28px;
   padding: 10px 20px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 4px;
   margin-bottom: 16px;
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .summary-item {
@@ -474,7 +475,7 @@ onMounted(() => {
 }
 
 .summary-label {
-  color: #888;
+  color: var(--text-3);
   font-weight: normal;
 }
 
@@ -493,8 +494,8 @@ onMounted(() => {
   position: sticky;
   bottom: 0;
   z-index: 10;
-  border-top: 2px solid #e4e7ed;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  border-top: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
 
   :deep(.ant-card-body) {
     padding: 8px 16px;
@@ -506,7 +507,7 @@ onMounted(() => {
   gap: 8px;
 }
 .matched-card {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 .matched-card-header {
   display: flex;
@@ -519,7 +520,7 @@ onMounted(() => {
   gap: 4px;
 }
 .account-name {
-  color: #666;
+  color: var(--text-2);
   font-size: 13px;
 }
 .matched-actions {
@@ -529,7 +530,7 @@ onMounted(() => {
 }
 .sample-rows {
   margin-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   padding-top: 8px;
 }
 </style>

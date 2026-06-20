@@ -11,6 +11,7 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getFlowDefinition,
   getFlowVersions,
@@ -434,8 +435,8 @@ onMounted(async () => {
           </a-tag>
         </template>
         <template v-else-if="column.key === 'isCurrentVersion'">
-          <a-tag v-if="record.isCurrentVersion" color="blue">当前</a-tag>
-          <span v-else style="color: #bbb">-</span>
+          <StatusTag v-if="record.isCurrentVersion" type="info">当前</StatusTag>
+          <span v-else style="color: var(--text-3)">-</span>
         </template>
         <template v-else-if="column.key === 'createdBy'">
           {{ (record as any).createdBy || (record as any).creatorName || '-' }}
@@ -516,9 +517,9 @@ onMounted(async () => {
               <div v-if="versionDetail.stages?.length">
                 <div v-for="stage in versionDetail.stages" :key="stage.id" class="stage-row">
                   <span class="stage-order">#{{ stage.sortOrder }}</span>
-                  <a-tag :color="stage.type === 'approval' ? 'blue' : stage.type === 'cc' ? 'green' : 'purple'">
+                  <StatusTag :type="stage.type === 'cc' ? 'success' : 'info'">
                     {{ stage.type }}
-                  </a-tag>
+                  </StatusTag>
                   <span class="stage-name">{{ stage.stageName }}</span>
                   <span v-if="stage.approvalMode" class="stage-meta">模式: {{ stage.approvalMode }}</span>
                   <span v-if="stage.assigneeStrategy" class="stage-meta">指派: {{ stage.assigneeStrategy }}</span>
@@ -556,7 +557,7 @@ onMounted(async () => {
       title="版本对比"
       placement="right"
       width="100%"
-      :body-style="{ padding: '16px', background: '#f5f7fa' }"
+      :body-style="{ padding: '16px', background: 'var(--bg-muted)' }"
       :header-style="{ padding: '12px 16px' }"
     >
       <a-spin :spinning="diffLoading">
@@ -633,9 +634,9 @@ onMounted(async () => {
                 >
                   <div class="diff-item-head">
                     <span class="stage-order">#{{ row.stage.sortOrder }}</span>
-                    <a-tag :color="row.stage.type === 'approval' ? 'blue' : row.stage.type === 'cc' ? 'green' : 'purple'">
+                    <StatusTag :type="row.stage.type === 'cc' ? 'success' : 'info'">
                       {{ row.stage.type }}
-                    </a-tag>
+                    </StatusTag>
                     <span class="diff-item-label">{{ row.stage.stageName }}</span>
                     <span v-if="statusBadge(row.status)" class="badge" :class="statusBadge(row.status)!.cls">
                       {{ statusBadge(row.status)!.text }}
@@ -654,9 +655,9 @@ onMounted(async () => {
                 >
                   <div class="diff-item-head">
                     <span class="stage-order">#{{ row.stage.sortOrder }}</span>
-                    <a-tag :color="row.stage.type === 'approval' ? 'blue' : row.stage.type === 'cc' ? 'green' : 'purple'">
+                    <StatusTag :type="row.stage.type === 'cc' ? 'success' : 'info'">
                       {{ row.stage.type }}
-                    </a-tag>
+                    </StatusTag>
                     <span class="diff-item-label">{{ row.stage.stageName }}</span>
                     <span v-if="statusBadge(row.status)" class="badge" :class="statusBadge(row.status)!.cls">
                       {{ statusBadge(row.status)!.text }}
@@ -710,7 +711,7 @@ onMounted(async () => {
 .header-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2329;
+  color: var(--text-1);
 }
 
 .version-tag {
@@ -731,20 +732,20 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   padding: 8px 0;
-  border-bottom: 1px dashed #f0f0f0;
+  border-bottom: 1px dashed var(--border);
   &:last-child { border-bottom: none; }
 }
 .stage-order {
   display: inline-block;
   min-width: 32px;
-  color: #8c8c8c;
+  color: var(--text-3);
   font-family: monospace;
 }
-.stage-name { font-weight: 500; color: #1f2329; }
-.stage-meta { color: #8c8c8c; font-size: 12px; }
+.stage-name { font-weight: 500; color: var(--text-1); }
+.stage-meta { color: var(--text-3); font-size: 12px; }
 
 .json-preview {
-  background: #f5f5f5;
+  background: var(--bg-muted);
   padding: 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -770,8 +771,8 @@ onMounted(async () => {
   margin-bottom: 12px;
 }
 .diff-header {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 14px;
@@ -780,12 +781,12 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
 }
-.diff-header-left { color: #595959; }
+.diff-header-left { color: var(--text-2); }
 .diff-header-right { color: var(--color-info); }
 
 .diff-section {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -793,10 +794,10 @@ onMounted(async () => {
 .diff-section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1f2329;
+  color: var(--text-1);
   padding-bottom: 8px;
   margin-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .diff-cols {
@@ -811,17 +812,17 @@ onMounted(async () => {
   min-height: 40px;
 }
 .diff-empty {
-  color: #bfbfbf;
+  color: var(--text-3);
   font-size: 12px;
   padding: 12px;
   text-align: center;
-  border: 1px dashed #f0f0f0;
+  border: 1px dashed var(--border);
   border-radius: 4px;
 }
 
 .diff-item {
-  background: #fafafa;
-  border-left: 3px solid #d9d9d9;
+  background: var(--bg-muted);
+  border-left: 3px solid var(--border);
   border-radius: 4px;
   padding: 8px 12px;
   font-size: 13px;
@@ -837,19 +838,19 @@ onMounted(async () => {
   color: var(--color-info);
   font-weight: 500;
 }
-.diff-item-label { color: #1f2329; }
+.diff-item-label { color: var(--text-1); }
 .diff-item-type {
-  color: #8c8c8c;
+  color: var(--text-3);
   font-size: 12px;
   padding: 0 6px;
-  background: #f0f0f0;
+  background: var(--bg-muted);
   border-radius: 2px;
 }
 .diff-changes {
   margin: 6px 0 0;
   padding-left: 18px;
   font-size: 12px;
-  color: #595959;
+  color: var(--text-2);
   font-family: 'JetBrains Mono', Consolas, monospace;
   li { line-height: 1.6; }
 }
@@ -878,32 +879,32 @@ onMounted(async () => {
   border-radius: 2px;
   font-weight: 500;
 }
-.badge-added { background: var(--color-success); color: #fff; }
-.badge-removed { background: var(--color-danger); color: #fff; }
-.badge-modified { background: var(--color-warning); color: #fff; }
+.badge-added { background: var(--color-success); color: var(--text-on-accent); }
+.badge-removed { background: var(--color-danger); color: var(--text-on-accent); }
+.badge-modified { background: var(--color-warning); color: var(--text-on-accent); }
 
 /* settings table */
 .settings-table {
   display: flex;
   flex-direction: column;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
 }
 .settings-row {
   display: grid;
   grid-template-columns: 240px 1fr 1fr;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
   &:last-child { border-bottom: none; }
 }
 .settings-row.settings-head {
-  background: #fafafa;
+  background: var(--bg-muted);
   font-weight: 600;
   font-size: 13px;
 }
 .settings-key {
   padding: 8px 12px;
-  border-right: 1px solid #f0f0f0;
+  border-right: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -912,7 +913,7 @@ onMounted(async () => {
 }
 .settings-val {
   padding: 8px 12px;
-  border-right: 1px solid #f0f0f0;
+  border-right: 1px solid var(--border);
   &:last-child { border-right: none; }
 }
 .settings-row.diff-added,

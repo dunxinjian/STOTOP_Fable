@@ -55,11 +55,11 @@ interface StatusMeta {
 }
 
 const STATUS_META: Record<CardStatus, StatusMeta> = {
-  draft: { text: '草稿', color: '#8c8c8c', tagColor: 'default' },
+  draft: { text: '草稿', color: 'var(--text-3)', tagColor: 'default' },
   active: { text: '进行中', color: 'var(--color-info)', tagColor: 'processing' },
   completed: { text: '已完成', color: 'var(--color-success)', tagColor: 'success' },
   returned: { text: '已退回', color: 'var(--color-danger)', tagColor: 'error' },
-  voided: { text: '已作废', color: '#8c8c8c', tagColor: 'default' },
+  voided: { text: '已作废', color: 'var(--text-3)', tagColor: 'default' },
 }
 
 const STATUS_OPTIONS: Array<{ label: string; value: CardStatus }> = [
@@ -857,8 +857,8 @@ onUnmounted(() => {
   position: relative;
   flex: 1;
   height: 80px;
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px 16px 12px 22px;
   cursor: pointer;
@@ -885,7 +885,7 @@ onUnmounted(() => {
 
   &:hover {
     border-color: var(--stat-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
     .stat-accent {
       opacity: 1;
@@ -895,7 +895,7 @@ onUnmounted(() => {
   &.is-active {
     border-color: var(--stat-color);
     background: var(--bg-muted);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
     .stat-accent {
       opacity: 1;
       width: 4px;
@@ -903,7 +903,7 @@ onUnmounted(() => {
   }
 
   &.is-danger.is-active {
-    background: linear-gradient(180deg, rgba(250, 173, 20, 0.06) 0%, #ffffff 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-warning) 6%, transparent) 0%, var(--bg-card) 100%);
   }
 }
 
@@ -916,7 +916,7 @@ onUnmounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   letter-spacing: 0.04em;
   display: inline-flex;
   align-items: center;
@@ -942,13 +942,13 @@ onUnmounted(() => {
 
 .monitor-table {
   :deep(.ant-table) {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 8px;
   }
   :deep(.ant-table-thead > tr > th) {
-    background: #fafafa;
+    background: var(--bg-muted);
     font-weight: 500;
-    color: #595959;
+    color: var(--text-2);
   }
   :deep(.row-actions) {
     opacity: 0.65;
@@ -971,7 +971,7 @@ onUnmounted(() => {
 .mono {
   font-family: 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
   font-size: 13px;
-  color: #595959;
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -992,7 +992,7 @@ onUnmounted(() => {
   background: var(--color-info-light);
   color: var(--color-info);
   font-size: 11px;
-  border: 1px solid #ffffff;
+  border: 1px solid var(--bg-card);
 }
 
 .stage-avatar.done {
@@ -1009,7 +1009,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #8c8c8c;
+  color: var(--text-3);
   font-variant-numeric: tabular-nums;
   .dur-icon {
     font-size: 12px;
@@ -1030,7 +1030,7 @@ onUnmounted(() => {
 }
 
 .text-muted {
-  color: #bfbfbf;
+  color: var(--text-3);
 }
 
 /* ============= 展开行 ============= */
@@ -1046,8 +1046,8 @@ onUnmounted(() => {
 }
 
 .expand-stage {
-  background: #fafafa;
-  border-left: 3px solid #d9d9d9;
+  background: var(--bg-muted);
+  border-left: 3px solid var(--border);
   padding: 10px 14px;
   border-radius: 4px;
   &.active {
@@ -1063,7 +1063,7 @@ onUnmounted(() => {
   margin-bottom: 8px;
   .es-name {
     font-weight: 500;
-    color: #262626;
+    color: var(--text-1);
   }
   .es-timeout {
     color: var(--color-warning-text);
@@ -1085,8 +1085,8 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   font-size: 12px;
 
@@ -1100,10 +1100,10 @@ onUnmounted(() => {
     }
   }
   .assignee-name {
-    color: #262626;
+    color: var(--text-1);
   }
   .assignee-time {
-    color: #8c8c8c;
+    color: var(--text-3);
     font-variant-numeric: tabular-nums;
   }
 }

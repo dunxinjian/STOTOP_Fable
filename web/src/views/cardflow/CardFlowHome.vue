@@ -389,11 +389,11 @@ function formatBytes(bytes: number): string {
   align-items: center;
   gap: 32px;
   padding: 14px 20px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 16px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 .kpi-item {
   display: flex;
@@ -402,7 +402,7 @@ function formatBytes(bytes: number): string {
 }
 .kpi-item + .kpi-item {
   padding-left: 32px;
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid var(--border);
 }
 .kpi-dot {
   width: 8px;
@@ -413,12 +413,12 @@ function formatBytes(bytes: number): string {
 }
 .kpi-label {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 .kpi-value {
   font-size: 20px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
 }
 
 /* Tab 区 */
@@ -454,17 +454,17 @@ function formatBytes(bytes: number): string {
 
 /* 面板 */
 .content-panel {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   height: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 .panel-title {
   font-size: 15px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-1);
   margin-bottom: 12px;
   padding-left: 10px;
   border-left: 3px solid var(--color-info);
@@ -490,7 +490,7 @@ function formatBytes(bytes: number): string {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
 }
 .quick-action-item:hover {
   background: var(--color-primary-light);

@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   getMyDelegations,
   createDelegation,
@@ -37,13 +38,13 @@ type DelegationStatus = 'active' | 'expired' | 'cancelled'
 
 interface StatusMeta {
   text: string
-  color: string
+  type: 'success' | 'default' | 'danger'
 }
 
 const STATUS_META: Record<DelegationStatus, StatusMeta> = {
-  active: { text: '生效中', color: 'green' },
-  expired: { text: '已过期', color: 'default' },
-  cancelled: { text: '已取消', color: 'red' },
+  active: { text: '生效中', type: 'success' },
+  expired: { text: '已过期', type: 'default' },
+  cancelled: { text: '已取消', type: 'danger' },
 }
 
 interface UserOption {
@@ -350,9 +351,9 @@ void h
         </template>
 
         <template v-else-if="column.key === 'status'">
-          <a-tag :color="STATUS_META[statusOf(record as DelegationDto)].color">
+          <StatusTag :type="STATUS_META[statusOf(record as DelegationDto)].type">
             {{ STATUS_META[statusOf(record as DelegationDto)].text }}
-          </a-tag>
+          </StatusTag>
         </template>
 
         <template v-else-if="column.key === 'action'">
@@ -498,22 +499,22 @@ void h
 }
 
 .trustee-avatar {
-  background: linear-gradient(135deg, var(--color-info) 0%, rgba(58, 111, 176, 0.65) 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--color-info) 0%, color-mix(in srgb, var(--color-info) 65%, transparent) 100%);
+  color: var(--text-on-accent);
   font-weight: 600;
   flex: 0 0 auto;
 }
 
 .trustee-name {
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .text-muted {
-  color: #8c8c8c;
+  color: var(--text-3);
 }
 
 .empty-guide {
@@ -522,24 +523,24 @@ void h
   align-items: center;
   justify-content: center;
   padding: 56px 16px;
-  color: #595959;
+  color: var(--text-2);
 
   .empty-icon {
     font-size: 56px;
-    color: #d9d9d9;
+    color: var(--text-3);
     margin-bottom: 16px;
   }
 
   .empty-title {
     font-size: 16px;
     font-weight: 600;
-    color: #262626;
+    color: var(--text-1);
     margin-bottom: 6px;
   }
 
   .empty-tip {
     font-size: 13px;
-    color: #8c8c8c;
+    color: var(--text-3);
     margin-bottom: 20px;
   }
 }
@@ -553,7 +554,7 @@ void h
 .form-help {
   margin-top: 6px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--text-3);
   line-height: 1.5;
 }
 </style>

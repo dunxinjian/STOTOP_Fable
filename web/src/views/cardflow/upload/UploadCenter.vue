@@ -118,7 +118,7 @@
         <!-- 已路由 -->
         <div v-if="autoResult.routed.length > 0" class="auto-result-section">
           <div class="auto-result-section-title">
-            <a-tag :color="'success'">已路由</a-tag>
+            <StatusTag type="success">已路由</StatusTag>
             <span class="auto-result-count">{{ autoResult.routed.length }} 个文件已触发导入</span>
           </div>
           <a-table
@@ -133,7 +133,7 @@
         <!-- 待认领 -->
         <div v-if="autoResult.unmatched.length > 0" class="auto-result-section">
           <div class="auto-result-section-title">
-            <a-tag :color="'warning'">待认领</a-tag>
+            <StatusTag type="warning">待认领</StatusTag>
             <span class="auto-result-count">{{ autoResult.unmatched.length }} 个文件未匹配流程，需人工指派</span>
           </div>
           <a-list :data-source="autoResult.unmatched" size="small" :split="true">
@@ -158,7 +158,7 @@
         <!-- 多义 -->
         <div v-if="autoResult.ambiguous.length > 0" class="auto-result-section">
           <div class="auto-result-section-title">
-            <a-tag :color="'processing'">多义</a-tag>
+            <StatusTag type="info">多义</StatusTag>
             <span class="auto-result-count">{{ autoResult.ambiguous.length }} 个文件命中多个流程，需人工抉择</span>
           </div>
           <a-list :data-source="autoResult.ambiguous" size="small" :split="true">
@@ -171,9 +171,9 @@
                   </template>
                   <template #description>
                     <span class="auto-cols-label">候选流程：</span>
-                    <a-tag v-for="(c, ci) in item.candidates" :key="ci" color="blue" class="auto-col-tag">
+                    <StatusTag v-for="(c, ci) in item.candidates" :key="ci" type="info" class="auto-col-tag">
                       流程 #{{ c.flowDefinitionId }} / 规则 #{{ c.pluginRuleId }}
-                    </a-tag>
+                    </StatusTag>
                   </template>
                 </a-list-item-meta>
               </a-list-item>
@@ -184,7 +184,7 @@
         <!-- 读取失败 -->
         <div v-if="autoResult.readErrors.length > 0" class="auto-result-section">
           <div class="auto-result-section-title">
-            <a-tag :color="'error'">读取失败</a-tag>
+            <StatusTag type="danger">读取失败</StatusTag>
             <span class="auto-result-count">{{ autoResult.readErrors.length }} 个文件无法读取</span>
           </div>
           <a-list :data-source="autoResult.readErrors" size="small" :split="true">
@@ -207,7 +207,7 @@
         <!-- 触发失败 -->
         <div v-if="autoResult.triggerErrors.length > 0" class="auto-result-section">
           <div class="auto-result-section-title">
-            <a-tag :color="'error'">触发失败</a-tag>
+            <StatusTag type="danger">触发失败</StatusTag>
             <span class="auto-result-count">{{ autoResult.triggerErrors.length }} 个文件命中流程但触发导入失败</span>
           </div>
           <a-list :data-source="autoResult.triggerErrors" size="small" :split="true">
@@ -217,7 +217,7 @@
                   <template #title>
                     <FileExcelOutlined style="color: var(--color-danger); margin-right: 6px" />
                     {{ item.fileName }}
-                    <a-tag color="blue" class="auto-col-tag">流程 #{{ item.flowDefinitionId }}</a-tag>
+                    <StatusTag type="info" class="auto-col-tag">流程 #{{ item.flowDefinitionId }}</StatusTag>
                   </template>
                   <template #description>
                     <span class="auto-error-text">{{ item.error }}</span>
@@ -382,7 +382,7 @@
     >
       <div class="assign-modal-body">
         <p>文件：{{ assignTarget?.fileName }}</p>
-        <p v-if="assignTarget?.assigneeName && assignTarget.assigneeName !== '系统自动'" style="color: rgba(0,0,0,0.45)">
+        <p v-if="assignTarget?.assigneeName && assignTarget.assigneeName !== '系统自动'" style="color: var(--text-3)">
           当前处理人：{{ assignTarget.assigneeName }}
         </p>
         <a-select v-model:value="assignTo" placeholder="请选择处理人" style="width: 100%; margin-top: 12px">
@@ -402,7 +402,7 @@
       @ok="confirmFlowSelect"
     >
       <div class="flow-select-modal-body">
-        <p style="color: rgba(0,0,0,0.45); margin-bottom: 12px">
+        <p style="color: var(--text-3); margin-bottom: 12px">
           文件 <strong>{{ unmatchedBatchInfo?.fileName }}</strong> 未匹配到流程，请手动选择：
         </p>
         <a-radio-group v-model:value="selectedFlowId" style="width: 100%">
@@ -440,6 +440,7 @@ import UploadDropZone from './components/UploadDropZone.vue'
 import BatchStatsBar from './components/BatchStatsBar.vue'
 import BatchFilterBar from './components/BatchFilterBar.vue'
 import BatchCard from './components/BatchCard.vue'
+import StatusTag from '@/components/StatusTag.vue'
 
 const { has } = usePermission()
 const router = useRouter()
@@ -742,9 +743,9 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 // 三合一面板
 .unified-panel {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -753,8 +754,8 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
 }
 
 // 卡片列表
@@ -782,7 +783,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .kanban-header {
   font-size: 14px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -790,24 +791,24 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 }
 
 .kanban-count {
-  background: rgba(0, 0, 0, 0.06);
+  background: color-mix(in srgb, var(--text-1) 6%, transparent);
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 
 .kanban-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 6px;
   padding: 10px 12px;
   margin-bottom: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 
@@ -818,7 +819,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .kanban-card-name {
   font-size: 13px;
-  color: #262626;
+  color: var(--text-1);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -831,7 +832,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 
 .kanban-card-handler {
@@ -840,7 +841,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   gap: 4px;
   margin-top: 6px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 
 .handler-avatar-mini {
@@ -851,7 +852,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .card-status-dot {
@@ -870,7 +871,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .wait-time {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   &.warning { color: var(--color-danger-text); font-weight: 600; }
 }
 
@@ -878,7 +879,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .assign-modal-body {
   p {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.65);
+    color: var(--text-2);
     margin-bottom: 4px;
   }
 }
@@ -889,9 +890,9 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 // 批量智能导入区
 .auto-import-panel {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   padding: 14px 20px;
   margin-bottom: 8px;
 }
@@ -907,7 +908,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .auto-import-title {
   font-size: 14px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
   display: flex;
   align-items: center;
 }
@@ -915,7 +916,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .auto-import-hint {
   font-size: 12px;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-left: 10px;
 }
 
@@ -941,7 +942,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .auto-result {
   margin-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   padding-top: 12px;
   display: flex;
   flex-direction: column;
@@ -957,12 +958,12 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .auto-result-count {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-2);
 }
 
 .auto-cols-label {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-right: 4px;
 }
 
@@ -972,7 +973,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .auto-empty-cols {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
 }
 
 .auto-error-text {
@@ -993,16 +994,16 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 // 组织预检提示栏
 .org-preview-bar {
   padding: 8px 20px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .toolbar-account-set {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-1);
 }
 
 .org-preview-warnings {
@@ -1027,7 +1028,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   display: flex;
   flex-direction: column;
   gap: 1px;
-  background: #f0f0f0;
+  background: var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1037,11 +1038,11 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--bg-card);
   transition: background 0.2s, opacity 0.2s;
 
   &:hover {
-    background: #fafafa;
+    background: var(--bg-muted);
   }
 
   &--deleting {
@@ -1058,7 +1059,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
   margin-top: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #d46b08;
+  color: var(--color-warning-text);
 }
 
 .recycle-item-info {
@@ -1069,7 +1070,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .recycle-item-name {
   font-size: 13px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1084,7 +1085,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .recycle-item-meta {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-top: 4px;
 }
 
@@ -1103,7 +1104,7 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 
 .flow-candidate-item {
   padding: 10px 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
   margin-bottom: 8px;
   transition: border-color 0.2s;
@@ -1116,18 +1117,18 @@ function handleBatchAction(payload: { type: string; batchId: number; errorId?: n
 .flow-candidate-name {
   font-size: 14px;
   font-weight: 500;
-  color: #262626;
+  color: var(--text-1);
 }
 
 .flow-candidate-code {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-left: 8px;
 }
 
 .flow-candidate-desc {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-3);
   margin-top: 4px;
   padding-left: 22px;
 }

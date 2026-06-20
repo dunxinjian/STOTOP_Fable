@@ -132,7 +132,7 @@
           <span class="result-title">抽样核对</span>
           <span class="result-subtitle">逐条查看原始值、计算结果值和成本项合计</span>
         </div>
-        <a-tag color="blue">样本 {{ report?.sampleRows?.length ?? 0 }}</a-tag>
+        <StatusTag type="info">样本 {{ report?.sampleRows?.length ?? 0 }}</StatusTag>
       </div>
 
       <a-table
@@ -229,7 +229,7 @@
           </template>
 
           <template v-else-if="column.dataIndex === 'affectedRows'">
-            <a-tag color="blue">{{ record.affectedRows || 1 }} 行</a-tag>
+            <StatusTag type="info">{{ record.affectedRows || 1 }} 行</StatusTag>
           </template>
 
           <template v-else-if="column.dataIndex === 'target'">
@@ -309,12 +309,12 @@
           </a-tab-pane>
           <a-tab-pane key="config" tab="配置命中">
             <div class="tag-list">
-              <a-tag v-for="item in selectedFinding.evidence?.matchedConfigurations || []" :key="item" color="green">
+              <StatusTag v-for="item in selectedFinding.evidence?.matchedConfigurations || []" :key="item" type="success">
                 {{ item }}
-              </a-tag>
-              <a-tag v-for="item in selectedFinding.evidence?.configurationIssues || []" :key="item" color="orange">
+              </StatusTag>
+              <StatusTag v-for="item in selectedFinding.evidence?.configurationIssues || []" :key="item" type="warning">
                 {{ item }}
-              </a-tag>
+              </StatusTag>
               <a-empty
                 v-if="!(selectedFinding.evidence?.matchedConfigurations?.length || selectedFinding.evidence?.configurationIssues?.length)"
                 description="无配置证据"
@@ -351,7 +351,7 @@
     >
       <template v-if="selectedSampleRow">
         <div class="drawer-title">
-          <a-tag color="blue">源行 {{ selectedSampleRow.sourceRowId || '-' }}</a-tag>
+          <StatusTag type="info">源行 {{ selectedSampleRow.sourceRowId || '-' }}</StatusTag>
           <strong>{{ selectedSampleRow.waybillNo || selectedSampleRow.businessKey || '样本行' }}</strong>
         </div>
 
@@ -465,7 +465,7 @@
               <h4>⑤ 实际凭证</h4>
               <template v-if="selectedVoucherDetail.actualVoucherId">
                 <div class="voucher-totals">
-                  <a-tag color="blue">{{ selectedVoucherDetail.actualVoucherNo }}</a-tag>
+                  <StatusTag type="info">{{ selectedVoucherDetail.actualVoucherNo }}</StatusTag>
                   <span>借合计 <strong>{{ formatMoney(selectedVoucherDetail.actualDebitTotal) }}</strong></span>
                   <span>贷合计 <strong>{{ formatMoney(selectedVoucherDetail.actualCreditTotal) }}</strong></span>
                   <a-tag v-if="selectedVoucherDetail.actualBalanced != null" :color="selectedVoucherDetail.actualBalanced ? 'green' : 'red'">
@@ -486,7 +486,7 @@
               <template v-if="selectedVoucherDetail.issues.length">
                 <h4>问题</h4>
                 <div class="tag-list">
-                  <a-tag v-for="issue in selectedVoucherDetail.issues" :key="issue" color="orange">{{ issue }}</a-tag>
+                  <StatusTag v-for="issue in selectedVoucherDetail.issues" :key="issue" type="warning">{{ issue }}</StatusTag>
                 </div>
               </template>
             </div>
@@ -535,6 +535,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import {
   ValidationAttribution,
   ValidationDomain,
@@ -1135,15 +1136,15 @@ onMounted(async () => {
 <style scoped lang="scss">
 .validation-workbench {
   padding: 16px;
-  background: #f5f7fb;
+  background: var(--bg-muted);
   min-height: calc(100vh - 88px);
 }
 
 .batch-strip,
 .control-band,
 .result-panel {
-  background: #fff;
-  border: 1px solid #e8edf5;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -1153,7 +1154,7 @@ onMounted(async () => {
   align-items: stretch;
   gap: 16px;
   padding: 16px 18px;
-  box-shadow: 0 8px 22px rgba(20, 43, 74, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .batch-core {
@@ -1178,11 +1179,11 @@ onMounted(async () => {
 
   strong {
     font-size: 17px;
-    color: #1f2937;
+    color: var(--text-1);
   }
 
   span {
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 12px;
   }
 }
@@ -1200,7 +1201,7 @@ onMounted(async () => {
   h4 {
     margin: 6px 0 0;
     font-size: 13px;
-    color: #1f2937;
+    color: var(--text-1);
   }
 }
 
@@ -1213,11 +1214,11 @@ onMounted(async () => {
   align-items: center;
   gap: 14px;
   padding: 6px 2px;
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 12px;
 
   strong {
-    color: #1f2937;
+    color: var(--text-1);
   }
 }
 
@@ -1243,7 +1244,7 @@ onMounted(async () => {
 }
 
 .metric {
-  border-left: 1px solid #edf1f7;
+  border-left: 1px solid var(--border);
   padding-left: 14px;
   display: flex;
   flex-direction: column;
@@ -1251,13 +1252,13 @@ onMounted(async () => {
   gap: 2px;
 
   span {
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 12px;
   }
 
   strong {
     font-size: 20px;
-    color: #111827;
+    color: var(--text-1);
     line-height: 1.15;
   }
 }
@@ -1293,9 +1294,9 @@ onMounted(async () => {
 .diagnosis-card {
   height: 94px;
   text-align: left;
-  border: 1px solid #e8edf5;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-card);
   padding: 14px 16px;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -1308,14 +1309,14 @@ onMounted(async () => {
 
   &.active {
     border-color: var(--border-strong);
-    box-shadow: 0 10px 24px rgba(18, 31, 53, 0.1);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 
   .card-label,
   small {
     display: block;
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 12px;
   }
 
@@ -1324,7 +1325,7 @@ onMounted(async () => {
     margin: 4px 0;
     font-size: 24px;
     line-height: 1.1;
-    color: #111827;
+    color: var(--text-1);
   }
 }
 
@@ -1334,8 +1335,8 @@ onMounted(async () => {
 }
 
 .sample-panel {
-  border-color: #dbeafe;
-  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.05);
+  border-color: color-mix(in srgb, var(--color-info) 15%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-info) 5%, transparent);
 }
 
 .result-head {
@@ -1349,12 +1350,12 @@ onMounted(async () => {
 .result-title {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-1);
 }
 
 .result-subtitle {
   margin-left: 10px;
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 12px;
 }
 
@@ -1374,7 +1375,7 @@ onMounted(async () => {
   min-width: 0;
 
   span {
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1383,7 +1384,7 @@ onMounted(async () => {
 }
 
 .finding-title strong {
-  color: #111827;
+  color: var(--text-1);
 }
 
 .value-stack,
@@ -1393,7 +1394,7 @@ onMounted(async () => {
   gap: 3px;
   min-width: 0;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--text-2);
 }
 
 .value-stack span,
@@ -1404,7 +1405,7 @@ onMounted(async () => {
 }
 
 .sample-result-cell.empty {
-  color: #9ca3af;
+  color: var(--text-3);
 }
 
 .sample-status-line {
@@ -1413,7 +1414,7 @@ onMounted(async () => {
   gap: 6px;
 
   strong {
-    color: #111827;
+    color: var(--text-1);
     font-size: 12px;
     font-weight: 600;
   }
@@ -1423,7 +1424,7 @@ onMounted(async () => {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #9ca3af;
+  background: var(--text-3);
   flex: 0 0 auto;
 
   &[data-status='ok'] {
@@ -1447,17 +1448,17 @@ onMounted(async () => {
   align-items: center;
   margin-top: 12px;
   padding: 10px 12px;
-  background: #f8fafc;
-  border: 1px solid #e8edf5;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 8px;
 
   span {
-    color: #64748b;
+    color: var(--text-2);
     font-size: 12px;
   }
 
   strong {
-    color: #111827;
+    color: var(--text-1);
     text-align: right;
   }
 }
@@ -1473,7 +1474,7 @@ onMounted(async () => {
 
   h4 {
     margin: 0 0 6px;
-    color: #111827;
+    color: var(--text-1);
     font-size: 13px;
     font-weight: 600;
   }
@@ -1494,7 +1495,7 @@ onMounted(async () => {
   margin-bottom: 12px;
 
   strong {
-    color: #111827;
+    color: var(--text-1);
   }
 }
 
@@ -1512,16 +1513,16 @@ onMounted(async () => {
   gap: 3px;
 
   span {
-    color: #4b5563;
+    color: var(--text-2);
   }
 
   small {
-    color: #6b7280;
+    color: var(--text-2);
   }
 }
 
 :deep(.evidence-list) {
-  border: 1px solid #eef2f7;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -1529,7 +1530,7 @@ onMounted(async () => {
 :deep(.evidence-row) {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid var(--border);
   min-height: 38px;
 
   &:last-child {
@@ -1543,22 +1544,22 @@ onMounted(async () => {
   }
 
   span {
-    background: #f8fafc;
-    color: #64748b;
+    background: var(--bg-muted);
+    color: var(--text-2);
     font-weight: 500;
   }
 
   strong {
-    color: #111827;
+    color: var(--text-1);
     font-weight: 500;
   }
 }
 
 :deep(.evidence-empty) {
-  color: #8c8c8c;
+  color: var(--text-3);
   padding: 18px;
   text-align: center;
-  border: 1px dashed #d9d9d9;
+  border: 1px dashed var(--border);
   border-radius: 8px;
 }
 

@@ -362,7 +362,7 @@ onMounted(loadIssues)
 <style scoped>
 .issue-page {
   padding: 16px;
-  background: #f5f7fb;
+  background: var(--bg-page);
   min-height: 100%;
 }
 
@@ -395,8 +395,8 @@ onMounted(loadIssues)
 
 .summary-item {
   height: 64px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
   border-radius: 6px;
   text-align: left;
   padding: 10px 12px;
@@ -405,12 +405,12 @@ onMounted(loadIssues)
 
 .summary-item.active {
   border-color: var(--border-strong);
-  background: #eef5ff;
+  background: color-mix(in srgb, var(--color-info) 8%, transparent);
 }
 
 .summary-label {
   display: block;
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 12px;
 }
 
@@ -459,22 +459,22 @@ onMounted(loadIssues)
 
 .issue-code {
   font-weight: 600;
-  color: #111827;
+  color: var(--text-1);
 }
 
 .issue-name {
-  color: #4b5563;
+  color: var(--text-2);
 }
 
 .issue-meta {
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 12px;
   white-space: nowrap;
 }
 
 .issue-message {
   margin-top: 8px;
-  color: #1f2937;
+  color: var(--text-1);
   line-height: 1.5;
 }
 
@@ -483,7 +483,7 @@ onMounted(loadIssues)
   gap: 14px;
   flex-wrap: wrap;
   margin-top: 8px;
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 12px;
 }
 
@@ -496,7 +496,7 @@ onMounted(loadIssues)
 
 .empty-state {
   padding: 64px 0;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 6px;
 }
 
