@@ -66,14 +66,16 @@
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'action'">
-            <a-button
-              type="link"
-              size="small"
-              :disabled="record.status !== 1"
-              @click="handleLeave(record)"
+            <a-popconfirm
+              v-if="record.status === 1"
+              title="确定为该访客登记离开吗？"
+              ok-text="确定"
+              cancel-text="取消"
+              @confirm="handleLeave(record)"
             >
-              登记离开
-            </a-button>
+              <a-button type="link" size="small">登记离开</a-button>
+            </a-popconfirm>
+            <a-button v-else type="link" size="small" disabled>登记离开</a-button>
             <a-button type="link" size="small" @click="handleEdit(record)">
               <EditOutlined />编辑
             </a-button>
