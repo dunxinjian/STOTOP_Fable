@@ -102,10 +102,10 @@
             <span v-if="record.unit">{{ record.unit }}<SettingOutlined class="unit-icon" /></span>
             <span v-else>-</span>
           </template>
-          <template v-if="column.dataIndex === 'isEnabled'">
+          <template v-if="column.dataIndex === 'enableStatus'">
             <a-switch
               size="small"
-              :checked="record.isEnabled"
+              :checked="record.enableStatus"
               :disabled="!canEdit"
               @change="(val: any) => handleStatusChange(record, !!val)"
             />
@@ -352,7 +352,7 @@ const accountColumns = [
   { title: '余额方向', dataIndex: 'balanceDirection', key: 'balanceDirection', width: 100, align: 'center' as const },
   { title: '辅助核算', dataIndex: 'auxiliary', key: 'auxiliary' },
   { title: '计算单位', dataIndex: 'unit', key: 'unit', width: 90, align: 'center' as const },
-  { title: '启/停用', dataIndex: 'isEnabled', key: 'isEnabled', width: 100, align: 'center' as const, fixed: 'right' as const },
+  { title: '启/停用', dataIndex: 'enableStatus', key: 'enableStatus', width: 100, align: 'center' as const, fixed: 'right' as const },
 ]
 
 // 期初值表格 columns
@@ -389,7 +389,7 @@ interface AccountNode {
   category: string
   categoryName: string
   balanceDirection: string
-  isEnabled: boolean
+  enableStatus: boolean
   parentId: number | null
   auxiliaryAccounting: any
   unit: string
@@ -794,10 +794,11 @@ async function doToggleStatus(row: any, val: boolean) {
   try {
     await toggleAccountStatus(row.id)
     message.success(val ? '已启用' : '已停用')
-    loadData()
   } catch (error) {
     // 失败原因由请求拦截器统一弹后端消息（如"该科目已被凭证引用，无法停用"）
     console.error('状态切换失败:', error)
+  } finally {
+    loadData() // 成功失败都刷新，保证开关视觉与后端真实状态一致
   }
 }
 
