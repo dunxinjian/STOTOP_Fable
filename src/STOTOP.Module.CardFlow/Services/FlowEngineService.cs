@@ -1507,7 +1507,16 @@ public class FlowEngineService : IFlowEngineService
     /// </summary>
     private async Task ProcessCardStagesForBatchAsync(CfBatch batch, CancellationToken ct)
     {
+        // 卡片由 BatchSummary/FanOut 等批次级插件在“共享 DbContext”里 Add+SaveChanges 创建，
+        // 保存后这些 CfCard 实例仍处于 ChangeTracker 跟踪态(Unchanged)。
+        // 生产环境全局启用 NoTrackingWithIdentityResolution(Program.cs)，默认无跟踪重查询会返回
+        // 全新未跟踪实例；随后循环里 `_dbContext.Entry(card).State = Modified` 与已跟踪的同主键实例
+        // 撞 key，抛 "CfCard cannot be tracked because another instance with the same key value is
+        // already being tracked"，批次卡在 CardCreated(3) 无法到终态。
+        // 显式 AsTracking 让重查询复用插件已跟踪的同一实例(标识解析)，消除重复跟踪冲突，
+        // 同时保证后续 ExecuteAutoStageAsync 内 `Entry(card).ReloadAsync()` 作用于已跟踪实例。
         var cards = await _dbContext.Set<CfCard>()
+            .AsTracking()
             .Where(c => c.FBatchId == batch.FID && c.FStatus == "draft")
             .ToListAsync(ct);
 
