@@ -37,6 +37,7 @@
       <!-- 右侧：表单区 -->
       <div class="login-form-panel">
         <div class="login-form-inner">
+          <template v-if="!orgSelectVisible">
           <div class="login-system-status">
             <span>当前组织：MDSTO</span>
             <span class="system-status-badge">系统正常</span>
@@ -133,6 +134,23 @@
             <span>仓储</span>
             <span>结算</span>
           </div>
+          </template>
+
+          <div v-else class="login-org-select">
+            <div class="login-org-select__title">选择要进入的组织</div>
+            <div class="login-org-select__hint">你有多个组织，请选择本次要进入的一个</div>
+            <button
+              v-for="org in orgList"
+              :key="org.orgId"
+              type="button"
+              class="login-org-select__item"
+              :class="{ 'is-primary': org.isPrimaryOrg === 1 }"
+              @click="handleOrgSelected(org.orgId)"
+            >
+              <span class="login-org-select__name">{{ org.orgName }}</span>
+              <span v-if="org.isPrimaryOrg === 1" class="login-org-select__badge">主组织</span>
+            </button>
+          </div>
 
           <div v-if="loading" class="login-card-overlay">
             <a-spin size="large" />
@@ -141,12 +159,6 @@
         </div>
       </div>
     </div>
-
-    <OrgSelectModal
-      v-model="orgSelectVisible"
-      :organizations="orgList"
-      @select="handleOrgSelected"
-    />
   </div>
 </template>
 
@@ -163,7 +175,6 @@ import { useEnterpriseInfoStore } from '@/stores/enterpriseInfo'
 import { useSecurityStore } from '@/stores/security'
 import { checkDbConnectionStatus } from '@/api/system'
 import { getDingtalkConfig } from '@/api/auth'
-import OrgSelectModal from '@/components/OrgSelectModal.vue'
 import type { UserOrganizationDto } from '@/types/organization'
 
 const router = useRouter()
@@ -655,6 +666,56 @@ async function handleDingtalkLogin() {
     border: 1px solid #edf0f4;
     font-size: 12px;
   }
+}
+
+// 组织选择内联面板
+.login-org-select {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-org-select__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.login-org-select__hint {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+
+.login-org-select__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background: var(--bg-muted);
+  }
+
+  &.is-primary {
+    border-color: var(--color-primary);
+  }
+}
+
+.login-org-select__name {
+  font-size: 14px;
+  color: var(--text-1);
+}
+
+.login-org-select__badge {
+  font-size: 12px;
+  color: var(--color-primary);
 }
 
 // 加载過罩层

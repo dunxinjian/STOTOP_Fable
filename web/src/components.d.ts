@@ -149,7 +149,6 @@ declare module 'vue' {
     LoanOffsetComponent: typeof import('./components/cardflow/runtime/components/LoanOffsetComponent.vue')['default']
     LockScreen: typeof import('./components/security/LockScreen.vue')['default']
     MobileFormContainer: typeof import('./components/MobileFormContainer.vue')['default']
-    OrgSelectModal: typeof import('./components/OrgSelectModal.vue')['default']
     OrgSwitcher: typeof import('./components/OrgSwitcher.vue')['default']
     PageHeader: typeof import('./components/PageHeader.vue')['default']
     PageLayout: typeof import('./components/PageLayout.vue')['default']
