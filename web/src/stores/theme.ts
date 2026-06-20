@@ -310,6 +310,8 @@ export const useThemeStore = defineStore('theme', () => {
     s.setProperty('--biz-approval', '#5B7290')
     s.setProperty('--biz-points', '#C99A2E')
     s.setProperty('--biz-finance', '#B8860B')
+    s.setProperty('--biz-task', '#4F8A7B')       // 任务：青绿，区别于审批蓝
+    s.setProperty('--biz-notification', '#8A8F99') // 通知：中性灰，低调（低优先级语义）
     // —— 静态：头像色环（CustomerManage BD 头像等；DOM 元素走 var() 可解析）
     s.setProperty('--avatar-palette-1', '#5B7290')
     s.setProperty('--avatar-palette-2', '#6BA292')
