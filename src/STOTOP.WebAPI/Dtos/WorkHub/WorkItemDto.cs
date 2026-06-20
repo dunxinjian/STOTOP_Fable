@@ -5,6 +5,12 @@ public class WorkItemDto
     public string Id { get; set; } = string.Empty;
     public string Source { get; set; } = string.Empty;      // "oa", "quality", "task", etc.
     public string Category { get; set; } = string.Empty;    // "approval", "task", "alert", "notification", "reminder"
+
+    /// <summary>业务类型键（用于前端上色/分组，如 "voucher"/"quality"/"flow:费用报销"）。</summary>
+    public string BizTypeKey { get; set; } = "approval";
+
+    /// <summary>业务类型中文标签（用户可见，如 "凭证复核"/"质量异常"/"费用报销"）。</summary>
+    public string BizTypeLabel { get; set; } = "审批";
     public string Priority { get; set; } = "normal";        // "urgent", "high", "normal", "low"
     public string Title { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
