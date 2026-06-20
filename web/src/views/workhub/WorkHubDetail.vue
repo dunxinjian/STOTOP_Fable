@@ -151,9 +151,22 @@ const workItemIsOverdue = computed(() => {
   return dayjs(workItem.value.deadline).isBefore(dayjs())
 })
 
+// 详情面板"详细信息"只展示对用户有意义的 metadata 键，并以中文标签呈现；
+// 其余内部键（wfUid/chainId/module/bizType/各种 Id/编码值等）一律隐藏，避免泄漏框架黑话。
+const METADATA_LABELS: Record<string, string> = {
+  assigneeName: '处理人',
+  exceptionNo: '异常编号',
+  progress: '进度',
+  reminderDate: '提醒日期',
+  pointValue: '积分值',
+}
+
 const metadataEntries = computed(() => {
-  if (!workItem.value?.metadata) return []
-  return Object.entries(workItem.value.metadata).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  const md = workItem.value?.metadata
+  if (!md) return []
+  return Object.entries(METADATA_LABELS)
+    .map(([key, label]) => ({ label, value: md[key] }))
+    .filter(({ value }) => value !== null && value !== undefined && value !== '')
 })
 
 const notificationData = computed(() => {
@@ -350,12 +363,12 @@ function goToDetailRoute() {
               <div class="wi-metadata__title">详细信息</div>
               <div class="wi-metadata__grid">
                 <div
-                  v-for="[key, value] in metadataEntries"
-                  :key="key"
+                  v-for="m in metadataEntries"
+                  :key="m.label"
                   class="wi-metadata__item"
                 >
-                  <span class="wi-metadata__key">{{ key }}</span>
-                  <span class="wi-metadata__value">{{ value }}</span>
+                  <span class="wi-metadata__key">{{ m.label }}</span>
+                  <span class="wi-metadata__value">{{ m.value }}</span>
                 </div>
               </div>
             </div>
