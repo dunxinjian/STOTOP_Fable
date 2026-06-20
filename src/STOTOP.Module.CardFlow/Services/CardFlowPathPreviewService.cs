@@ -68,7 +68,7 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
             FlowDefinitionId = definitionId,
             FlowVersionId = version.FID
         };
-        var context = BuildPreviewContext(request);
+        var context = await BuildPreviewContextAsync(request, cancellationToken);
         var stageByKey = stages
             .Where(stage => !string.IsNullOrWhiteSpace(stage.FStageKey))
             .GroupBy(stage => stage.FStageKey, StringComparer.OrdinalIgnoreCase)
@@ -250,7 +250,8 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
         };
     }
 
-    private static ConditionEvaluationContext BuildPreviewContext(CardFlowPathPreviewRequest request)
+    private async Task<ConditionEvaluationContext> BuildPreviewContextAsync(
+        CardFlowPathPreviewRequest request, CancellationToken cancellationToken)
     {
         var cardData = ParseObject(request.InitialDataJson);
         foreach (var pair in ParseObject(request.DataJson))
@@ -258,7 +259,7 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
             cardData[pair.Key] = pair.Value;
         }
 
-        return ConditionContextFactory.Build(new ConditionContextInputs
+        var context = ConditionContextFactory.Build(new ConditionContextInputs
         {
             CardData = cardData,
             SourceModule = request.SourceModule,
@@ -268,6 +269,13 @@ public sealed class CardFlowPathPreviewService : ICardFlowPathPreviewService
             OrgId = request.OrgId,
             HasCurrentStage = false
         });
+
+        var orgRole = await OrgRoleContextResolver.ResolveAsync(
+            _dbContext, request.OrgId ?? 0, request.InitiatorId, cancellationToken);
+        context.OrgChain = orgRole.OrgChain;
+        context.RoleCodes = orgRole.RoleCodes;
+        context.RoleNames = orgRole.RoleNames;
+        return context;
     }
 
     private static Dictionary<string, object?> ParseObject(string? json)
