@@ -23,27 +23,27 @@ defineProps<{
 
 <style scoped lang="scss">
 .cf-explain-component {
-  border-left: 3px solid #3d7d5c;
-  background: #f6faf7;
+  border-left: 3px solid var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
   padding: 10px 12px;
   border-radius: 4px;
 
   &__title {
-    color: #22332b;
+    color: var(--color-success-text);
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 6px;
   }
 
   &__empty {
-    color: #7c8781;
+    color: var(--text-3);
     font-size: 12px;
   }
 
   &__list {
     margin: 0;
     padding-left: 18px;
-    color: #31423a;
+    color: var(--color-success-text);
 
     li + li {
       margin-top: 8px;
@@ -56,7 +56,7 @@ defineProps<{
 
     p {
       margin: 2px 0 0;
-      color: #52615a;
+      color: var(--text-2);
       font-size: 12px;
       line-height: 18px;
     }
