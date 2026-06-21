@@ -68,14 +68,6 @@ public class UpdateVisitorRequest
 }
 
 /// <summary>
-/// 访客离开请求
-/// </summary>
-public class DepartureRequest
-{
-    public DateTime DepartureTime { get; set; }
-}
-
-/// <summary>
 /// 访客登记查询请求
 /// </summary>
 public class VisitorQueryRequest

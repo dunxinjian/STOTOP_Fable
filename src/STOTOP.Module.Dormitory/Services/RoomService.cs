@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -47,6 +48,7 @@ public class RoomService : IRoomService
 
         var items = await query
             .Include(r => r.Building)
+            .Include(r => r.Beds)
             .OrderBy(r => r.FFloor)
             .ThenBy(r => r.FRoomNumber)
             .Skip((request.PageIndex - 1) * request.PageSize)
@@ -67,6 +69,7 @@ public class RoomService : IRoomService
         var rooms = await _roomRepository.Query()
             .Where(r => r.FBuildingId == buildingId && r.FStatus == 1)
             .Include(r => r.Building)
+            .Include(r => r.Beds)
             .OrderBy(r => r.FFloor)
             .ThenBy(r => r.FRoomNumber)
             .ToListAsync();
@@ -211,7 +214,8 @@ public class RoomService : IRoomService
             BedsCount = entity.FBedsCount,
             RoomType = entity.FRoomType,
             Status = entity.FStatus,
-            CreatedTime = entity.FCreatedTime
+            CreatedTime = entity.FCreatedTime,
+            OccupiedBeds = entity.Beds.Count(b => b.FStatus == DorStatus.Bed.Occupied)
         };
     }
 
@@ -223,6 +227,7 @@ public class RoomService : IRoomService
             RoomId = entity.FRoomId,
             RoomNumber = string.Empty,
             BedNumber = entity.FBedNumber,
+            BedType = entity.FBedType,
             Remark = entity.FRemark,
             Status = entity.FStatus,
             CreatedTime = entity.FCreatedTime,

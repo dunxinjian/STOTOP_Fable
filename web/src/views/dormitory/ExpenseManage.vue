@@ -85,8 +85,8 @@
           <template v-if="column.dataIndex === 'month'">
             {{ record.month }}
           </template>
-          <template v-if="column.dataIndex === 'shareType'">
-            {{ getShareTypeLabel(record.shareType) }}
+          <template v-if="column.dataIndex === 'shareMethod'">
+            {{ getShareMethodLabel(record.shareMethod) }}
           </template>
           <template v-if="column.dataIndex === 'status'">
             <a-tag :color="getStatusColor(record.status)">
@@ -94,6 +94,9 @@
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'action'">
+            <a-button type="link" size="small" @click="handleViewAllocation(record)">
+              <PieChartOutlined />分摊
+            </a-button>
             <a-button type="link" size="small" @click="handleEdit(record)">
               <EditOutlined />编辑
             </a-button>
@@ -163,20 +166,15 @@
             value-format="YYYY-MM"
           />
         </a-form-item>
-        <a-form-item label="分摊方式" name="shareType">
+        <a-form-item label="分摊方式" name="shareMethod">
           <a-select
-            v-model:value="formData.shareType"
+            v-model:value="formData.shareMethod"
             placeholder="请选择分摊方式"
-            :options="shareTypeOptions"
+            :options="shareMethodOptions"
           />
         </a-form-item>
-        <a-form-item label="缴费截止日期" name="dueDate">
-          <a-date-picker
-            v-model:value="formData.dueDate"
-            placeholder="请选择缴费截止日期"
-            style="width: 100%"
-            value-format="YYYY-MM-DD"
-          />
+        <a-form-item v-if="dialogType === 'edit'" label="缴费状态" name="status">
+          <a-select v-model:value="formData.status" :options="statusOptions" />
         </a-form-item>
         <a-form-item label="备注">
           <a-textarea
@@ -193,6 +191,40 @@
         <a-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</a-button>
       </template>
     </a-modal>
+
+    <!-- 分摊明细弹窗 -->
+    <a-modal v-model:open="allocationVisible" title="费用分摊明细" :width="560" :footer="null">
+      <a-spin :spinning="allocationLoading">
+        <template v-if="allocationData">
+          <a-descriptions :column="2" size="small" bordered style="margin-bottom: 16px">
+            <a-descriptions-item label="房间">{{ allocationData.roomNumber }}</a-descriptions-item>
+            <a-descriptions-item label="分摊方式">{{ getShareMethodLabel(allocationData.shareMethod) }}</a-descriptions-item>
+            <a-descriptions-item label="费用总额">{{ formatAmount(allocationData.expenseAmount) }}</a-descriptions-item>
+            <a-descriptions-item label="在住人数">{{ allocationData.occupantCount }} 人</a-descriptions-item>
+          </a-descriptions>
+          <a-table
+            :columns="allocationColumns"
+            :data-source="allocationData.shares"
+            :pagination="false"
+            row-key="employeeId"
+            size="small"
+            bordered
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'amount'">
+                <span class="amount-cell">{{ formatAmount(record.amount) }}</span>
+              </template>
+            </template>
+            <template #emptyText>
+              <EmptyState description="该房间当前无在住人员，暂无可分摊对象" />
+            </template>
+          </a-table>
+          <div class="allocation-total">
+            合计分摊：<span class="amount-cell">{{ formatAmount(allocationData.allocatedTotal) }}</span>
+          </div>
+        </template>
+      </a-spin>
+    </a-modal>
   </div>
 </template>
 
@@ -201,7 +233,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined, PieChartOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import {
@@ -211,7 +243,9 @@ import {
   deleteExpense,
   getAllBuildings,
   getRoomList,
+  getExpenseAllocation,
   type ExpenseDto,
+  type ExpenseAllocationDto,
   type BuildingListItemDto,
   type RoomDto,
 } from '@/api/dormitory'
@@ -224,10 +258,9 @@ const expenseTypeOptions = [
   { label: '其他', value: 'Other' },
 ]
 
-// 分摊方式选项
-const shareTypeOptions = [
+// 分摊方式选项（均摊=总额按人数等分；固定=每人按金额收取）
+const shareMethodOptions = [
   { label: '均摊', value: 'Equal' },
-  { label: '按人头', value: 'PerPerson' },
   { label: '固定', value: 'Fixed' },
 ]
 
@@ -245,7 +278,7 @@ const tableColumns = [
   { title: '费用类型', dataIndex: 'expenseType', key: 'expenseType', width: 100 },
   { title: '金额', dataIndex: 'amount', key: 'amount', width: 120, align: 'right' as const },
   { title: '月份', dataIndex: 'month', key: 'month', width: 100 },
-  { title: '分摊方式', dataIndex: 'shareType', key: 'shareType', width: 100 },
+  { title: '分摊方式', dataIndex: 'shareMethod', key: 'shareMethod', width: 100 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 90, align: 'center' as const },
   { title: '操作', dataIndex: 'action', key: 'action', width: 150, align: 'center' as const, fixed: 'right' as const },
 ]
@@ -297,8 +330,8 @@ const formData = reactive({
   expenseType: undefined as string | undefined,
   amount: undefined as number | undefined,
   month: '',
-  shareType: 'Equal' as string,
-  dueDate: '',
+  shareMethod: 'Equal' as string,
+  status: 0 as number,
   remark: '',
 })
 
@@ -373,8 +406,8 @@ function resetForm() {
   formData.expenseType = undefined
   formData.amount = undefined
   formData.month = ''
-  formData.shareType = 'Equal'
-  formData.dueDate = ''
+  formData.shareMethod = 'Equal'
+  formData.status = 0
   formData.remark = ''
   currentExpenseId.value = null
 }
@@ -394,8 +427,8 @@ function handleEdit(row: any) {
   formData.expenseType = row.expenseType
   formData.amount = row.amount
   formData.month = row.month
-  formData.shareType = (row as any).shareType || 'Equal'
-  formData.dueDate = row.dueDate || ''
+  formData.shareMethod = row.shareMethod || 'Equal'
+  formData.status = row.status ?? 0
   formData.remark = row.remark || ''
   dialogVisible.value = true
 }
@@ -416,7 +449,7 @@ async function handleSubmit() {
       expenseType: formData.expenseType!,
       amount: formData.amount!,
       month: formData.month,
-      dueDate: formData.dueDate || undefined,
+      shareMethod: formData.shareMethod,
       remark: formData.remark || undefined,
     }
 
@@ -424,7 +457,7 @@ async function handleSubmit() {
       await createExpense(data)
       message.success('新增成功')
     } else {
-      await updateExpense(currentExpenseId.value!, data)
+      await updateExpense(currentExpenseId.value!, { ...data, status: formData.status })
       message.success('更新成功')
     }
     dialogVisible.value = false
@@ -446,6 +479,30 @@ async function handleDelete(row: any) {
   }
 }
 
+// ===== 费用分摊明细 =====
+const allocationVisible = ref(false)
+const allocationLoading = ref(false)
+const allocationData = ref<ExpenseAllocationDto | null>(null)
+const allocationColumns = [
+  { title: '员工', dataIndex: 'employeeName', key: 'employeeName' },
+  { title: '工号', dataIndex: 'employeeId', key: 'employeeId', width: 100 },
+  { title: '应分摊金额', dataIndex: 'amount', key: 'amount', width: 140, align: 'right' as const },
+]
+
+async function handleViewAllocation(row: any) {
+  allocationVisible.value = true
+  allocationLoading.value = true
+  allocationData.value = null
+  try {
+    allocationData.value = await getExpenseAllocation(row.id)
+  } catch (e) {
+    console.error('获取分摊明细失败:', e)
+    message.error('获取分摊明细失败')
+  } finally {
+    allocationLoading.value = false
+  }
+}
+
 // 格式化金额
 function formatAmount(amount: number) {
   return `¥${(amount || 0).toFixed(2)}`
@@ -463,13 +520,14 @@ function getExpenseTypeLabel(type: string) {
 }
 
 // 获取分摊方式标签
-function getShareTypeLabel(type: string) {
+function getShareMethodLabel(method?: string) {
+  if (!method) return '—'
   const map: Record<string, string> = {
     Equal: '均摊',
-    PerPerson: '按人头',
+    PerPerson: '均摊', // 兼容历史数据
     Fixed: '固定',
   }
-  return map[type] || type
+  return map[method] || method
 }
 
 // 获取状态标签
@@ -504,5 +562,11 @@ onMounted(() => {
 .amount-cell {
   font-family: monospace;
   font-weight: 500;
+}
+
+.allocation-total {
+  margin-top: 12px;
+  text-align: right;
+  font-weight: 600;
 }
 </style>

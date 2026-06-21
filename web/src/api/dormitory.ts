@@ -11,23 +11,24 @@ export interface PagedResult<T = any> {
   pageSize: number
 }
 
-// 楼栋
+// 楼栋（字段对齐后端：totalFloors/managerId/dormitoryType；roomCount/bedCount/occupiedBeds 由后端实时统计）
 export interface BuildingListItemDto {
   id: number
   code: string
   name: string
   address?: string
-  floorCount: number
+  totalFloors: number
+  managerId?: number
+  dormitoryType?: string
   roomCount: number
   bedCount: number
   occupiedBeds: number
-  managerName?: string
-  managerPhone?: string
   status: number
   createdTime?: string
 }
 
 export interface BuildingDto extends BuildingListItemDto {
+  managerName?: string
   remark?: string
   updatedTime?: string
 }
@@ -36,15 +37,15 @@ export interface CreateBuildingRequest {
   code: string
   name: string
   address?: string
-  floorCount: number
-  managerName?: string
-  managerPhone?: string
+  totalFloors: number
+  managerId?: number
+  dormitoryType?: string
   remark?: string
 }
 
 export interface UpdateBuildingRequest extends CreateBuildingRequest {}
 
-// 房间
+// 房间（occupiedBeds 由后端按床位状态统计）
 export interface RoomDto {
   id: number
   buildingId: number
@@ -53,7 +54,6 @@ export interface RoomDto {
   roomNumber: string
   roomType: string
   bedsCount: number
-  bedCount: number
   occupiedBeds: number
   status: number
   remark?: string
@@ -90,15 +90,15 @@ export interface CreateBedRequest {
   remark?: string
 }
 
-export interface UpdateBedRequest extends CreateBedRequest {}
+export interface UpdateBedRequest extends CreateBedRequest {
+  status?: number
+}
 
-// 入住记录
+// 入住记录（字段对齐后端：仅 checkInDate/checkOutDate，无预计/部门/工号等）
 export interface ResidenceDto {
   id: number
   employeeId: number
   employeeName?: string
-  employeeCode?: string
-  departmentName?: string
   buildingId: number
   buildingName?: string
   roomId: number
@@ -106,9 +106,7 @@ export interface ResidenceDto {
   bedId: number
   bedNumber?: string
   checkInDate: string
-  expectedCheckOutDate?: string
   checkOutDate?: string
-  actualCheckOutDate?: string
   status: number
   remark?: string
   createdTime?: string
@@ -119,7 +117,6 @@ export interface CreateResidenceRequest {
   employeeId: number
   bedId: number
   checkInDate: string
-  expectedCheckOutDate?: string
   remark?: string
 }
 
@@ -129,9 +126,6 @@ export interface CheckOutRequest {
 }
 
 export interface UpdateResidenceRequest {
-  bedId: number
-  checkInDate: string
-  expectedCheckOutDate?: string
   remark?: string
 }
 
@@ -144,10 +138,8 @@ export interface ExpenseDto {
   expenseType: string
   month: string
   amount: number
-  paidAmount: number
+  shareMethod?: string
   status: number
-  dueDate?: string
-  paidDate?: string
   remark?: string
   createdTime?: string
   updatedTime?: string
@@ -158,23 +150,40 @@ export interface CreateExpenseRequest {
   expenseType: string
   month: string
   amount: number
-  dueDate?: string
+  shareMethod?: string
   remark?: string
 }
 
-export interface UpdateExpenseRequest extends CreateExpenseRequest {}
+export interface UpdateExpenseRequest extends CreateExpenseRequest {
+  status?: number
+}
 
-// 设施
+// 费用分摊明细
+export interface ExpenseShareDto {
+  employeeId: number
+  employeeName?: string
+  amount: number
+}
+
+export interface ExpenseAllocationDto {
+  expenseId: number
+  roomId: number
+  roomNumber: string
+  shareMethod?: string
+  expenseAmount: number
+  occupantCount: number
+  allocatedTotal: number
+  shares: ExpenseShareDto[]
+}
+
+// 设施（字段对齐后端：仅 facilityName/quantity/status/remark）
 export interface FacilityDto {
   id: number
   roomId: number
   roomNumber?: string
   facilityName: string
-  facilityType: string
   quantity: number
   status: number
-  purchaseDate?: string
-  warrantyDate?: string
   remark?: string
   createdTime?: string
   updatedTime?: string
@@ -182,16 +191,15 @@ export interface FacilityDto {
 
 export interface CreateFacilityRequest {
   facilityName: string
-  facilityType: string
   quantity: number
-  purchaseDate?: string
-  warrantyDate?: string
   remark?: string
 }
 
-export interface UpdateFacilityRequest extends CreateFacilityRequest {}
+export interface UpdateFacilityRequest extends CreateFacilityRequest {
+  status?: number
+}
 
-// 报修工单
+// 报修工单（字段对齐后端：description/priority/result/handledTime）
 export interface RepairOrderDto {
   id: number
   roomId: number
@@ -199,31 +207,36 @@ export interface RepairOrderDto {
   buildingName?: string
   reporterId: number
   reporterName?: string
-  issueType: string
-  issueDescription: string
-  urgency: number
+  description: string
+  priority: number
   status: number
   handlerId?: number
   handlerName?: string
-  handleResult?: string
-  handleTime?: string
+  result?: string
+  handledTime?: string
   createdTime?: string
   updatedTime?: string
 }
 
 export interface CreateRepairOrderRequest {
   roomId: number
-  issueType: string
-  issueDescription: string
-  urgency: number
+  reporterId: number
+  description: string
+  priority: number
+}
+
+export interface UpdateRepairOrderRequest {
+  description: string
+  priority: number
 }
 
 export interface HandleRepairOrderRequest {
-  handleResult: string
+  handlerId: number
+  result: string
   status: number
 }
 
-// 访客
+// 访客（字段对齐后端：visitReason/visitedPersonId/arrivalTime/departureTime）
 export interface VisitorDto {
   id: number
   roomId: number
@@ -232,14 +245,14 @@ export interface VisitorDto {
   visitorName: string
   visitorPhone?: string
   visitorIdCard?: string
-  visitPurpose?: string
-  visitTime: string
-  expectedLeaveTime?: string
-  actualLeaveTime?: string
+  visitReason?: string
+  visitedPersonId?: number
+  visitedPersonName?: string
+  arrivalTime: string
+  departureTime?: string
   status: number
   remark?: string
   createdTime?: string
-  updatedTime?: string
 }
 
 export interface CreateVisitorRequest {
@@ -247,36 +260,50 @@ export interface CreateVisitorRequest {
   visitorName: string
   visitorPhone?: string
   visitorIdCard?: string
-  visitPurpose?: string
-  visitTime: string
-  expectedLeaveTime?: string
+  visitReason?: string
+  visitedPersonId?: number
+  arrivalTime: string
   remark?: string
 }
 
-export interface UpdateVisitorRequest extends CreateVisitorRequest {}
+export interface UpdateVisitorRequest {
+  visitorName: string
+  visitorPhone?: string
+  visitorIdCard?: string
+  visitReason?: string
+  visitedPersonId?: number
+  remark?: string
+}
 
-// 卫生检查
+// 卫生检查（字段对齐后端：inspectorId/inspectorName）
 export interface HygieneCheckDto {
   id: number
   roomId: number
   roomNumber?: string
   buildingName?: string
   checkDate: string
-  checkerId: number
-  checkerName?: string
-  score: number
-  result: string
-  issues?: string
+  inspectorId: number
+  inspectorName?: string
+  score?: number
+  result?: string
   remark?: string
   createdTime?: string
 }
 
 export interface CreateHygieneCheckRequest {
   roomId: number
+  inspectorId: number
   checkDate: string
-  score: number
-  result: string
-  issues?: string
+  score?: number
+  result?: string
+  remark?: string
+}
+
+export interface UpdateHygieneCheckRequest {
+  inspectorId: number
+  checkDate: string
+  score?: number
+  result?: string
   remark?: string
 }
 
@@ -460,6 +487,11 @@ export function deleteExpense(id: number): Promise<boolean> {
   return del(`/dormitory/expenses/${id}`)
 }
 
+// 费用分摊明细（按房间当前在住人分摊）
+export function getExpenseAllocation(id: number): Promise<ExpenseAllocationDto> {
+  return get(`/dormitory/expenses/${id}/allocation`)
+}
+
 // ==================== 设施管理 API ====================
 
 // 设施列表
@@ -502,6 +534,11 @@ export function getRepairOrderList(params: {
 // 创建报修工单
 export function createRepairOrder(data: CreateRepairOrderRequest): Promise<RepairOrderDto> {
   return post('/dormitory/repair-orders', data)
+}
+
+// 更新报修工单（描述/紧急程度）
+export function updateRepairOrder(id: number, data: UpdateRepairOrderRequest): Promise<RepairOrderDto> {
+  return put(`/dormitory/repair-orders/${id}`, data)
 }
 
 // 处理报修工单
@@ -564,6 +601,11 @@ export function getHygieneCheckList(params: {
 // 创建卫生检查
 export function createHygieneCheck(data: CreateHygieneCheckRequest): Promise<HygieneCheckDto> {
   return post('/dormitory/hygiene-checks', data)
+}
+
+// 更新卫生检查
+export function updateHygieneCheck(id: number, data: UpdateHygieneCheckRequest): Promise<HygieneCheckDto> {
+  return put(`/dormitory/hygiene-checks/${id}`, data)
 }
 
 // 删除卫生检查

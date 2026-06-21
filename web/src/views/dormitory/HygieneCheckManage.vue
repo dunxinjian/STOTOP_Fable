@@ -78,6 +78,9 @@
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'action'">
+            <a-button type="link" size="small" @click="handleEdit(record)">
+              <EditOutlined />编辑
+            </a-button>
             <a-popconfirm
               title="确定删除该检查记录吗？"
               ok-text="确定"
@@ -96,10 +99,10 @@
       </a-table>
     </a-card>
 
-    <!-- 新增检查记录弹窗 -->
+    <!-- 新增/编辑检查记录弹窗 -->
     <a-modal
       v-model:open="dialogVisible"
-      title="新增卫生检查记录"
+      :title="dialogMode === 'add' ? '新增卫生检查记录' : '编辑卫生检查记录'"
       width="600px"
       :destroy-on-close="true"
       @cancel="dialogVisible = false"
@@ -118,13 +121,15 @@
             show-search
             :filter-option="filterOption"
             :options="roomOptions"
+            :disabled="dialogMode === 'edit'"
           />
         </a-form-item>
-        <a-form-item label="检查人ID" name="checkerId">
+        <a-form-item label="检查人ID" name="inspectorId">
           <a-input-number
-            v-model:value="formData.checkerId"
+            v-model:value="formData.inspectorId"
             placeholder="请输入检查人ID"
             style="width: 100%"
+            :min="1"
           />
         </a-form-item>
         <a-form-item label="检查日期" name="checkDate">
@@ -158,20 +163,11 @@
             :options="resultOptions"
           />
         </a-form-item>
-        <a-form-item label="问题说明">
-          <a-textarea
-            v-model:value="formData.issues"
-            :rows="3"
-            placeholder="请输入存在的问题"
-            :maxlength="500"
-            show-count
-          />
-        </a-form-item>
         <a-form-item label="备注">
           <a-textarea
             v-model:value="formData.remark"
-            :rows="2"
-            placeholder="请输入备注"
+            :rows="3"
+            placeholder="请输入备注或存在的问题"
             :maxlength="500"
             show-count
           />
@@ -190,30 +186,32 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import {
   getHygieneCheckList,
   createHygieneCheck,
+  updateHygieneCheck,
   deleteHygieneCheck,
   getAllBuildings,
   getRoomList,
   type HygieneCheckDto,
   type CreateHygieneCheckRequest,
+  type UpdateHygieneCheckRequest,
 } from '@/api/dormitory'
 
 // 表格列配置
 const tableColumns = [
   { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '房间信息', dataIndex: 'roomInfo', key: 'roomInfo', width: 180 },
-  { title: '检查人', dataIndex: 'checkerName', key: 'checkerName', width: 100 },
+  { title: '检查人', dataIndex: 'inspectorName', key: 'inspectorName', width: 100 },
   { title: '检查日期', dataIndex: 'checkDate', key: 'checkDate', width: 120 },
   { title: '评分', dataIndex: 'score', key: 'score', width: 180 },
   { title: '检查结果', dataIndex: 'result', key: 'result', width: 100, align: 'center' as const },
   { title: '备注', dataIndex: 'remark', key: 'remark', width: 200, ellipsis: true },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 100, align: 'center' as const, fixed: 'right' as const },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 140, align: 'center' as const, fixed: 'right' as const },
 ]
 
 // 检查结果选项
@@ -259,22 +257,23 @@ function handleTableChange(pag: any) {
 
 // 弹窗相关
 const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
+const currentCheckId = ref<number | null>(null)
 
 const formData = reactive({
   roomId: undefined as number | undefined,
-  checkerId: undefined as number | undefined,
+  inspectorId: undefined as number | undefined,
   checkDateValue: dayjs() as any,
   score: 80,
   result: undefined as string | undefined,
-  issues: '',
   remark: '',
 })
 
 const formRules: Record<string, Rule[]> = {
   roomId: [{ required: true, message: '请选择房间', trigger: 'change' }],
-  checkerId: [{ required: true, message: '请输入检查人ID', trigger: 'blur' }],
+  inspectorId: [{ required: true, message: '请输入检查人ID', trigger: 'blur' }],
   checkDate: [{ required: true, message: '请选择检查日期', trigger: 'change' }],
   score: [{ required: true, message: '请输入评分', trigger: 'blur' }],
   result: [{ required: true, message: '请选择检查结果', trigger: 'change' }],
@@ -361,17 +360,31 @@ function handleReset() {
 // 重置表单
 function resetForm() {
   formData.roomId = undefined
-  formData.checkerId = undefined
+  formData.inspectorId = undefined
   formData.checkDateValue = dayjs()
   formData.score = 80
   formData.result = undefined
-  formData.issues = ''
   formData.remark = ''
+  currentCheckId.value = null
 }
 
 // 新增
 function handleAdd() {
+  dialogMode.value = 'add'
   resetForm()
+  dialogVisible.value = true
+}
+
+// 编辑
+function handleEdit(record: any) {
+  dialogMode.value = 'edit'
+  currentCheckId.value = record.id
+  formData.roomId = record.roomId
+  formData.inspectorId = record.inspectorId
+  formData.checkDateValue = record.checkDate ? dayjs(record.checkDate) : dayjs()
+  formData.score = record.score ?? 80
+  formData.result = record.result
+  formData.remark = record.remark || ''
   dialogVisible.value = true
 }
 
@@ -386,17 +399,32 @@ async function handleSubmit() {
 
   submitLoading.value = true
   try {
-    const data: CreateHygieneCheckRequest = {
-      roomId: formData.roomId!,
-      checkDate: formData.checkDateValue ? formData.checkDateValue.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-      score: formData.score,
-      result: formData.result!,
-      issues: formData.issues || undefined,
-      remark: formData.remark || undefined,
-    }
+    const checkDate = formData.checkDateValue
+      ? formData.checkDateValue.format('YYYY-MM-DD')
+      : dayjs().format('YYYY-MM-DD')
 
-    await createHygieneCheck(data)
-    message.success('新增成功')
+    if (dialogMode.value === 'add') {
+      const data: CreateHygieneCheckRequest = {
+        roomId: formData.roomId!,
+        inspectorId: formData.inspectorId!,
+        checkDate,
+        score: formData.score,
+        result: formData.result!,
+        remark: formData.remark || undefined,
+      }
+      await createHygieneCheck(data)
+      message.success('新增成功')
+    } else {
+      const data: UpdateHygieneCheckRequest = {
+        inspectorId: formData.inspectorId!,
+        checkDate,
+        score: formData.score,
+        result: formData.result!,
+        remark: formData.remark || undefined,
+      }
+      await updateHygieneCheck(currentCheckId.value!, data)
+      message.success('更新成功')
+    }
     dialogVisible.value = false
     fetchHygieneCheckList()
   } finally {

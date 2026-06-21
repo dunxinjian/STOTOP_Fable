@@ -50,6 +50,17 @@ public class HygieneCheckController : ControllerBase
         }
     }
 
+    [HttpPut("{id}")]
+    public async Task<ApiResult<HygieneCheckDto>> Update(long id, [FromBody] UpdateHygieneCheckRequest request)
+    {
+        var result = await _hygieneCheckService.UpdateHygieneCheckAsync(id, request);
+        if (result == null)
+        {
+            return ApiResult<HygieneCheckDto>.Fail("卫生检查记录不存在");
+        }
+        return ApiResult<HygieneCheckDto>.Success(result, "更新卫生检查记录成功");
+    }
+
     [HttpDelete("{id}")]
     public async Task<ApiResult> Delete(long id)
     {

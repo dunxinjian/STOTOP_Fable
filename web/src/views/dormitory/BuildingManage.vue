@@ -122,9 +122,9 @@
         </a-row>
         <a-row :gutter="20">
           <a-col :span="12">
-            <a-form-item label="总楼层" name="floorCount">
+            <a-form-item label="总楼层" name="totalFloors">
               <a-input-number
-                v-model:value="formData.floorCount"
+                v-model:value="formData.totalFloors"
                 :min="1"
                 :max="100"
                 style="width: 100%"
@@ -149,19 +149,10 @@
         <a-row :gutter="20">
           <a-col :span="12">
             <a-form-item label="管理员">
-              <a-input
-                v-model:value="formData.managerName"
-                placeholder="请输入管理员姓名"
-                :maxlength="50"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="联系电话">
-              <a-input
-                v-model:value="formData.managerPhone"
-                placeholder="请输入联系电话"
-                :maxlength="30"
+              <EmployeeSelect
+                v-model="formData.managerId"
+                :initial-label="formData.managerName"
+                placeholder="搜索管理员姓名/工号"
               />
             </a-form-item>
           </a-col>
@@ -207,6 +198,7 @@ import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+import EmployeeSelect from '@/components/EmployeeSelect.vue'
 import DataTable from '@/components/DataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import {
@@ -227,7 +219,7 @@ const tableColumns = [
   { title: '编码', dataIndex: 'code', key: 'code', width: 100 },
   { title: '名称', dataIndex: 'name', key: 'name', width: 150, ellipsis: true },
   { title: '地址', dataIndex: 'address', key: 'address', width: 200, ellipsis: true },
-  { title: '总楼层', dataIndex: 'floorCount', key: 'floorCount', width: 80, align: 'center' as const },
+  { title: '总楼层', dataIndex: 'totalFloors', key: 'totalFloors', width: 80, align: 'center' as const },
   { title: '房间数', dataIndex: 'roomCount', key: 'roomCount', width: 80, align: 'center' as const },
   { title: '床位数', dataIndex: 'bedCount', key: 'bedCount', width: 80, align: 'center' as const },
   { title: '已入住', dataIndex: 'occupiedBeds', key: 'occupiedBeds', width: 80, align: 'center' as const },
@@ -261,10 +253,10 @@ const formData = reactive({
   code: '',
   name: '',
   address: '',
-  floorCount: 1,
+  totalFloors: 1,
   dormitoryType: 'male' as 'male' | 'female' | 'mixed',
+  managerId: undefined as number | undefined,
   managerName: '',
-  managerPhone: '',
   remark: '',
 })
 
@@ -293,7 +285,7 @@ const formRules: Record<string, Rule[]> = {
     { validator: validateCode, trigger: 'blur' },
   ],
   name: [{ required: true, message: '请输入楼栋名称', trigger: 'blur' }],
-  floorCount: [{ required: true, message: '请输入总楼层', trigger: 'blur' }],
+  totalFloors: [{ required: true, message: '请输入总楼层', trigger: 'blur' }],
   dormitoryType: [{ required: true, message: '请选择宿舍类型', trigger: 'change' }],
 }
 
@@ -336,10 +328,10 @@ function resetForm() {
   formData.code = ''
   formData.name = ''
   formData.address = ''
-  formData.floorCount = 1
+  formData.totalFloors = 1
   formData.dormitoryType = 'male'
+  formData.managerId = undefined
   formData.managerName = ''
-  formData.managerPhone = ''
   formData.remark = ''
 }
 
@@ -364,10 +356,10 @@ async function handleEdit(row: any) {
       formData.code = detail.code
       formData.name = detail.name
       formData.address = detail.address || ''
-      formData.floorCount = detail.floorCount
-      formData.dormitoryType = 'male' // 后端暂未返回该字段，使用默认值
+      formData.totalFloors = detail.totalFloors
+      formData.dormitoryType = (detail.dormitoryType as 'male' | 'female' | 'mixed') || 'male'
+      formData.managerId = detail.managerId
       formData.managerName = detail.managerName || ''
-      formData.managerPhone = detail.managerPhone || ''
       formData.remark = detail.remark || ''
     }
   } catch (error) {
@@ -396,9 +388,9 @@ async function handleSubmit() {
       code: formData.code,
       name: formData.name,
       address: formData.address || undefined,
-      floorCount: formData.floorCount,
-      managerName: formData.managerName || undefined,
-      managerPhone: formData.managerPhone || undefined,
+      totalFloors: formData.totalFloors,
+      managerId: formData.managerId,
+      dormitoryType: formData.dormitoryType,
       remark: formData.remark || undefined,
     }
 

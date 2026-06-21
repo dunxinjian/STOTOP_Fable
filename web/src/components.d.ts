@@ -133,7 +133,7 @@ declare module 'vue' {
     DynamicApproverComponent: typeof import('./components/cardflow/runtime/components/DynamicApproverComponent.vue')['default']
     DynamicForm: typeof import('./components/DynamicForm.vue')['default']
     DynamicFormMobile: typeof import('./components/DynamicFormMobile.vue')['default']
-    EmployeeSelect: typeof import('./components/form-widgets/EmployeeSelect.vue')['default']
+    EmployeeSelect: typeof import('./components/EmployeeSelect.vue')['default']
     EmptyState: typeof import('./components/EmptyState.vue')['default']
     FeedbackQuickSubmit: typeof import('./components/FeedbackQuickSubmit.vue')['default']
     FileUpload: typeof import('./components/form-widgets/FileUpload.vue')['default']

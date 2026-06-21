@@ -226,12 +226,67 @@ export const layoutRoute: RouteRecordRaw = {
       component: () => import('@/views/finance/TreasuryRollingForecast.vue'),
       meta: { title: '13周资金预测', icon: 'LineChartOutlined', module: 'finance' },
     },
-    // 宿舍管理首页
+    // ===== 宿舍管理（静态路由，提供稳定 name + 菜单种子缺失时兜底，镜像 finance 模式）=====
+    // 模块入口：进入 /dormitory 重定向到楼栋管理
     {
-      path: 'dormitory/home',
-      name: 'DormitoryHome',
+      path: 'dormitory',
+      redirect: '/dormitory/buildings',
+      meta: { hidden: true, module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/dashboard',
+      name: 'DormitoryDashboard',
       component: () => import('@/views/dormitory/DormitoryDashboard.vue'),
-      meta: { title: '宿舍管理', icon: 'HomeOutlined', module: 'dormitory' },
+      meta: { title: '宿舍统计', icon: 'DashboardOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/buildings',
+      name: 'BuildingManage',
+      component: () => import('@/views/dormitory/BuildingManage.vue'),
+      meta: { title: '楼栋管理', icon: 'BankOutlined', module: 'dormitory' },
+    },
+    {
+      // 房间管理：楼栋的子页，由楼栋列表带 buildingId 跳入（hidden，不在侧栏）
+      path: 'dormitory/buildings/:buildingId/rooms',
+      name: 'RoomManage',
+      component: () => import('@/views/dormitory/RoomManage.vue'),
+      meta: { title: '房间管理', icon: 'AppstoreOutlined', hidden: true, module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/residences',
+      name: 'ResidenceManage',
+      component: () => import('@/views/dormitory/ResidenceManage.vue'),
+      meta: { title: '入住管理', icon: 'UserAddOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/expenses',
+      name: 'ExpenseManage',
+      component: () => import('@/views/dormitory/ExpenseManage.vue'),
+      meta: { title: '费用管理', icon: 'DollarOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/facilities',
+      name: 'FacilityManage',
+      component: () => import('@/views/dormitory/FacilityManage.vue'),
+      meta: { title: '设施管理', icon: 'ToolOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/repairs',
+      name: 'RepairOrderManage',
+      component: () => import('@/views/dormitory/RepairOrderManage.vue'),
+      meta: { title: '报修工单', icon: 'WarningOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/visitors',
+      name: 'VisitorManage',
+      component: () => import('@/views/dormitory/VisitorManage.vue'),
+      meta: { title: '访客登记', icon: 'TeamOutlined', module: 'dormitory' },
+    },
+    {
+      path: 'dormitory/hygiene',
+      name: 'HygieneCheckManage',
+      component: () => import('@/views/dormitory/HygieneCheckManage.vue'),
+      meta: { title: '卫生检查', icon: 'SafetyCertificateOutlined', module: 'dormitory' },
     },
     // 三轮车管理首页
     {

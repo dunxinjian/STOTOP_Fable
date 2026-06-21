@@ -31,11 +31,11 @@
             </a-form-item>
             <a-form-item label="紧急程度" style="margin-bottom:0">
               <a-select
-                v-model:value="searchForm.urgency"
+                v-model:value="searchForm.priority"
                 placeholder="全部"
                 allow-clear
                 style="width: 120px"
-                :options="urgencyOptions"
+                :options="priorityOptions"
               />
             </a-form-item>
           </div>
@@ -69,14 +69,14 @@
           <template v-if="column.dataIndex === 'roomInfo'">
             <span>{{ record.buildingName }} - {{ record.roomNumber }}</span>
           </template>
-          <template v-if="column.dataIndex === 'issueDescription'">
-            <a-tooltip :title="record.issueDescription">
-              <span class="ellipsis-text">{{ record.issueDescription }}</span>
+          <template v-if="column.dataIndex === 'description'">
+            <a-tooltip :title="record.description">
+              <span class="ellipsis-text">{{ record.description }}</span>
             </a-tooltip>
           </template>
-          <template v-if="column.dataIndex === 'urgency'">
-            <a-tag :color="getUrgencyColor(record.urgency)">
-              {{ getUrgencyText(record.urgency) }}
+          <template v-if="column.dataIndex === 'priority'">
+            <a-tag :color="getPriorityColor(record.priority)">
+              {{ getPriorityText(record.priority) }}
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'status'">
@@ -85,6 +85,14 @@
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'action'">
+            <a-button
+              type="link"
+              size="small"
+              :disabled="record.status === 3 || record.status === 4"
+              @click="handleEdit(record)"
+            >
+              <EditOutlined />编辑
+            </a-button>
             <a-button
               type="link"
               size="small"
@@ -111,57 +119,59 @@
       </a-table>
     </a-card>
 
-    <!-- 新增报修弹窗 -->
+    <!-- 新增/编辑报修弹窗 -->
     <a-modal
-      v-model:open="addDialogVisible"
-      title="新增报修工单"
+      v-model:open="formDialogVisible"
+      :title="dialogMode === 'add' ? '新增报修工单' : '编辑报修工单'"
       width="600px"
       :destroy-on-close="true"
-      @cancel="addDialogVisible = false"
+      @cancel="formDialogVisible = false"
     >
       <a-form
-        ref="addFormRef"
-        :model="addFormData"
-        :rules="addFormRules"
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
         :label-col="{ style: { width: '100px' } }"
         style="padding: 10px 20px"
       >
         <a-form-item label="房间" name="roomId">
           <a-select
-            v-model:value="addFormData.roomId"
+            v-model:value="formData.roomId"
             placeholder="请选择房间"
             show-search
             :filter-option="filterOption"
             :options="roomOptions"
+            :disabled="dialogMode === 'edit'"
           />
         </a-form-item>
-        <a-form-item label="报修人ID" name="reporterId">
-          <a-input-number
-            v-model:value="addFormData.reporterId"
-            placeholder="请输入报修人ID"
-            style="width: 100%"
+        <a-form-item label="报修人" name="reporterId">
+          <EmployeeSelect
+            v-model="formData.reporterId"
+            :initial-label="formData.reporterName"
+            :disabled="dialogMode === 'edit'"
+            placeholder="搜索报修人姓名/工号"
           />
         </a-form-item>
-        <a-form-item label="问题描述" name="issueDescription">
+        <a-form-item label="问题描述" name="description">
           <a-textarea
-            v-model:value="addFormData.issueDescription"
+            v-model:value="formData.description"
             :rows="4"
             placeholder="请输入问题描述"
             :maxlength="500"
             show-count
           />
         </a-form-item>
-        <a-form-item label="紧急程度" name="urgency">
+        <a-form-item label="紧急程度" name="priority">
           <a-select
-            v-model:value="addFormData.urgency"
+            v-model:value="formData.priority"
             placeholder="请选择紧急程度"
-            :options="urgencyOptions"
+            :options="priorityOptions"
           />
         </a-form-item>
       </a-form>
       <template #footer>
-        <a-button @click="addDialogVisible = false">取消</a-button>
-        <a-button type="primary" :loading="submitLoading" @click="handleSubmitAdd">确定</a-button>
+        <a-button @click="formDialogVisible = false">取消</a-button>
+        <a-button type="primary" :loading="submitLoading" @click="handleSubmitForm">确定</a-button>
       </template>
     </a-modal>
 
@@ -180,16 +190,12 @@
         :label-col="{ style: { width: '100px' } }"
         style="padding: 10px 20px"
       >
-        <a-form-item label="处理人ID" name="handlerId">
-          <a-input-number
-            v-model:value="processFormData.handlerId"
-            placeholder="请输入处理人ID"
-            style="width: 100%"
-          />
+        <a-form-item label="处理人" name="handlerId">
+          <EmployeeSelect v-model="processFormData.handlerId" placeholder="搜索处理人姓名/工号" />
         </a-form-item>
-        <a-form-item label="处理结果" name="handleResult">
+        <a-form-item label="处理结果" name="result">
           <a-textarea
-            v-model:value="processFormData.handleResult"
+            v-model:value="processFormData.result"
             :rows="4"
             placeholder="请输入处理结果"
             :maxlength="500"
@@ -217,18 +223,21 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
-import { PlusOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import EmployeeSelect from '@/components/EmployeeSelect.vue'
 import {
   getRepairOrderList,
   createRepairOrder,
+  updateRepairOrder,
   handleRepairOrder,
   deleteRepairOrder,
   getAllBuildings,
   getRoomList,
   type RepairOrderDto,
   type CreateRepairOrderRequest,
+  type UpdateRepairOrderRequest,
   type HandleRepairOrderRequest,
 } from '@/api/dormitory'
 
@@ -237,12 +246,12 @@ const tableColumns = [
   { title: '序号', dataIndex: 'index', key: 'index', width: 60, align: 'center' as const },
   { title: '房间信息', dataIndex: 'roomInfo', key: 'roomInfo', width: 180 },
   { title: '报修人', dataIndex: 'reporterName', key: 'reporterName', width: 100 },
-  { title: '问题描述', dataIndex: 'issueDescription', key: 'issueDescription', width: 200, ellipsis: true },
-  { title: '紧急程度', dataIndex: 'urgency', key: 'urgency', width: 100, align: 'center' as const },
+  { title: '问题描述', dataIndex: 'description', key: 'description', width: 200, ellipsis: true },
+  { title: '紧急程度', dataIndex: 'priority', key: 'priority', width: 100, align: 'center' as const },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100, align: 'center' as const },
   { title: '处理人', dataIndex: 'handlerName', key: 'handlerName', width: 100 },
   { title: '创建时间', dataIndex: 'createdTime', key: 'createdTime', width: 160 },
-  { title: '操作', dataIndex: 'action', key: 'action', width: 140, align: 'center' as const, fixed: 'right' as const },
+  { title: '操作', dataIndex: 'action', key: 'action', width: 180, align: 'center' as const, fixed: 'right' as const },
 ]
 
 // 状态选项
@@ -254,7 +263,7 @@ const statusOptions = [
 ]
 
 // 紧急程度选项
-const urgencyOptions = [
+const priorityOptions = [
   { label: '一般', value: 1 },
   { label: '紧急', value: 2 },
   { label: '非常紧急', value: 3 },
@@ -274,7 +283,7 @@ const roomOptions = ref<{ label: string; value: number }[]>([])
 const searchForm = reactive({
   roomId: undefined as number | undefined,
   status: undefined as number | undefined,
-  urgency: undefined as number | undefined,
+  priority: undefined as number | undefined,
 })
 
 // 表格数据
@@ -301,81 +310,65 @@ function handleTableChange(pag: any) {
   fetchRepairOrderList()
 }
 
-// 新增弹窗相关
-const addDialogVisible = ref(false)
-const addFormRef = ref<FormInstance>()
+// 新增/编辑弹窗
+const formDialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
+const currentOrderId = ref<number | null>(null)
 
-const addFormData = reactive({
+const formData = reactive({
   roomId: undefined as number | undefined,
   reporterId: undefined as number | undefined,
-  issueDescription: '',
-  urgency: undefined as number | undefined,
+  reporterName: '',
+  description: '',
+  priority: undefined as number | undefined,
 })
 
-const addFormRules: Record<string, Rule[]> = {
+const formRules: Record<string, Rule[]> = {
   roomId: [{ required: true, message: '请选择房间', trigger: 'change' }],
   reporterId: [{ required: true, message: '请输入报修人ID', trigger: 'blur' }],
-  issueDescription: [{ required: true, message: '请输入问题描述', trigger: 'blur' }],
-  urgency: [{ required: true, message: '请选择紧急程度', trigger: 'change' }],
+  description: [{ required: true, message: '请输入问题描述', trigger: 'blur' }],
+  priority: [{ required: true, message: '请选择紧急程度', trigger: 'change' }],
 }
 
-// 处理弹窗相关
+// 处理弹窗
 const processDialogVisible = ref(false)
 const processFormRef = ref<FormInstance>()
-const currentOrderId = ref<number | null>(null)
 
 const processFormData = reactive({
   handlerId: undefined as number | undefined,
-  handleResult: '',
+  result: '',
   status: undefined as number | undefined,
 })
 
 const processFormRules: Record<string, Rule[]> = {
   handlerId: [{ required: true, message: '请输入处理人ID', trigger: 'blur' }],
-  handleResult: [{ required: true, message: '请输入处理结果', trigger: 'blur' }],
+  result: [{ required: true, message: '请输入处理结果', trigger: 'blur' }],
   status: [{ required: true, message: '请选择新状态', trigger: 'change' }],
 }
 
-// 获取紧急程度颜色
-function getUrgencyColor(urgency: number): string {
-  const colors: Record<number, string> = {
-    1: 'blue',
-    2: 'orange',
-    3: 'red',
-  }
-  return colors[urgency] || 'default'
+// 紧急程度颜色
+function getPriorityColor(priority: number): string {
+  const colors: Record<number, string> = { 1: 'blue', 2: 'orange', 3: 'red' }
+  return colors[priority] || 'default'
 }
 
-// 获取紧急程度文本
-function getUrgencyText(urgency: number): string {
-  const texts: Record<number, string> = {
-    1: '一般',
-    2: '紧急',
-    3: '非常紧急',
-  }
-  return texts[urgency] || '未知'
+// 紧急程度文本
+function getPriorityText(priority: number): string {
+  const texts: Record<number, string> = { 1: '一般', 2: '紧急', 3: '非常紧急' }
+  return texts[priority] || '未知'
 }
 
-// 获取状态颜色
+// 状态颜色
 function getStatusColor(status: number): string {
-  const colors: Record<number, string> = {
-    1: 'default',
-    2: 'processing',
-    3: 'success',
-    4: 'default',
-  }
+  const colors: Record<number, string> = { 1: 'default', 2: 'processing', 3: 'success', 4: 'default' }
   return colors[status] || 'default'
 }
 
-// 获取状态文本
+// 状态文本
 function getStatusText(status: number): string {
-  const texts: Record<number, string> = {
-    1: '待处理',
-    2: '处理中',
-    3: '已完成',
-    4: '已关闭',
-  }
+  const texts: Record<number, string> = { 1: '待处理', 2: '处理中', 3: '已完成', 4: '已关闭' }
   return texts[status] || '未知'
 }
 
@@ -392,10 +385,7 @@ async function loadRoomOptions() {
     for (const building of buildings) {
       const rooms = await getRoomList(building.id)
       for (const room of rooms) {
-        options.push({
-          label: `${building.name} - ${room.roomNumber}`,
-          value: room.id,
-        })
+        options.push({ label: `${building.name} - ${room.roomNumber}`, value: room.id })
       }
     }
     roomOptions.value = options
@@ -414,7 +404,7 @@ async function fetchRepairOrderList() {
     }
     if (searchForm.roomId) params.roomId = searchForm.roomId
     if (searchForm.status !== undefined) params.status = searchForm.status
-    if (searchForm.urgency !== undefined) params.urgency = searchForm.urgency
+    if (searchForm.priority !== undefined) params.priority = searchForm.priority
     const res = await getRepairOrderList(params)
     if (res) {
       tableData.value = res.items || []
@@ -435,45 +425,69 @@ function handleSearch() {
 function handleReset() {
   searchForm.roomId = undefined
   searchForm.status = undefined
-  searchForm.urgency = undefined
+  searchForm.priority = undefined
   pagination.pageIndex = 1
   fetchRepairOrderList()
 }
 
-// 重置新增表单
-function resetAddForm() {
-  addFormData.roomId = undefined
-  addFormData.reporterId = undefined
-  addFormData.issueDescription = ''
-  addFormData.urgency = undefined
+// 重置表单
+function resetForm() {
+  formData.roomId = undefined
+  formData.reporterId = undefined
+  formData.reporterName = ''
+  formData.description = ''
+  formData.priority = undefined
+  currentOrderId.value = null
 }
 
 // 新增
 function handleAdd() {
-  resetAddForm()
-  addDialogVisible.value = true
+  dialogMode.value = 'add'
+  resetForm()
+  formDialogVisible.value = true
 }
 
-// 提交新增
-async function handleSubmitAdd() {
-  if (!addFormRef.value) return
+// 编辑
+function handleEdit(record: any) {
+  dialogMode.value = 'edit'
+  currentOrderId.value = record.id
+  formData.roomId = record.roomId
+  formData.reporterId = record.reporterId
+  formData.reporterName = record.reporterName || ''
+  formData.description = record.description
+  formData.priority = record.priority
+  formDialogVisible.value = true
+}
+
+// 提交新增/编辑
+async function handleSubmitForm() {
+  if (!formRef.value) return
   try {
-    await addFormRef.value.validate()
+    await formRef.value.validate()
   } catch {
     return
   }
 
   submitLoading.value = true
   try {
-    const data: CreateRepairOrderRequest = {
-      roomId: addFormData.roomId!,
-      issueType: '其他', // 默认类型
-      issueDescription: addFormData.issueDescription,
-      urgency: addFormData.urgency!,
+    if (dialogMode.value === 'add') {
+      const data: CreateRepairOrderRequest = {
+        roomId: formData.roomId!,
+        reporterId: formData.reporterId!,
+        description: formData.description,
+        priority: formData.priority!,
+      }
+      await createRepairOrder(data)
+      message.success('新增成功')
+    } else {
+      const data: UpdateRepairOrderRequest = {
+        description: formData.description,
+        priority: formData.priority!,
+      }
+      await updateRepairOrder(currentOrderId.value!, data)
+      message.success('更新成功')
     }
-    await createRepairOrder(data)
-    message.success('新增成功')
-    addDialogVisible.value = false
+    formDialogVisible.value = false
     fetchRepairOrderList()
   } finally {
     submitLoading.value = false
@@ -484,7 +498,7 @@ async function handleSubmitAdd() {
 function handleProcess(record: any) {
   currentOrderId.value = record.id
   processFormData.handlerId = record.handlerId
-  processFormData.handleResult = record.handleResult || ''
+  processFormData.result = record.result || ''
   processFormData.status = record.status === 1 ? 2 : record.status
   processDialogVisible.value = true
 }
@@ -501,7 +515,8 @@ async function handleSubmitProcess() {
   submitLoading.value = true
   try {
     const data: HandleRepairOrderRequest = {
-      handleResult: processFormData.handleResult,
+      handlerId: processFormData.handlerId!,
+      result: processFormData.result,
       status: processFormData.status!,
     }
     await handleRepairOrder(currentOrderId.value!, data)

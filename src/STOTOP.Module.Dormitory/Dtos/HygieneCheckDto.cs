@@ -49,6 +49,18 @@ public class CreateHygieneCheckRequest
 }
 
 /// <summary>
+/// 更新卫生检查请求
+/// </summary>
+public class UpdateHygieneCheckRequest
+{
+    public long InspectorId { get; set; }
+    public DateTime CheckDate { get; set; }
+    public int? Score { get; set; }
+    public string? Result { get; set; }
+    public string? Remark { get; set; }
+}
+
+/// <summary>
 /// 卫生检查查询请求
 /// </summary>
 public class HygieneCheckQueryRequest

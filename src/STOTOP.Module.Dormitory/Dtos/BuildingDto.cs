@@ -12,6 +12,7 @@ public class BuildingDto
     public string? Address { get; set; }
     public int TotalFloors { get; set; }
     public long? ManagerId { get; set; }
+    public string? ManagerName { get; set; }
     public string? DormitoryType { get; set; }
     public string? Remark { get; set; }
     public int Status { get; set; }
@@ -35,6 +36,10 @@ public class BuildingListItemDto
     public string? DormitoryType { get; set; }
     public int Status { get; set; }
     public DateTime CreatedTime { get; set; }
+    // 统计（由楼栋下房间/床位实时计算）
+    public int RoomCount { get; set; }
+    public int BedCount { get; set; }
+    public int OccupiedBeds { get; set; }
 }
 
 /// <summary>

@@ -48,6 +48,8 @@ public class UpdateBedRequest
     public string BedNumber { get; set; } = string.Empty;
     public string BedType { get; set; } = "lower";
     public string? Remark { get; set; }
+    /// <summary>床位状态（0/1空闲、2已入住、3维修中），不传则保持原值</summary>
+    public int? Status { get; set; }
 }
 
 /// <summary>

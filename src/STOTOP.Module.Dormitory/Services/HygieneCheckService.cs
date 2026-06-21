@@ -106,6 +106,11 @@ public class HygieneCheckService : IHygieneCheckService
             throw new InvalidOperationException("房间不存在");
         }
 
+        if (request.Score is < 0 or > 100)
+        {
+            throw new InvalidOperationException("评分需在 0-100 之间");
+        }
+
         var hygieneCheck = new DorHygieneCheck
         {
             FRoomId = request.RoomId,
@@ -119,6 +124,24 @@ public class HygieneCheckService : IHygieneCheckService
 
         await _hygieneCheckRepository.AddAsync(hygieneCheck);
         return (await GetHygieneCheckByIdAsync(hygieneCheck.FID))!;
+    }
+
+    public async Task<HygieneCheckDto?> UpdateHygieneCheckAsync(long id, UpdateHygieneCheckRequest request)
+    {
+        var hygieneCheck = await _hygieneCheckRepository.Query()
+            .AsTracking()
+            .FirstOrDefaultAsync(hc => hc.FID == id);
+
+        if (hygieneCheck == null) return null;
+
+        hygieneCheck.FInspectorId = request.InspectorId;
+        hygieneCheck.FCheckDate = request.CheckDate;
+        hygieneCheck.FScore = request.Score;
+        hygieneCheck.FResult = request.Result;
+        hygieneCheck.FRemark = request.Remark;
+
+        await _hygieneCheckRepository.UpdateAsync(hygieneCheck);
+        return await GetHygieneCheckByIdAsync(id);
     }
 
     public async Task<bool> DeleteHygieneCheckAsync(long id)

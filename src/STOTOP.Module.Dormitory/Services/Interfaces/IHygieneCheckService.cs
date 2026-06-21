@@ -8,5 +8,6 @@ public interface IHygieneCheckService
     Task<PagedResult<HygieneCheckListItemDto>> GetHygieneChecksAsync(HygieneCheckQueryRequest request);
     Task<HygieneCheckDto?> GetHygieneCheckByIdAsync(long id);
     Task<HygieneCheckDto> CreateHygieneCheckAsync(CreateHygieneCheckRequest request);
+    Task<HygieneCheckDto?> UpdateHygieneCheckAsync(long id, UpdateHygieneCheckRequest request);
     Task<bool> DeleteHygieneCheckAsync(long id);
 }

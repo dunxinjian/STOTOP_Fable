@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
@@ -108,7 +109,7 @@ public class VisitorService : IVisitorService
             FVisitedPersonId = request.VisitedPersonId,
             FArrivalTime = request.ArrivalTime,
             FRemark = request.Remark,
-            FStatus = 1,
+            FStatus = DorStatus.Visitor.Visiting,
             FCreatedTime = DateTime.Now
         };
 
@@ -135,7 +136,7 @@ public class VisitorService : IVisitorService
         return await GetVisitorByIdAsync(id);
     }
 
-    public async Task<VisitorDto?> DepartureAsync(long id, DepartureRequest request)
+    public async Task<VisitorDto?> DepartureAsync(long id, DateTime? departureTime = null)
     {
         var visitor = await _visitorRepository.Query()
             .AsTracking()
@@ -143,8 +144,8 @@ public class VisitorService : IVisitorService
 
         if (visitor == null) return null;
 
-        visitor.FDepartureTime = request.DepartureTime;
-        visitor.FStatus = 2; // 2 = 已离开
+        visitor.FDepartureTime = departureTime ?? DateTime.Now;
+        visitor.FStatus = DorStatus.Visitor.Left;
 
         await _visitorRepository.UpdateAsync(visitor);
         return await GetVisitorByIdAsync(id);

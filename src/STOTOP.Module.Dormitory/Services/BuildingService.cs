@@ -1,19 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using STOTOP.Core.Interfaces;
 using STOTOP.Core.Models;
+using STOTOP.Module.Dormitory.Constants;
 using STOTOP.Module.Dormitory.Dtos;
 using STOTOP.Module.Dormitory.Entities;
 using STOTOP.Module.Dormitory.Services.Interfaces;
+using STOTOP.Module.HR.Entities;
 
 namespace STOTOP.Module.Dormitory.Services;
 
 public class BuildingService : IBuildingService
 {
     private readonly IRepository<DorBuilding> _buildingRepository;
+    private readonly IRepository<HrEmployee> _employeeRepository;
 
-    public BuildingService(IRepository<DorBuilding> buildingRepository)
+    public BuildingService(
+        IRepository<DorBuilding> buildingRepository,
+        IRepository<HrEmployee> employeeRepository)
     {
         _buildingRepository = buildingRepository;
+        _employeeRepository = employeeRepository;
     }
 
     #region Building CRUD
@@ -36,6 +42,8 @@ public class BuildingService : IBuildingService
         var total = await query.CountAsync();
 
         var items = await query
+            .Include(b => b.Rooms)
+            .ThenInclude(r => r.Beds)
             .OrderByDescending(b => b.FCreatedTime)
             .Skip((request.PageIndex - 1) * request.PageSize)
             .Take(request.PageSize)
@@ -67,7 +75,16 @@ public class BuildingService : IBuildingService
             .ThenInclude(r => r.Beds)
             .FirstOrDefaultAsync(b => b.FID == id);
 
-        return building == null ? null : MapToDto(building);
+        if (building == null) return null;
+        var dto = MapToDto(building);
+        if (building.FManagerId.HasValue)
+        {
+            dto.ManagerName = await _employeeRepository.Query()
+                .Where(e => e.FID == building.FManagerId.Value)
+                .Select(e => e.FName)
+                .FirstOrDefaultAsync();
+        }
+        return dto;
     }
 
     public async Task<BuildingDto> CreateBuildingAsync(CreateBuildingRequest request)
@@ -196,7 +213,11 @@ public class BuildingService : IBuildingService
             ManagerId = entity.FManagerId,
             DormitoryType = entity.FDormitoryType,
             Status = entity.FStatus,
-            CreatedTime = entity.FCreatedTime
+            CreatedTime = entity.FCreatedTime,
+            RoomCount = entity.Rooms.Count,
+            BedCount = entity.Rooms.Sum(r => r.Beds.Count),
+            // 床位状态 2=已入住（入住/退宿时联动维护），据此统计占用
+            OccupiedBeds = entity.Rooms.Sum(r => r.Beds.Count(b => b.FStatus == DorStatus.Bed.Occupied))
         };
     }
 
