@@ -159,9 +159,9 @@ public static class CardFlowModuleExtensions
         services.AddTransient<AutoVoucherHandler>();
 
         // Handler 工厂
-        services.AddSingleton<ClassificationHandlerFactory>(sp =>
+        services.AddSingleton<ClassificationHandlerFactory>(_ =>
         {
-            var factory = new ClassificationHandlerFactory(sp);
+            var factory = new ClassificationHandlerFactory();
             factory.Register<AlertNotifyHandler>("AlertNotify");
             factory.Register<InfoRecordHandler>("InfoRecord");
             factory.Register<WorkTaskHandler>("WorkTask");
